@@ -1,0 +1,4 @@
+ trace←{⍺←⊢                          ⍝ Trace of function application.
+     fn←⍺⍺{⍙←⍺⍺ ⋄ ~∘' ⍙'⍕⊂⎕OR'⍙'}⍵   ⍝ function representation.
+     ↑⊢/⎕←⍺ fn ⍵'=>',⊂⍺ ⍺⍺ ⍵         ⍝ display and result.
+ }

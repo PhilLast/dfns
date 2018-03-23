@@ -1,0 +1,3 @@
+ rr←{IO ⎕IO←⎕IO 0                                ⍝ Round-robin tournament.
+     IO+(⍵÷2)↑[2]m,[0.5]⌽m←0,v⌽1+n n⍴v←⍳n←0⌈⍵-1
+ }

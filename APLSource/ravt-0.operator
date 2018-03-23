@@ -1,0 +1,3 @@
+ ravt←{                      ⍝ Generic depth-first tree traversal.
+     (⊃∇⍨/⌽(⊂⍺),⍺ ⍵⍵ ⍵)⍺⍺ ⍵  ⍝ visits children before parent.
+ }

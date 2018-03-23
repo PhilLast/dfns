@@ -1,0 +1,4 @@
+ ssmat←{⎕ML←1                ⍝ Matrix search/replace.
+     cmat find repl←⍵        ⍝ Char matrix, find & replace vectors.
+     ↑{ss ⍵ find repl}¨↓cmat ⍝ Using ss for each row.
+ }

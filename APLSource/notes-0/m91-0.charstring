@@ -1,0 +1,79 @@
+m ← ##.m91 n                                ⍝ McCarthy's M91 function.
+
+The McCarthy 91 function  is a recursive function, defined by John McCarthy as a
+test case for formal verification within computer science.
+
+http://en.wikipedia.org/wiki/McCarthy_91_function
+
+The recursive definition:
+
+    M n → n-10,       if n>100
+    M n → M(M(n+11)), otherwise
+
+is nicely expressed as a dfn:
+
+    m91←{               ⍝ non-tracing version
+        ⍵>100: ⍵-10     ⍝ high number: M(n) → n-10
+        ∇ ∇ ⍵+11        ⍝ low number:  M(n) → M(M(n+11))
+    }
+
+We  can  watch  the progress of the sequence by displaying the value of ⍵ at the
+start  of  each  function  invocation and passing as left argument, which of the
+recursive calls was used:
+
+    m91←{                       ⍝ McCarthy's M91 function.
+        ⍺←0 ⋄ ⍞←∊⍕¨⍺'→'⍵' '     ⍝ trace:
+        ⍵>100:⍵-10              ⍝ high number: M(n) → n-10
+        1 ∇ 2 ∇ ⍵+11            ⍝ low number:  M(n) → M(M(n+11))
+    }
+
+Then:
+
+    m91 2
+0→2 2→13 2→24 2→35 2→46 2→57 2→68 2→79 2→90 2→101 1→91 2→102 1→92 2→103 1→93 2→1
+04 1→94 2→105 1→95 2→106 1→96 2→107 1→97 2→108 1→98 2→109 1→99 2→110 1→100 2→111
+ 1→101 1→91 2→102 1→92 2→103 1→93 2→104 1→94 2→105 1→95 2→106 1→96 2→107 1→97 2→
+108 1→98 2→109 1→99 2→110 1→100 2→111 1→101 1→91 2→102 1→92 2→103 1→93 2→104 1→9
+4 2→105 1→95 2→106 1→96 2→107 1→97 2→108 1→98 2→109 1→99 2→110 1→100 2→111 1→101
+ 1→91 2→102 1→92 2→103 1→93 2→104 1→94 2→105 1→95 2→106 1→96 2→107 1→97 2→108 1→
+98 2→109 1→99 2→110 1→100 2→111 1→101 1→91 2→102 1→92 2→103 1→93 2→104 1→94 2→10
+5 1→95 2→106 1→96 2→107 1→97 2→108 1→98 2→109 1→99 2→110 1→100 2→111 1→101 1→91
+2→102 1→92 2→103 1→93 2→104 1→94 2→105 1→95 2→106 1→96 2→107 1→97 2→108 1→98 2→1
+09 1→99 2→110 1→100 2→111 1→101 1→91 2→102 1→92 2→103 1→93 2→104 1→94 2→105 1→95
+ 2→106 1→96 2→107 1→97 2→108 1→98 2→109 1→99 2→110 1→100 2→111 1→101 1→91 2→102
+1→92 2→103 1→93 2→104 1→94 2→105 1→95 2→106 1→96 2→107 1→97 2→108 1→98 2→109 1→9
+9 2→110 1→100 2→111 1→101 1→91 2→102 1→92 2→103 1→93 2→104 1→94 2→105 1→95 2→106
+ 1→96 2→107 1→97 2→108 1→98 2→109 1→99 2→110 1→100 2→111 1→101
+91
+
+We could generalise the function by parameterising the constants that define the
+breakpoint and increments:
+
+    mGen←{              ⍝ McCarthy's M91 function (generalised)
+        ⍺←11 100 ¯10    ⍝ default increments and breakpoint
+        lo brk hi←⍺     ⍝ increment for hi and low numbers and breakpoint
+        {               ⍝
+            ⍵>brk:⍵+hi  ⍝ high number: M(n) → n-hi
+            ∇ ∇ ⍵+lo    ⍝ low number:  M(n) → M(M(n+lo))
+        }⍵
+    }
+
+Then:
+
+    5 10 ¯4∘mGen¨ 5 to 15
+7 7 7 7 7 7 7 8 9 10 11
+
+    5 10 ¯3∘mGen¨ 5 to 15
+8 9 8 9 8 9 8 9 10 11 12
+
+Examples:
+
+    m91¨ 90 to 100                  ⍝ ⍵<100 → 91
+91 91 91 91 91 91 91 91 91 91 91
+
+    m91¨ 101 to 110                 ⍝ ⍵≥100 → ⍵-10
+91 92 93 94 95 96 97 98 99 100
+
+See also: osc k6174
+Index:91
+Index;McCarthy J.

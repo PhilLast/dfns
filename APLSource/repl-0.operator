@@ -1,0 +1,13 @@
+ repl←{                      ⍝ Read-eval-print loop.
+     ⍺⍺{
+         0::'Eh?'            ⍝ trap all errors.
+         ⍎'⍺⍺ ⍵'             ⍝ expose trap to ⍺⍺.
+         ⍺⍺                  ⍝ to bind operand.
+     }{
+         left←{(∨\⍵≠' ')/⍵}  ⍝ left-align
+         buff←left⍞⊣⍞←'    ' ⍝ prompt for next input.
+         buff≡,⍵:            ⍝ matches terminator: quit.
+         buff∧.=' ':∇ ⍵      ⍝ blank line: ignore.
+         ∇ ⍵⊣⎕←⍺⍺ buff       ⍝ eval, display and repeat.
+     }⍵
+ }

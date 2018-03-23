@@ -1,0 +1,26 @@
+⍝ Conditional function power:
+
+    {⍵,'.'} until {60=⍴⍵} 'Note'            ⍝ Extend until 60 wide.
+Note........................................................
+
+    1 disp ↓ until {1=⍴⍴⍵} 2 2 2 2⍴⍳16      ⍝ Split until vector.
+┌→────────────────────┬────────────────────────────┐
+│┌→────────┬─────────┐│┌→───────────┬─────────────┐│
+││┌→──┬───┐│┌→──┬───┐│││┌→───┬─────┐│┌→────┬─────┐││
+│││1 2│3 4│││5 6│7 8│││││9 10│11 12│││13 14│15 16│││
+││└~─→┴~─→┘│└~─→┴~─→┘│││└~──→┴~───→┘│└~───→┴~───→┘││
+│└────────→┴────────→┘│└───────────→┴────────────→┘│
+└────────────────────→┴───────────────────────────→┘
+
+      {⍵+1} until {1} 0                     ⍝ {⍵+1} applied once.
+1
+
+      {1↓⍵} while {' '∊⍵}  'hello world'    ⍝ While & until <concur> if initial
+world
+      {1↓⍵} until {~' '∊⍵} 'hello world'    ⍝ ·· argument <escapes> termination.
+world
+
+      {1↓⍵} while {'⎕'∊⍵}  'hello world'    ⍝ While & until <differ> if initial
+hello world
+      {1↓⍵} until {~'⎕'∊⍵} 'hello world'    ⍝ ·· argument <incurs> termination.
+ello world

@@ -1,0 +1,7 @@
+ timestamp←{⍺←⎕TS            ⍝ Time-stamped message.
+     join←{↑⍺⍺{⍺,⍺⍺,⍵}/⍵}    ⍝ join vector ⍵ with ⍺'s.
+     fmt←{(-2⌈⍴⍕⍵)↑'0',⍕⍵}¨  ⍝ format number with leading zeros.
+     date←'-'join fmt 3↑⍺    ⍝ date: YYYY-MM-DD
+     time←':'join fmt 3↑3↓⍺  ⍝ time: HH:MM:SS
+     ' 'join date time ⍵     ⍝ blank-separated date, time and message.
+ }

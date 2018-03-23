@@ -1,0 +1,74 @@
+⍝ Multi-line D-input:
+
+⍝ Din uses quote-quad input/output. For testing, we modify copies of
+⍝ the function to input from variable ∆i and output to variable ∆o.
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+                                                            ⍝
+    ∆in←{(∆i↓⍨←1)⊢⍵,⊃∆i}        ⍝ input from buffer         ⍝
+                                                            ⍝
+    qp←'⍞⊣⍞←' '∆in'∘subs        ⍝ subs quote-quad prompt    ⍝
+                                                            ⍝
+    _←⎕fx qp ⎕cr'din'           ⍝ modify copy of function.  ⍝
+                                                            ⍝
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+    ∆i ←⊂''
+    ∆i,←⊂'      ⍝ blank lines'
+    ∆i,←⊂'      ⍝ and comments'
+    ∆i,←⊂'0:⍵   ⍝ preserved'
+    ∆i,←⊂'⍵ ⍵'
+    ∆i,←⊂''
+
+    dots ⎕cr din'dup'           ⍝ input of regular dfn.
+dup←{                   
+·         ⍝ blank lines 
+·         ⍝ and comments
+·   0:⍵   ⍝ preserved   
+·   ⍵ ⍵                 
+}                       
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+    ∆i←⊂'⍵ ⍵}'
+
+    ⎕cr din'dup'                ⍝ single line input.
+dup←{⍵ ⍵}
+
+    ∆i←⊂'2+3'                   ⍝ single line input.
+
+    din''
+5
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+    ∆i ←⊂'{'           ⍝·   {
+    ∆i,←⊂'⍵ ⍵'         ⍝·   ·   ⍵ ⍵
+    ∆i,←⊂'∘{'          ⍝·   }∘{
+    ∆i,←⊂'⍵ ⍵'         ⍝·   ·   ⍵ ⍵
+    ∆i,←⊂'0'           ⍝·   }0
+    
+    disp din''                  ⍝ multi-line expression.
+┌───┬───┐
+│0 0│0 0│
+└───┴───┘
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+    ∆i ←⊂'f←{'         ⍝·   f←{         ⍝ comments
+    ∆i,←⊂'⍵ ⍵'         ⍝·   ·   ⍵ ⍵     ⍝ removed
+    ∆i,←⊂'∘{'          ⍝·   }∘{
+    ∆i,←⊂'⍵ ⍵'         ⍝·   ·   ⍵ ⍵
+    ∆i,←⊂'{'           ⍝·   }{
+    ∆i,←⊂'⍺⍺ ⍺⍺ ⍵'     ⍝·   ·   ⍺⍺ ⍺⍺ ⍵
+    ∆i,←⊂''            ⍝·   }
+
+    ⍎'din'''' ⋄ 0 0⍴0'          ⍝ multi-line derived fn:
+
+    disp ⎕cr'f'
+┌───────────────┬─────────┐
+│┌─────┬─┬─────┐│{⍺⍺ ⍺⍺ ⍵}│
+││{⍵ ⍵}│∘│{⍵ ⍵}││         │
+│└─────┴─┴─────┘│         │
+└───────────────┴─────────┘
+

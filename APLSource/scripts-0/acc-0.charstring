@@ -1,0 +1,40 @@
+⍝ Accumulating reduction:
+
+    disp {⍺,'f',⍵}acc'abcd'
+┌───────┬─────┬───┬─┐
+│afbfcfd│bfcfd│cfd│d│
+└───────┴─────┴───┴─┘
+
+    disp ,acc ⍳4
+┌───────┬─────┬───┬─┐
+│1 2 3 4│2 3 4│3 4│4│
+└───────┴─────┴───┴─┘
+
+    +acc 1 2 3 4
+10 9 7 4
+
+    disp ,acc 2/¨⍳4
+┌───────────────┬───────────┬───────┬───┐
+│1 1 2 2 3 3 4 4│2 2 3 3 4 4│3 3 4 4│4 4│
+└───────────────┴───────────┴───────┴───┘
+
+    disp ,acc 2/¨⍳0                 ⍝ null vector argument.
+11::DOMAIN ERROR
+
+    slow←{⌽⍺⍺⍨\⌽⍵}                  ⍝ slow O(n*2) coding.
+
+    disp ,slow 2/¨⍳4                ⍝ slow version gives same result.
+┌───────────────┬───────────┬───────┬───┐
+│1 1 2 2 3 3 4 4│2 2 3 3 4 4│3 3 4 4│4 4│
+└───────────────┴───────────┴───────┴───┘
+
+    ⍲acc 1 0 0              ⍝ ⍲ is non-associative (although it is commutative).
+0 1 0
+
+    ⍲ slow 1 0 0            ⍝ slow coding differs for non-associative operand.
+1 1 0
+
+    1 disp ,slow 2/¨⍳0              ⍝ slow version on null vector.
+┌⊖──┐
+│0 0│
+└~─→┘

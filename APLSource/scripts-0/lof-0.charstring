@@ -1,0 +1,31 @@
+⍝ List of functions:
+
+      ⊃÷/ +/lof⍴ 1 2 3 4                                ⍝ arithmetic mean.
+2.5
+      cvex←'will' 'you' 'nill'                          ⍝ vector of vectors.
+
+      disp {2↑⍵} lof {2↑⌽⍵} lof {⌽2↑⍵} cvex             ⍝ without left closure.
+┌────┬───┬──────────┬──────────┐
+│will│you│┌────┬───┐│┌───┬────┐│
+│    │   ││nill│you│││you│will││
+│    │   │└────┴───┘│└───┴────┘│
+└────┴───┴──────────┴──────────┘
+
+      disp {''} lof {2↑⍵} lof {2↑⌽⍵} lof {⌽2↑⍵} cvex    ⍝ explicit closure.
+┌──────────┬──────────┬──────────┐
+│┌────┬───┐│┌────┬───┐│┌───┬────┐│
+││will│you│││nill│you│││you│will││
+│└────┴───┘│└────┴───┘│└───┴────┘│
+└──────────┴──────────┴──────────┘
+
+      _lof←{                  ⍝ Close list of functions.
+          ⍺←⊢                 ⍝ ambivalent.
+          (⍺ ⍺⍺ ⍵)(⍺ ⍵⍵ ⍵)    ⍝ one at a time.
+      }
+
+      disp {2↑⍵} _lof {2↑⌽⍵} lof {⌽2↑⍵} cvex            ⍝ closure using <_lof>.
+┌──────────┬──────────┬──────────┐
+│┌────┬───┐│┌────┬───┐│┌───┬────┐│
+││will│you│││nill│you│││you│will││
+│└────┴───┘│└────┴───┘│└───┴────┘│
+└──────────┴──────────┴──────────┘

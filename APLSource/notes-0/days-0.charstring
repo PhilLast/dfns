@@ -1,0 +1,80 @@
+daynos ← {g←17520902} ##.days dates     ⍝ Day number from ⎕TS format.
+
+Returns number of days since 1899-12-31 00:00:00 for each ⎕TS-style vector along
+the  last axis of its argument. Part of day appears as a fractional component of
+the  result.  For  example,  midnight on new year's eve 31 Dec 1899 yields 1 and
+noon on the following day (1 Jan 1900) is 1.5.
+
+Optional  left argument {g}, a scalar number of the form yyyymmdd, specifies the
+date  of  the →Gregorian_calendar← reform (default 17520902 ≡≡ 1752-09-02). This
+is of interest only when exploring historical dates, see the example below.
+
+(
+    Bug: Although [days] accounts for the "removal" of 11 days in September 1752
+    for  the  change to the Gregorian calendar, it does not accommodate the att-
+    endant  change  to  New  Year's  Day.  Prior  to  the  implementation of the
+    →British_Calendar_Act_1751←  the year changed at midnight on the 24th March,
+    making  25th  March  New  Year's Day. The following pairs of dates should be
+    contiguous in the British calendar:
+
+    1750-03-24  1751-03-25      ⍝ Julian year change in March 1750.
+    1751-12-31  1752-01-01 *    ⍝ Calendar Act year change on Dec 31 in 1751.
+    1752-03-24  1752-03-25      ⍝ no Julian year change March 1752.
+    1752-09-02  1752-09-14      ⍝ change to Gregorian calendar.
+    1752-12-31  1753-01-01      ⍝ normal Gregorian year change 1752-1753.
+
+  * "...  according  to  which the Year of our Lord beginneth on the 25th Day of
+     March,  shall  not  be  made use of from and after the last Day of December
+     1751; and that the first Day of January next following the said last Day of
+     December shall be reckoned, taken, deemed and accounted to be the first Day
+     of the Year of our Lord 1752; ..."
+)
+
+Ref: Jean Meeus, "Astronomical Algorithms", p59. ISBN 0-943396-61-1, 1998.
+
+Sometimes  called  the  "International Day Number" or IDN, [days] is an origin-1
+system, where 1900-01-01 00:00:00 ≡≡ 1.0. Compare this with the →mayan← origin-0
+scheme, where a day started at noon.
+
+Peter-Michael  Hager  suggests this nifty one-liner, which is good for dates be-
+tween 1752-09-14 and 2400-02-28:
+
+    n_days←{{¯693896+(⍵>730500)+⌊36524×⍵÷36525}¯60++/⍵[2]↑(⌈365.25⊥⍵[1 3]),31,(29-×4|1⊃⍵),9⍴5⍴31 30}
+
+Examples:
+
+    days ⎕ts                            ⍝ Current date and time.
+38455.58296
+
+    days 1935 1 8                       ⍝ Whole number of days.
+12791
+
+    days 1935 1 8, 12 20                ⍝ Part way through day.
+12791.51389
+
+    days 1879 3 14 11 30                ⍝ Negative for dates before 1899 12 31.
+¯7596.520833
+
+    -/⎕←days 2 3⍴1533 8 26, 1536 5 19   ⍝ Matrix of dates → vector of day nos.
+¯133795 ¯132798
+¯997
+    ⎕ts≡date days ⎕ts                   ⍝ Full circle.
+1
+    days↑1752 09∘,¨02 14                ⍝ Sept 1752: 2nd and 14th contiguous.
+¯53799 ¯53798
+
+    --/days ↑1700∘,¨(2 29)(3 1)         ⍝ 1700 was still a leap year in GB.
+1
+    eudays←15821004∘days                ⍝ European Gregorian calendar reform.
+
+    eudays ↑1582 10∘,¨04 15             ⍝ Oct 1582: 4th and 15th contiguous.
+¯115860 ¯115859
+
+    --/eudays ↑1700∘,¨(2 28)(3 1)       ⍝ 1700 was not a leap year in Europe.
+1
+
+See also: Dates date cal timestamp mayan compidn
+See also: Gregorian_calendar British_Calendar_Act_1751
+
+Index:date|1752|International Day Number
+Index;Meeus J.|Hager P-M.

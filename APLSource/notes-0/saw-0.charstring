@@ -1,0 +1,79 @@
+rslt ← {left} (fun ##.saw) {right}          ⍝ Apply function Simple-Array-Wise.
+
+The  function  operand  is applied to or between each simple (depth 0 or 1) sub-
+array in the argument(s). [saw] is thought to have been published first by IBM's
+Ed Eusebi, who remarked that "It's good to have a saw in your toolbox".
+
+Technical notes:
+
+A  monadic  version  of the operator tests the depth of its argument and applies
+the  operand  function  if  it  is simple. Otherwise, it recursively applies the
+derived function '∇' (function operand bound with operator), to each sub array.
+
+    saw←{           ⍝ Function operand applied Simple-Array-Wise.
+        1≥|≡⍵:⍺⍺ ⍵  ⍝ Simple: apply operand.
+              ∇¨⍵   ⍝ Nested: visit each subarray.
+    }
+
+Phil Last suggested this (⎕io- and ⎕ml-independent) one-liner:
+
+    saw←{⊃⍬⍴⊢∘∇¨/(1↓1 0~≡⍵),⊢∘⍺⍺/(1 0∩≡⍵),⊂⍵}
+
+A dyadic version, suggested by Paul Mansour, looks like this:
+
+    saw←{               ⍝ Function operand applied Simple-Array-Wise.
+        2≥|≡⍺ ⍵:⍺ ⍺⍺ ⍵  ⍝ Both simple: apply operand.
+        1≥|≡⍵:∇∘⍵¨⍺     ⍝ ⍵ simple: traverse ⍺.
+        1≥|≡⍺:⍺∘∇¨⍵     ⍝ ⍺ simple: traverse ⍵.
+        ⍺ ∇¨⍵           ⍝ Both nested: traverse both.
+    }
+
+Dyadic [saw] is a close relative of the pervasion operator →perv←. See the tech-
+nical notes in →perv← for a generalisation that includes both.
+
+Finally,  we  can  produce  an ambi-valent version, by defaulting a missing left
+argument to the identity function ⊢.
+
+    saw←{                   ⍝ Function operand applied Simple-Array-Wise.
+        ⍺←⊢                 ⍝ default left arg.
+        2≥|≡⍺ ⍵ ⍵:⍺ ⍺⍺ ⍵    ⍝ Both simple: apply operand.
+        1≥|≡⍵:⍺ ∇¨⊂⍵        ⍝ ⍵ simple: traverse ⍺.
+        2≥|≡⍺ 1:⍺∘∇¨⍵       ⍝ ⍺ simple: traverse ⍵.
+        ⍺ ∇¨⍵               ⍝ Both nested: traverse both.
+    }
+
+Example:
+
+    disp¨eng esp                        ⍝ two nested vectors.
+ ┌───┬┬┬┬────┐  ┌───┬───┬────┬┬┐
+ │One││││Five│  │Uno│Dos│Tres│││
+ └───┴┴┴┴────┘  └───┴───┴────┴┴┘
+
+     ⌽saw eng esp                       ⍝ _monadic_ saw on depth-3 array.
+┌─────────────┬────────────────┐
+│┌───┬┬┬┬────┐│┌───┬───┬────┬┬┐│
+││enO││││eviF│││onU│soD│serT││││
+│└───┴┴┴┴────┘│└───┴───┴────┴┴┘│
+└─────────────┴────────────────┘
+
+    eng {⍺,'=',⍵}saw esp                ⍝ _dyadic_ saw between depth-2 arrays.
+┌───────┬────┬─────┬─┬─────┐
+│One=Uno│=Dos│=Tres│=│Five=│
+└───────┴────┴─────┴─┴─────┘
+
+    fnb←{' '∧.=⍺:⍵ ⋄ ⍺}saw              ⍝ Paul Mansour's [fnb] function.
+
+    eng fnb esp                         ⍝ eng replaces esp simple-array-wise.
+┌───┬───┬────┬┬────┐
+│One│Dos│Tres││Five│
+└───┴───┴────┴┴────┘
+
+    ↑fnb/ eng esp '¿?'                  ⍝ eng replaces esp with default: '¿?'.
+┌───┬───┬────┬──┬────┐
+│One│Dos│Tres│¿?│Five│
+└───┴───┴────┴──┴────┘
+
+See also: perv rows
+
+Index:simple-array-wise
+Index;Eusebi E.|Last P.|Mansour P.

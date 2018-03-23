@@ -1,0 +1,10 @@
+ kind←{                              ⍝ Parse-category of name(s) ⍵.
+     ⎕ML←1                           ⍝ kinds 0:undefined 1:nil 2:fun 3:mop 4:dop
+     props←(⎕CR¨,⎕NC,1∘⎕AT),↓1/↑⍵    ⍝ properties of referent (note the fork)
+     cr nc _ fn op←↓⍉props           ⍝ crep, nameclass, valency
+     ops←{⍵-4 2-.=↑⍵ op}             ⍝ nameclass:4 → kind mop:3 dop:4
+     nil←{⍵-3.1 0∧.=↑nc fn}          ⍝ niladic fn → kind nil:1
+     fns←{⍵-1 1 4+.×2 3 5∘.=⍵}       ⍝ nameclass:2 3 8 9 → kind: nil:1 fun:2
+     hyb←{⍵+0.5×cr∊,¨'/⌿\⍀'}         ⍝ hybrid:2.5 / ⌿ \ ⍀
+     hyb ops nil fns 5⌊⌊nc           ⍝ spaces etc → 5
+ }

@@ -1,0 +1,11 @@
+⍝ Lower-casification:
+
+    lcase 2 7⍴'PLEASE WHISPER'
+please 
+whisper
+
+    lcase 4↓⎕av
+ 	⌶ɫ%'⍺⍵_abcdefghijklmnopqrstuvwxyz¯.⍬0123456789⊢¥$£¢∆abcdefghijklmnopqrstuvwxyzý·⍙ÁÂÃÇÈÊËÌÍÎÏÐÒÓÔÕÙÚÛÝþãìðòõ{€}⊣⌷¨àäåæ⍨éñöøüßàáâäåæçèéêëíîïñ[/⌿\⍀<≤=≥>≠∨∧-+÷×?∊⍴~↑↓⍳○*⌈⌊∇∘(⊂⊃∩∪⊥⊤|;,⍱⍲⍒⍋⍉⌽⊖⍟⌹!⍕⍎⍫⍪≡≢óôöø"#&´┘┐┌└┼─├┤┴┬│@ùúû^ü`∣¶:⍷¿¡⋄←→⍝)] §⎕⍞⍣
+
+    ⎕ucs lcase ⎕ucs 65 9056 66      ⍝ [8692] 'A<variant>B' → 'a<variant>b'
+97 9056 98

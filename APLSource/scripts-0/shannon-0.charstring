@@ -1,0 +1,37 @@
+⍝ Shannon entropy of message ⍵:
+
+    ⎕pp←4
+
+   (shannon⍤1 , ⊣) 1+~(⍳10) ∘.> ⍳10
+0      2 2 2 2 2 2 2 2 2 2
+0.469  1 2 2 2 2 2 2 2 2 2
+0.7219 1 1 2 2 2 2 2 2 2 2
+0.8813 1 1 1 2 2 2 2 2 2 2
+0.971  1 1 1 1 2 2 2 2 2 2
+1      1 1 1 1 1 2 2 2 2 2
+0.971  1 1 1 1 1 1 2 2 2 2
+0.8813 1 1 1 1 1 1 1 2 2 2
+0.7219 1 1 1 1 1 1 1 1 2 2
+0.469  1 1 1 1 1 1 1 1 1 2
+
+    shannon¨ 'banana' 'orange'
+1.459 2.585
+
+    shannon ⎕A                      ⍝ 5 bits to encode A..Z
+4.7
+    shannon ⎕AV                     ⍝ 8 bits to encode ⎕AV
+8
+    shannon∘{⍳2*⍵}¨ ⍳10             ⍝ alphabets of size 2*⍵
+1 2 3 4 5 6 7 8 9 10
+
+    {(≢⍵)(≢∪⍵)} notes.Marilyn       ⍝ Marilyn's stats ##.notes.Marilyn
+11373 17
+    shannon notes.Marilyn           ⍝ Marilyn's entropy
+3.458
+    shannon{⍵[?⍨≢⍵]} notes.Marilyn  ⍝ order of items is immaterial
+3.458
+    shannon ∪ notes.Marilyn         ⍝ repetitions _are_ significant
+4.087
+
+    shannon ''                      ⍝ null message
+11::DOMAIN ERROR

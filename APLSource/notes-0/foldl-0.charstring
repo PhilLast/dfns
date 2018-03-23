@@ -1,0 +1,124 @@
+rslt ← ival (func ##.foldl) vals            ⍝ Fold (reduce) from the left.
+
+Phil  Last's  operator  uses  dyadic operand function [func] to accumulate items
+from vector right argument [vals] starting with initial value [ival]. In effect:
+
+    a f foldl i j k ··· →  (((a f i)f j)f k) ···
+
+[foldl] is equivalent to, but faster than, the traditional operator:
+
+    ∇ rslt←ival(func foldl)vals;val
+[1]   rslt←ival
+[2]   :For val :In vals
+[3]       rslt←rslt func val    ⍝ accumulate result.
+[4]   :End
+    ∇
+
+A related cumulative left-to-right scan operator might look like this:
+
+    scanl←{⎕ML←0                ⍝ Scan from the left.
+        2>⊃⌽⍴⍵:⍵                ⍝ few items: done.
+        ⌽↑⍺⍺{
+            (⊂(⊃⍵)⍺⍺ ⍺),⍵
+        }/(⌽⍵),⊂⊂⍺
+    }
+
+    'hello' ⌽⍨ scanl 1 1 0 ¯1 ¯1            ⍝ cf ascan in →scan←
+┌─────┬─────┬─────┬─────┬─────┬─────┐
+│hello│elloh│llohe│llohe│elloh│hello│
+└─────┴─────┴─────┴─────┴─────┴─────┘
+
+Technical note:
+
+The domain or "type" of left argument [ival] is in general distinct from that of
+the  items  of  right  argument  vector [vals]. In the  text replacement example
+below,  the  left  argument is a character vector (text string) and the right, a
+vector of from/to pairs.
+
+To show what's going on, we could invent a type notation:
+
+    ::                  "is of type",
+    ⍺, ⍵, ∊, ⍳, ⍴, ···  arbitrary types ("type variables"),
+    ∇, ∇∇               place marker for function, operator,
+    → ···               "to a ···" result type ···
+    [⍺]                 vector of ⍺s
+    [⍺;]                matrix of ⍺s.
+
+Then:
+
+    foldl :: ⍺ (⍺ ∇ ⍵ → ⍺) ∇∇ [⍵] → ⍺
+
+From this we can see that:
+
+- the type of the result of the derived function is the same as the type of its
+  left argument, which is also  ¯¯¯¯¯¯¯
+
+- the type of the result of the operand function and the type of its left argu-
+  ment;                         ¯¯¯¯¯¯¯
+
+- the type of the right argument of the operand function is the same as the type
+  of each item of the derived function's right argument array.
+
+This  topic is explored in a little more depth in supplied workspace Max; search
+for "type of" and "foldl" in max.dws/Introduction.
+
+Similarly, the type of scanl, above, is:
+
+    scanl :: ⍺ (⍺ ∇ ⍵ → ⍺) ∇∇ [⍵] → [⍺]
+
+Comparison with primitive (vector) reduction:
+
+If the right argument of a  primitive reduction is "homogeneous", in that all of
+its items are of the same type, the type of a vector reduction is:
+
+    / :: (⍺ ∇ ⍺ → ⍺) ∇∇ [⍺] → ⍺         ⍝ homogeneous vector reduction
+                                          ¯¯¯¯
+However, APL allows vectors to be "heterogeneous".  In particular, if the right-
+most item is of a distinct type, we could say the argument is of type [⍺],⊂⍵ and
+the type of primitive reduction is:
+
+    / :: (⍺ ∇ ⍵ → ⍵) ∇∇ [⍺],⊂⍵ → ⊂⍵     ⍝ heterogeneous vector reduction
+                                          ¯¯¯¯¯¯
+Composition of types:
+
+     f :: {x} ∇ ⍵ → ∊       ⍝ optional left argument {x}
+     g ::     ∇ ⍺ → ⍵
+=> f∘g :: {x} ∇ ⍺ → ∊
+
+Variations
+¯¯¯¯¯¯¯¯¯¯
+A  monadic  version  of  foldl  might take the prototypical item of its argument
+array as an initial value:
+
+    foldl←{⎕ML←1            ⍝ Fold (reduce) from the left.
+        ↑⍺⍺⍨/(⌽⍵),⊂⊃0⍴⍵     ⍝ ival is prototypical item.
+    }              ¯¯¯¯     ⍝ :: (⍺ ∇ ⍺ → ⍺) ∇∇ [⍺] → ⍺
+
+Alternatively, we could _default_ the initial value  to the prototypical item of
+the right argument by inserting an ⍺←··· line like this:
+
+    foldl←{⎕ML←1            ⍝ Fold (reduce) from the left.
+        ⍺←⊃0⍴⍵              ⍝ default initial value.
+        ↑⍺⍺⍨/(⌽⍵),⊂⍺        ⍝ :: {⍺} (⍺ ∇ ⍵ → ⍺) ∇∇ [⍵] → ⍺
+    }
+
+Examples:
+
+    repl←subs⍨                                  ⍝ ⍺ with ⍵ replacement.
+
+    'I dare not' repl 'dare' 'would'            ⍝ single word replacement.
+I would not
+
+    'many a mickle'repl foldl 'nk'('y' 'es')'iu' ⍝ multiple letter replacement.
+makes a muckle
+
+      0 ,foldl 2 3⍴⍳6                           ⍝ higher rank arrays.
+0 1 2 3
+0 4 5 6
+
+    ⍝ For more examples, see →remnode← and →Graphs←
+
+See also: acc trav pred scan remnode Graphs
+
+Index:reduction|fold|type notation
+Index;Last P.

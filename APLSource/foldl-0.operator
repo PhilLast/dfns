@@ -1,0 +1,3 @@
+ foldl←{⎕ML←1             ⍝ Fold (reduce) from the left.
+     ↑⍺⍺⍨/(⌽⍵),⊂⍺
+ }

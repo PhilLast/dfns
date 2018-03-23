@@ -1,0 +1,510 @@
+cols ← {base←1} ##.mayan numb               ⍝ Mayan numbers.
+
+As  the Pre-Columbian people of Central America used their toes as well as their
+fingers for counting, they wound up with a base 20 (vigesimal) number system.
+
+In earlier writings, distinct symbols were used to represent different powers of
+20:
+       1 - dot
+      20 - hatchet or flag
+     400 - feather
+    8000 - purse or incense pouch
+
+For  example,  if  ⍟,  ⍞, ↑, $ represent pictograms of dot, hatchet, feather and
+purse respectively, then
+
+    $ $ ↑ ⍞ ⍞ ⍞ ⍟ ⍟ ⍟ ⍟  →  20⊥2 1 3 4 →  16464
+
+An APL function to decode such strings might be:
+
+      deco←{20⊥+/'$↑⍞⍟'∘.=⍵~' '}
+
+      deco'$ $ ↑ ⍞ ⍞ ⍞ ⍟ ⍟ ⍟ ⍟'
+16464
+
+By  the 10th century AD, this had evolved into a positional system in which dig-
+its  1-19 were expressed as dots '⍟' arranged in 4 rows (hands/feet) of 5 (fing-
+ers/toes).  For  legibility,  completed  rows  of  5  were drawn as a solid line
+'⌹⌹⌹⌹⌹'  and  multi-digit  numbers were written in columns with more significant
+digit-blocks (higher powers of 20) uppermost.
+
+For example, the number 258 (20⊥12 18) would be written:
+
+    ┌───────┐
+    │  ⍟ ⍟  │
+    │ ⌹⌹⌹⌹⌹ │     (2+5+5)×20
+    │ ⌹⌹⌹⌹⌹ │
+    │       │         +
+    │  ⍟⍟⍟  │
+    │ ⌹⌹⌹⌹⌹ │     (3+5+5+5)×1
+    │ ⌹⌹⌹⌹⌹ │
+    │ ⌹⌹⌹⌹⌹ │
+    └───────┘
+
+The  system  boasted  a Zero (represented by a snail or sea shell pictogram) and
+when  used  for date calculations, had a curious irregularity in the third place
+(and  only  the  third  place) in that items in this position represented 18×20,
+rather  than  20×20.  In  APL terms, this means we use ··· 20 20 18 20 to encode
+into Mayan calendrical numbers.
+
+Function mayan's optional left argument selects
+
+    0: regular  ··· 20 20 20 base,
+    1: calendar ··· 20 18 20 base (default).
+
+As the principal use of arithmetic was astronomical and calendrical, it is prob-
+able  that the 18×20 (=360) irregularity was introduced as a simplification. The
+Mayan  calendar  year  had 360 regular days together with 5 extra "null" days in
+the short month of Wayeb (see below).
+
+We  should not infer any vagueness about the length of a Mayan year: The Priest-
+Astronomers  managed  to calculate Sun, Moon and planet cycles to an astonishing
+accuracy; for example, the length of a year was calculated to a precision better
+than  we  manage with our Gregorian leap year system, even with its no-it-isn't,
+yes-it-is adjustment at 100 and 400 years:
+
+    Modern "accurate" solar year    ·   365.242198 days
+    Mayan calculation of solar year ·   365.242    days     (-0.000054% error)
+    Gregorian leap year system  ·   ·   365.2425   days     (+0.000083% error)
+
+(
+    The Mayan calendar uses the following units of time:
+
+                            days  ×\
+    Kin                        1   1    (day)
+    Uinal                     20  20    (month)
+    Tun                      360  18    (year)
+    Katun                  7,200  20    (a "score" of years)
+    Baktun               144,000  20
+    Piktun             2,880,000  20
+    Kalabtun          57,600,000  20
+    Kinchiltun     1,152,000,000  20
+    Alautun       23,040,000,000  20
+    Hablatun     460,800,000,000  20
+)
+
+(
+    The names of cardinal numbers reveal a vestigial decimal system:
+
+    0 xix im    10 lahun                20 hun kal
+    1 hun       11 buluc                40 ca kal
+    2 caa       12 lahca                60 ox kal
+    3 ox        13 oxlahun              80 can kal
+    4 can       14 canlahun            100 hoo kal
+    5 hoo       15 hoolahun            120 uac kal
+    6 uac       16 uaclahun            140 uuc kal
+    7 uuc       17 uuclahun            200 ka hoo kal
+    8 uaxac     18 uaxaclahun          400 hun bak
+    9 bolon     19 bolonlahun          800 ca bak
+                                     1,200 ox bak
+                                     1,600 can bak
+                                     2,000 hoo bak
+                                     8,000 hun pic
+                                   160,000 hun calab
+                                 3,200,000 hun kinchil
+                                64,000,000 hun alau
+    (
+        The  name  for 10 "lahun" appears to include the word for 1 "hun", which
+        means  it  might translate into English as something like "one-ty". This
+        would imply that the Maya had distinct words for the numbers 0-9, where-
+        as English has distinct words for 1-10 (with Zero following later).
+
+        Mayan months and weeks both start with day 0.
+
+        All of this suggests that the Maya were ⎕IO←0 people.
+
+        Yay Maya!
+    )
+)
+
+(
+    Positional number systems lend themselves to calculation using various types
+    of abacus. An example "Nepohualtzitzin" dates from 900-1000 AD.
+
+    See: eval.dws/notes.soroban
+)
+
+To convert decimal number 86,672 to (calendrical) Mayan, we would use:
+
+          20 20 18 20⊤86627
+    12 0 11 7
+
+Which, using Mayan-style digits, becomes:
+
+     ⍟ ⍟            12 × 7200
+    ⌹⌹⌹⌹⌹
+    ⌹⌹⌹⌹⌹              +
+
+     _@/             0 × 360        (_@/ is a picture of a snail)
+                       +
+      ⍟             11 × 20
+    ⌹⌹⌹⌹⌹
+    ⌹⌹⌹⌹⌹              +
+
+     ⍟ ⍟             7 × 1
+    ⌹⌹⌹⌹⌹
+
+
+Examples:
+
+      mayan 6386            ⍝ (20 18 20⊤6386 → 17 13 6)
+
+  ⍟ ⍟
+ ⌹⌹⌹⌹⌹
+ ⌹⌹⌹⌹⌹
+ ⌹⌹⌹⌹⌹
+
+  ⍟⍟⍟
+ ⌹⌹⌹⌹⌹
+ ⌹⌹⌹⌹⌹
+
+   ⍟
+ ⌹⌹⌹⌹⌹
+
+      mayan 4321            ⍝ (20 18 20⊤4321 → 12 0 1)
+
+  ⍟ ⍟
+ ⌹⌹⌹⌹⌹
+ ⌹⌹⌹⌹⌹
+
+  _@/
+
+   ⍟
+
+      mayan 70              ⍝ "Three score years and ten".
+
+  ⍟⍟⍟
+
+ ⌹⌹⌹⌹⌹
+ ⌹⌹⌹⌹⌹
+
+
+      disp∘mayan¨ ⎕         ⍝ various numbers:
+⎕:
+   1234     2345     3456     4567     5678      360     7200
+ ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐
+ │     │  │     │  │     │  │     │  │     │  │     │  │     │
+ │ ⍟⍟⍟ │  │  ⍟  │  │⍟⍟⍟⍟ │  │ ⍟ ⍟ │  │⌹⌹⌹⌹⌹│  │  ⍟  │  │  ⍟  │
+ ├─────┤  │⌹⌹⌹⌹⌹│  │⌹⌹⌹⌹⌹│  │⌹⌹⌹⌹⌹│  │⌹⌹⌹⌹⌹│  ├─────┤  ├─────┤
+ │     │  ├─────┤  ├─────┤  │⌹⌹⌹⌹⌹│  │⌹⌹⌹⌹⌹│  │     │  │     │
+ │ ⍟ ⍟ │  │     │  │     │  ├─────┤  ├─────┤  │ _@/ │  │ _@/ │
+ │⌹⌹⌹⌹⌹│  │⍟⍟⍟⍟ │  │⌹⌹⌹⌹⌹│  │     │  │     │  ├─────┤  ├─────┤
+ ├─────┤  │⌹⌹⌹⌹⌹│  │⌹⌹⌹⌹⌹│  │ ⍟ ⍟ │  │ ⍟⍟⍟ │  │     │  │     │
+ │     │  ├─────┤  ├─────┤  │⌹⌹⌹⌹⌹│  │⌹⌹⌹⌹⌹│  │ _@/ │  │ _@/ │
+ │⍟⍟⍟⍟ │  │     │  │     │  │⌹⌹⌹⌹⌹│  │⌹⌹⌹⌹⌹│  └─────┘  ├─────┤
+ │⌹⌹⌹⌹⌹│  │⌹⌹⌹⌹⌹│  │  ⍟  │  ├─────┤  ├─────┤           │     │
+ │⌹⌹⌹⌹⌹│  └─────┘  │⌹⌹⌹⌹⌹│  │     │  │     │           │ _@/ │
+ └─────┘           │⌹⌹⌹⌹⌹│  │ ⍟ ⍟ │  │ ⍟⍟⍟ │           └─────┘
+                   │⌹⌹⌹⌹⌹│  │⌹⌹⌹⌹⌹│  │⌹⌹⌹⌹⌹│
+                   └─────┘  └─────┘  │⌹⌹⌹⌹⌹│
+                                     │⌹⌹⌹⌹⌹│
+                                     └─────┘
+
+⍝ The following function converts ⎕TS-style dates into Mayan "Long Count" form,
+⍝ assuming that the Long Count epoch started August 11th, 3114 BCE.
+
+      long_count←{      ⍝ Mayan Long Count from Gregorian (⎕TS) date.
+          ⍺←584283      ⍝ default GMT correlation: 0.0.0.0.0 ≡ JD:584283.
+          G←⌊days ⍵     ⍝ Gregorian day.
+          J←2415020+G   ⍝ Julian day.
+          mayan J-⍺     ⍝ Mayan from Julian.
+      }
+
+      long_count 2003 12 25                     ⍝ 2003-12-25 ≡ 12.19.10.15.16
+
+  ⍟ ⍟
+ ⌹⌹⌹⌹⌹
+ ⌹⌹⌹⌹⌹
+
+ ⍟⍟⍟⍟
+ ⌹⌹⌹⌹⌹
+ ⌹⌹⌹⌹⌹
+ ⌹⌹⌹⌹⌹
+
+ ⌹⌹⌹⌹⌹
+ ⌹⌹⌹⌹⌹
+
+ ⌹⌹⌹⌹⌹
+ ⌹⌹⌹⌹⌹
+ ⌹⌹⌹⌹⌹
+
+   ⍟
+ ⌹⌹⌹⌹⌹
+ ⌹⌹⌹⌹⌹
+ ⌹⌹⌹⌹⌹
+
+      long_count 2012 12 21     ⍝ First day of 14th Baktun.
+
+  ⍟⍟⍟
+ ⌹⌹⌹⌹⌹
+ ⌹⌹⌹⌹⌹
+
+  _@/
+
+  _@/
+
+  _@/
+
+  _@/
+
+⍝ This stand-alone version converts a YYYY MM DD vector into the equivalent
+⍝ n.n.n.n.n vector:
+
+      long_vec←{          ⍝ Raw long-count vector.
+          ⍺←584283        ⍝ default GMT correlation: 0.0.0.0.0 ≡ JD:584283.
+          G←⌊days ⍵       ⍝ Gregorian day.
+          J←2415020+G     ⍝ Julian day.
+          M←J-⍺           ⍝ Mayan from Julian.
+
+          n←1+⌈18⍟1⌈M     ⍝ generous number of digits.
+          b←20-2⌽n↑2      ⍝ encoding base.
+          v←b⊤M           ⍝ long-count vector.
+          (∨\v≠0)/v       ⍝ without leading 0s.
+      }
+
+      long_vec 2012 12 21   ⍝ first day of 14th Backtun
+13 0 0 0 0
+
+Correlation with Modern Dates
+-----------------------------
+There  is  overwhelming  evidence  that the Maya maintained a rigorous calendar.
+However,  as this ceased with the decline of the civilisation, it has been diff-
+icult to determine how Mayan dates correspond to the Julian or Gregorian calend-
+ars. Two correlations seem to be favoured:
+
+The first, known as "GMT"  (Goodman, Martinez, Thompson),  suggests  that  Mayan
+date 0.0.0.0.0 corresponds to  Julian date 584,283.  This is based on studies of
+some  contemporary  Central American communities, whose calendar seems to be in-
+herited from the Maya.  The  argument  is  that  (unless  the population of such
+peoples dwindled to a critical number at some point in the past before  recover-
+ing) it is inconceivable that their calendar should have missed or gained  days;
+it would be as unthinkable as western civilisation's  missing  or  duplicating a
+couple of Wednesdays.
+
+The second "GMT+2", which uses relatively recent evidence, is  based  upon Mayan
+recorded observations  of  eclipses.  We  can  date  such  events  with  extreme
+accuracy, and they suggest a correlation with Julian date 584,285.
+
+If the astronomical recording was accurate, an explanation  of  the  discrepency
+might be that the 584,285 calendar was subsequently adjusted to realign with the
+seasons in the same way the Gregorian calendar skipped 3-13 September in 1752.
+
+The functions shown here use the 584,283 (GMT) correlation, which now appears to
+be the more generally accepted one.
+
+Cycles
+------
+Today  almost  all of the civilised world enjoys a 7-day week. This cycle, which
+is  independent of month and year, is so universal that we forget why we decided
+upon seven.
+
+(muse:
+
+    There are many suggestions as to the origin of the 7-day week, and no single
+    theory is widely accepted as the definitive answer.
+
+    One  example is that the concept of the week arose in primitive agricultural
+    societies,  where  seven  days  was about the right interval for a farmer to
+    prepare  and  bring  his goods to market. A shorter interval would waste too
+    much  time away from production, and a longer one might risk goods perishing
+    between market days.
+
+    Note  firstly, that there are strong reasons for market days to occur at ex-
+    actly  regular  intervals:  every so-many days, rather than being constantly
+    re-negotiated.  With a regular "week", there is much more chance of everyone
+    showing up on the same day; a prerequisite for successful trading.
+
+    It  is tempting to speculate whether widespread acceptance of an interval of
+    seven days might have come about by a form of natural selection, rather than
+    as  a collective or bureaucratic conscious decision: A farmer returning from
+    his  local  market might have found on occasion, that his figs, chickens and
+    so-forth  were  ready again after six days. If his local market did not fall
+    on  the  following  day,  he might have felt inclined to take his goods to a
+    neighbouring village's market even though it was slightly farther to travel.
+
+    Villages whose market days just happened to accommodate natural agricultural
+    cycles  would  tend to retain regular trade as well as to attract occasional
+    additional  visitors,  whereas  those with slightly more inconvenient cycles
+    would tend to decline. In this way, farmer-friendly market cycles would tend
+    automatically to become the norm.
+
+    (
+        Having  established  same-length  cycles in adjacent villages, there may
+        have  been  a  second mechanism that selected for staggered market days,
+        while reinforcing their regularity.
+
+        Service  providers  such as pot-menders and tooth-pullers, who needed no
+        time  to prepare between market days, would probably have toured markets
+        on  different  days in nearby locations. In the case of a collision, the
+        trader  would  probably  have chosen the better-attended market, and his
+        presence  there  would in turn have made that market marginally more at-
+        tractive to shoppers, tending to increase its size, ... and so on.
+
+        Looking  at  the  larger picture, these rotating service providers (axe-
+        grinders,  sooth-sayers,  hair-cutters, entertainers, ...) could be seen
+        as  the teeth on the interlocking cogs of an expanding economic machine,
+        which  absorbed  adjacent communities, synchronising them into the 7-day
+        cycle.
+
+        (
+            If  this were the case, we might expect the names of the days of the
+            week  (in a particular locale) to indicate the locations of the more
+            important  markets in that area: "Oxford-day", "Banbury-day", and so
+            forth, rather than being named after deities.
+        )
+    )
+
+    That  the Mayan civilization chose a week with thirteen days (see below), as
+    opposed to one with seven, does not, of itself, detract from this theory, as
+    the  Mayan  agricultural  profile was quite different from that of Eurasia's
+    "Fertile Crescent".  See "Guns, Germs, and Steel: The Fates of Human Societ-
+    ies", Jared Diamond.
+
+    But all of this is merely conjecture ...
+)
+
+The  Mayan calendar included several cycles, two of which often accompany a Long
+Count date. Combinations such as these are similar to our compound date format:
+
+    Wednesday, November 5, 2003.
+    │          │
+    │          └──── Month  12-cycle.
+    └─────────────── Weekday 7-cycle.
+
+    "Haab"    is a cycle of 18 × 20-day months.
+    "Tzolkin" is a cycle of 20 × 13-day weeks.
+
+Haab  has 18 × 20-day months together with one 5-day month making a total of 365
+days in the year:
+
+    Pop         Wo          Sip         Sotz'       Tzek
+    Xul         Yaxk'in     Mol         Ch'en       Yax
+    Sak         Keh         Mak         K'ank'in    Muwan
+    Pax         K'ayab      Kumk'u      Wayeb (5)
+
+    Months←'Pop' 'Wo' 'Sip' 'Sotz''' 'Tzek' 'Xul' 'Yaxk''in' 'Mol' 'Ch''en' 'Yax' 'Sak' 'Keh' 'Mak' 'K''ank''in' 'Muwan' 'Pax' 'K''ayab' 'Kumk''u' 'Wayeb'
+
+The  short month of Wayeb is inauspicious; one should refrain from washing, hair
+combing and nit-picking during Wayeb.
+
+Day-within-month and Month name can be extracted by:
+
+      haab←{⎕IO←0                       ⍝ Mayan day within month.
+          ⍺←245                         ⍝ align Gregorian and Maya cycles.
+          mon day←0 20⊤365|⍺+⌊days ⍵    ⍝ month index and day number.
+          name←mon⊃Months               ⍝ name of month.
+          day name                      ⍝ origin-0 day within month.
+      }
+
+      haab 2003 12 25   ⍝ Christmas day 2003 fell on the fourth day of K'ank'in.
+4  K'ank'in
+
+      haab 2003 12 26   ⍝ Boxing day fell on the fifth day of K'ank'in.
+5  K'ank'in
+
+      haab 2003 12 27   ⍝ ... etc.
+6  K'ank'in
+
+The names of the 20 Tzolkin days are as follows:
+
+    Imix        Ik'         Ak'bal      K'an        Chikchan
+    Kimi        Manik'      Lamat       Muluk       Ok
+    Chuwen      Eb          Ben         Ix          Men
+    Kib         Kaban       Etz'nab     Kawak       Ahaw
+
+    Days←'Imix' 'Ik''' 'Ak''bal' 'K''an' 'Chikchan' 'Kimi' 'Manik''' 'Lamat' 'Muluk' 'Ok' 'Chuwen' 'Eb' 'Ben' 'Ix' 'Men' 'Kib' 'Kaban' 'Etz''nab' 'Kawak' 'Ahaw'
+
+The  20  Tzolkin  days  are  reused cyclically for successive 13-day weeks. This
+means  that  a particular day number (0-12) coincides with a particular day name
+(Imix-Ahaw) only every 20×13 = 260 days.
+
+The Tzolkin date can be extracted using:
+
+      tzolkin←{⎕IO←0                ⍝ Mayan Tzolkin number and day.
+          ⍺←2 16                    ⍝ align Gregorian and Maya cycles.
+          num day←13 20|⍺+⌊days ⍵   ⍝ day number and name index.
+          name←day⊃Days             ⍝ day name.
+          (num+1)name               ⍝ origin-1 day within cycle.
+      }
+
+      tzolkin 2003 12 25    ⍝ Christmas day 2003 fell on day 9, a Kib-day.
+9  Kib
+
+      tzolkin 2003 12 26    ⍝ Boxing day fell on day 10, a Kaban-day.
+10  Kaban
+
+      tzolkin 2003 12 27    ⍝ ... etc.
+11  Etz'nab
+
+An Attractive Gift
+------------------
+Print  the result of the following function on a stone tablet or gold pendant to
+make an attractive "Stela" of a loved one's date of birth. The final (lower) two
+digits  show  Tzolkin and Haab dates, the Mayan cultural equivalent of an astro-
+logical star sign.
+
+      time_units←'Kin' 'Uinal' 'Tun' 'Katun' 'Baktun' 'Piktun' 'Kalabtun' 'Kinchiltun' 'Alautun' 'Hablatun'
+
+      stela←{                               ⍝ Stela for date ⍵ (yyyy mm dd).
+          long←long_count ⍵                 ⍝ Long Count days.
+          hnum hname←haab ⍵                 ⍝ month and day.
+          tnum tname←tzolkin ⍵              ⍝ week and day.
+          digits←long⍪↑,∘mayan¨tnum hnum    ⍝ maya-style digits.
+          lft←1 0∘↓¨digits                  ⍝ left-side column: numbers.
+          rgt←⌽7↑hname tname,time_units     ⍝ right-side column: names.
+          disp lft,rgt                      ⍝ collected stela.
+      }
+
+Here  are  Stelae for Victoria and David Beckham, together with little Brooklyn,
+Romeo, Cruz and Harper. Notice how Brooklyn and Cruz share the same star signs.
+
+         david←1974 04 17
+      victoria←1975 05 02
+      brooklyn←1999 03 04
+         romeo←2002 09 01
+          cruz←2005 02 20
+       harper7←2011 07 10
+
+      stela¨¨(david victoria)(brooklyn romeo cruz harper7)
+  ┌─────┬──────┐  ┌─────┬──────┐    ┌─────┬──────┐  ┌─────┬──────┐  ┌─────┬──────┐  ┌─────┬──────┐
+  │ ⍟ ⍟ │      │  │ ⍟ ⍟ │      │    │ ⍟ ⍟ │      │  │ ⍟ ⍟ │      │  │ ⍟ ⍟ │      │  │ ⍟ ⍟ │      │
+  │⌹⌹⌹⌹⌹│Baktun│  │⌹⌹⌹⌹⌹│Baktun│    │⌹⌹⌹⌹⌹│Baktun│  │⌹⌹⌹⌹⌹│Baktun│  │⌹⌹⌹⌹⌹│Baktun│  │⌹⌹⌹⌹⌹│Baktun│
+  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │    │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │
+  ├─────┼──────┤  ├─────┼──────┤    ├─────┼──────┤  ├─────┼──────┤  ├─────┼──────┤  ├─────┼──────┤
+  │ ⍟⍟⍟ │      │  │ ⍟⍟⍟ │      │    │⍟⍟⍟⍟ │      │  │⍟⍟⍟⍟ │      │  │⍟⍟⍟⍟ │      │  │⍟⍟⍟⍟ │      │
+  │⌹⌹⌹⌹⌹│Katun │  │⌹⌹⌹⌹⌹│Katun │    │⌹⌹⌹⌹⌹│Katun │  │⌹⌹⌹⌹⌹│Katun │  │⌹⌹⌹⌹⌹│Katun │  │⌹⌹⌹⌹⌹│Katun │
+  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │    │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │
+  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │    │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │
+  ├─────┼──────┤  ├─────┼──────┤    ├─────┼──────┤  ├─────┼──────┤  ├─────┼──────┤  ├─────┼──────┤
+  │ _@/ │ Tun  │  │  ⍟  │ Tun  │    │⌹⌹⌹⌹⌹│ Tun  │  │⍟⍟⍟⍟ │ Tun  │  │ ⍟ ⍟ │      │  │ ⍟⍟⍟ │      │
+  ├─────┼──────┤  ├─────┼──────┤    ├─────┼──────┤  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│ Tun  │  │⌹⌹⌹⌹⌹│ Tun  │
+  │ ⍟⍟⍟ │      │  │⍟⍟⍟⍟ │      │    │ ⍟ ⍟ │      │  ├─────┼──────┤  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │
+  │⌹⌹⌹⌹⌹│Uinal │  │⌹⌹⌹⌹⌹│Uinal │    │⌹⌹⌹⌹⌹│Uinal │  │⍟⍟⍟⍟ │Uinal │  ├─────┼──────┤  │⌹⌹⌹⌹⌹│      │
+  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │    │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │ _@/ │Uinal │  ├─────┼──────┤
+  ├─────┼──────┤  ├─────┼──────┤    │⌹⌹⌹⌹⌹│      │  ├─────┼──────┤  ├─────┼──────┤  │⍟⍟⍟⍟ │Uinal │
+  │ ⍟ ⍟ │      │  │ ⍟ ⍟ │      │    ├─────┼──────┤  │  ⍟  │      │  │⍟⍟⍟⍟ │      │  │⌹⌹⌹⌹⌹│      │
+  │⌹⌹⌹⌹⌹│ Kin  │  │⌹⌹⌹⌹⌹│ Kin  │    │⍟⍟⍟⍟ │      │  │⌹⌹⌹⌹⌹│ Kin  │  │⌹⌹⌹⌹⌹│ Kin  │  ├─────┼──────┤
+  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │    │⌹⌹⌹⌹⌹│ Kin  │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│ Kin  │
+  ├─────┼──────┤  ├─────┼──────┤    │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │
+  │ ⍟ ⍟ │  Eb  │  │⌹⌹⌹⌹⌹│  Eb  │    │⌹⌹⌹⌹⌹│      │  ├─────┼──────┤  ├─────┼──────┤  ├─────┼──────┤
+  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │    ├─────┼──────┤  │⌹⌹⌹⌹⌹│ Kib  │  │ ⍟⍟⍟ │Kawak │  │ ⍟ ⍟ │  Ok  │
+  ├─────┼──────┤  ├─────┼──────┤    │ ⍟ ⍟ │Kawak │  │⌹⌹⌹⌹⌹│      │  ├─────┼──────┤  │⌹⌹⌹⌹⌹│      │
+  │⌹⌹⌹⌹⌹│ Pop  │  │ _@/ │  Wo  │    │⌹⌹⌹⌹⌹│      │  ├─────┼──────┤  │ ⍟ ⍟ │K'ayab│  ├─────┼──────┤
+  └─────┴──────┘  └─────┴──────┘    ├─────┼──────┤  │⍟⍟⍟⍟ │ Mol  │  └─────┴──────┘  │ ⍟⍟⍟ │      │
+                                    │ ⍟ ⍟ │      │  │⌹⌹⌹⌹⌹│      │                  │⌹⌹⌹⌹⌹│ Tzek │
+                                    │⌹⌹⌹⌹⌹│K'ayab│  └─────┴──────┘                  │⌹⌹⌹⌹⌹│      │
+                                    │⌹⌹⌹⌹⌹│      │                                  │⌹⌹⌹⌹⌹│      │
+                                    └─────┴──────┘                                  └─────┴──────┘
+References:
+    http://en.wikipedia.org/wiki/Maya_numerals
+    http://en.wikipedia.org/wiki/Mesoamerican_Long_Count_calendar
+    Ifrah, G. "The Universal History of Numbers".
+    Diamond, J. "Guns, Germs, and Steel: The Fates of Human Societies".
+    http://mayan-calendar.com/calc.html
+
+See also: eval.dws/notes.soroban.
+See also: roman days Dates ary
+
+Index:number system|stela|calendar|date|astronomy|vigesimal number system|abacus
+Index:diversions
+Index;Beckham D.|Diamond J.|Ifra G.

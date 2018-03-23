@@ -1,0 +1,17 @@
+ dots←{                          ⍝ Show dfn with "white dots".
+     ⍺←'·'                       ⍝ white dot.
+     kwds←':E' ':C' ':U'⍷¨⊂⍵     ⍝ end of ctrl paragraph keywords.
+     ends←↑∨/kwds,⊂⍵='}'         ⍝ end of cstructs and dfns.
+     spcs←∧\' '=⍵                ⍝ leading spaces.
+     xdents←ends∧1,0 ¯1↓spcs     ⍝ leading exdents.
+     flood←(⍪1 2){               ⍝ flood upwards into blanks.
+         hits←⍺⍷⍵                ⍝ 1s above 2s
+         ~1∊hits:⍵               ⍝ none: done.
+         ⍺ ∇ hits+⍵              ⍝ try again with 1 2 → 2 2.
+     }spcs+2×xdents              ⍝ spaces 'n braces.
+     dmask←,2=flood-xdents       ⍝ mask vector for white dots.
+
+     crep←⍵                      ⍝ name canonical rep to
+     crep[dmask/,⍳⍴⍵]←⍺          ⍝ place dots in char matrix,
+     crep                        ⍝ and return.
+ }

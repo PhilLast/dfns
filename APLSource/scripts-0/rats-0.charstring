@@ -1,0 +1,88 @@
+⍝ Rational number arithmetic:
+
+    28 rats 75                              ⍝ rational representation.
+2 7  3  5
+2 1 ¯1 ¯2
+
+    rexp←{⍺←'r'                         ⍝ simple r-expression translator.
+        rat←{')',⍵,'rats('}             ⍝ '-' → ')-rats('
+        svec←rat\¨2/¨'+-×÷*∧^∨⍎⍕'       ⍝ subs pair for each op fn.
+        src←↑subs/(svec,⊂⍺'rats '),⊂⍵   ⍝ translated source. See →subs←.
+        '(',src,')'                     ⍝ source for apl expression.
+    }
+
+    eval ← ⍕rats∘⍎∘rexp                     ⍝ r-expression evaluator.
+
+    eval '36r140'                           ⍝ simplify.
+9r35
+    eval¨'0r1' '1r1'                        ⍝ tricky cases.
+ 0r1  1r1 
+    eval '1r1 - 0r1'                        ⍝ tricky case.
+1r1
+    eval '0r1 + 1r1'                        ⍝ tricky case.
+1r1
+    eval '0r1 - 0r1'                        ⍝ tricky case.
+0r1
+    eval '1r2 + 1r3'                        ⍝ + sum
+5r6
+    eval '1r2 - 1r3'                        ⍝ - diff
+1r6
+    eval '3r4 × 2r3'                        ⍝ × prod
+1r2
+    eval '2r3 ÷ 2r3'                        ⍝ ÷ quot
+1r1
+    eval '4r9 * 3r2'                        ⍝ * power
+8r27
+    eval '3r5 ∧ 5r6'                        ⍝ ∧ lcm
+15r1
+    eval '3r5 ∨ 5r6'                        ⍝ ∨ gcd
+1r30
+    eval '(1r2 × 3r4) + 1r8'                ⍝ more complex expression.
+1r2
+    eval '3r1 - 5r1'                        ⍝ subtraction of larger from smaller
+11::negative
+    eval '0r1 - 5r1'                        ⍝ subtraction of larger from zero.
+11::negative
+
+    ⍎rats 3 rats 4                          ⍝ real equivalent.
+0.75
+    {⍵ ?rats ⍵} 3 rats 4                    ⍝ unexpected operand function.
+11::unexpected: ?
+
+    eval '2r1 * 1r2'                        ⍝ 2*÷2 irrational power.
+11::irrational
+
+    disp(0 rats 0)(0rats 1)(1 rats 1)       ⍝ tricky cases.
+┌─┬─┬┐
+│0│0││
+│1│1││
+└─┴─┴┘
+
+    tab←{                       ⍝ function table
+        aa←⍺⍺{                  ⍝ test function.
+            11::'*'             ⍝ * for error.
+            ⍺ ⍺⍺ rats ⍵         ⍝ apply rats operand.
+        }                       ⍝
+        r←{⍺ rats ⍵}            ⍝ ⍺/⍵ matrix.
+        f←⍎rats                 ⍝ float.
+        rat← ∘.aa ⍨ ∘.r ⍨ ⍳⍵    ⍝ using ⍺⍺ rats.
+        alt← ∘.⍵⍵ ⍨ ∘.÷ ⍨ ⍳⍵    ⍝ using ⍵⍵ alternative.
+        alt ≡ f¨ rat            ⍝ results identical?
+    }
+
+    +tab+       6                           ⍝ + sum
+1
+    -tab{⍺<⍵:'*' ⋄ ⍺-⍵} 6                   ⍝ - diff
+1
+    ×tab×       6                           ⍝ × prod
+1
+    ÷tab÷       6                           ⍝ ÷ quot
+1
+    ⎕ct←16*¯8                               ⍝ soften tolerance for gcd/lcm:
+
+    lcm←{⍺×⍵÷⍺ gcd ⍵}                       ⍝ least common multiple.
+
+    ∨tab gcd    6                           ⍝ ∨ gcd
+1
+    ∧tab lcm    6                           ⍝ ∧ lcm
+1

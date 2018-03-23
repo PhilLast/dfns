@@ -1,0 +1,92 @@
+rslt ← {larg} I ##._fk J fk_ K rarg         ⍝ simulation of "fork" syntax.
+rslt ← {larg} I  ##.fk J fk  K rarg         ⍝ slower but more elegant.
+
+NB: forks are now implemented as primitive constructs in Dyalog.
+
+The function '≥' (greater than or equal) can be considered to be the application
+of  the two functions '>' (greater than) and '=' (equal), separately between the
+arguments and the combining of the results with '∨' (or).
+
+       ┌───∨───┐
+     ┌─>─┐   ┌─=─┐
+     ⍺   ⍵   ⍺   ⍵
+
+Suggested by Phil Last, fork implements this tree structure using a pair of  op-
+erators [_fk] and [fk_].
+
+An alternative coding
+---------------------
+Phil  goes  on  to  say: The version below I wrote last year when I was thinking
+about  the  technique  I  used  in →cond←, where the need for the separation and
+interdependence  is  swapped  for  the loss of a very few fairly unlikely scalar
+arguments (and several extra lines of code).
+
+    fk←{
+        A B C←112358314594370 774156178538190 998752796516730
+        ⍺←A                        ⍝ ⍺←A ⋄ fg←f←⍺⍺ ⋄ h←g←⍵⍵
+        ⍺≡A:B ⍺⍺ ⍵(⍵⍵ ⍵)           ⍝ ⍺≡A:B fg ⍵(h ⍵)
+        ⍺≡B:⊃⍺⍺{(⍺⍺ ⍺)⍵⍵ ⍵}⍵⍵/⍵    ⍝ ⍺≡B:⊃{(f ⍺)g ⍵}/⍵
+        ⍺≡C:⊃⍺⍺{(⊃⍺⍺/⍺)⍵⍵ ⍵}⍵⍵/⍵   ⍝ ⍺≡C:⊃{(⊃f/⍺)g ⍵}/⍵
+        C ⍺⍺(⍺ ⍵)(⍺ ⍵⍵ ⍵)          ⍝ C fg(⍺ ⍵)(⍺ h ⍵)
+    }
+
+It's slower than the _fk/fk_ pair obviously improving relatively as the overhead
+gets less significant ...
+
+        (>fk∨fk=)cf(>_fk∨fk_=)∘⌽⍨⍳1e1
+    2.292270531
+
+        (>fk∨fk=)cf(>_fk∨fk_=)∘⌽⍨⍳1e3
+    1.798882682
+
+        (>fk∨fk=)cf(>_fk∨fk_=)∘⌽⍨⍳1e6
+    0.9954407295
+
+at which point it's only twice as slow as the primitive ...
+
+        (>fk∨fk=)cf≥∘⌽⍨⍳1e6
+    2.006006006
+
+So it's only an exercise in coding but it's a better model if we ever decided to
+add a primitive.  It even extends correctly to odd trains (forks of forks) which
+_fk/fk_ doesn't ...
+
+The following is true for boolean arguments (≥ ←→ ∨∘~ ←→ if) each time replacing
+the leftmost function with an equivalent fork ...
+
+    ≥ ←→ >fk∨fk= ←→ =fk⍱fk<fk∨fk= ←→ ∧fk∨fk⍱fk⍱fk<fk∨fk=
+
+    ∘.(∧fk∨fk⍱fk⍱fk<fk∨fk=)⍨0 1
+1 0
+1 1
+
+NB: In Dyalog operator-operand sequences associate (bind) left, so that:
+
+    f op g op h  ←→  (f op g)op h
+
+whereas, in J, forks associate right:
+
+    f g h ←→ f(g h)
+
+This difference is reflected in this implementation of fork.
+
+Examples:
+
+      ge ← > _fk ∨ fk_ =        ⍝ defined ≥ function (dyadic).
+
+      (⍳5) ∘.ge ⍳5
+1 0 0 0 0
+1 1 0 0 0
+1 1 1 0 0
+1 1 1 1 0
+1 1 1 1 1
+
+      mean ← +/ _fk ÷ fk_ ⍴     ⍝ arithmetic mean (monadic).
+
+      mean 1 2 3 4
+2.5
+
+See also: dft cond co_ops
+
+Index:hook|fork|co-operator
+Index;Last P.

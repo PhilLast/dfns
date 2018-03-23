@@ -1,0 +1,147 @@
+ ratsum←{⎕IO ⎕ML←0 1                         ⍝ ⍺⍺-rational sum of ⍺ and ⍵.
+
+    ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Sum
+
+     sum←{lrus mans rrus←⍵                   ⍝ reduction of sum struct ⍵.
+         cr rru←⍺ rrusum rrus                ⍝ sum of rrus and carry-out.
+         cm man_←cr rsum mans                ⍝   ..   mans   ..  ..  ..
+         lru man←cm lrusum lrus man_         ⍝   ..   lrus   ..  ..  ..
+         lru man rru                         ⍝ sum of struct.
+     }                                       ⍝ :: ∇ lrus mans rrus → lru man rru
+
+     rrusum←{                                ⍝ sum of rrus.
+         co rru←⍺ rsum ⍵                     ⍝ carry-out and sum.
+         co=⍺:co rru                         ⍝ carry-out = carry-in: done.
+         co rsum ⍵                           ⍝ re-input carry-out as carry-in.
+     }                                       ⍝ :: ci ∇ rrus → co rru
+
+     lrusum←{lrus man←⍵                      ⍝ sum of lrus.
+         co lru←⍺ rsum lrus                  ⍝ carry-out and tentative lru.
+         co=⍺:lru man                        ⍝ carry-out = carry-in: done.
+         cc dd←⍺ rsum 2 ¯1↑lrus              ⍝ carry-out, next digit of mantissa.
+         cc ∇(¯1⌽lrus)(dd,man)               ⍝ carry-in to rhs of lru.
+     }                                       ⍝ :: ci ∇ lrus → lru man
+
+     atab←{                                  ⍝ addition table for digits ⍵.
+         min←⍵⍳'0'                           ⍝ - minimum value.
+         vals←-min-⍳⍴⍵                       ⍝ numeric values of digits.
+         ntab←vals∘.+vals                    ⍝ all sums larg vs. rarg.
+         base←2/⍴⍵                           ⍝ 2-digit encode/decode vector.
+         vtab←-min-base⊤base⊥min+base⊤ntab   ⍝ base-⍵:  2-digit addition values.
+         ptab←↓(min+(¯1⌽⍳3)⍉vtab)⊃¨⊂⍵        ⍝ array of (carry_out result) pairs,
+         {(ptab,⍵)⍪⍵,⊂'0.'}⍵,¨'.'            ⍝ with additional rows/cols for '.'.
+     }                                       ⍝ :: ∇ [digits] → [[carry sum];]
+
+     rsum←(atab ⍺⍺~'{}'){                    ⍝ row sum of matrix ⍵, carry_in ⍺.
+         cov itot←↓⍉↑⍺⍺[↓⍉digs⍳⍵]            ⍝ carry vector and initial total.
+         '0'∧.=cov,⍺:'0'itot                 ⍝ all-zero carry: done.
+         co tot←'0'∇↑(1↓cov,⍺)itot           ⍝ total with shifted carry vector.
+         (⊃⊃⌽'0'∇↑co,⊂1↑cov)tot              ⍝ aggregate carry and total.
+     }                                       ⍝ :: ∇ [d;] → d [d]
+
+    ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Compilation
+
+     compile←{                               ⍝ compilation of sum structure.
+         lmrs wids reps←↓⍉↑trans¨⍺ ⍵         ⍝ numbers and digit counts.
+         mpads←-wids-⌈/wids                  ⍝ lft and rgt mantissa padding.
+         rpads←2/∧¨/reps                     ⍝ lru and rru padding.
+         ↑¨↓⍉↑pad¨↓⍉↑lmrs mpads rpads        ⍝ fully aligned sum structure.
+     }                                       ⍝ :: rexp ∇ rexp → lmrs
+
+     trans←{                                 ⍝ translation of rexp → lmr.
+         ~∧/⍵∊digs,'<|.>':err'bad char'      ⍝ unacceptable character: <0|50%6>
+         ~'<>'≡ext ⍵:err'bad <>s'            ⍝ missing angle-brackets: <99
+         ~'<>'≡⍵∩'<>':err'bad <>s'           ⍝ surplus angle-brackets: <1<2>
+         ~'||'≡⍵∩'||':err'bad ||s'           ⍝ wrong number of bars:   <3|4>
+         lru man rru←'|'sepr ⍵~'<>'          ⍝ ⍵ split at |-bars.
+         1∊lru man rru∊⊂'':err'null field'   ⍝ missing field:          <|5|6>
+         '.'∊lru,rru:err'bad number'         ⍝ unacceptable RU:        <1.2|3|4>
+         ml←man⍳'.'                          ⍝ no of digits to left of point.
+         mr←(⍴man)-ml+'.'∊man                ⍝   ..      ..    right     ..
+         (lru man rru)(ml,mr)(,↑⍴¨lru rru)   ⍝ number and sequence widths.
+     }                                       ⍝ :: ∇ rexp → (lmr)(n m)(n m)
+
+     pad←{                                   ⍝ padded-out subfields.
+         (l m r)(ml mr)(lr rr)←⍵             ⍝ number struct and paddings.
+         dot←'.'~m,mr↓'.'                    ⍝ dot separator.
+         man←(⌽ml⍴⌽l),m,dot,mr⍴r             ⍝ external emission pads mantissa.
+         rru←rr⍴mr⌽r                         ⍝ internal replication pads RRU.
+         lru←⌽lr⍴⌽(-ml)⌽l                    ⍝   ..      ..      ..      LRU.
+         lru man rru                         ⍝ padded structure.
+     }                                       ⍝ :: ∇ lmr(w w)(w w) → lmr
+
+    ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Normalisation
+
+     norm←{crru xabs icon clru ⍵}            ⍝ canonical form of number.
+
+     clru←{lru man rru←⍵                     ⍝ try to clear lru to <0|.
+         ∨/∧/optl∘.=lru:⍵                    ⍝ ..00 or ..22 {012}, can't improve.
+         lw rw←⌈\⍴¨lru rru                   ⍝ lru and rru widths (no of digits).
+         mw←⍴man~'.'                         ⍝ number of mantissa digits.
+         _lru←cdigs[digs⍳lru]                ⍝ clearing digits for lru.
+         _man←'. 'repl(man≠'.')\mw⍴_lru      ⍝ .. replicated through mantissa,
+         _rru←rw⍴mw⌽_lru                     ⍝ ..    ..  ..  ..  ..  rru.
+         _lmr←_lru _man _rru                 ⍝ aligned "zero" to add.
+         lmrr←lru man,⊂rw⍴rru                ⍝ original number with extended rru.
+         ∇'0'sum↑¨↓⍉↑_lmr lmrr               ⍝ sum with ~lru "zero" clears lru.
+     }                                       ⍝ :: ∇ lmr → lmr
+
+     icon←{lru man rru←⍵                     ⍝ internal contraction of RUs.
+         (⌽minrep⌽lru)man(minrep rru)        ⍝ lru and rru are mirror-symmetric.
+     }                                       ⍝ :: ∇ lmr → lmr
+
+     minrep←{                                ⍝ minimum replicator  010101 → 01
+         facs←{(0=⍵|⍴⍵)/⍵}1+⍳⍴⍵              ⍝ factors of ⍴rru.
+         reps←facs⍴¨⊂⍵                       ⍝ 0 01 010 1010 ...
+         seqs←(⍴⍵)⍴¨reps                     ⍝ 000000 01010101 010010 ...
+         (seqs⍳⊂⍵)⊃reps                      ⍝ shortest rru.
+     }                                       ⍝ rru ← ∇ rru
+
+     xabs←{lru man rru←⍵                     ⍝ external absorption.
+         1=⍴man:⍵                            ⍝ <ab|n|pq>: done.
+         '.'=⊃⌽man:∇ lru(¯1↓man)rru          ⍝ <l|m.|r> → <l|m|r>
+         ('.'∊man)∧(⊃⌽man)=⊃⌽rru:∇ ¯1 amd ⍵  ⍝ <l|nn.ffr|pqr> → <l|nn.ff|rpq>
+         (~'.'∊2↑man)∧(⊃lru)≡⊃man:∇ 1 amd ⍵  ⍝ <abc|ann.ff|r> → <bca|nn.ff|r>
+         ⍵                                   ⍝ mantissa digits absorbed.
+     }                                       ⍝ :: ∇ lmr → lmr
+
+     amd←{lru man rru←⍵                      ⍝ absorb mantissa digit.
+         lru←(⍺⌈0)⌽lru                       ⍝ <abc| → <bca|
+         rru←(⍺⌊0)⌽rru                       ⍝ |pqr> → |rpq>
+         lru(⍺↓man)rru                       ⍝ mantissa digit absorbed.
+     }                                       ⍝ :: dirn ∇ lmr → lmr
+
+     crru←{lru man rru←⍵                     ⍝ nudge <0|4|9> → <0|5|0> → 5
+         ~rru≡,comp'0':⍵                     ⍝ rru ≠ ~0: give up.
+         sig←×-/digs⍳rru,'0'                 ⍝ posn of ~0 wrt 0.
+         inc←(digs⍳'0')⊃sig⌽digs             ⍝ carry-in to rru.
+         zero←'0'⊣¨¨⍵                        ⍝ conformable zero: <0|000|0>
+         inc sum↑¨↓⍉↑⍵ zero                  ⍝ alternative representation.
+     }                                       ⍝ :: ∇ lmr → lmr
+
+    ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ General utility and top-level call
+
+     sepr←{⍺{(≢⍺)↓¨(⍺⍷⍵)⊂⍵}⍺,⍵}              ⍝ ⍵ split at separator ⍺.
+     join←{↑⍺{⍺,⍺⍺,⍵}/⍵}                     ⍝ ⍵ joined with separator ⍺.
+     repl←{↑⍵{⍺ join ⍵ sepr ⍺⍺}/⍺}           ⍝ subs [⍺0/⍺1]⍵:: str ← to fm ∇ str
+     comp←{((⌽digs),⍵)[(digs,⍵)⍳⍵]}          ⍝ complement.
+     fmt←{'|' '.|'repl('|'join ⍵)join'<>'}   ⍝ format of number.
+     ext←{⌽2↑¯1⌽⍵}                           ⍝ extremal digits.
+     err←⎕SIGNAL∘11                          ⍝ complain and give up.
+
+     digs←↑↓/(1 ¯1×'{}'≡ext ⍺⍺),⊂⍺⍺          ⍝ digits without surrounding {}s.
+     optl←'0',('0'∊ext digs)/comp'0'         ⍝ optimum lru: 0 or 0,~0
+
+     cdigs←{                                 ⍝ lru-clearing digits.
+         '0'∊ext ⍵:comp ⍵                    ⍝ {012345} → {543210}
+         (¯1-2×⍵⍳'0')⌽⌽⍵                     ⍝ {≡=-0+#} → {≡#+0-=}
+     }digs                                   ⍝ :: [d]
+
+     xchars←' {}[]()<>\|/,:.'                ⍝ chars excluded from digs.
+     1∊xchars∊digs:err'bad digit'            ⍝ bad base: {0.2}
+     ~'0'∊digs:err'missing zero'             ⍝ bad base: {123)
+     ~digs≡∪digs:err'duplicate digits'       ⍝ bad base: {101}
+
+     0=⎕NC'⍺':fmt norm⊃trans comp ⍵          ⍝ monadic: -⍵  complement of number.
+     fmt norm'0'sum ⍺ compile ⍵              ⍝ dyadic: ⍺+⍵  sum of numbers.
+ }

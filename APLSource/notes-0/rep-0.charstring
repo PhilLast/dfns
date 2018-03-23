@@ -1,0 +1,33 @@
+enc ← ##.rep name                           ⍝ Encapsulate function/operator.
+
+Returns an encapsulation of the function or operator [name] suitable for storing
+in  an array or on file. Notably, the representation accommodates named, derived
+(or "assigned") functions, such as: sum←+/.
+
+Technical note:
+
+For  traditional and D- functions/operators, ⎕or could be used directly, but the
+⎕or of a derived function does not include its name for re-fixing. In this case,
+the  capsule is a (name ⎕or) pair. Note that the rank of ⎕cr is used to disting-
+uish:
+
+    0=⍴⍴⎕cr ⍵:  primitive / system function.
+    1=⍴⍴⎕cr ⍵:  derived function.
+    2=⍴⍴⎕cr ⍵:  defined / D-function.
+
+Example:
+
+    ⎕fx'z←tfn' 'z←⎕ts'          ⍝ trad fn.
+    dfn←{3↑⍵}                   ⍝ D fn.
+    afn←×/                      ⍝ assigned fn.
+
+    rep¨ 'tfn' 'dfn' 'afn'
+┌─────────────┬───────────┬────────┐
+│┌─────┬─────┐│┌─────────┐│┌───┬──┐│
+││z←tfn│z←⎕TS│││dfn←{3↑⍵}│││afn│×/││
+│└─────┴─────┘│└─────────┘│└───┴──┘│
+└─────────────┴───────────┴────────┘
+
+See also: fix mns
+
+Index:function array|encapsulate function

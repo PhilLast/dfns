@@ -1,0 +1,9 @@
+ at←{⍺←⊢                             ⍝ Item substitution: (⍺ ⍺⍺ ⍵) at ⍵⍵ in ⍵.
+     3≠⎕NC'⍺⍺':⎕SIGNAL 2             ⍝ modifier operand must be a function
+     indx←⍺⍺{                        ⍝ choose-indices for selection
+         3=⎕NC'⍵⍵':(~~,⍵⊢¨⍵⍵ ⍵)/,⍳⍴⍵ ⍝ function: scatter-point bool selection
+         ~1=≡,⍵⍵:⍵⍵                  ⍝ nested: reach/choose indexing
+         (⊂⍵⍵)⌷[⎕IO]⍳⍴⍵              ⍝ simple: major cell selection
+     }⍵⍵⊢⍵                           ⍝ ⍵ is subject array
+     A⊣A[indx]←⍺ ⍺⍺(A←⍵)[indx]       ⍝ nb: duplicate indices ignored
+ }

@@ -1,0 +1,3 @@
+ vwise←{                 ⍝ Variable-wise: apply ⍺⍺ to each var in space ⍵.
+     ⍵.(⍺⍺∘⍎¨↓⎕NL 2)     ⍝ apply ⍺⍺ to value of each variable.
+ }

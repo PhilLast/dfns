@@ -1,0 +1,147 @@
+rslt ← {larg} (land ##.cf rand) rarg        ⍝ Ratio of operand timings.
+
+(cf. compare, abbrv. confer(arch.) [Lat: conferre:com-:together + ferre:bring])
+
+Phil  Last supplies this operator, which reports the ratio of the times taken to
+apply its left and right operand functions to (or between) its argument(s).
+
+    ⍺ f ∇∇ g ⍵  ←→  (⍺ f time ⍵) ÷ ⍺ g time ⍵
+      f ∇∇ g ⍵  ←→  (  f time ⍵) ÷   g time ⍵
+
+Technical notes:
+
+Phil points out that we could do some interesting code transformations:
+
+    cf←{⍺←⊢             ⍝ Compare operand timings.
+        a←⍺ ⋄ f←⍺⍺ ⋄ g←⍵⍵ ⋄ w←⍵ ⋄ t←{⍬⍴2↓⎕AI-(⍺⍺/⍳1+⍵)⊢⎕AI}
+        ÷/1{⊃∇/⍺{(1000<+/⍵)↓(2×⍺)⍵}({a f w}t ⍺)({a g w}t ⍺)}1
+    }
+
+Spreading the code over a number of lines, we see:
+
+    cf←{⍺←⊢                             ⍝ Compare operand timings.
+        a←⍺                             ⍝ naming of ⍺
+        f←⍺⍺                            ⍝           ⍺⍺
+        g←⍵⍵                            ⍝           ⍵⍵
+        w←⍵                             ⍝            ⍵
+        t←{                             ⍝ ⍺⍺-timing operator
+            ⍬⍴2↓⎕AI-(⍺⍺/⍳1+⍵)⊢⎕AI       ⍝ time ⍺⍺ ⍺⍺ .. ⍺⍺ applications.   [1]
+        }                               ⍝      └────⍵────┘
+        ÷/1{                            ⍝ ratio of (initially 1) applications.
+            ⊃∇/⍺{                       ⍝ repetition while 2-item vector from:
+                (1000<+/⍵)↓(2×⍺)⍵       ⍝ doubling apps while time < 1 sec.
+            }({a f w}t ⍺)({a g w}t ⍺)   ⍝ timing each function f and g.    [2]
+        }1
+    }
+
+cf keeps doubling the number of function applications in line[1] until the total
+time spent is at least one second.
+
+Notice  that the operands of the timing operator t: {a f w} & {a g w} in line[2]
+are constant functions in that they ignore any arguments. Phil notes that we can
+derive such constant function without having to name their arguments. So instead
+of:
+
+    a←⍺   ┐
+    f←⍺⍺  ├─── {a f w}
+    g←⍵⍵  ├─── {a g w}
+    w←⍵   ┘
+
+we can say:
+                   ┐
+    ff←⊢∘(⍺∘⍺⍺)∘⍵  ├─── ff
+            ¯¯     │
+    gg←⊢∘(⍺∘⍵⍵)∘⍵  ├─── gg
+            ¯¯     ┘
+
+You can try this in the session with a constant-function-making operator:
+
+    mkff←{ ff∘←⊢∘(⍺∘⍺⍺)∘⍵ }     ⍝ make constant function:   ff←{⍺ ⍺⍺ ⍵}.
+
+      2 + mkff 3                ⍝ ff←{2+3}
+
+      ff 99
+5
+
+Although not necessary in this case, we could extend mkff to generate a function
+that ignores both its right and _left_ arguments by binding a further ⊢∘:
+
+    mkff←{ ff∘←⊢∘(⊢∘(⍺∘⍺⍺)∘⍵) }         ⍝ make constant function ff←{⍺ ⍺⍺ ⍵}.
+               ¯¯          ¯
+    20 + mkff 30                        ⍝ ff←{20+30}
+
+    ff 4                                ⍝ right and
+50
+    2 ff 3                              ⍝ left arg ignored.
+50
+
+(muse:
+    If  Dyalog were extended to allow functions (and operators) to return funct-
+    ions as results, the above might look a little neater:
+
+        mk∆ ← {⍺←⊢ ⋄ ⊢∘(⊢∘(⍺∘⍺⍺)∘⍵) }           ⍝ constant function: {⍺ ⍺⍺ ⍵}.
+
+        gg ← 3 × mk∆ 4                          ⍝ gg←{3×4}
+
+        'do' gg 'zen'
+    12
+
+    This  is explored further in the experimental  "Function Results Edition" of
+    Dyalog, See: http://dfns.dyalog.com/downloads/fre.pdf
+)
+
+Incorporating this technique into our cf operator yields:
+
+    cf←{⍺←⊢                             ⍝ Compare operand timings.
+        ff←⊢∘(⍺∘⍺⍺)∘⍵                   ⍝ naming of {⍺ ⍺⍺ ⍵}
+        gg←⊢∘(⍺∘⍵⍵)∘⍵                   ⍝           {⍺ ⍵⍵ ⍵}
+        t←{                             ⍝ ⍺⍺-timing operator
+            ⍬⍴2↓⎕AI-(⊢∘⍺⍺/⍳1+⍵)⊢⎕AI     ⍝ time ⍺⍺ ⍺⍺ .. ⍺⍺ applications.   [1]
+        }                               ⍝      └────⍵────┘
+        ÷/1{                            ⍝ ratio of (initially 1) applications.
+            ⊃∇/⍺{                       ⍝ repetition while 2-item vector from:
+                (1000<+/⍵)↓(2×⍺)⍵       ⍝ doubling apps while time < 1 sec.
+            }(ff t ⍺)(gg t ⍺)           ⍝ timing each function ff and gg.  [2]
+        }1  ⍝ ¯¯      ¯¯
+    }
+
+Next, we can avoid naming ff and gg by binding them with the timing operator and
+passing the resulting derived functions as operands to line[2]:
+
+    cf←{⍺←⊢                             ⍝ Compare operand timings.
+        t←{                             ⍝ ⍺⍺-timing operator
+            ⍬⍴2↓⎕AI-(⊢∘⍺⍺/⍳1+⍵)⊢⎕AI     ⍝ time ⍺⍺ ⍺⍺ .. ⍺⍺ applications.   [1]
+        }                               ⍝      └────⍵────┘
+        ÷/1 ⊢∘(⍺∘⍺⍺)∘⍵ t{               ⍝ ratio of (initially 1) applications.
+            ⊃∇/⍺{                       ⍝ repetition while 2-item vector from:
+                (1000<+/⍵)↓(2×⍺)⍵       ⍝ doubling apps while time < 1 sec.
+            }(⍺⍺ ⍺)(⍵⍵ ⍺)               ⍝ timing each function ⍺⍺ and ⍵⍵.  [2]
+        }(⊢∘(⍺∘⍵⍵)∘⍵ t)1                ⍝ ⍵⍵ timing function.
+    }
+
+Unfortunately,  in the absence of a higher level "hyperator" that takes operator
+t  as operand, this is as far as we can go, unless we are prepared to repeat the
+definition  of  t  for left and right operands. Either way, we wind up with a cf
+operator that has no local assignment and no guards; it is a simple expression:
+
+    cf←{⍺←⊢             ⍝ Compare operand timings.
+        ÷/1⊢∘(⊢∘(⍺∘⍺⍺)∘⍵){⍬⍴2↓⎕AI-(⍺⍺/⍳1+⍵)⊢⎕AI}{
+            ⊃∇/⍺{
+                (1000<+/⍵)↓(2×⍺)⍵
+            }(⍺⍺ ⍺)(⍵⍵ ⍺)
+        }(⊢∘(⊢∘(⍺∘⍵⍵)∘⍵){⍬⍴2↓⎕AI-(⍺⍺/⍳1+⍵)⊢⎕AI})1
+    }
+
+Examples:
+
+    {(+/⍵)÷⍴⍵} cf {+/⍵÷⍴⍵}  ⍳1000       ⍝ compare codings of mean.
+0.164
+
+    ⎕av (,⍨¨) cf (,¨⍨) ⎕av              ⍝ commute-each vs. each-commute.
+1.35
+
+See also: cmpx
+
+Index:performance|timing|expression comparison|hyperator
+Index:closure|Function Results Edition
+Index;Last P.

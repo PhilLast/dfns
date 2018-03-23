@@ -1,0 +1,5 @@
+ file←{                  ⍝ Apply operand function to native file tie.
+     tie←⍵ ⎕NTIE 0       ⍝ open file.
+     rslt←⍺⍺ tie         ⍝ operate on file.
+     rslt⊣⎕NUNTIE tie    ⍝ close and return result.
+ }

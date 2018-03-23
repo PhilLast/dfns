@@ -1,0 +1,77 @@
+⍝ Trace function application:
+
+⍝ [trace] uses ⎕← to display monitoring information in the session.
+⍝ For testing, we modify the temporary copy of the operator in this
+⍝ namespace to output to variable ∆out.
+
+    sout←'⎕←' '∆out,∘⊂∘⍕←'∘subs         ⍝ subs ∆out← for ⎕←
+
+    _←⎕fx sout ⎕cr'trace'               ⍝ modify trace operator.
+
+    ∆out←''                             ⍝ initialise output buffer.
+    +/trace ⍳5                          ⍝ trace "over" reduction.
+15
+    ↑∆out                               ⍝ show traced output.
+ +/  1 2 3 4 5  =>  15
+
+    ∆out←''
+    +trace/ ⍳5                          ⍝ trace "into" reduction
+15
+    ↑∆out
+4  +  5  =>  9  
+3  +  9  =>  12 
+2  +  12  =>  14
+1  +  14  =>  15
+
+    ∆out←''
+    +trace/ 2 4⍴⍳8                      ⍝ reduction of matrix
+10 26
+    ↑∆out
+3  +  4  =>  7  
+2  +  7  =>  9  
+1  +  9  =>  10 
+7  +  8  =>  15 
+6  +  15  =>  21
+5  +  21  =>  26
+
+    ∆out←''
+    2(+trace ,trace ×trace)3            ⍝ trace of fork
+5 6
+    ↑∆out
+2  ×  3  =>  6   
+2  +  3  =>  5   
+5  ,  6  =>  5 6 
+
+    ∆out←''
+    +trace\⍳4                           ⍝ trace of scan
+1 3 6 10
+    ↑∆out
+1  +  2  =>  3 
+2  +  3  =>  5 
+1  +  5  =>  6 
+3  +  4  =>  7 
+2  +  7  =>  9 
+1  +  9  =>  10
+
+    ∆out←''
+    ⊢trace¨⍳4                           ⍝ trace of each
+1 2 3 4
+    ↑∆out
+ ⊢  1  =>  1
+ ⊢  2  =>  2
+ ⊢  3  =>  3
+ ⊢  4  =>  4
+
+:If 0               ⍝ for change to evaluation order of inner product:
+        ∆out←''
+        2 3 4 5 +trace.(×trace) 6 7 8 9     ⍝ trace inner product.
+    110
+        ↑∆out
+    5  ×  9  =>  45   
+    4  ×  8  =>  32   
+    32  +  45  =>  77 
+    3  ×  7  =>  21   
+    21  +  77  =>  98 
+    2  ×  6  =>  12   
+    12  +  98  =>  110
+:EndIf

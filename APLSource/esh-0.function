@@ -1,0 +1,77 @@
+ esh←{⎕IO ⎕ML←0 1                            ⍝ Shell for Eide-number sums.
+
+     loop←{                                  ⍝ prompt/eval/display loop.
+         buff←rmcm ask'    '                 ⍝ prompt and input next line.
+         chars←buff~' '                      ⍝ without blanks.
+         chars≡,')':                         ⍝ ')': quit.
+         chars≡'':∇ ⍵                        ⍝ ignore blank line.
+         '{'=⊃chars:∇ ⍵ base chars           ⍝ {base}: base change.
+         ∇ ⍵ put ⍵ ratsum sum buff           ⍝ otherwise: eval/display ...
+     }                                       ⍝ :: ∇ {base}
+
+     base←{                                  ⍝ base change:  {··0··}
+         xchars←'¯{}[]()<>\|/,:.'            ⍝ excluded chars.
+         digs null←2↑'}{'sepr 1⌽⍵            ⍝ '{base}' → 'base' ''
+         ~''≡null:⍺ put'bad {}s'             ⍝ bad base: }012
+         1∊digs∊xchars:⍺ put'bad char'       ⍝ bad base: {0.12}
+         ~'0'∊⍵:⍺ put'missing 0'             ⍝ bad base: {123}
+         ~⍵≡∪⍵:⍺ put'duplicate digits'       ⍝ bad base: {010}
+         digs                                ⍝ good base.
+     }                                       ⍝ :: ∇ {base} → base
+
+     sum←{                                   ⍝ sum of numbers: n m ...
+         nvec←(' 'sepr'0 ',⍵)~⊂''            ⍝ blank-separated numbers.
+         negs←'¯'=⊃¨nvec                     ⍝ negative numbers.
+         vals←nvec~¨'¯'                      ⍝ abs values of numbers.
+         0∊nchk¨'.'=vals:'bad number'        ⍝ check for, say, 1212..
+         lmrs←join∘'<>'∘(ifmt mirr)¨vals     ⍝ 123.499.. → <0|123.4|9>
+         ':'∊↑lmrs:'bad number'              ⍝ error signalled from ifmt.
+         11::⊃⎕DM                            ⍝ trap and report errors.
+         ⍺⍺ ofmt↑⍺⍺/negs ⍺⍺ pow¨lmrs         ⍝ pair-wise sum of numbers.
+     }                                       ⍝ :: base ∇ [num] → lmr
+
+     nchk←{                                  ⍝ check .. syntax.
+         ∧/⍵:0                               ⍝ no digits: bad            .
+         1<+/0 1 0⍷0,⍵,0:0                   ⍝ too many radix pts: bad   1.2.3
+         ~1∊1 1⍷⍵:1                          ⍝ no double-dots: ok        12.3
+         1∊0 1 1 0⍷⍵:0                       ⍝ enclosed double-dots: bad 12..3
+         ~1 1≡¯2↑⍵:1                         ⍝ no trailing ..s: ok.    ..11
+         1∊0 1 0⍷⍵                           ⍝ no radix point: bad       12..
+     }                                       ⍝ :: ∇ numb → ok
+
+     ifmt←{                                  ⍝ input formatting.
+         (⊃⍵)∊'<>':1↓⍵                       ⍝ <1|2|3> → 1|2|3>
+         ~'..'≡2↑⍵:'0|',⍵                    ⍝  12 → 0|12
+         tail←(¯2×'..'≡¯2↑⍵)↑⍵               ⍝ trailing dots.
+         ,∘tail{                             ⍝ abcd →
+             iseq←2×1+⍳⍴⍵                    ⍝ 2 4 6 8 ..
+             reps←iseq⍴¨,\⍵                  ⍝ aa abab abcabc abcdabcd ..
+             mask←reps∊iseq↑¨⊂⍵              ⍝ repeated seqs in ⍵.
+             ~1∊mask:'|:'                    ⍝ can't parse: 0.1234..
+             rseq←(⌈/mask/⍳⍴mask)⊃,\⍵        ⍝ longest repeated sequence.
+             rseq,'|',⍵                      ⍝ lru|man
+         }(-⍴tail)↓2↓⍵                       ⍝ :: ∇ ..man → lru|man
+     }                                       ⍝ :: ∇ num → l|m|r
+
+     ofmt←{                                  ⍝ output formatting.
+         lru man rru←'|'sepr ⍵~'<>'          ⍝ lru man rru.
+         ~lru≡,'0':'¯',∇ ⍺⍺ ⍵                ⍝ <9|9|0> → ¯1
+         lft←(~lru≡,'0')/'..',lru,lru        ⍝ <lru| → ..lrurlu|
+         rgt←(~rru≡,'0')/rru,rru,'..'        ⍝ |rru> ← |rrurru..
+         dot←(rru≡,'0')↓'.'~man              ⍝ separating dot.
+         lft,man,dot,rgt                     ⍝ ..lru man rru...
+     }                                       ⍝ :: ∇ <l|m|r> → ..lmr..
+
+     put←{⍺⊣⍞←⍵,⊃⌽⎕TC}                       ⍝ show ⍵, return ⍺.
+     ask←{⍞⊣⍞←⍵}                             ⍝ input from keyboard.
+     mirr←{⍺⍺⌽⍺⍺⌽⍵}                          ⍝ apply mirror-wise.
+
+     rmcm←{(∧\⍵≠'⍝')/⍵}                      ⍝ up to '⍝' char.
+     sepr←{(≢⍺)↓¨⍺{(⍺⍷⍵)⊂⍵}⍺,⍵}              ⍝ ⍵ split at separator string ⍺.
+     join←{↑⍺{⍺,⍺⍺,⍵}/⍵}                     ⍝ ⍵ joined with separator ⍺.
+     pow←{(⍺⍺⍣⍺)⍵}                           ⍝ explicit function power.
+
+     digs←''base ⍵ join'{}'                  ⍝ check initial base.
+     digs≡'':                                ⍝ base bad: give up.
+     loop digs                               ⍝ base ok: loop until ")".
+ }

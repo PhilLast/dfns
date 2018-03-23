@@ -1,0 +1,22 @@
+cmp ← {cmp←1} ##.packX txt                  ⍝ TeXt Packer.
+
+Supplied  by  Veli-Matti Jantunen, packX splits its text argument into two char-
+acter pairs, and saves the indices of the pairs that can be made from the unique
+list.
+
+The compression ratio is not quite as good as packH, but the uncompress speed is
+much better.
+
+VMJ says: I tested one 250 kB text file, which gave me the results:
+
+packer    time to pack/pack+unpack    ratio
+------    ------------------------    -----
+packH      0,4s    7,5s               51,6%
+packS      0,9s    (>5min..)          51,1%
+packB      0,2s    0,4s               26,8%
+packX      1,4s    1,7s               30,8%
+
+See also: Data_compression
+
+Index:packing|compression
+Index;Jantunen V-M.

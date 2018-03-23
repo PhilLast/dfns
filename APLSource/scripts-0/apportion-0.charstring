@@ -1,0 +1,89 @@
+⍝ Huntington-Hill apportionment:
+
+    ⍝ Population per state following the 1790 census:
+
+    s1790 ← 'CT'   'DE'  'GA'  'KY'  'MD'   'MA'   'NH'   'NJ'   'NY'   'NC'   'PA'   'RI'  'SC'   'VT'  'VA'
+    p1790 ←  236841 55540 70835 68705 278514 475327 141822 179570 331589 353523 432879 68446 206236 85533 630560
+
+    105 apportion p1790                 ⍝ 105 seats apportioned *fairly*
+7 2 2 2 8 14 4 5 10 10 12 2 6 3 18
+
+    s1790,⍪105 apportion p1790          ⍝ Wikipedia example
+ CT   7
+ DE   2
+ GA   2
+ KY   2
+ MD   8
+ MA  14
+ NH   4
+ NJ   5
+ NY  10
+ NC  10
+ PA  12
+ RI   2
+ SC   6
+ VT   3
+ VA  18
+
+    ⍝ Population per state following the 2010 census:
+
+    s2010 ← 'AL'    'AK'   'AZ'    'AR'    'CA'     'CO'    'CT'    'DE'   'FL'     'GA'    'HI'    'ID'    'IL'     'IN'    'IA'    'KS'    'KY'    'LA'    'ME'    'MD'    'MA'    'MI'    'MN'    'MS'    'MO'    'MT'    'NE'    'NV'    'NH'    'NJ'    'NM'    'NY'     'NC'    'ND'   'OH'     'OK'    'OR'    'PA'     'RI'    'SC'    'SD'   'TN'    'TX'     'UT'    'VT'   'VA'    'WA'    'WV'    'WI'    'WY'
+    p2010 ←  4822023 731449 6553255 2949131 38041430 5187582 3590347 917092 19317568 9919945 1392313 1595728 12875255 6537334 3074186 2885905 4380415 4601893 1329192 5884563 6646144 9883360 5379139 2984926 6021988 1005141 1855525 2758931 1320718 8864590 2085538 19570261 9752073 699628 11544225 3814820 3899353 12763536 1050292 4723723 833354 6456243 26059203 2855287 626011 8185867 6897012 1855413 5726398 576412
+
+    apportion p2010     ⍝ apportionment of 435 seats
+7 1 9 4 53 7 5 1 27 14 2 2 18 9 4 4 6 6 2 8 9 14 7 4 8 1 3 4 2 12 3 27 14 1 16 5 5 18 2 7 1 9 36 4 1 11 10 3 8 1
+
+      s2010,⍪apportion p2010            ⍝ Seats in House of Representatives
+ AL   7
+ AK   1
+ AZ   9
+ AR   4
+ CA  53
+ CO   7
+ CT   5
+ DE   1
+ FL  27
+ GA  14
+ HI   2
+ ID   2
+ IL  18
+ IN   9
+ IA   4
+ KS   4
+ KY   6
+ LA   6
+ ME   2
+ MD   8
+ MA   9
+ MI  14
+ MN   7
+ MS   4
+ MO   8
+ MT   1
+ NE   3
+ NV   4
+ NH   2
+ NJ  12
+ NM   3
+ NY  27
+ NC  14
+ ND   1
+ OH  16
+ OK   5
+ OR   5
+ PA  18
+ RI   2
+ SC   7
+ SD   1
+ TN   9
+ TX  36
+ UT   4
+ VT   1
+ VA  11
+ WA  10
+ WV   3
+ WI   8
+ WY   1
+
+    +/123 apportion ?(?100)⍴1000
+123

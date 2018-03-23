@@ -1,0 +1,14 @@
+⍝ Shannon-Fano packing:
+
+      disp packS'Mississippi'           ⍝ Shannon-Fano packing.
+┌──┬────┬───────┬───────────────────────────────────────────────────────────┐
+│11│ispM│1 2 3 3│0 1 0 1 1 0 1 1 1 1 1 1 0 1 0 1 0 0 1 0 1 0 0 1 1 0 1 1 0 0│
+└──┴────┴───────┴───────────────────────────────────────────────────────────┘
+
+    chk←{
+        ⍵≡0 ⍺⍺ ⍺⍺ ⍵:'ok'
+        ' Error: compression round-trip fails'
+    }
+
+    packS chk ⎕fmt notes.Marilyn        ⍝ simple text matrix
+ok

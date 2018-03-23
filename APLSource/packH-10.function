@@ -1,0 +1,66 @@
+ packH←{⎕IO ⎕ML←0 1                      ⍝ Huffman packing.
+
+     compress←{                          ⍝ compression.
+         shape←⍴⍵ ⋄ vect←,⍵              ⍝ shape and items of array.
+         uniq←∪vect                      ⍝ unique items.
+         freq←+/uniq∘.=vect              ⍝ frequency of occurrence.
+
+         tree←{                          ⍝ Huffman tree.
+             1=⍴⍵:⊃⌽⊃⍵                   ⍝ list exhausted: done
+             nxt←⍵[2↑⍋⊃¨⍵]               ⍝ next two lowest frequencies,
+             freqs items←↓⍉↑nxt          ⍝ and corresponding items.
+             ∇(⍵~nxt),⊂(+/freqs),⊂items  ⍝ collect 2 most infrequent items.
+         }↓⍉↑freq uniq                   ⍝ tree from frequency-item pairs.
+
+         items csegs←↓⍉↑⍬{               ⍝ Dictionary: items ←→ code-segments.
+             ⍬≡⍴⍵:⊂⍵ ⍺                   ⍝ all done: item and binary code.
+             ↑,/(⍺∘,¨0 1)∇¨⍵             ⍝ extended codes for sub-trees.
+         }tree                           ⍝ from frequency tree.
+
+         bits←∊csegs[items⍳vect]         ⍝ bit string of tree indices.
+
+         leaves depths←↓⍉↑tree{          ⍝ tree leaves and depths.
+             ⍬≡⍴⍺:⊂⍺ ⍵                   ⍝ leaf: leaf and depth.
+             ↑,/⍺ ∇¨1+⍵                  ⍝ branch: traverse deeper sub-branches.
+         }0                              ⍝ starting at depth 0 for the root.
+
+         shape leaves depths bits        ⍝ compressed structure.
+     }
+
+     expand←{                            ⍝ expansion.
+         shape leaves depths bits←⍵      ⍝ compressed structure.
+
+         tree←⍬ 0 1⊃{                    ⍝ reconstituted Huffman tree.
+             (⊃⍺)≠⊃⊃⍵:(⊂⍺),⍵             ⍝ distinct adjacent depths: continue.
+             (⌽{⊃⍵-1}\⌽↓⍉↑⍺(⊃⍵))∇ 1↓⍵    ⍝ identical   ..      ..  : coalesce.
+         }/(↓⍉↑depths leaves),¯1         ⍝ depths, leaves with trailing dummy.
+
+         picks←⍬{                        ⍝ tree index vectors.
+             ⍬≡⍴⍵:⊂⍺                     ⍝ leaf: done.
+             ↑,/(⍺∘,¨0 1)∇¨⍵             ⍝ visit each branch,
+         }tree                           ⍝ ··· of the tree.
+
+         maxd←|≡tree                     ⍝ max depth.
+
+         dict←↑,/{                       ⍝ lookup dictionary.
+             item←⍵⊃tree                 ⍝ next tree leaf.
+             indl←0⊃⍴⍵                   ⍝ trailing index length.
+             (2*maxd-indl)⍴⊂indl item    ⍝ extended pick vectors.
+         }¨picks                         ⍝ ··· for each index vector.
+
+         iwin←⍳maxd                      ⍝ input index window.
+         obuff←,shape⍴leaves             ⍝ initial output buffer.
+         ibuff←bits,maxd⍴0               ⍝ padded input buffer.
+
+         shape⍴{                         ⍝ restore original shape.
+             ix ox←⍵                     ⍝ input and output indices.
+             ox=⍴obuff:obuff             ⍝ end of output, done
+             nxt←2⊥ibuff[ix+iwin]        ⍝ next dictionary index.
+             skip item←nxt⊃dict          ⍝ number of bits and output item.
+             obuff[ox]←item              ⍝ paste item into output buffer.
+             ∇ ⍵+skip 1                  ⍝ traverse input and output buffers.
+         }0                              ⍝ initial input/output buffer indices.
+     }
+
+     ⍺←1 ⋄ ⍺:compress ⍵ ⋄ expand ⍵       ⍝ compress or expand.
+ }

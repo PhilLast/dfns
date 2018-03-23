@@ -1,0 +1,11 @@
+⍝ Interpret a throw of dice:
+
+    ⎕io←1
+      
+    dice¨⍳6 6
+ Snake Eyes  Unlucky  Unlucky  Unlucky  Unlucky  Seven    
+ Unlucky     Pair     Unlucky  Unlucky  Seven    Unlucky  
+ Unlucky     Unlucky  Pair     Seven    Unlucky  Unlucky  
+ Unlucky     Unlucky  Seven    Pair     Unlucky  Unlucky  
+ Unlucky     Seven    Unlucky  Unlucky  Pair     Unlucky  
+ Seven       Unlucky  Unlucky  Unlucky  Unlucky  Box Cars 

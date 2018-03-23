@@ -1,0 +1,8 @@
+⍝ Refs path from root to ⍵:
+
+    0⍴'a.b.c' ⎕ns''
+
+    (refpath a.b.c) ≡ (refpath ⎕this), refs a
+1
+    (,¨# ⎕se) ≡ refpath¨ # ⎕se      ⍝ refpath of root returns 1-vector.
+1

@@ -1,0 +1,92 @@
+ rslt  ← ##.din ''                      ⍝ Evaluation of multi-line D-expression.
+{name} ← ##.din name                    ⍝ Definition of multi-line Dfn,
+
+NB: From Dyalog V14, this function is available as User-Command: ]dinput.
+
+[din] inputs a multi-line expression or definition, directly  from  the session,
+using ⍞-prompting.
+
+[din] anticipates the input of closing braces and infers appropriate indentation
+for each prompt.  "White dots" are included at each tab point in the prompt as a
+reminder that we're in an input loop and to assist in keeping track  of  nesting
+levels.
+
+Entering a single '→' character, at any time, will abort the input loop.
+
+In the following illustration, only the underlined characters are typed. Notice,
+in particular, that no closing braces need be entered:
+
+      din'dup'
+      ¯¯¯¯¯¯¯¯
+·   dup←{
+
+·   ·   {
+        ¯
+·   ·   ·   ⍵ ⍵
+            ¯¯¯
+·   ·   }⍵
+         ¯
+·   }
+
+
+Technical note:
+
+After swapping leading '·' characters in prompted input for blanks, [din] accum-
+ulates in ⍺ and ⍵:
+
+    ⍺ defn: Vector of input line vectors, including comments.
+
+    ⍵ expr: ⋄-separated concatenation of uncommented input lines.
+
+At exit, [din] tries to ⎕FX accumulated [defn] lines. If this succeeds, the name
+of the newly-fixed function is returned as a shy result.
+
+Otherwise,  if  the  fix fails, the accumulated [expr] is executed and, if succ-
+essful, its result is returned.
+
+This means that a dfn definition will be fixed as entered, with comments intact.
+In addition, though a multi-line _derived_ function will fail to ⎕FX, it will be
+established at second attempt by the executed assignment. See examples below.
+
+Examples:
+
+      din''                     ⍝ multi-line expression evaluation.
+·   ↑{
+·   ·   size←⎕size ⍵
+·   ·   ⍕⍵,size
+·   }¨↓⎕nl ⍳10
+dddd  1044
+din   6760
+dup    324
+gcd    480
+notes 4652
+
+      display ⎕cr din'gcd'      ⍝ multi-line dfn definition.
+·   gcd←{       ⍝ (c) Euclid
+·   ·   ⍺=0:|⍵
+·   ·   ⍵ ∇ |⍺-⍵
+·   }
+┌→───────────────────────┐
+↓gcd←{       ⍝ (c) Euclid│
+│    ⍺=0:|⍵              │
+│    ⍵ ∇|⍺-⍵             │
+│}                       │
+└────────────────────────┘
+
+      disp ⎕cr din'dddd'        ⍝ multi-line derived function definition:
+·   dddd←{
+·   ·   ⍵ ⍵         ⍝ comments
+·   }∘{             ⍝ disappear
+·   ·   ⍵ ⍵
+·   }{
+·   ·   ⍺⍺ ⍺⍺ ⍵
+·   }
+┌───────────────┬─────────┐
+│┌─────┬─┬─────┐│{⍺⍺ ⍺⍺ ⍵}│
+││{⍵ ⍵}│∘│{⍵ ⍵}││         │
+│└─────┴─┴─────┘│         │
+└───────────────┴─────────┘
+
+See also: dots
+
+Index:define function|session input|⎕SE|REPL

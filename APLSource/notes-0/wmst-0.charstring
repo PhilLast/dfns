@@ -1,0 +1,101 @@
+tree ← wug ##.wmst root         ⍝ Minimum Spanning Tree for weighted graph ⍺.
+
+[wmst] uses Prim's algorithm to find a Mimimum Spanning Tree (MST) for weighted,
+undirected  graph  [wug]. An MST is a set of minimum-total-cost edges that conn-
+ects  all vertices. This set of edges must form a tree; otherwise, it would con-
+tain at least one cycle, which means that an edge could be removed, reducing the
+total cost without isolating any vertices.
+
+Real-life  examples  of applications of MSTs include finding lowest-cost ways to
+connect computers in a network or the least-expensive bridge-building project to
+join up a little cluster of islands.
+
+In the context of undirected graphs, a _tree_ has no concept of hierarchy. There
+is no parent-child relationship between the vertices and in particular, there is
+no "root" node. A tree is just a graph that contains no cycles.
+
+    Tree          Non-Tree
+     └┤ ┌           └┤ ┌
+   ─┼─┼─┤┌        ─┼─┼─┤┌
+    │└┼┐└┼         │└┼┐└┼
+    └────          └────┘
+
+However,  the representation of a tree used by the graph functions in this work-
+space,  imposes  a hierarchy. A tree is represented by a vector of parent-vertex
+indices. Each vertex, apart from the root, which has a dummy index of ¯1, indic-
+ates the position in the vector of its parent. This representation is chosen be-
+cause  it is compact and makes it easy to extract paths from any vertex, back to
+the  root.  Notice  that we can produce a "directed" tree from an undirected one
+(pictured  above  left),  by  selecting _any_ vertex as root. Choosing a root in
+this  way, immediately imposes a unique hierarchy on the tree: every edge points
+from a child vertex back to its parent. Wmst takes this arbitrary root vertex as
+right argument.
+
+Technical notes:
+
+Prim's algorithm accumulates the MST as follows:
+
+    Starting with the chosen root as a 1-vertex tree,
+    while there are vertices not connected to the tree,
+        identify edges connecting these vertices to those within the tree and
+        incorporate the lowest-cost of these into the tree.
+    endwhile
+
+Notice that for any graph and root vertex, the MST is _not_ the same as the tree
+produced  by  →wspan←.  [wmst] guarantees that the total edge cost is minimised,
+while  →wspan← produces the lowest cost path from the root to _each_ vertex. The
+following weighted, undirected 4-vertex graph illustrates the distinction.
+
+      graph           MST[A]        wspan[A]
+    A───1───B       A─←─1───B       A─←─1───B
+    │       │               ↑       ↑       ↑
+    2       1               1       2       1
+    │       │               │       │       │
+    C───1───D       C───1─→─D       C       D
+
+The  difference is that the lowest-cost-path from C to A is C→A, but edge C-A is
+too expensive to be included in the MST.
+
+An  alternative to Prim's algorithm is Kruskal's algorithm, which builds the MST
+by  adding edges, rather than vertices. This is an equally good approach, though
+it requires a second pass to render the final tree in the format required by the
+functions in this workspace.
+
+References:
+
+Kruskal, J.B., On the shortest spanning tree of a graph and the traveling sales-
+man problem. Proceedings of the American Mathematical Society, 7:48-50, 1956.
+
+Prim, R.C., Shortest connection networks and some generalizations. Bell Systems
+Technology Journal, 36:1389-1401, 1957.
+
+The graph used in the examples below, looks like this:
+
+    ┌───────A───────┐       Edge    Weight
+    │       │       │       ----    ------
+    1       3       1       A-B     1
+    │       │       │       A-C     3
+    B───2───C───1───D       A-D     1
+            │       │       B-C     2
+            1       1       C-D     1
+            │       │       C-E     1
+            └───────E       D-E     1
+
+Examples:
+
+      aa                        ⍝ simple weighted, undirected graph shown above.
+┌─────┬───┬───────┬─────┬───┐
+│2 3 4│1 3│1 2 4 5│1 3 5│3 4│
+├─────┼───┼───────┼─────┼───┤
+│1 3 1│1 2│3 2 1 1│1 1 1│1 1│
+└─────┴───┴───────┴─────┴───┘
+
+      aa wmst 2                 ⍝ minimum spanning tree with root 2, c.f.:
+2 ¯1 4 1 4
+
+      aa wspan 2                ⍝ spanning tree with lowest cost to each vertex.
+2 ¯1 2 1 3
+
+See also: wspan span Graphs wGraphs
+
+Index:graph, weighted|spanning tree|mininum spanning tree

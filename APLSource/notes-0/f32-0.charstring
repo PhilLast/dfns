@@ -1,0 +1,114 @@
+v83 ← ##.f32 nums                       ⍝ Conversion to 32-bit floats as ⎕DR 83.
+
+From Tomas Gustafsson, this function takes a simple numeric array and returns an
+equivalent numeric vector suitable for sending to an  external  process that ex-
+pects 32-bit IEEE floating point numbers.
+
+Each number in argument [nums] is  mapped  to  four  ⎕DR-type-83  numbers in the
+range ¯128..127.
+
+Ref: https://en.wikipedia.org/wiki/Single-precision_floating-point_format
+
+Geoff Streeter suggests this alternative coding, which uses ⎕NA function MEMCPY:
+
+    f32a←{                              ⍝ Conversion to 32-bit floats as ⎕DR 83.
+        bytes←4×≢∊⍵                     ⍝ bytes count
+        xx←⍕{2×⎕SIZE'⍵'}⍬               ⍝ '32' or '64'
+        libfn←'dyalog',xx,'|MEMCPY'     ⍝ library|function name
+        MEMCPY←⊢                        ⍝ local name for ⎕NA'd function
+        _←⎕NA libfn,' >I1[] <F4[] P'    ⍝ link to library fn
+        MEMCPY bytes(∊⍵)bytes           ⍝ conversion of numeric array
+    }
+
+Examples:
+
+    f32 1 2 3                           ⍝ 3 numbers => 3×4 bytes
+0 0 ¯128 63 0 0 0 64 0 0 64 64
+
+    f32¨ 1 2 3                          ⍝ each number separately
+┌───────────┬────────┬─────────┐
+│0 0 ¯128 63│0 0 0 64│0 0 64 64│
+└───────────┴────────┴─────────┘
+
+    ⌽∘f32¨ 1 2 3                        ⍝ byte-reversed for Intel machine
+┌───────────┬────────┬─────────┐
+│63 ¯128 0 0│64 0 0 0│64 64 0 0│
+└───────────┴────────┴─────────┘
+
+    hex∘⌽∘f32¨ 1 2 3                    ⍝ hexadecimal format, see →hex←
+┌─────────────┬─────────────┬─────────────┐
+│┌──┬──┬──┬──┐│┌──┬──┬──┬──┐│┌──┬──┬──┬──┐│
+││3f│80│00│00│││40│00│00│00│││40│40│00│00││
+│└──┴──┴──┴──┘│└──┴──┴──┴──┘│└──┴──┴──┴──┘│
+└─────────────┴─────────────┴─────────────┘
+
+    ∊∘hex∘⌽∘f32¨ 1 2 3                  ⍝ enlisted hex per number
+┌────────┬────────┬────────┐
+│3f800000│40000000│40400000│
+└────────┴────────┴────────┘
+
+    ↑ ∊∘hex∘⌽∘f32¨ 1 2 3                ⍝ hex of 32-bit floating point: 1 2 3
+3f800000
+40000000
+40400000
+
+    x32 ← ↑ ∊∘hex∘⌽∘f32¨                ⍝ 32-bit hex formatter
+    x32 1 2 3
+3f800000
+40000000
+40400000
+
+    x32 0 1 ¯2, ÷3                      ⍝ examples from Wikipedia
+00000000
+3f800000
+c0000000
+3eaaaaaa
+
+    x64 ← ↑ hexf¨                       ⍝ 64-bit hex formatter, see →hexf←
+    x64 1 2 3
+3FF0000000000000
+4000000000000000
+4008000000000000
+
+    cmp ← x32, ' ', x64                 ⍝ 32/64-bit comparison
+    cmp 1 to 10                         ⍝ 1..10
+3f800000 3FF0000000000000
+40000000 4000000000000000
+40400000 4008000000000000
+40800000 4010000000000000
+40a00000 4014000000000000
+40c00000 4018000000000000
+40e00000 401C000000000000
+41000000 4020000000000000
+41100000 4022000000000000
+41200000 4024000000000000
+
+    cmp 2* 1 to 10                      ⍝ 2 4 8 .. 1024
+40000000 4000000000000000
+40800000 4010000000000000
+41000000 4020000000000000
+41800000 4030000000000000
+42000000 4040000000000000
+42800000 4050000000000000
+43000000 4060000000000000
+43800000 4070000000000000
+44000000 4080000000000000
+44800000 4090000000000000
+
+      cmp * 1 to 10                     ⍝ *1, *2, ...
+402df854 4005BF0A8B145769
+40ec7325 401D8E64B8D4DDAE
+41a0af2d 403415E5BF6FB106
+425a6481 404B4C902E273A58
+431469c4 40628D389970338F
+43c9b6e2 407936DC5690C08F
+44891442 409122885AAEDDAA
+453a4f53 40A749EA7D470C6E
+45fd38ab 40BFA7157C470F82
+46ac14ee 40D5829DCF950560
+
+See also: hex hexf to
+
+Index: 32-bit floating point
+Index; Gustafsson T.|Streeter G.
+

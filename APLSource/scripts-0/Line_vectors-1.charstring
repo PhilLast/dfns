@@ -1,0 +1,43 @@
+⍝ Line Vectors:
+
+    cvec←'Incidentally, using the terms "successor" and "predecessor" as opposed to "increment" and "decrement" stems from having a <denotational> rather than <operational> view of a function. In other words, a function is seen as denoting the mapping between the sets that comprise its domain and range, rather than as a prescription for the operation that converts one into the other. To take a specific example: Min''s ''+'' doesn''t increment its argument; it leaves it alone and denotes its successor as result. Given this view, words from the subset of nouns that can be used as determiners (first of, reverse of, ···), seem more appropriate than transitive verbs as names for functions. Specifically: sum, difference, product and quotient appear preferable to: add, subtract, multiply and divide.'
+
+      60 wrap cvec
+Incidentally, using the terms "successor" and "predecessor" 
+as opposed to "increment" and "decrement" stems from having 
+a <denotational> rather than <operational> view of a        
+function. In other words, a function is seen as denoting the
+mapping between the sets that comprise its domain and range,
+rather than as a prescription for the operation that        
+converts one into the other. To take a specific example:    
+Min's '+' doesn't increment its argument; it leaves it alone
+and denotes its successor as result. Given this view, words 
+from the subset of nouns that can be used as determiners    
+(first of, reverse of, ···), seem more appropriate than     
+transitive verbs as names for functions. Specifically: sum, 
+difference, product and quotient appear preferable to: add, 
+subtract, multiply and divide.                              
+
+      justify 60 wrap cvec
+Incidentally,  using the terms "successor" and "predecessor"
+as  opposed to "increment" and "decrement" stems from having
+a   <denotational>  rather  than  <operational>  view  of  a
+function. In other words, a function is seen as denoting the
+mapping between the sets that comprise its domain and range,
+rather  than  as  a  prescription  for  the  operation  that
+converts  one  into  the  other. To take a specific example:
+Min's '+' doesn't increment its argument; it leaves it alone
+and  denotes its successor as result. Given this view, words
+from  the  subset  of  nouns that can be used as determiners
+(first  of,  reverse  of,  ···),  seem more appropriate than
+transitive  verbs as names for functions. Specifically: sum,
+difference,  product and quotient appear preferable to: add,
+subtract, multiply and divide.                              
+
+    cvec ≡ squeeze unwrap justify 60 wrap cvec              ⍝ full circle.
+1
+    {cvec ≡ squeeze unwrap justify ⍵ wrap cvec}¨10×2 to 10  ⍝ full circles.
+1 1 1 1 1 1 1 1 1
+
+    cvec ≡ squeeze unwrap justify 10 wrap cvec              ⍝ too narrow.
+0

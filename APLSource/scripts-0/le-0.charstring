@@ -1,0 +1,228 @@
+⍝ Total array ordering: ⍺≤⍵
+
+    2 le 3                  ⍝ simple scalar comparison: 2≤3 → 1
+1
+    4 le ,3                 ⍝ items 4>3 more significant than rank
+0
+    3 le ,3                 ⍝ items match: rank decides
+1
+    1 2 le 1 1 3            ⍝ short array extended with fill items
+0
+    1 1 0 le 1 1            ⍝ items match (after fill): initial shape decides
+0
+    1 2 3 9 le 2 3⍴⍳6       ⍝ same as (2 4↑1 4⍴1 2 3 9) le (2 4↑2 3⍴1 2 3 4 5 6)
+0
+    (⍳2 2) le ⌽⍳2 2         ⍝ nested
+1
+    3 le '3'                ⍝ num >> char
+0
+    ''le ⍬                  ⍝ comparison of nulls => comparison of prototypes.
+1
+    'k'9 le 4't'            ⍝ mixed arrays
+1
+    nss ← ⎕ns¨'' ''         ⍝ pair of "equal" namespaces.
+    le/nss                  ⍝ identical.
+1
+    nss.v←'world' 'hello'   ⍝ distinguishing values.
+    le/nss                  ⍝ distinct.
+0
+    notes le ⎕or'notes'     ⍝ namespace vs ⎕OR of namespace.
+1
+    le/⎕or¨'test' 'le'      ⍝ function ⎕OR comparison
+0
+    le/¨1 0⌽¨⊂{⍵.ref←⌽⍵}⎕ns¨'' ''   ⍝ ref-cycle detection.
+1 1
+    qsort←{                         ⍝ quicksort.
+        1≥⍴⍵:⍵                      ⍝ single item or null: done.
+        head tail←(1↑⍵)(1↓⍵)        ⍝ first and remaining items.
+        le gt←1 0=⊂tail ⍺⍺¨head     ⍝ comparison with first item.
+        (∇ le/tail),head,∇ gt/tail  ⍝ sorted vector.
+    }
+
+    display le qsort 3(,3)'3'(,'3')     ⍝ char << num; scalar << vector
+┌→────────────┐
+│   ┌→┐   ┌→┐ │
+│ 3 │3│ 3 │3│ │
+│ - └─┘   └~┘ │
+└∊────────────┘
+
+    ip←+.×                                      ⍝ named function.
+
+    stuff ← ⎕SE ⍬ # (⎕or'ip') '' ⍬              ⍝ assorted stuff.
+
+    display le qsort stuff                      ⍝   sorted stuff.
+┌→────────────────────────┐
+│ ┌⊖┐ ┌⊖┐ ┌⊖┐       ┌───┐ │
+│ │ │ │0│ │0│ # ⎕SE │+.×│ │
+│ └─┘ └~┘ └~┘       └∇──┘ │
+└∊────────────────────────┘
+
+⍝ Other relationships can be derived from le:
+
+    cmp ← {⍺⍺/le/¨1 0⌽¨⊂⍺ ⍵}                    ⍝ comparison
+
+    ge ← ≥cmp                                   ⍝ greater or equal
+    eq ← =cmp                                   ⍝ equal
+    ne ← ≠cmp                                   ⍝ not equal
+    lt ← <cmp                                   ⍝ less than
+    gt ← >cmp                                   ⍝ greater than
+
+    (⎕ns'')eq ⎕ns''                             ⍝ distinct spaces deemed equal.
+1
+    ∘.ge⍨ 0 1                                   ⍝ truth-table for ≥
+1 0
+1 1
+    grade←{| ⊢/↑ ⍺⍺ qsort ⍵ {⍺ ⍵}¨ ⍵⍵ ⍳⍴⍵}      ⍝ grade up/down.
+
+    gu ← le grade +                             ⍝ grade-up   ⍋
+    gd ← ge grade -                             ⍝ grade-down ⍒
+
+    gu 3 1 4 1 5                                ⍝ grade-up of numeric vector.
+2 4 1 3 5
+
+    gd 3 1 4 1 5                                ⍝ grade-down of numeric vector.
+5 3 1 2 4
+
+    display stuff                               ⍝ assorted stuff.
+┌→────────────────────────┐
+│     ┌⊖┐   ┌───┐ ┌⊖┐ ┌⊖┐ │
+│ ⎕SE │0│ # │+.×│ │ │ │0│ │
+│     └~┘   └∇──┘ └─┘ └~┘ │
+└∊────────────────────────┘
+
+    gu stuff                                    ⍝ grade-up of stuff.
+5 2 6 3 1 4
+
+    gd stuff                                    ⍝ grade-down of stuff.
+4 1 3 2 6 5
+
+    q ← 'to' 'be' 'or' 'not' 'to' 'be'          ⍝ that is the question.
+
+    gu q                                        ⍝ grade-up of char vectors ...
+2 6 4 3 1 5
+
+    ⍋∘↑ q                                       ⍝ ... concurs with ⍋∘↑
+2 6 4 3 1 5
+
+    nvs ← (1 1) ⍬ (2 3 4) (1 1) ⍬ (2 3)         ⍝ numeric vectors.
+
+    gd  nvs                                     ⍝ grade-down ...
+3 6 1 4 2 5
+
+    ⍒∘↑ nvs                                     ⍝ ... concurs with ⍒∘↑
+3 6 1 4 2 5
+
+    refs ← {}∘(⎕ns∘{''}∘⎕ex¨ ⍨) ⍝ refs to new spaces.
+
+    refs'xy'                    ⍝ new spaces
+    x.(a c)←1 3                 ⍝ with names a c
+    y.(a b)←1 4                 ⍝ ... and a b
+    x le y                      ⍝ (a c) supersedes (a b)
+0
+    x.b←2                       ⍝ new name b in x
+    x le y                      ⍝ (a:1 b:2 ...) precedes (a:1 b:4 ...)
+1
+    refs'xyz'                   ⍝ new spaces
+    x.le←⎕nr'le'                ⍝ x.le is ⎕nr of function.
+    y.le←⎕or'le'                ⍝ y.le is ⎕or of function.
+    {}z.⎕fx ⎕cr'le'             ⍝ z.le is function.
+
+    cmp ← ∘.le⍨                 ⍝ comparison table.
+    cmp x y z                   ⍝ x ≤ y ≤ z.
+1 1 1
+0 1 1
+0 0 1
+
+    refs'xy'                    ⍝ new spaces
+    {}x.?1                      ⍝ mutate x.⎕rl
+    x le y                      ⍝ x.⎕rl >> y.⎕rl
+0
+    refs'xy'                    ⍝ new spaces.
+    x.(ref←⎕ns'')               ⍝ inward-pointing ref.
+    y.(ref←##.x)                ⍝ outward-pointing ref.
+    cmp x y                     ⍝ comparisons
+1 1
+0 1
+
+    le qsort 3 4 3j4 3j¯4 ¯3j4 ¯3j¯4  4j3 4j¯3 ¯4j3 ¯4j¯3
+¯4J¯3 ¯4J3 ¯3J¯4 ¯3J4 3J¯4 3 3J4 4J¯3 4 4J3
+
+    gu 3j5 3j4 4j3 3j4          ⍝ complex number grade-up.
+2 4 1 3
+
+:If {11::0 ⋄ (⎕ex'f'){1}'f'⎕wc ⍵}'Form'('Visible' 0)        ⍝ support for GUI?
+
+        {}'eg'{⍺ ⎕wc'Form' ⍵ ('Visible' 0)}¨'Echo' 'Golf'   ⍝ two forms.
+
+        g le e                  ⍝ compared on Caption property
+    0
+        e g←0                   ⍝ remove forms.
+
+:EndIf
+
+    cmp {⍵⊣⍵.(p q)←↓⍉↑1 ¯1⌽¨⊂⍵}⎕NS¨3/⊂⍬         ⍝ Nick's example
+1 1 1
+1 1 1
+1 1 1
+
+    cmp {⍵⊣⍵.(p q r s)←↓⍉↑(⍳4)⌽¨⊂⍵} ⎕ns¨4/⊂⍬    ⍝ 4-way Nick
+1 1 1 1
+1 1 1 1
+1 1 1 1
+1 1 1 1
+
+    (x←⎕ns ⍬).(x←⎕ns ⍬).(x←##)                  ⍝ 3-cycle
+    (y←⎕ns ⍬).(y←⎕ns ⍬).(y←⎕ns ⍬).(y←##.##)     ⍝ 4-cycle
+    x y ≡ x.x.x y.y.y.y                         ⍝ check for cycles
+1
+    cmp x y                                     ⍝ shorter cycle is less
+1 1
+0 1
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ some checking fuctions:
+
+    v ← x 3 1 4 1 5 y       ⍝ vector of values
+
+    cmp v
+1 0 0 0 0 0 1
+1 1 0 1 0 1 1
+1 1 1 1 1 1 1
+1 0 0 1 0 1 1
+1 1 1 1 1 1 1
+1 0 0 0 0 1 1
+0 0 0 0 0 0 1
+
+    tc ← (⊢ ∨ ∨.∧)⍨ ⍣≡      ⍝ transitive closure
+    tc cmp v                ⍝ no effect: le is transitive
+1 0 0 0 0 0 1
+1 1 0 1 0 1 1
+1 1 1 1 1 1 1
+1 0 0 1 0 1 1
+1 1 1 1 1 1 1
+1 0 0 0 0 1 1
+0 0 0 0 0 0 1
+
+    tck ← ≡∘tc⍨∘cmp         ⍝ check of transitivity
+    tck v
+1
+    rc ← ∨∘⍉ ⍨              ⍝ reflexive closure
+    rc cmp v                ⍝ complete: le is total
+1 1 1 1 1 1 1
+1 1 1 1 1 1 1
+1 1 1 1 1 1 1
+1 1 1 1 1 1 1
+1 1 1 1 1 1 1
+1 1 1 1 1 1 1
+1 1 1 1 1 1 1
+
+    rck ← 0∘(~∊)∘rc∘cmp     ⍝ check of (reflexive) totality
+    rck v
+1
+    chk ← tck ∧ rck         ⍝ check
+    chk v                   ⍝ Hoorah!
+1
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ regression tests:
+
+    chk (# #)(# # #)        ⍝ extension of ref-arrays.
+1

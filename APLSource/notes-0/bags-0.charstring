@@ -1,0 +1,131 @@
+z ← l (fn ##.bags) r                        ⍝ Multisets/bags.
+
+Operator [bags] models the Parks-Smith proposal for a  $  operator,  which  adds
+Multisets to APL.
+
+A "Multiset" or "bag" has attributes of both a vector and a set in that,  like a
+vector, it may have duplicate items and,  like a set,  the order of its items is
+not significant.
+
+[bags] is an operator, which treats its arguments as if they were multisets.
+
+        1 2 2 3  ≡bags  2 1 3 2     ⍝ multiset item-order is not significant.
+    1
+        1 2 2 3  ≡bags  1 2 3 3     ⍝ multiset duplicate count is significant.
+    0
+
+Illustration
+------------
+Given two vectors, which we want to view as multisets:
+
+        A ← 2 1 2 1 3 2 5
+        B ← 3 4 2 1 2 3
+
+By permuting the vector items and indenting the second one,  we can arrange that
+all coincident items (if any) are aligned:
+
+                     ┌───────── ⍝ coincident items 1 2 2 3
+                  ┌──┴──┐
+        A ← 1 2 5 1 2 2 3       ⍝ permutation of 1st vector.
+        B ←       1 2 2 3 4 3   ⍝       ..       2nd    ..
+                  └─────┘
+
+now various multiset functions can be illustrated so:
+
+              ┌───────────────── A ~bags B  →  1 2 5    ⍝ asymmetric difference.
+              │      ┌────────── A ∩bags B  →  1 2 2 3  ⍝ intersection.
+            ┌─┴─┐ ┌──┴──┐  ┌──── B ~bags A  →  4 3      ⍝ asymmetric difference.
+        A ← 1 2 5 1 2 2 3 ┌┴┐
+        B ← │   │ 1 2 2 3 4 3
+            └─┬─┘ └─────┘ └┬┘
+            │ └────────────┴── A('§'bags)B  →  1 2 5 4 3 ⍝ symmetric difference.
+            └───────┬───────┘
+                    └─────────── A ∪bags B  →  1 2 5 1 2 2 3 4 3    ⍝ union.
+
+Searching functions ⍳ and ∊ take account of duplicate items in multisets:
+
+        8 7 8 ⍳bags 8 8 8 8
+    1 3 4 4
+
+        8 8 8 8 ∊bags 8 7 8
+    1 1 0 0
+
+In all, bags is defined for operands:
+
+    ≡    match.
+    ≢    natch.
+    ~    multiset asymmetric difference (MAD)
+   '§'   multiset symmetric difference (MSD) *
+    ∪    unique/union.
+    ∩    intersection.
+    ∊    progressive membership.        Smith [2]
+    ⍳    progressive dyadic iota.       FinnAPL Idiom List [3]
+
+[*] operand § must be enclosed in quotes, see example below.  Note also that the
+derived function ('§'bags) must be parenthesised in order to prevent operand '§'
+from binding with the left argument: larg('§'bags)rarg.  Alternatively, we might
+prefer to name '§'bags:
+
+          1 2 3 ('§'bags) 2 3 4
+    1 4
+          msd ← '§'bags
+
+          1 2 3 msd 2 3 4
+    1 4
+
+To allow for extending this operand set in the future, operands not in this list
+generate a NONCE ERROR.
+
+Refs:
+    [0] Parks-Smith paper "Proposal for Multiset Features in APL"
+    [1] http://en.wikipedia.org/wiki/Multiset
+    [2] http://www.sudleyplace.com/APL/AnatomyOfAnIdiom.ahtml
+    [3] http://nsg.upor.net/jpage/finnapl.pdf
+
+Examples:
+
+      1 2 3 1 2 3 ~bags 1 1 3 1         ⍝ multiset asymmetric difference (MAD)
+2 2 3
+
+    1 1 1 2 2 3 ('§'bags) 1 2 2 3 3 3   ⍝ multiset symmetric difference (MSD)
+1 1 3 3
+
+      1 2 3 1 2 3 ⍳bags 1 1 3 1         ⍝ progressive dyadic iota (PDI)
+1 4 3 7
+
+    3 1 3 ∊bags 3 1 1 2                 ⍝ progressive dyadic epsilon (PDE)
+1 1 0
+
+    (⊂1 2 2) ≡bags¨ (1 2)(2 2 1)(1 1 2) ⍝ match
+0 1 0
+
+    (⊂1 2 2) ≢bags¨ (1 2)(2 2 1)(1 1 2) ⍝ natch
+1 0 1
+
+    1 2 2 3 ∪bags 2 3 3                 ⍝ union
+1 2 2 3 3
+
+    ∪bags 1 1 2 2                       ⍝ unique is a no-op
+1 1 2 2
+
+    1 2 2 3 ∩bags 2 3 3 2               ⍝ intersection
+2 2 3
+
+    1 2 3 3 1 2 3 ,bags 3 1 3           ⍝ non-multiset function
+1 2 3 3 1 2 3 3 1 3
+
+    'tick' 'tock' ≡bags 'tock' 'tick'   ⍝ nested args.
+1
+    A←?10/5  ⋄  B←?10/5                 ⍝ vectors with repeated items.
+
+    (A ∪bags B) ≡bags (B ∪bags A)       ⍝ multiset-union is commutative.
+1
+    (A ∩bags B) ≡bags (B ∩bags A)       ⍝ multiset-intersection is commutative.
+1
+    msd←'§'bags ⋄ (A msd B) ≡bags (B msd A)     ⍝ MSD is commutative.
+1
+    (⍳⍴A) ≡ A ⍳bags A                   ⍝ progressive dyadic iota.
+1
+
+Index:multiset|bags|FinnAPL Idiom List
+Index;Parks P.|Smith R.A.

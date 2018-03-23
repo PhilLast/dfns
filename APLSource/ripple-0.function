@@ -1,0 +1,3 @@
+ ripple←{            ⍝ Perfect Ripple Shuffle.
+     ⍵[⍋⍒(⍴⍵)⍴0 1]
+ }

@@ -1,0 +1,447 @@
+⍝ Exact cover Pentominos tiling:
+
+    ⍝ Matrix of the 12 pentominos:
+
+    p ←⍉⍪ '     I                                    '
+    p ⍪←  '     I L   N                         Y    '
+    p ⍪←  '  FF I L   N PP TTT     V   W    X  YY ZZ '
+    p ⍪←  ' FF  I L  NN PP  T  U U V   WW  XXX  Y  Z '
+    p ⍪←  '  F  I LL N  P   T  UUU VVV  WW  X   Y  ZZ'
+
+    display p                       ⍝ Char matrix with blank separator columns.
+┌→─────────────────────────────────────────┐
+↓     I                                    │
+│     I L   N                         Y    │
+│  FF I L   N PP TTT     V   W    X  YY ZZ │
+│ FF  I L  NN PP  T  U U V   WW  XXX  Y  Z │
+│  F  I LL N  P   T  UUU VVV  WW  X   Y  ZZ│
+└──────────────────────────────────────────┘
+
+    split←{                         ⍝ Individual tiles.
+        segs ← 0 1∘↓¨ (∧⌿⍵=' ')⊂⍵   ⍝ separated at blank columns.
+        {(∨/⍵≠' ')⌿⍵}¨ segs         ⍝ without blank rows.
+    }
+
+    display split p                 ⍝ Individual tiles.
+┌→──────────────────────────────────────────────────────────────────┐
+│ ┌→──┐ ┌→┐ ┌→─┐ ┌→─┐ ┌→─┐ ┌→──┐ ┌→──┐ ┌→──┐ ┌→──┐ ┌→──┐ ┌→─┐ ┌→──┐ │
+│ ↓ FF│ ↓I│ ↓L │ ↓ N│ ↓PP│ ↓TTT│ ↓U U│ ↓V  │ ↓W  │ ↓ X │ ↓ Y│ ↓ZZ │ │
+│ │FF │ │I│ │L │ │ N│ │PP│ │ T │ │UUU│ │V  │ │WW │ │XXX│ │YY│ │ Z │ │
+│ │ F │ │I│ │L │ │NN│ │P │ │ T │ └───┘ │VVV│ │ WW│ │ X │ │ Y│ │ ZZ│ │
+│ └───┘ │I│ │LL│ │N │ └──┘ └───┘       └───┘ └───┘ └───┘ │ Y│ └───┘ │
+│       │I│ └──┘ └──┘                                    └──┘       │
+│       └─┘                                                         │
+└∊──────────────────────────────────────────────────────────────────┘
+
+    rots ← {⍵(⍉⊖⍵)(⌽⊖⍵)(⊖⍉⍵)}       ⍝ Tile rotations.
+
+    tmat ← ↑ rots¨ split p          ⍝ All tiles / all rotations.
+    display tmat
+┌→────────────────────────────┐
+↓ ┌→──┐ ┌→──┐   ┌→──┐ ┌→──┐   │
+│ ↓ FF│ ↓ F │   ↓ F │ ↓F  │   │
+│ │FF │ │FFF│   │ FF│ │FFF│   │
+│ │ F │ │  F│   │FF │ │ F │   │
+│ └───┘ └───┘   └───┘ └───┘   │
+│ ┌→┐   ┌→────┐ ┌→┐   ┌→────┐ │
+│ ↓I│   ↓IIIII│ ↓I│   ↓IIIII│ │
+│ │I│   └─────┘ │I│   └─────┘ │
+│ │I│           │I│           │
+│ │I│           │I│           │
+│ │I│           │I│           │
+│ └─┘           └─┘           │
+│ ┌→─┐  ┌→───┐  ┌→─┐  ┌→───┐  │
+│ ↓L │  ↓LLLL│  ↓LL│  ↓   L│  │
+│ │L │  │L   │  │ L│  │LLLL│  │
+│ │L │  └────┘  │ L│  └────┘  │
+│ │LL│          │ L│          │
+│ └──┘          └──┘          │
+│ ┌→─┐  ┌→───┐  ┌→─┐  ┌→───┐  │
+│ ↓ N│  ↓NN  │  ↓ N│  ↓NNN │  │
+│ │ N│  │ NNN│  │NN│  │  NN│  │
+│ │NN│  └────┘  │N │  └────┘  │
+│ │N │          │N │          │
+│ └──┘          └──┘          │
+│ ┌→─┐  ┌→──┐   ┌→─┐  ┌→──┐   │
+│ ↓PP│  ↓PPP│   ↓ P│  ↓PP │   │
+│ │PP│  │ PP│   │PP│  │PPP│   │
+│ │P │  └───┘   │PP│  └───┘   │
+│ └──┘          └──┘          │
+│ ┌→──┐ ┌→──┐   ┌→──┐ ┌→──┐   │
+│ ↓TTT│ ↓  T│   ↓ T │ ↓T  │   │
+│ │ T │ │TTT│   │ T │ │TTT│   │
+│ │ T │ │  T│   │TTT│ │T  │   │
+│ └───┘ └───┘   └───┘ └───┘   │
+│ ┌→──┐ ┌→─┐    ┌→──┐ ┌→─┐    │
+│ ↓U U│ ↓UU│    ↓UUU│ ↓UU│    │
+│ │UUU│ │U │    │U U│ │ U│    │
+│ └───┘ │UU│    └───┘ │UU│    │
+│       └──┘          └──┘    │
+│ ┌→──┐ ┌→──┐   ┌→──┐ ┌→──┐   │
+│ ↓V  │ ↓VVV│   ↓VVV│ ↓  V│   │
+│ │V  │ │V  │   │  V│ │  V│   │
+│ │VVV│ │V  │   │  V│ │VVV│   │
+│ └───┘ └───┘   └───┘ └───┘   │
+│ ┌→──┐ ┌→──┐   ┌→──┐ ┌→──┐   │
+│ ↓W  │ ↓ WW│   ↓WW │ ↓  W│   │
+│ │WW │ │WW │   │ WW│ │ WW│   │
+│ │ WW│ │W  │   │  W│ │WW │   │
+│ └───┘ └───┘   └───┘ └───┘   │
+│ ┌→──┐ ┌→──┐   ┌→──┐ ┌→──┐   │
+│ ↓ X │ ↓ X │   ↓ X │ ↓ X │   │
+│ │XXX│ │XXX│   │XXX│ │XXX│   │
+│ │ X │ │ X │   │ X │ │ X │   │
+│ └───┘ └───┘   └───┘ └───┘   │
+│ ┌→─┐  ┌→───┐  ┌→─┐  ┌→───┐  │
+│ ↓ Y│  ↓  Y │  ↓Y │  ↓YYYY│  │
+│ │YY│  │YYYY│  │Y │  │ Y  │  │
+│ │ Y│  └────┘  │YY│  └────┘  │
+│ │ Y│          │Y │          │
+│ └──┘          └──┘          │
+│ ┌→──┐ ┌→──┐   ┌→──┐ ┌→──┐   │
+│ ↓ZZ │ ↓  Z│   ↓ZZ │ ↓  Z│   │
+│ │ Z │ │ZZZ│   │ Z │ │ZZZ│   │
+│ │ ZZ│ │Z  │   │ ZZ│ │Z  │   │
+│ └───┘ └───┘   └───┘ └───┘   │
+└∊────────────────────────────┘
+
+    ⎕io ← 0                         ⍝ Offset calculations easier with origin 0.
+
+    arena ← 4 15 ⍴ 1                ⍝ Board on which to place tiles.
+    arena
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+
+    F0 ← ' '≠ ⊃tmat                 ⍝ 0-rotated first tile.
+    F0
+0 1 1
+1 1 0
+0 1 0
+
+    put←{                           ⍝ Possible placements of tile ⍺ in arena ⍵.
+        ax ← (,⍵)/ ,⍳⍴ ⍵            ⍝ coordinates of arena cells.
+        tx ← (,⍺)/ ,⍳⍴ ⍺            ⍝   ..      ..   tile   ..
+        {∧/(tx+⊂⍵)∊ax}¨ ⍳⍴ ⍵        ⍝ displacements within the arena.
+    }
+
+    F0 put arena                    ⍝ Possible placements of F0.
+1 1 1 1 1 1 1 1 1 1 1 1 1 0 0
+1 1 1 1 1 1 1 1 1 1 1 1 1 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+    bmat ← tmat ≠ ' '                   ⍝ Boolean matrices for all tiles.
+
+    disp (split p), bmat put¨ ⊂arena    ⍝ Possible placements: tiles/rotations.
+┌───┬─────────────────────────────┬─────────────────────────────┬─────────────────────────────┬─────────────────────────────┐
+│ FF│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│
+│FF │1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│
+│ F │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+│   │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+├───┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│I  │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 0 0 0 0│
+│I  │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 0 0 0 0│
+│I  │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 0 0 0 0│
+│I  │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 0 0 0 0│
+│I  │                             │                             │                             │                             │
+├───┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│L  │1 1 1 1 1 1 1 1 1 1 1 1 1 1 0│1 1 1 1 1 1 1 1 1 1 1 1 0 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 1 0│1 1 1 1 1 1 1 1 1 1 1 1 0 0 0│
+│L  │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 1 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 1 0 0 0│
+│L  │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 1 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 1 0 0 0│
+│LL │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+├───┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ N │1 1 1 1 1 1 1 1 1 1 1 1 1 1 0│1 1 1 1 1 1 1 1 1 1 1 1 0 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 1 0│1 1 1 1 1 1 1 1 1 1 1 1 0 0 0│
+│ N │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 1 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 1 0 0 0│
+│NN │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 1 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 1 0 0 0│
+│N  │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+├───┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│PP │1 1 1 1 1 1 1 1 1 1 1 1 1 1 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 1 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│
+│PP │1 1 1 1 1 1 1 1 1 1 1 1 1 1 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 1 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│
+│P  │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│
+│   │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+├───┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│TTT│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│
+│ T │1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│
+│ T │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+│   │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+├───┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│U U│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 1 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 1 0│
+│UUU│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 1 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 1 0│
+│   │1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+│   │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+├───┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│V  │1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│
+│V  │1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│
+│VVV│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+│   │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+├───┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│W  │1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│
+│WW │1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│
+│ WW│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+│   │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+├───┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ X │1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│
+│XXX│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│
+│ X │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+│   │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+├───┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ Y │1 1 1 1 1 1 1 1 1 1 1 1 1 1 0│1 1 1 1 1 1 1 1 1 1 1 1 0 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 1 0│1 1 1 1 1 1 1 1 1 1 1 1 0 0 0│
+│YY │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 1 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 1 0 0 0│
+│ Y │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 1 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│1 1 1 1 1 1 1 1 1 1 1 1 0 0 0│
+│ Y │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+├───┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ZZ │1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│
+│ Z │1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│1 1 1 1 1 1 1 1 1 1 1 1 1 0 0│
+│ ZZ│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+│   │0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+└───┴─────────────────────────────┴─────────────────────────────┴─────────────────────────────┴─────────────────────────────┘
+
+⍝ Extending the function to return not just a matrix of possible placements
+⍝ but a rank-3 array, where the additional axis marks which arena cells each
+⍝ placement would cover:
+
+    put←{                   ⍝ Arena ⍵ cells covered by placements of tile ⍺.
+        ax ← (,⍵)/ ,⍳⍴ ⍵    ⍝ coordinates of arena cells.
+        tx ← (,⍺)/ ,⍳⍴ ⍺    ⍝   ..      ..   tile   ..
+        ↑{                  ⍝ rank-3 array of:
+            p ← tx+⊂⍵       ⍝ offset of placed tile.
+            a ← ax∊p        ⍝ arena cells covered.
+            t ← p∊ax        ⍝ tile cells within arena.
+            a ∧ ∧/t         ⍝ arena cells covered by this displacement.
+        }¨⍳⍴⍵               ⍝ for each possible placement.
+    }
+
+    ⍴ F0 put arena          ⍝ F0 (row col) placements × arena cells covered.
+4 15 60
+
+    all ← ↑ bmat put¨ ⊂arena    ⍝ All possible placements for all tiles.
+
+    ⍴ all                   ⍝ Tiles × rotation × posn(row × col) × covers.
+12 4 4 15 60
+
+    xmat ← ,[⍳4] all        ⍝ Actions vs consequences for exact cover matrix.
+    ⍴ xmat
+2880 60
+
+    pvec ← X xmat           ⍝ First attempt at placements.
+    +/ pvec                 ⍝ 12 tiles placed :-)
+12
+
+    tmp ← pvec /⍳⍴ pvec     ⍝ Row indices of placed tiles.
+    tmp
+180 301 306 318 333 338 348 353 668 1470 1812 2667
+
+    tmp ← ⍉12 4 8 8 ⊤ tmp   ⍝ Placed: tile, rotation, row, column.
+    tmp
+ 0 2 6 4
+ 1 0 5 5
+ 1 0 6 2
+ 1 0 7 6
+ 1 1 1 5
+ 1 1 2 2
+ 1 1 3 4
+ 1 1 4 1
+ 2 2 3 4
+ 5 2 7 6
+ 7 0 2 4
+10 1 5 3
+
+    display tmat[↓tmp[;⍳2]]             ⍝ Duplicate tiles: no cigar :-(
+┌→──────────────────────────────────────────────────────────────────────────┐
+│ ┌→──┐ ┌→┐ ┌→┐ ┌→┐ ┌→────┐ ┌→────┐ ┌→────┐ ┌→────┐ ┌→─┐ ┌→──┐ ┌→──┐ ┌→───┐ │
+│ ↓ F │ ↓I│ ↓I│ ↓I│ ↓IIIII│ ↓IIIII│ ↓IIIII│ ↓IIIII│ ↓LL│ ↓ T │ ↓V  │ ↓  Y │ │
+│ │ FF│ │I│ │I│ │I│ └─────┘ └─────┘ └─────┘ └─────┘ │ L│ │ T │ │V  │ │YYYY│ │
+│ │FF │ │I│ │I│ │I│                                 │ L│ │TTT│ │VVV│ └────┘ │
+│ └───┘ │I│ │I│ │I│                                 │ L│ └───┘ └───┘        │
+│       │I│ │I│ │I│                                 └──┘                    │
+│       └─┘ └─┘ └─┘                                                         │
+└∊──────────────────────────────────────────────────────────────────────────┘
+
+⍝ Here's a function to display the placements:
+
+    show←{⎕io ⎕ml←0                     ⍝ Simple display of tiling.
+        ⍵≡0:⍵                           ⍝ failure: no tiling possible.
+        (tmat arena)←⍺                  ⍝ tiles, arena and X-selection.
+        (t o)(r c) ← ⍴¨ ⍺               ⍝ shapes.
+        ixmat ← ⍉ (t o r c)⊤ ⍵/⍳⍴⍵      ⍝ indices: tile rotation, row col.
+        tx ax ← ↓¨ 1 0 1 0⊂ixmat        ⍝ tiling and arena indices.
+        tiles ← tmat[tx]                ⍝ tiles to be placed.
+        tcos ← {(,⍵)/,⍳⍴⍵}¨ tiles≠' '   ⍝ tile coordinate vectors.
+        maps ← (⍳r c)∘∊¨ tcos + ⊂¨ax    ⍝ boolean placement per tile.
+        chars ← ' ', (1↑¨tcos) ⊃¨ tiles ⍝ initial letters of tiles.
+        chars[↑(1+⍳t)+.× maps]          ⍝ tiling picture using initial letters.
+    }
+
+    (tmat arena)show pvec               ⍝ Placements for pvec (note duplicates).
+FIIIIIIIIIILVVV
+FFFIIIIILLLLZZV
+UFUIIIIIIIIIIZV
+UUUIIIIIIIIIIZZ
+
+⍝ We need additional constraint columns to avoid X's reusing tiles.
+
+    nt   ← ⊃⍴ tmat                      ⍝ Number of tiles.
+    dups ← (⊃⍴ xmat) ÷ nt               ⍝ Number of rows per tile.
+    unq  ← (dups/⍳ nt)∘.= ⍳ nt          ⍝ Unique tiles constraint columns.
+
+:If 1∊'v*'∊Alpha                        ⍝ Verbose or *: takes around 0.1 seconds.
+
+        (tmat arena)show X xmat, unq    ⍝ Successful tiling; hurrah!
+    FIIIIILLLLXYYYY
+    FFFNNNLTWXXXYZV
+    UFUPPNNTWWXZZZV
+    UUUPPPTTTWWZVVV
+
+:EndIf
+
+
+⍝ Collecting all of the above into a couple of functions:
+
+    pcomp←{⎕ml←0                        ⍝ Pentomino compilation.
+
+        ⍺← ↑⌽{                          ⍝ default tiles:
+            ⍵,⊂'     I                                    '}{
+            ⍵,⊂'     I L   N                         Y    '}{
+            ⍵,⊂'  FF I L   N PP TTT     V   W    X  YY ZZ '}{
+            ⍵,⊂' FF  I L  NN PP  T  U U V   WW  XXX  Y  Z '}{
+            ⍵,⊂'  F  I LL N  P   T  UUU VVV  WW  X   Y  ZZ'}⍬
+
+        split←{                         ⍝ Individual tiles.
+            segs ← 0 1∘↓¨ (∧⌿⍵=' ')⊂⍵   ⍝ separated at blank columns.
+            {(∨/⍵≠' ')⌿⍵}¨ segs         ⍝ without blank rows.
+        }
+
+        rots ← {⍵(⍉⊖⍵)(⌽⊖⍵)(⊖⍉⍵)}       ⍝ tile rotations.
+
+        flips ← {⍵,⍉¨⍵}⍣⍵               ⍝ ⍵: include turn-overs.
+
+        ↑ flips¨ rots¨ split ⍺          ⍝ All tiles / all rotations.
+    }
+
+    tile←{⎕io ⎕ml←0                 ⍝ ⍺-tiling of arena ⍵.
+
+        ⍺ ← pcomp 0                 ⍝ standard pentomino set; rotations only.
+
+        put←{                       ⍝ ⍵-cells covered by all posns of tile ⍺.
+            ax ← (,⍵)/ ,⍳⍴ ⍵        ⍝ coordinates of arena cells.
+            tx ← (,⍺)/ ,⍳⍴ ⍺        ⍝   ..      ..   tile   ..
+            ↑{                      ⍝ rank-3 array of:
+                p ← tx+⊂⍵           ⍝ offset of placed tile.
+                a ← ax∊p            ⍝ arena cells covered.
+                t ← p∊ax            ⍝ tile cells within arena.
+                a∧∧/t               ⍝ arena cells covered by this displacement.
+            }¨⍳⍴⍵                   ⍝ for each possible placement.
+        }
+
+        all  ← ↑ (⍺≠' ') put¨ ⊂⍵    ⍝ all possible placements for all tiles.
+        xmat ← ,[⍳4] all            ⍝ actions vs consequences matrix.
+        nt   ← ⊃⍴ ⍺                 ⍝ number of tiles.
+        dups ← (⊃⍴ xmat) ÷ nt       ⍝ number of rows per tile.
+        unq  ← (dups/⍳ nt)∘.= ⍳ nt  ⍝ unique tiles constraint columns.
+
+        (⍺ ⍵) show X xmat,unq       ⍝ tile placements.
+    }
+
+⍝ This function, uses box-drawing characters as grouting between the tiles:
+
+    pretty←{                            ⍝ Outlined placements.
+        ⍵≡0:'No tiling possible'        ⍝ failure: :-(
+        ⍺←1 2 ⋄ h v←⍺                   ⍝ aspect ratio.
+        n←h⌿v/⍵                         ⍝ aspect-stretched tiles.
+        m←'$'⍪('$',n,'$')⍪'$'           ⍝ $-framed tiling.
+        r c←(1+2×⍴m)⍴¨⊂0 1              ⍝ row and column expansion vectors.
+        x←r{⍵⍵\⍺⍺⍀⍵}c                   ⍝ matrix expansion.
+        s←{⍺⊃¨↑,¨/⊂¨¨⍵}                 ⍝ select.
+        a←x(m=' ')s m'$'                ⍝ expanded grid.
+        b←(1⊖x 0⍪2≠⌿m)s a'*'            ⍝ vertical tile separators.
+        c←(1⌽x 0,2≠/m)s b'*'            ⍝ horizontal  ..      ..
+        adj←{↑(1 ¯1⌽¨⊂⍵)∨.∨1 ¯1⊖¨⊂⍵}    ⍝ bleed of adjacent *s.
+        msk←(c=' ')∧adj c='*'           ⍝ *s flooded into blanks.
+        f←draw msk s c'*'               ⍝ $-framed picture →draw←
+        g←(f='$')s f ' '                ⍝ restoring blanks.
+        2 0↓¯2 0↓0 2↓0 ¯2↓g             ⍝ unframed picture.
+    }
+
+:If 1∊'v*'∊Alpha                        ⍝ Verbose or *: takes around 3 seconds:
+
+        pretty tile 4 15⍴1              ⍝ 4×15 board, as above.
+    ┌───┬───────────────────┬───────────────┬───┬───────────────┐
+    │F F│I I I I I I I I I I│L L L L L L L L│X X│Y Y Y Y Y Y Y Y│
+    │   └───────┬───────────┤   ┌───┬───┬───┘   └───┐   ┌───┬───┤
+    │F F F F F F│N N N N N N│L L│T T│W W│X X X X X X│Y Y│Z Z│V V│
+    ├───┐   ┌───┼───────┐   └───┤   │   └───┐   ┌───┴───┘   │   │
+    │U U│F F│U U│P P P P│N N N N│T T│W W W W│X X│Z Z Z Z Z Z│V V│
+    │   └───┘   │       └───┬───┘   └───┐   └───┤   ┌───────┘   │
+    │U U U U U U│P P P P P P│T T T T T T│W W W W│Z Z│V V V V V V│
+    └───────────┴───────────┴───────────┴───────┴───┴───────────┘
+
+
+        pretty tile 5 12⍴1              ⍝ 5×12 board.
+    ┌───┬───────────┬───────────┬───────────────┬───┐
+    │F F│N N N N N N│T T T T T T│Y Y Y Y Y Y Y Y│P P│
+    │   └───────┐   └───┐   ┌───┴───┐   ┌───┬───┘   │
+    │F F F F F F│N N N N│T T│W W W W│Y Y│V V│P P P P│
+    ├───┐   ┌───┼───────┤   ├───┐   └───┤   │       │
+    │U U│F F│U U│Z Z Z Z│T T│X X│W W W W│V V│P P P P│
+    │   └───┘   ├───┐   ├───┘   └───┐   │   └───────┤
+    │U U U U U U│L L│Z Z│X X X X X X│W W│V V V V V V│
+    ├───────────┘   │   └───┐   ┌───┴───┴───────────┤
+    │L L L L L L L L│Z Z Z Z│X X│I I I I I I I I I I│
+    └───────────────┴───────┴───┴───────────────────┘
+
+        pretty tile 6 10⍴1              ⍝ 6×10 board.
+    ┌───┬───────────────────┬───┬───────────┐
+    │F F│I I I I I I I I I I│T T│U U U U U U│
+    │   └───────┬───┬───────┘   │   ┌───┐   │
+    │F F F F F F│W W│T T T T T T│U U│X X│U U│
+    ├───┐   ┌───┘   ├───────┐   ├───┘   └───┤
+    │L L│F F│W W W W│N N N N│T T│X X X X X X│
+    │   ├───┘   ┌───┴───┐   └───┴───┐   ┌───┤
+    │L L│W W W W│Z Z Z Z│N N N N N N│X X│V V│
+    │   ├───────┴───┐   ├───────────┴───┤   │
+    │L L│P P P P P P│Z Z│Y Y Y Y Y Y Y Y│V V│
+    │   └───┐       │   └───┐   ┌───────┘   │
+    │L L L L│P P P P│Z Z Z Z│Y Y│V V V V V V│
+    └───────┴───────┴───────┴───┴───────────┘
+
+        pretty tile ~(⍳8 8)∊3+⍳2 2      ⍝ 8×8 board with 2×2 hole in centre.
+    ┌───┬───────────┬───────────┬───┐
+    │I I│U U U U U U│V V V V V V│Z Z│
+    │   │   ┌───┐   │   ┌───────┘   │
+    │I I│U U│X X│U U│V V│Z Z Z Z Z Z│
+    │   ├───┘   └───┤   │   ┌───────┤
+    │I I│X X X X X X│V V│Z Z│W W W W│
+    │   ├───┐   ┌───┴───┼───┘   ┌───┤
+    │I I│N N│X X│       │W W W W│Y Y│
+    │   │   ├───┤       │   ┌───┘   │
+    │I I│N N│F F│       │W W│Y Y Y Y│
+    ├───┘   │   └───┬───┴───┼───┐   │
+    │N N N N│F F F F│P P P P│T T│Y Y│
+    │   ┌───┘   ┌───┤       │   │   │
+    │N N│F F F F│L L│P P P P│T T│Y Y│
+    ├───┴───────┘   │   ┌───┘   └───┤
+    │L L L L L L L L│P P│T T T T T T│
+    └───────────────┴───┴───────────┘
+
+        pretty tile ~(⍳8 8)∊2 5∘.,3 4   ⍝ 8×8 board with 2 holes.
+    ┌───┬───────────┬───────────────┐
+    │F F│N N N N N N│Y Y Y Y Y Y Y Y│
+    │   └───────┐   └───┐   ┌───────┤
+    │F F F F F F│N N N N│Y Y│L L L L│
+    ├───┐   ┌───┼───────┼───┼───┐   │
+    │I I│F F│P P│       │Z Z│V V│L L│
+    │   ├───┘   ├───────┘   │   │   │
+    │I I│P P P P│Z Z Z Z Z Z│V V│L L│
+    │   │       │   ┌───────┘   │   │
+    │I I│P P P P│Z Z│V V V V V V│L L│
+    │   ├───┬───┼───┴───┬───┬───┴───┤
+    │I I│T T│W W│       │X X│U U U U│
+    │   │   │   └───┬───┘   └───┐   │
+    │I I│T T│W W W W│X X X X X X│U U│
+    ├───┘   └───┐   └───┐   ┌───┘   │
+    │T T T T T T│W W W W│X X│U U U U│
+    └───────────┴───────┴───┴───────┘
+
+:EndIf

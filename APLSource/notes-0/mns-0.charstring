@@ -1,0 +1,49 @@
+ref ← ##.mns defn                    ⍝ Make Namespace from association list ⍵.
+
+[defn]  is  a "name association list" of the form ('name' class value), ···. The
+result is a reference to a new namespace in which each name in the list has been
+instantiated with its given class. The list may contain nested items with class=
+9 to represent sub-spaces. The [mns] function was suggested by Paul Mansour.
+
+Technical note:
+
+As  [mns]  is a utility function, it should be able to operate in an environment
+with  any  migration  level  and  either index origin. However, the code may not
+localise  and specify ⎕ML or ⎕IO as these values would be inherited by the name-
+spaces it created. For this reason, the code is written in an origin and migrat-
+ion level independent way.
+
+Examples:
+
+    alist                                   ⍝ association list
+┌─────────────┬────────────────────────────────────────────────────┬─────────────────────┐
+│┌───┬─┬─────┐│┌───┬─┬────────────────────────────────────────────┐│┌────┬─┬────────────┐│
+││mat│2│1 2 3│││sub│9│┌───────────────────┬──────────────────────┐│││spin│3│┌──────────┐││
+││   │ │4 5 6│││   │ ││┌───┬─┬───────────┐│┌────┬─┬─────────────┐││││    │ ││spin←{⍉¨⍵}│││
+│└───┴─┴─────┘││   │ │││dup│3│┌─────────┐│││oper│4│┌───────────┐│││││    │ │└──────────┘││
+│             ││   │ │││   │ ││dup←{⍵ ⍵}││││    │ ││oper←{⍺⍺ ⍵}│││││└────┴─┴────────────┘│
+│             ││   │ │││   │ │└─────────┘│││    │ │└───────────┘││││                     │
+│             ││   │ ││└───┴─┴───────────┘│└────┴─┴─────────────┘│││                     │
+│             ││   │ │└───────────────────┴──────────────────────┘││                     │
+│             │└───┴─┴────────────────────────────────────────────┘│                     │
+└─────────────┴────────────────────────────────────────────────────┴─────────────────────┘
+
+    tree mns alist                          ⍝ show fixed ns.
+#.[Namespace]
+·   ~ mat
+·   ∇ spin
+·   sub
+·   ·   ∇ dup
+·   ·   ∘ oper
+
+    (mns alist).(spin sub.(dup oper) mat)   ⍝ check it out.
+┌───┬───┐
+│1 4│1 4│
+│2 5│2 5│
+│3 6│3 6│
+└───┴───┘
+
+See also: rep
+
+Index:namespace|association list|⎕ML
+Index;Mansour P.

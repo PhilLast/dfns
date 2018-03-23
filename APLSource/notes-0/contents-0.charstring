@@ -1,0 +1,537 @@
+---------------------------------------------------------
+D-functions and operators loosely grouped into categories
+---------------------------------------------------------
+
+Click function name in list below to see notes, and within the note:
+
+                     ┌───────────── click here to see function coding
+    ┌────────────────│─────────── ···
+    │ rslt ← larg ##.foo rarg       ⍝ description ···
+    │
+    │ ··· related function →goo← is a ···
+    │                       │
+    │ See also: hoo koo ··· │
+    └───────────│───────────│─── ···
+                │           │
+                │           │
+                └───────────┴─── click here to see notes for related functions.
+
+The  above "header line" in the notes gives a _hint_ of the syntax of the funct-
+ion or operator it describes. The informal syntax is modelled on the header line
+of a traditional APL function in that it names its arguments and results, and an
+_optional_ left argument is embraced by curly braces. Default values for option-
+al left arguments are indicated by assignment '←'.  Here is an example:
+
+    fmat ← {gap←1 {max←⎕pw}} ##.cols items      ⍝ Multi-column display.
+           └───────┬───────┘
+                   │
+                   └──────── [cols] takes an optional 1 or 2 item left argument,
+                                    with default values 1 and ⎕pw.
+
+Note that some functions appear in more than one category.
+
+·   Structures.
+·   ·
+·   ·   Arrays.
+·   ·   ·   alists          ⍝ Association lists.
+·   ·   ·   acc             ⍝ Accumulating reduction.
+·   ·   ·   at              ⍝ Item substitution: new at sel in old
+·   ·   ·   bags            ⍝ Multisets / bags.
+·   ·   ·   box             ⍝ Box the simple text array ⍵.
+·   ·   ·   chksum          ⍝ Simple ⍺-digit checksum.
+·   ·   ·   cmat            ⍝ ⍺-combination matrix of ⍳⍵.
+·   ·   ·   cols            ⍝ Multi-column display.
+·   ·   ·   disp            ⍝ Boxed sketch of nested array.
+·   ·   ·   display         ⍝ Boxed display of array.
+·   ·   ·   displays        ⍝ Boxed display of array with axis lengths.
+·   ·   ·   displayr        ⍝ Boxed display of array with subarray depths.
+·   ·   ·   dist            ⍝ Levenshtein distance.
+·   ·   ·   dsp             ⍝ Reduced version of disp.
+·   ·   ·   enlist          ⍝ List ⍺-leaves of nested array.
+·   ·   ·   find            ⍝ Lines containing string(s) ⍵.
+·   ·   ·   from            ⍝ Select (1↓⍴⍵)-cells from array.
+·   ·   ·   foldl           ⍝ Fold (reduce) from the left.
+·   ·   ·   iotag           ⍝ Generalized iota.
+·   ·   ·   le              ⍝ Total array ordering (TAO) comparison.
+·   ·   ·   list            ⍝ List from vector ⍵.
+·   ·   ·   ltrav           ⍝ List traversal.
+·   ·   ·   match           ⍝ find with wildcards.
+·   ·   ·   mns             ⍝ Make NS from association list ⍵.
+·   ·   ·   nlines          ⍝ Number of display lines for simple array.
+·   ·   ·   pack            ⍝ Saves WS by sharing identical subarrays.
+·   ·   ·   perv            ⍝ Scalar pervasion, apply function between scalars.
+·   ·   ·   pmat            ⍝ Permutation matrix of ⍳⍵.
+·   ·   ·   pred            ⍝ Partitioned reduction.
+·   ·   ·   rows            ⍝ Operand function applied to argument rows.
+·   ·   ·   sam             ⍝ Select and modify.
+·   ·   ·   saw             ⍝ Operand function applied Simple-Array-Wise.
+·   ·   ·   scan            ⍝ Variations on primitive scan.
+·   ·   ·   select          ⍝ ⍺-selection of items from vector ⍵.
+·   ·   ·   shannon         ⍝ Shannon entropy of message ⍵.
+·   ·   ·   subvec          ⍝ Is ⍺ a subvector of ⍵?
+·   ·   ·   subs            ⍝ Vector substitution.
+·   ·   ·   type            ⍝ Array of type ⍺.
+·
+·   ·   Trees
+·   ·   ·   BST             ⍝ Binary Search Trees.
+·   ·   ·   ·   avl         ⍝ Adelson-Velskii, Landis (AVL) trees.
+·   ·   ·   ·   sbst        ⍝ Simple binary search trees.
+·   ·   ·   ·   redblack    ⍝ Red-black trees.
+·   ·   ·   ·   splay       ⍝ Splay trees.
+·   ·   ·   dft             ⍝ Display of function tree.
+·   ·   ·   tfmt            ⍝ Char matrix from tree(s).
+·   ·   ·   tnest           ⍝ Array from TreeView style tree.
+·   ·   ·   trav            ⍝ Generic depth-first tree traversal.
+·   ·   ·   tree            ⍝ Display of namespace tree.
+·   ·   ·   tview           ⍝ TreeView style tree from nested array.
+·
+·   ·   Graphs
+·   ·   ·   assign          ⍝ Hungarian method cost assignment.
+·   ·   ·   gperm           ⍝ ⍵-permutation of vertices of graph ⍺.
+·   ·   ·   insnode         ⍝ Insert vertex ⍵ in graph ⍺.
+·   ·   ·   remnode         ⍝ Remove vertex ⍵ from graph ⍺.
+·   ·   ·   inslink         ⍝ Insert edge ⍵ in graph ⍺.
+·   ·   ·   remlink         ⍝ Remove edge ⍵ from graph ⍺.
+·   ·   ·   search          ⍝ Breadth-first search of graph ⍺.
+·   ·   ·   path            ⍝ Shortest path from/to ⍵ in graph ⍺.
+·   ·   ·   span            ⍝ Breadth-first spanning tree for graph ⍺.
+·   ·   ·   dfspan          ⍝ Depth-first spanning tree for graph ⍺.
+·   ·   ·   scc             ⍝ Strongly connected components of directed graph ⍵.
+·   ·   ·   stdists         ⍝ Spanning tree path lengths.
+·   ·   ·   stpath          ⍝ Path through spanning tree ⍺ to vertex ⍵.
+·   ·   ·   stpaths         ⍝ Spanning tree paths.
+·   ·   ·   X               ⍝ Exact cover: Knuth's Algorithm X.
+·
+·   ·   wGraphs             ⍝ Weighted graphs.
+·   ·   ·   wcost           ⍝ Cost vector for path ⍵ through _weighted_ graph ⍺.
+·   ·   ·   wpath           ⍝ Quickest path from/to ⍵ in _weighted_ graph ⍺.
+·   ·   ·   wspan           ⍝ Spanning tree for _weighted_ graph ⍺ from ⍵.
+·   ·   ·   wmst            ⍝ Minimum Spanning Tree for _weighted_ graph ⍺.
+·
+·   ·   Words.
+·   ·   ·   ssword          ⍝ Approx alternative to xutils' ss.
+·   ·   ·   words           ⍝ Source vector split into words.
+·   ·   ·   tokens          ⍝ Lex of APL source line.
+·   ·   ·   von             ⍝ Capitalise first letters of names.
+·
+·   ·   Strings.
+·   ·   ·   base64          ⍝ Base64 encoding and decoding as used in MIME.
+·   ·   ·   dist            ⍝ Levenshtein distance.
+·   ·   ·   find            ⍝ Search for string ⍵ in vars, fns and ops.
+·   ·   ·   just            ⍝ Justify text array.
+·   ·   ·   lcase           ⍝ Lower-casification.
+·   ·   ·   ucase           ⍝ Upper-casification.
+·   ·   ·   mtrim           ⍝ Trim trailing blank columns from matrix.
+·   ·   ·   shannon         ⍝ Shannon entropy of message ⍵.
+·   ·   ·   ss              ⍝ Approx alternative to xutils' string replacement.
+·   ·   ·   ssmat           ⍝ Matrix search/replace.
+·   ·   ·   ssword          ⍝ Approx alternative to xutils' word replacement.
+·   ·   ·   subs            ⍝ Vector substitution.
+·   ·   ·   subvec          ⍝ Is ⍺ a subvector of ⍵?
+·   ·   ·   squeeze         ⍝ Compress multiple blanks.
+·   ·   ·   timestamp       ⍝ Time-stamped message.
+·   ·   ·   xtabs           ⍝ Expand/compress HT chars.
+·   ·   ·   htx             ⍝ Extract html segments.
+·
+·   ·   Line_vectors
+·   ·   ·   htx             ⍝ Extract html segments.
+·   ·   ·   ltov            ⍝ Lines to nested vector.
+·   ·   ·   vtol            ⍝ Nested vector to lines.
+·   ·   ·   wrap            ⍝ Wrap word vector at ⍺ columns.
+·   ·   ·   unwrap          ⍝ Replace [LF] with blanks.
+·   ·   ·   justify         ⍝ Justify line-vector to ⍺ columns.
+·   ·   ·   squeeze         ⍝ Compress multiple blanks.
+·   ·   ·   vtrim           ⍝ Trim trailing blanks from line-vector.
+·   ·   ·   wrapnote        ⍝ Wrap text paragraphs in note vector.
+·   ·   ·   xtabs           ⍝ Expand/compress HT chars.
+·
+·   ·   Blank_removal
+·   ·   ·   dlb             ⍝ Drop Leading Blanks.
+·   ·   ·   dtb             ⍝ Drop Trailing Blanks.
+·   ·   ·   deb             ⍝ Drop Ending Blanks.
+·   ·   ·   dxb             ⍝ Drop eXtraneous Blanks.
+·   ·   ·   dmb             ⍝ Drop Multiple Blanks.
+·   ·   ·   dab             ⍝ Drop All Blanks.
+·
+·   ·   Data_compression
+·   ·   ·   base64          ⍝ Base64 encoding and decoding as used in MIME.
+·   ·   ·   pack4           ⍝ Quad-tree packing.
+·   ·   ·   packB           ⍝ Pack a simple array.
+·   ·   ·   packD           ⍝ Pack char array to boolean vector.
+·   ·   ·   packH           ⍝ Huffman packing.
+·   ·   ·   packN           ⍝ Zero packing.
+·   ·   ·   packQ           ⍝ Assorted uniQues packer.
+·   ·   ·   packR           ⍝ RLE packing.
+·   ·   ·   packS           ⍝ Shannon-Fano packing.
+·   ·   ·   packT           ⍝ Simple text vector packager.
+·   ·   ·   packU           ⍝ Unique packer.
+·   ·   ·   packX           ⍝ TeXt packer.
+·   ·   ·   packZ           ⍝ Lempel-Ziv-Welch.
+·
+·   ·   Power.operators
+·   ·   ·   cond            ⍝ Conditional function application.
+·   ·   ·   do              ⍝ Apply no-result function "en passant".
+·   ·   ·   else            ⍝ Condition f else g ...
+·   ·   ·   for             ⍝ Multiple selection of function list.
+·   ·   ·   invr            ⍝ Approx inverse of real-valued function.
+·   ·   ·   limit           ⍝ Function power limit (fixpoint).
+·   ·   ·   pow             ⍝ Explicit function power.
+·   ·   ·   repl            ⍝ Read-eval-print loop.
+·   ·   ·   traj            ⍝ Function limit "trajectory".
+·   ·   ·   while           ⍝ Conditional function power.
+·   ·   ·   until           ⍝ Conditional function power.
+·
+·   ·   Function_arrays
+·   ·   ·   case            ⍝ select statement.
+·   ·   ·   for             ⍝ Multiple selection of function list.
+·   ·   ·   of              ⍝ pick'th fn applied to arg.
+·   ·   ·   lof             ⍝ List of functions.
+·   ·   ·   logic           ⍝ logical function array.
+·   ·   ·   vof             ⍝ Vector of functions.
+·   ·   ·   fnarray         ⍝ Array of functions.
+·
+·   ·   Syntax.operators
+·   ·   ·   and             ⍝ Sequential test.
+·   ·   ·   cond            ⍝ Conditional function application.
+·   ·   ·   do              ⍝ Apply no-result function "en passant".
+·   ·   ·   fork            ⍝ Function fork.
+·   ·   ·   or              ⍝ Sequential test.
+·
+·   ·   Expressions.
+·   ·   ·   dft             ⍝ Display of function tree.
+·   ·   ·   htx             ⍝ Extract html segments.
+·   ·   ·   joy             ⍝ Subset of the Joy language.
+·   ·   ·   kind            ⍝ Parse-category of name(s) ⍵.
+·   ·   ·   kk              ⍝ Kind Koloring of d-fnop named ⍵.
+·   ·   ·   lisp            ⍝ Evaluator for a subset of Scheme.
+·   ·   ·   parse           ⍝ Bunda-Gerth parsing.
+·   ·   ·   rmcm            ⍝ Remove comment from line of APL.
+·   ·   ·   unify           ⍝ Unification of expressions.
+·
+·   Numbers.
+·   ·
+·   ·   Whole.numbers
+·   ·   ·   adic            ⍝ Bijective base-⍺ numeration.
+·   ·   ·   apportion       ⍝ Huntington-Hill apportionment.
+·   ·   ·   big             ⍝ Arithmetic on large integers.
+·   ·   ·   bsearch         ⍝ Binary search: least n in range ⍵ such that ⍺⍺ n.
+·   ·   ·   bt              ⍝ Balanced Ternary Arithmetic.
+·   ·   ·   cfract          ⍝ Continued fraction approximation of real number.
+·   ·   ·   colsum          ⍝ Sum of (default decimal) columns.
+·   ·   ·   dec             ⍝ Decimal from hexadecimal.
+·   ·   ·   efract          ⍝ Egyptian fraction for ⍺÷⍵.
+·   ·   ·   esh             ⍝ Shell for Eide-number sums.
+·   ·   ·   f32             ⍝ Conversion to 32-bit floats as ⎕DR 83.
+·   ·   ·   factorial       ⍝ Tail-recursive factorial.
+·   ·   ·   fibonacci       ⍝ Tail-recursive Fibonacci.
+·   ·   ·   factors         ⍝ Prime factors of ⍵.
+·   ·   ·   gcd             ⍝ Greatest common divisor.
+·   ·   ·   k6174           ⍝ Kaprekar's operation.
+·   ·   ·   lcm             ⍝ Least common multiple.
+·   ·   ·   hex             ⍝ Hexadecimal from decimal.
+·   ·   ·   hexf            ⍝ IEEE 754/854 binary floating point.
+·   ·   ·   int             ⍝ Signed from unsigned integers.
+·   ·   ·   nats            ⍝ Natural number arithmetic.
+·   ·   ·   nicediv         ⍝ ⍵ similar integers with sum ⍺.
+·   ·   ·   osc             ⍝ Oscillate - probably returns 1.
+·   ·   ·   pco             ⍝ Prime numbers.
+·   ·   ·   range           ⍝ Numeric range classification.
+·   ·   ·   rational        ⍝ Rational approximation to real ⍵.
+·   ·   ·   rats            ⍝ Rational arithmetic.
+·   ·   ·   ratsum          ⍝ ⍺⍺-rational sum of ⍺ and ⍵.
+·   ·   ·   stamps          ⍝ Postage stamps to the value of ⍵.
+·   ·   ·   sieve           ⍝ Sieve of Eratosthenes.
+·   ·   ·   to              ⍝ Sequence ⍺ .. ⍵
+·   ·   ·   uns             ⍝ Unsigned from signed integers.
+
+·   ·   Rational.numbers
+·   ·   ·   ary             ⍝ ⍺-ary representation of rational ⍵.
+·   ·   ·   cfract          ⍝ Continued fraction approximation of real number.
+·   ·   ·   efract          ⍝ Egyptian fraction for ⍺÷⍵.
+·   ·   ·   esh             ⍝ Shell for Eide-number sums.
+·   ·   ·   gcd             ⍝ Greatest common divisor.
+·   ·   ·   lcm             ⍝ Least common multiple.
+·   ·   ·   rational        ⍝ Rational approximation to real ⍵.
+·   ·   ·   rats            ⍝ Rational arithmetic.
+·   ·   ·   ratsum          ⍝ ⍺⍺-rational sum of ⍺ and ⍵.
+·
+·   ·   Real.numbers
+·   ·   ·   abc             ⍝ Arithmetic Boundary Checking.
+·   ·   ·   bayes           ⍝ Bayes' formula.
+·   ·   ·   birthday        ⍝ Probability of same birthday.
+·   ·   ·   cfract          ⍝ Continued fraction approximation of real number.
+·   ·   ·   Cholesky        ⍝ decomposition of a Hermitian +ive-definite matrix.
+·   ·   ·   det             ⍝ Determinant of square numeric matrix.
+·   ·   ·   efract          ⍝ Egyptian fraction for ⍺÷⍵.
+·   ·   ·   gauss_jordan    ⍝ Gauss-Jordan elimination.
+·   ·   ·   invr            ⍝ Approx inverse of real-valued function.
+·   ·   ·   kcell           ⍝ Relationship between point and k-cell.
+·   ·   ·   kball           ⍝ Relationship between point and k-ball.
+·   ·   ·   ksphere         ⍝ Hypersphere surface and volume.
+·   ·   ·   mean            ⍝ Arithmetic mean.
+·   ·   ·   NormRand        ⍝ Random numbers with a normal distribution.
+·   ·   ·   phinary         ⍝ Phinary rep of scalar number ⍵.
+·   ·   ·   root            ⍝ ⍺'th root.
+·   ·   ·   roots           ⍝ Real roots of quadratic.
+·   ·   ·   shannon         ⍝ Shannon entropy of message ⍵.
+·
+·   ·   Complex.numbers
+·   ·   ·   Cholesky        ⍝ decomposition of a Hermitian +ive-definite matrix.
+·   ·   ·   cxdraw          ⍝ Complex function drawing.
+·   ·   ·   polar           ⍝ Polar from cartesian coordinates.
+·   ·   ·   xpower          ⍝ Fast multi-digit power using FFT.
+·   ·   ·   xtimes          ⍝ Fast multi-digit product using FFT.
+·
+·   ·   Dates
+·   ·   ·   birthday        ⍝ Probability of same birthday.
+·   ·   ·   cal             ⍝ Calendar.
+·   ·   ·   compidn         ⍝ Component timestamp in IDN format.
+·   ·   ·   days            ⍝ Day number from ⎕TS format.
+·   ·   ·   date            ⍝ ⎕TS format from day number.
+·   ·   ·   easter          ⍝ Easter Day in year ⍵.
+·   ·   ·   timestamp       ⍝ Time-stamped message.
+·
+·   Workspace.administration
+·   ·
+·   ·   Workspaces
+·   ·   ·   exit            ⍝ Return to calling environment.
+·   ·   ·   fndiff          ⍝ Defined function differences.
+·   ·   ·   index           ⍝ ⍵-index of notes in space ⍺.
+·   ·   ·   refws           ⍝ Ref to "saved" ws ⍵.
+·   ·   ·   test            ⍝ Run test script: no news => good news.
+·   ·   ·   utf8            ⍝ ⎕AV ←→ UTF-8 translation.
+·   ·   ·   wsdiff          ⍝ Workspace differences.
+·   ·   ·   wsmerge         ⍝ {protected} merge from saved ws.
+·   ·   ·   xhtml           ⍝ Export this WS to ⍵\*.htm.
+·
+·   ·   Namespaces
+·   ·   ·   index           ⍝ ⍵-index of notes in space ⍺.
+·   ·   ·   mns             ⍝ Make NS from association list ⍵.
+·   ·   ·   nspack          ⍝ Share arrays across space tree.
+·   ·   ·   refs            ⍝ Vector of sub-space references.
+·   ·   ·   refmatch        ⍝ Space reference match.
+·   ·   ·   tree            ⍝ Display of namespace tree.
+·   ·   ·   up              ⍝ Ref to ⍵-parent of space ⍺.
+·   ·   ·   vwise           ⍝ Variable-wise: apply ⍺⍺ to each var in space ⍵.
+·   ·   ·   xrefs           ⍝ Extract refs vector from array ⍵.
+·
+·   ·   Functions.and.operators
+·   ·   ·   ambiv           ⍝ Ambivalize traditional functions: ⍵.
+·   ·   ·   attrib          ⍝ Function/operator attributes.
+·   ·   ·   din             ⍝ Evaluation of multi-line D-expression.
+·   ·   ·   dots            ⍝ Show dfn with "white dots".
+·   ·   ·   find            ⍝ Search for string ⍵ in vars, fns and ops.
+·   ·   ·   fix             ⍝ Fix function/operator rep.
+·   ·   ·   fndiff          ⍝ Defined function differences.
+·   ·   ·   fnrefs          ⍝ External refs from function ⍵.
+·   ·   ·   fnrepl          ⍝ Function string replacement.
+·   ·   ·   isdfn           ⍝ Test for D function.
+·   ·   ·   ncpath          ⍝ ⎕path-aware ⎕nc.
+·   ·   ·   refmt           ⍝ Reformat dfn/op.
+·   ·   ·   rep             ⍝ Representation of function/operator.
+·   ·   ·   trace           ⍝ Trace function application.
+·   ·   ·   UndoRedo        ⍝ Derive undo/redo function.
+·
+·   Files.
+·   ·
+·   ·   Native.files
+·   ·   ·   file            ⍝ Apply operand function to native file tie.
+·   ·   ·   getfile         ⍝ Get text file ⍵ as nested vector.
+·   ·   ·   hexdump         ⍝ Hex dump of native file.
+·   ·   ·   putfile         ⍝ Put rows to text-file.
+·   ·   ·   utf8            ⍝ ⎕AV ←→ UTF-8 translation.
+·   ·   ·   utf8get         ⍝ Char vector from UTF-8 file ⍵.
+·   ·   ·   utf8put         ⍝ Char vector ⍺ to UTF-8 file ⍵.
+·   ·   ·   xtabs           ⍝ Expand/compress HT chars.
+·
+·   ·   Component.files
+·   ·   ·   filefind        ⍝ Find 'string' ⍵ in component file ⍺.
+·
+·   Diversions.
+·   ·
+·   ·   ·   baby            ⍝ The Manchester Small Scale Experimental Machine.
+·   ·   ·   bf              ⍝ Brainfuck.
+·   ·   ·   birthday        ⍝ Probability of same birthday.
+·   ·   ·   dice            ⍝ Interpret a throw of dice.
+·   ·   ·   draw            ⍝ Draw over '*'s.
+·   ·   ·   joy             ⍝ Subset of the Joy language.
+·   ·   ·   keyboards       ⍝ APL keyboard layouts.
+·   ·   ·   kt              ⍝ Knight's Tour chess problem.
+·   ·   ·   life            ⍝ John Conway's "Game of Life".
+·   ·   ·   lisp            ⍝ Evaluator for a subset of Scheme.
+·   ·   ·   mac             ⍝ Simple Macro Processor for bf.
+·   ·   ·   mayan           ⍝ Mayan numbers.
+·   ·   ·   maze            ⍝ Kidz maze.
+·   ·   ·   mmind           ⍝ Mastermind or "cows and bulls".
+·   ·   ·   morse           ⍝ Conversion to/from Morse code.
+·   ·   ·   mp3             ⍝ Create playlist(s) for mp3 directories.
+·   ·   ·   queens          ⍝ N-queens chess problem.
+·   ·   ·   quzzle          ⍝ A hard, simple problem.
+·   ·   ·   ripple          ⍝ Perfect Ripple Shuffle.
+·   ·   ·   rr              ⍝ Round-robin tournament.
+·   ·   ·   roman           ⍝ Roman numeral arithmetic.
+·   ·   ·   sudoku          ⍝ Solution vector for Sudoku problem ⍵.
+·
+·   Performance.
+·   ·
+·   ·   ·   cf              ⍝ Ratio of operand timings.
+·   ·   ·   cmpx            ⍝ Approx expression timings.
+·   ·   ·   mdf             ⍝ Monitor D function.
+·   ·   ·   memo            ⍝ Function memoization.
+·   ·   ·   ticks           ⍝ Sample Dfn execution clock ticks.
+·   ·   ·   time            ⍝ Time function application.
+
+------------------------
+Person and Topic Indexes
+------------------------
+Function [index] generates [person] and [topic] indexes from those lines in each
+note  that  start  with  the character vector 'Index'. In addition, the note for
+→index←  contains  lines starting Index≡, which supply aliases of the form: "For
+this, see that".
+
+-------------------------
+A note on code appearance
+-------------------------
+The  functions  and  operators in the workspace have been formatted to make them
+easier to read. For example, the "else" operator should look like this:
+
+    else←{          ⍝ Condition f else g ...
+        ⍺:⍺⍺ ⍵      ⍝ True: apply left operand.
+          ⍵⍵ ⍵      ⍝ False: apply right operand.
+    }
+
+If  you  have [AutoFormat functions] checked in the Options→Configure→Trace/Edit
+tab,  the system will impose its own canonical formatting style. This is OK, but
+makes the functions look a little odd:
+
+    else←{          ⍝ Condition f else g ...
+         ⍺:⍺⍺ ⍵      ⍝ True: apply left operand.
+         ⍵⍵ ⍵      ⍝ False: apply right operand.
+     }
+
+To see the code in its intended format, uncheck the box and try again.
+
+-------------------
+Nested Array Boxing
+-------------------
+The  ]boxing  user command was introduced in Dyalog V13.  Examples in this work-
+space that display  nested arrays assume ]boxing ON and so dispense with an exp-
+licit call to the →disp← function:
+
+Example:
+
+    ]boxing
+Is ON
+
+    ⊃,∘⊂/⍳4         ⍝ nested vector
+┌─┬───────┐
+│1│┌─┬───┐│
+│ ││2│3 4││
+│ │└─┴───┘│
+└─┴───────┘
+
+------------
+Highlighting
+------------
+Words in the notes may be distinguished by various styles of bracket:
+
+→link←  Link to another note; double-click or Shift-Enter to follow the link.
+[bold]  Function or argument name, equivalent to bold font.
+_ital_  Emphasised word, equivalent to italic font.
+
+------------
+Note Colours
+------------
+When viewing these notes from an APL session (as opposed to a web browser), you
+can change their colours, see: →colour_change←.
+
+------------
+Code Colours
+------------
+The pages on the web that display code have been "kind-coloured".  Names in the
+code have been "coloured" using an italic font to distinguish the kind of lang-
+uage elements they denote:
+
+                Kind   Font     Colour
+                ----   ----     ------
+               array   normal   black
+            function   italic   black
+    monadic operator   italic   medium blue
+     dyadic operator   italic   lighter blue
+
+See →kk← for more details.
+
+-----------------------------
+Dyalog Version considerations
+-----------------------------
+Dfns.dws is maintained using the most up-to-date  release  of  the  interpreter.
+Places in which future language developments might improve the code  are  marked
+<V> as a reminder of which code to review when the workspace is ported to a new-
+er version.
+
+This expression lists all of the <V> lines:
+
+    {⎕←⍵ find'<V>'}¨refs #      ⍝ display <V>-lines.
+
+--------------
+Test namespace
+--------------
+Namespace  "scripts" contains test scripts for most of the functions and operat-
+ors in the workspace. See →test←.
+
+--------
+Feedback
+--------
+Suggestions  for extending or improving this workspace would be most welcome via
+email to: john@dyalog.com.
+
+See the "Functional Programming" forum in http://forums.dyalog.com.
+
+Dfns.dws is edited by John Scholes with contributions from:
+
+Aaron Hsu
+Adrian Smith
+Arthur Whitney
+Blay Tarnoff
+Bob Bernecky
+Dag Dittmer
+Dan Baronet
+David Crossley
+Dick Bowman
+Gianfranco Alongi
+Gianluigi Quario
+Geoff Streeter
+Jay Foad
+Jim Ryan
+John B. Halleck
+John Daintree
+John Niss Hansen
+John R. Clark
+Jonathan Barman
+Kai Jaeger
+LeRoy N. Eide
+Maria Wells
+Mark Johns
+Mayer Goldberg
+Michael Kassler
+Mike Day
+Maurice Jordan
+Michael Baas
+Morten Kromberg
+Nick Nickolov
+Nicolas Delcros
+Paul Mansour
+Perttu Pakarinen
+Peter-Michael Hager
+Phil Last
+Ralf Riediger
+Ray Cannon
+Ray Polivka
+Reima Naumanen
+Roger Hui
+Stefano Lanzavecchia
+Stephen Taylor
+Steve Mansour
+Tomas Gustafsson
+Veli-Matti Jantunen
+Yves Bopp

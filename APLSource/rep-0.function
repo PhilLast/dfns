@@ -1,0 +1,4 @@
+ rep←{                   ⍝ Encapsulate function/operator.
+     2=⍴⍴⎕CR ⍵:⎕OR ⍵     ⍝ trad/dfn:     (⎕or).
+     ⍵(⎕OR ⍵)            ⍝ assigned fn:  (name ⎕or) pair.
+ }

@@ -1,0 +1,5 @@
+ fnarray←{       ⍝ Array of functions.
+     t←⎕NS''     ⍝ temp space.
+     t.f←⍺⍺      ⍝ name operand function in space.
+     t,⍵         ⍝ accumulate function array vector.
+ }

@@ -1,0 +1,14 @@
+ packN←{                     ⍝ Null packing.
+
+     cmp←{
+         mask←,⍵≠1↑0⍴⍵       ⍝ mask of non-nulls.
+         (⍴⍵)mask(mask/,⍵)   ⍝ shape mask non-nulls.
+     }
+
+     exp←{
+         shape mask items←⍵
+         shape⍴mask\items
+     }
+
+     ⍺←1 ⋄ ⍺:cmp ⍵ ⋄ exp ⍵   ⍝ compress or expand.
+ }

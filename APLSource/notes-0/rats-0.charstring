@@ -1,0 +1,372 @@
+rslt ← {larg} (fn ##.rats) rarg             ⍝ Rational arithmetic.
+rslt ← (land      ##.rats) rarg             ⍝ Rational number.
+
+[rats]  provides  accurate  conversion  and arithmetic for non-negative rational
+numbers.
+
+NB: [rats] deals only in single (scalar) numbers, rather than whole arrays.
+
+Called with a natural number left operand, rats converts [land] and [rarg] to an
+internal form.
+
+        r ← 16 rats 9           ⍝ internal form of rational number 16r9.
+        s ←  1 rats 2           ⍝   ..      ..      ..      ..      1r2.
+
+Otherwise, the operand is a function chosen from monadic ⍕ or ⍎:
+
+        rfmt ← ⍕rats            ⍝ ⍕ r-format.
+        real ← ⍎rats            ⍝ ⍎ approx real equivalent.
+
+        rfmt¨ r s               ⍝ r-format of rational numbers.
+     16r9  1r2
+
+        real¨ r s               ⍝ approx real equivalent of rational numbers.
+    1.7778 0.5
+
+or from one of the dyadic functions + - × ÷ * ∨ ∧:
+
+        rfmt r +rats s          ⍝ + sum of rational numbers 16r9 + 1r2
+    41r18
+
+        rfmt r -rats s          ⍝ - difference  ·   ·   ·   16r9 - 1r2
+    23r18
+
+        rfmt r ×rats s          ⍝ × product ·   ·   ·   ·   16r9 × 1r2
+    8r9
+
+        rfmt r ÷rats s          ⍝ ÷ quotient    ·   ·   ·   16r9 ÷ 1r2
+    32r9
+
+        rfmt r *rats s          ⍝ * power       ·   ·   ·   16r9 * 1r2
+    4r3
+
+        rfmt r ∨rats s          ⍝ ∨ gcd ·   ·   ·   ·   ·   16r9 ∨ 1r2
+    1r18
+
+        rfmt r ∧rats s          ⍝ ∧ lcm ·   ·   ·   ·   ·   16r9 ∧ 1r2
+    16r1
+
+[rats]  assumes the presence of function →factors←, which it calls when it needs
+to  determine the prime factors of an argument. In practice, this happens relat-
+ively infrequently.
+
+Technical notes
+---------------
+A rational  number ⍺r⍵ is conveniently represented as a pair [P Q] of vectors of
+prime  factors  and corresponding powers. Within [rats] these vectors are stored
+as a 2-row simple integer matrix.
+
+For example: the rational number 28r75 has P≡(2 7 3 5) and Q≡(2 1 ¯1 ¯2):
+
+        28 rats 75              ⍝ internal form of 28r75.
+    2 7  3  5
+    2 1 ¯1 ¯2
+
+Positive  powers contribute to the numerator and negative ones to the denominat-
+or. The approximate real equivalent of [P Q] is thus: P×.*Q.
+
+        28÷75                   ⍝ approx real 28r75
+    0.37333
+
+        ×/*⌿ 28 rats 75         ⍝   ..      ..
+    0.37333
+
+This  representation  makes  arithmetic particularly straightforward. Almost all
+operations  are  expressed in terms of factor matrices and even sums and differ-
+ences  are  applied only to what remains after common factors have been removed.
+This  means that the relatively expensive factoring of large numbers into primes
+is reduced to a minimum.
+
+Normal Form
+-----------
+Subfunction  [norm] normalises its argument by collecting like factors and summ-
+ing  their  powers.  The sum of powers with differing signs is equivalent to the
+cancelling operation, when dealing with fractions.
+
+In  addition,  [norm]  removes  factors-of-power-0, and powers-of-factor-1. This
+means that the structure for rational number 1r1 is a 0-column matrix:
+
+        display 1 rats 1                ⍝ 1r1 - 0-column matrix.
+    ┌⊖┐
+    ↓0│
+    │0│
+    └~┘
+
+Finally, as 0r1, 0r2, ·· 0r<anything> are equivalent, [norm] chooses 0r1.
+
+NB: [norm] does not arrange factor-power columns in any particular order, so the
+following are equivalent normal forms:
+
+        r35 r53                         ⍝ equivalent expressions of 15r1
+    ┌───┬───┐
+    │3 5│5 3│
+    │1 1│1 1│
+    └───┴───┘
+
+        ⍕rats¨ r35 r53                  ⍝ r-formats are identical.
+     15r1  15r1
+
+Product ×
+---------
+The product of two rational structures is just the normalisation of their caten-
+ation!
+
+        mul ← {norm ⍺,⍵}                ⍝ ⍺×⍵   (⍺ and ⍵ are rational numbers).
+                                           ¯
+Quotient ÷
+----------
+The integer power of a rational number [P Q]*⍵ = [P Q×1 ⍵].
+
+        expn ← {↑1 ⍵×↓⍺}                ⍝ ⍺*⍵   (⍺ is rational, ⍵ is integer).
+or
+        expn ← {1 ⍵×[⎕io]⍺}             ⍝ ... according to taste.
+So:
+        (28 rats 75)∘expn¨1 2 3         ⍝ 28r75 * 1 2 3
+    ┌─────────┬─────────┬─────────┐
+    │2 7  3  5│2 7  3  5│2 7  3  5│
+    │2 1 ¯1 ¯2│4 2 ¯2 ¯4│6 3 ¯3 ¯6│
+    └─────────┴─────────┴─────────┘
+
+In particular, expn∘¯1 returns the _reciprocal_ of its rational argument:
+
+        {⍵∘expn¨1 ¯1} 28 rats 75        ⍝ 28r75 * 1 ¯1
+    ┌─────────┬─────────┐
+    │2 7  3  5│ 2  7 3 5│
+    │2 1 ¯1 ¯2│¯2 ¯1 1 2│
+    └─────────┴─────────┘
+
+so we can use expn to implement division:
+
+        div ← {norm ⍺,⍵ expn ¯1}        ⍝ ⍺÷⍵   (⍺ and ⍵ rational).
+                                           ¯
+Next, notice that function 0∘⌈ returns the (un-normalised) numerator:
+
+          0∘⌈ 28 rats 75                ⍝ 28r1
+    2 7 3 5
+    2 1 0 0
+
+        real 0∘⌈ 28 rats 75             ⍝ 28r1
+    28
+
+and applied to the reciprocal, reveals the denominator:
+
+        {0⌈⍵∘expn¨1 ¯1} 28 rats 75     ⍝ 28r75 → 28 75
+    ┌───────┬───────┐
+    │2 7 3 5│2 7 3 5│
+    │2 1 0 0│0 0 1 2│
+    └───────┴───────┘
+
+        sepr ← {0⌈⍵∘expn¨1 ¯1}          ⍝ separate numerator/denominator.
+
+        real¨ sepr 28 rats 75           ⍝ round trip: (28 75) → 28r75 → (28 75)
+    28 75
+
+Power *
+-------
+The _rational_ power of a rational number:
+·
+    [P Q]*[R S] = [P X],
+        where X = Q×R×.*S,
+            as long as X≡⌊X,
+                otherwise, error "irrational".
+·
+    4r9 * 3r2 → 8r27
+·
+    2r1 * 1r2 → irrational    (square root of 2).
+
+GCD ∨  /  LCM ∧
+---------------
+We  can  extract greatest-common-divisor and least-common-multiple directly from
+the factors of a pair of normalised rational numbers.
+
+If  two  _whole_ numbers have normal rational forms [P Q] and [R S] (which means
+that vectors Q and S have no negative items) then:
+
+    [P Q] ∨ [R S]  =  [PiR QnS],                ⍝ ∨ ----------------------gcd[1]
+          ¯
+    where:
+
+        PiR is the intersection of factor vectors P and R and
+                   ¯¯¯¯¯¯¯¯¯¯¯¯
+        QnS is the minimum of power vectors Q and S within the intersection.
+                   ¯¯¯¯¯¯¯                          ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+and
+    [P Q] ∧ [R S]  =  [PuR QxS],                ⍝ ∧ ----------------------lcm[1]
+          ¯
+    where:
+
+        PuR is the union of factor vectors P and R and
+                   ¯¯¯¯¯
+        QxS is the maximum of power vectors Q and S within the union.
+                   ¯¯¯¯¯¯¯                          ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+For example:
+
+          90 rats 1                             ⍝ [(2 3 5)(1 2 1)]
+    2 3 5
+    1 2 1
+
+          84 rats 1                             ⍝ [(2 3 7)(2 1 1)]
+    2 3 7
+    2 1 1
+
+          (90 rats 1)∨rats 84 rats 1            ⍝ gcd ∨: intersection / minimum.
+    2 3
+    1 1
+
+          (90 rats 1)∧rats 84 rats 1            ⍝ lcm ∧: union / maximum.
+    2 3 5 7
+    2 2 1 1
+
+Secondly, if a, b, c and d are whole numbers, then in general:
+
+    (a÷b) ∨ (c÷d)  =  (a∨c) ÷ (b∧c)             ⍝ ∨ ----------------------gcd[2]
+
+    (a÷b) ∧ (c÷d)  =  (a∧c) ÷ (b∨c)             ⍝ ∧ ----------------------lcm[2]
+
+Let ⌈P Q] and ⌊P Q] be notation for the numerator and denominator of [P Q]
+
+    ⌈P Q]  =  num ← {norm 0⌈⍵}                  ⍝ numerator.
+    ⌊P Q]  =  den ← {norm 0⌈⍵ expn ¯1}          ⍝ denominator.
+
+For example:
+
+    if
+        [P Q] = [(2 3 5 7)(¯1 2 1 ¯3)]
+    then
+        ⌈P Q]  =  [(3 5)(2 1)]                  ⍝ numerator.
+
+        ⌊P Q]  =  [(2 7)(1 3)]                  ⍝ denominator.
+    and
+        [P Q]  = ⌈P Q] × ⌊P Q] * ¯1             ⍝ numerator × ÷ denominator.
+                       ¯
+therefore:
+
+    [P Q] ∨ [R S]
+          ¯
+
+    ⌈P Q]   ⌈R S]                               ⍝ defn of ⌈...] and ⌊...]
+=>  ----- ∨ -----
+    ⌊P Q] ¯ ⌊R S]
+
+
+    ⌈P Q]∨⌈R S]                                 ⍝ from gcd[2] above.
+=>  -----------
+    ⌊P Q]∧⌊R S]
+
+
+    [PiR QnS]                                   ⍝ from gcd[1] above.
+=>  ---------
+    [PuR QxS]
+
+
+=>  [PiR QnS], [PuR QxS] * ¯1                   ⍝ as in the quotient case.
+
+Similarly, for lcm (∧):
+
+    [P Q] ∧ [R S]
+          ¯
+
+    ⌈P Q]   ⌈R S]                               ⍝ defn of ⌈...] and ⌊...]
+=>  ----- ∧ -----
+    ⌊P Q] ¯ ⌊R S]
+
+
+    ⌈P Q]∧⌈R S]                                 ⍝ from lcm[2] above.
+=>  -----------
+    ⌊P Q]∨⌊R S]
+
+
+    [PuR QxS]                                   ⍝ from lcm[1] above.
+=>  ---------
+    [PiR QnS]
+
+
+=>  [PuR QxS], [PiR QnS] * ¯1                   ⍝ as in the quotient case.
+
+
+Sum / difference
+----------------
+In general, for numbers A and B and any N≠0:
+
+                  ┌  A     B  ┐
+    A + B  =  N × │ --- + --- │
+      ¯           └  N  ¯  N  ┘
+
+If  we  choose N = A∨B (greatest common divisor of A and B), then both (A÷N) and
+(B÷N)  are  whole numbers and may be added (resp. subtracted) directly. Further,
+(A÷N)  and  (B÷N)  are the smallest whole numbers for which this holds, so their
+sum (resp. difference) is as small as possible and so easiest to re-factorise.
+
+(muse:
+
+    sum/difference deals separately with zero arguments.  Zero seems (to JMS) to
+    be, let's say, an uneasy member of the set of rational numbers.
+
+    sum←{                           ⍝ sum (difference).
+        0∊⍵:⍺                       ⍝ ⍺+0 → ⍺, ⍺-0 → ⍺
+        0∊⍺:⍵×nchk ⍺⍺ 1             ⍝ 0+⍵ → ⍵, 0-⍵ → error
+        mul←⍺ gcd ⍵                 ⍝ gcd multiplier
+        ...
+)
+
+Examples:
+
+    factors¨28 75                       ⍝ prime factors.
+ 2 2 7  3 5 5
+
+    28 rats 75                          ⍝ rational representation.
+2 7  3  5
+2 1 ¯1 ¯2
+
+    ⍕rats 28 rats 75                    ⍝ r-format.
+28r75
+
+    ⍎rats 28 rats 75                    ⍝ approx real number equivalent.
+0.3733333333
+
+    ⍝ We can make a translator for simple expressions of rational scalars:
+
+    rexp←{⍺←'r'                         ⍝ simple r-expression translator.
+        rat←{')',⍵,'rats('}             ⍝ ⍵ → )⍵rats(
+        svec←rat\¨2/¨'+-×÷*∧^∨⍎⍕'       ⍝ subs pair for each op fn.
+        src←↑subs/(svec,⊂⍺' rats '),⊂⍵  ⍝ translated source. See →subs←.
+        '(',src,')'                     ⍝ source for apl expression.
+    }
+
+    rexp'2r3 + 3r4'                     ⍝ r-expression translation.
+(2 rats 3 )+rats( 3 rats 4)
+
+    eval ← ⍕rats∘⍎∘rexp                 ⍝ r-expression evaluation.
+
+    eval ' 36r140 '                     ⍝ simplify.
+9r35
+
+    eval '1r2 + 1r3'                    ⍝ sum.
+5r6
+
+    eval '1r2 - 1r3'                    ⍝ difference.
+1r6
+
+    eval '3r4 × 2r3'                    ⍝ product.
+1r2
+
+    eval '2r3 ÷ 2r3'                    ⍝ quotient.
+1r1
+
+    eval '4r9 * 3r2'                    ⍝ power
+8r27
+
+    eval '2r5 ∨ 3r5'                    ⍝ gcd.
+1r5
+
+    eval '2r5 ∧ 3r5'                    ⍝ lcm.
+6r5
+
+    eval ' (1r2 × 3r4) + 1r8 '          ⍝ more complex expression.
+1r2
+
+See also: pco factors rational subs gcd nats bt ary
+See also: numbers
+
+Index:rational number|prime number
+Index:greatest common divisor|least common multiple

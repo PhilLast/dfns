@@ -1,0 +1,126 @@
+nested ← {left} ##.eis right                ⍝ enclose-if-simple / link
+
+Suggested by Adám Brudzewsky, a model for enclose-if-simple and link, approximat-
+ely as per ';' in SHARP APL and J.
+
+Monadic case: enclose if simple
+-------------------------------
+It is often convenient to allow a function to take either one or many items as
+argument. Perhaps we have an editing function:
+
+    edit 'this'             ⍝ edit of single item
+    edit 'this' 'that'      ⍝ edit of two items
+
+Such functions often choose to enclose a simple (one item) argument and then pro-
+ceed as in the multiple-argument case:
+
+    1=≡⍵:∇⊂⍵                ⍝ single item: enclose and try again
+    ed¨⍵                    ⍝ edit each name
+or
+    ed¨{1=≡⍵:⊂⍵ ⋄ ⍵}⍵       ⍝ edit each name
+or
+    ed¨⊂⍣(1=≡⍵)⊢⍵           ⍝ edit each name
+
+Monadic [eis] encapsulates this idea as:
+
+    ed¨eis ⍵                ⍝ edit one or more names
+
+Dyadic case: link
+-----------------
+The dyadic case provides an (approximate) explicit equivalent of the implicit
+"vector" (stranding) notation:
+
+    A eis B eis C ... ←~→ A B C ...
+
+Simple Scalars
+--------------
+In Dyalog, the enclose of a simple scalar is itself. What should [eis] do with a
+simple scalar? There are two main contenders:
+
+    eis0 0 ←→ 0             ⍝ no enclosure
+    eis1 0 ←→ ⊂,0           ⍝ enclose of _ravel_ of
+
+[eis0] is fine for the sort of example above (ed¨eis ⍵) but (dyadic) link fares
+less well in more abstract cases, such as reduction:
+
+        display ⊃eis1/⍳6            ⍝ eis1: simple scalar ravel-enclosed
+    ┌→────────────────────────┐
+    │ ┌→┐ ┌→┐ ┌→┐ ┌→┐ ┌→┐ ┌→┐ │
+    │ │1│ │2│ │3│ │4│ │5│ │6│ │
+    │ └~┘ └~┘ └~┘ └~┘ └~┘ └~┘ │
+    └∊────────────────────────┘
+        display ⊃eis0/⍳6            ⍝ eis0: simple scalar not ravel-enclosed
+    ┌→──────────────┐
+    │         ┌→──┐ │
+    │ 1 2 3 4 │5 6│ │
+    │         └~──┘ │
+    └∊──────────────┘
+
+For this reason the behaviour of eis1, which ravels a simple scalar argument, is
+chosen for this model.
+
+Examples:
+
+    ⍝ Monadic case: enclose if simple ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+    display eis 'hello'             ⍝ simple array enclosed
+┌─────────┐
+│ ┌→────┐ │
+│ │hello│ │
+│ └─────┘ │
+└∊────────┘
+    display eis 'hello' 'world'     ⍝ nested array: no-op
+┌→────────────────┐
+│ ┌→────┐ ┌→────┐ │
+│ │hello│ │world│ │
+│ └─────┘ └─────┘ │
+└∊────────────────┘
+    display eis 'h'                 ⍝ simple scalar: ravel-enclosed
+┌─────┐
+│ ┌→┐ │
+│ │h│ │
+│ └─┘ │
+└∊────┘
+    display eis ↑'hello' 'world'    ⍝ simple matrix: enclosed
+┌─────────┐
+│ ┌→────┐ │
+│ ↓hello│ │
+│ │world│ │
+│ └─────┘ │
+└∊────────┘
+
+    ⍝ Dyadic case: link ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+    display 'this' eis 'and' eis 'that'             ⍝ simple vectors sequence
+┌→────────────────────┐
+│ ┌→───┐ ┌→──┐ ┌→───┐ │
+│ │this│ │and│ │that│ │
+│ └────┘ └───┘ └────┘ │
+└∊────────────────────┘
+    display 'aa' 'bb' eis 'cc' 'dd' eis 'ee' 'ff'   ⍝ nested vectors sequence
+┌→──────────────────────────────┐
+│ ┌→─┐ ┌→─┐ ┌→─┐ ┌→─┐ ┌→─┐ ┌→─┐ │
+│ │aa│ │bb│ │cc│ │dd│ │ee│ │ff│ │
+│ └──┘ └──┘ └──┘ └──┘ └──┘ └──┘ │
+└∊──────────────────────────────┘
+    display ⊃ eis/ 1 2 3 4                          ⍝ link-reduction
+┌→────────────────┐
+│ ┌→┐ ┌→┐ ┌→┐ ┌→┐ │
+│ │1│ │2│ │3│ │4│ │
+│ └~┘ └~┘ └~┘ └~┘ │
+└∊────────────────┘
+    display ⊃ ,/ 1 2 3 4                            ⍝ cf join-reduction
+┌→──────┐
+│1 2 3 4│
+└~──────┘
+    display ⊃ {⍺ ⍵}/ 1 2 3 4                        ⍝ cf pair-reduction
+┌→──────────────┐
+│   ┌→────────┐ │
+│ 1 │   ┌→──┐ │ │
+│   │ 2 │3 4│ │ │
+│   │   └~──┘ │ │
+│   └∊────────┘ │
+└∊──────────────┘
+
+Index:link|enclose-if-simple
+Index;Brudzewsky A.

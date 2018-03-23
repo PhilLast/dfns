@@ -1,0 +1,218 @@
+rats ← {tolerance←⎕ct} ##.rational nums     ⍝ Rational approximation to real ⍵.
+
+Argument [nums] is a numeric,  possibly nested, array of shape S.  The result is
+an array of shape: (2,S) with pairs of whole numbers, along the first axis, with
+a quotient which is  ⍺-tolerably  close  to  the  corresponding  argument  item.
+[rational] guarantees to return the smallest pair of such numbers.  For example,
+if we choose pi (an irrational number) as argument, then with the default ⎕CT of
+1e¯14, we see:
+
+        rational ○1             ⍝ tolerable rational approximation to pi
+    5419351 1725033
+
+        (○1) = ÷/ rational ○1   ⍝ quotient of pair is ⎕CT-equal to argument.
+    1
+        ⎕ct←1e¯10               ⍝ coarser tolerance.
+
+        rational ○1             ⍝ coarser tolerance yields smaller pair.
+    208341 66317
+
+        ⊢ numbs ← +/¨1⊂ 2 2 2⍴ +\10*-⍳8         ⍝ nested numeric array.
+    ┌─────────────────┬───────────────────┐
+    │0.1     0.111    │0.11     0.1111    │
+    │0.11111 0.1111111│0.111111 0.11111111│
+    └─────────────────┴───────────────────┘
+
+        disp rational numbs                     ⍝ rational pairs.
+    ┌───────────────┬─────────────────┐
+    │    1     111  │    11     1111  │
+    │11111 1111111  │111111 11111111  │
+    ├───────────────┼─────────────────┤
+    │    10     1000│    100     10000│
+    │100000 10000000│1000000 100000000│
+    └───────────────┴─────────────────┘
+
+        numbs ≡ ÷⌿ rational numbs               ⍝ round-trip
+    1
+
+The  integer  pair  could  be reconstituted directly from the continued fraction
+returned  by  function →cfract←. The inner reduction in the coding that follows,
+represents the expression transformation:
+
+  ···+1     ···+1        ···+1        ···+1         ┐ ···+ ┌ yz+1
+      ─         ─            ─            ─         │      │ ─────────  => ···
+      x+1       x+1    ┐   ┌ x+z    ┐   ┌ x(yz+1)+z ├───→──┤ x(yz+1)+z
+        ─         ─    ├─→─┤   ──── ├─→─┤ ───────── │      └
+      ┌ y+1 ┐   ┌ yz+1 │   └   yz+1 ┘   └   yz+1    ┘
+      │   ─ ├─→─┤ ──── │
+      └   z ┘   └   z  ┘
+
+
+    rational←{              ⍝ Rational approximation from continued fraction.
+        ⌽↑{                 ⍝ reversed accumulation of,
+            top bot←⍵       ⍝ tailmost,
+            ⌽top 0+⍺ 1×bot  ⍝ fractions.
+        }/(cfract ⍵),1      ⍝ continued fraction representation.
+    }
+
+or the equivalent one-liner:
+
+    rational←{⌽↑{↑⍺{⌽⍺ 0+⍺⍺ 1×⍵}/⍵}/(cfract ⍵),⊂1 1}
+
+For  amusement, [rational]  could be recast as a derived function, although it's
+hard to see a practical benefit of doing so:
+
+    rational ← ↑∘(÷∘⊂∘(1∘∨)⍨∘(1∘(,⍨∘⊂))⍨)       ⍝ derived fn (⎕ml=0)
+
+Historical note
+---------------
+Prior to the implementation of primitive function GCD (∨) this more complex cod-
+ing, which was slower by a factor of around 2, was used:
+
+    rational←{                  ⍝ Rational number near real ⍵.
+        ⍺←⎕CT ⋄ ⎕CT←⍺           ⍝ default comparison tolerance.
+        real←⍵                  ⍝ "real" number.
+        real{                   ⍝ starting with real number.
+            An←⌊⍺               ⍝ nth term of continued fraction.
+            Cn←1 An+.×⍵         ⍝ nth convergent pair.
+            real=÷/Cn:Cn        ⍝ tolerably close rational: done.
+            (÷⍺-An)∇ 1 0↓⍵⍪Cn   ⍝ otherwise: next term.
+        }2 2⍴0 1 1 0            ⍝ convergents: C¯2, C¯1.
+    }
+
+A Perfectly Accurate (⎕ct-intolerant) Version
+---------------------------------------------
+If we ignore comparison tolerance, all IEEE floating point numbers are rational,
+with a denominator of a power of 2 (yeah?).
+
+Using →hexf←, this version decodes the bits from the internal IEEE double float-
+ing-point representation and uses →nats← to provide a perfectly (⎕CT=0) accurate
+rational  pair.  The  two-item  result is a pair of character vectors of decimal
+digits.
+
+    ratf←{⎕IO ⎕ML ⎕CT←0                 ⍝ Exact rational from IEEE double.
+        digs←16↑⎕D,⎕A                   ⍝ hex digits.
+        bits←,⍉2 2 2 2⊤digs⍳hexf ⍵      ⍝ binary floating number.
+        split←(⍳⍴bits)∊0 1 12           ⍝ split fields: sign exponent mantissa.
+        bsign bexp bmant←split⊂bits     ⍝ bit-vector fields.
+        sign←bsign/'¯'                  ⍝ negative sign.
+        exp←¯1022+2⊥bexp                ⍝ signed numeric binary exponent.
+        deco←{↑⍺{⍺+nats ⍺⍺×nats ⍵}/⌽⍵}  ⍝ accurate ⍺-decode.
+        top←2 deco 1,bmant              ⍝ numerator.
+        bot←2*nats 53-exp               ⍝ denominator.
+        sign '',¨top{                   ⍝ rational pair, char vectors à la nats.
+            1∊'13579'∊,↑¯1↑¨⍺ ⍵:⍺ ⍵     ⍝ either number is odd: done.
+            (⍺÷nats 2)∇ ⍵÷nats 2        ⍝ both even: cancel 2s.
+        }bot
+    }
+
+Notice that some friendly decimal numbers such as 0.1 are not representable with
+perfect  accuracy in binary.  This means that the closest number to 0.1 that may
+be represented in 53 bits, is the rational number:
+
+    3602879701896397 ÷ 36028797018963968
+0.1
+
+    ratf 1234                           ⍝ whole number.
+┌────┬─┐
+│1234│1│
+└────┴─┘
+
+    ratf 0.1                            ⍝ ÷10 is not a finite binary number.
+┌────────────────┬─────────────────┐
+│3602879701896397│36028797018963968│
+└────────────────┴─────────────────┘
+
+    ratf 2*¯16                          ⍝ reciprocal of power of 2 is spot-on.
+┌─┬─────┐
+│1│65536│
+└─┴─────┘
+
+    ratf ¯0.75                          ⍝ negative sign fixed to numerator.
+┌──┬─┐
+│¯3│4│
+└──┴─┘
+
+Notice  that  the denominator of the rational pair returned by ratf is always an
+integer power of 2.
+
+Ref: http://en.wikipedia.org/wiki/Continued_fraction
+
+Examples:
+
+    rational 0.75             ⍝ three quarters.
+3 4
+    rational ÷3               ⍝ one third.
+1 3
+
+    rational ¯0.1234          ⍝ negative real => negative numerator.
+¯617 5000
+
+    rational 0                ⍝ 0 => 0÷1 (this is handy for →cfract←).
+0 1
+
+    1e¯10 rational 2*÷2       ⍝ coarse rational approximation to sqrt(2).
+114243 80782
+
+    ⎕←pi←rational ○1          ⍝ tolerable approxmiation to pi.
+5419351 1725033
+
+    (○1)=÷/pi                 ⍝ ... compares within ⎕ct.
+1
+    gcd/pi                    ⍝ pair is relatively prime.
+1
+    gcd/⎕←rational 9÷16       ⍝ pair of relatively prime numbers:
+9 16
+1
+    rational 11÷29            ⍝ pair matches rational of quotient ...
+11 29
+                              ⍝ ... for all relatively prime pairs:
+
+    {⍵≡rational÷/⍵}¨ ∘.,⍨ sieve 2 to 100
+0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0
+
+    ⍉ rational +∘÷\ cfract ○1   ⍝ successive rational approximations to Pi.
+      3       1
+     22       7
+    333     106
+    355     113
+ 103993   33102
+ 104348   33215
+ 208341   66317
+ 312689   99532
+ 833719  265381
+1146408  364913
+5419351 1725033
+
+⍝ Looking at the third row above, we see that if we divide the number-of-the-
+⍝ beast (666) by the NYC area code (212) we get a reasonable appoximation to Pi.
+
+See also: factors sieve gcd cfract efract pco
+See also: hexf nats
+See also: numbers
+
+Index:rational number|Pi|Beast, number of the

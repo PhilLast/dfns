@@ -1,0 +1,202 @@
+ redblack←{⎕IO ⎕ML←0 1                   ⍝ Red-black trees.
+
+     ins←{                               ⍝ tree ⍺ with key=val ⍵.        [ins]
+         ⍺≡0:base ⍵ 1(0 0)               ⍝ null: new <red> node and path.
+         ((nxt _)red subs)(key _)←⍺ ⍵    ⍝ parts of node.
+         nxt≡key:done ⍵ red subs         ⍝ match: new value, long path.
+         node path←⍺ ∇ search ⍵          ⍝ natch: search subtrees.
+         2≠⍴path:node path               ⍝ not grandparent: continue.
+         p c←path                        ⍝ parent and child sides.
+         ~node isred p:node path         ⍝ parent black [insB]: no change.
+         node isred-p:node insRR p       ⍝ uncle red [insRR]:
+         p=c:node insRBo p               ⍝ C is P's outer child [insRBo]:
+         (node rot∘p sub p)insRBo p      ⍝ C is P's inner child [insRBi]:
+     }                                   ⍝ t p ← t ∇ k v
+
+     insRR←{                             ⍝ red uncle.                    [insRR]
+         g←flip ⍺                        ⍝   [G] → <G>
+         u←g flip sub ⍵                  ⍝   <U> → [U]
+         base u flip sub-⍵               ⍝   <P> → [P]
+     }                                   ⍝ :: t ∇ p → t p
+
+     insRBo←{                            ⍝ C is outer child.             [insRBo]
+         g←flip ⍺                        ⍝   [G] → <G>
+         p←g rot-⍵                       ⍝       ⌽ G-P
+         done flip p                     ⍝   <P> → [P]
+     }                                   ⍝ :: t ∇ p → t p
+
+     get←{                               ⍝ value for key ⍵ from tree ⍺.
+         ⍺≡0:                            ⍝ key not in tree: no value.
+         (nxt val)_ subs←⍺               ⍝ next key, value and subtrees.
+         nxt≡⍵:val                       ⍝ match: value from tree.
+         ((>/⍋↑⍵ nxt)⊃subs)∇ ⍵           ⍝ search subtree.
+     }                                   ⍝ v ← t ∇ k
+
+     rem←{                               ⍝ remove key ⍵ from tree ⍺.
+         ⍺≡0:done 0                      ⍝ null: key not in tree.
+         (nxt _)red(lft rgt)←⍺           ⍝ node key and subtrees.
+         ~nxt≡⊃⍵:bal ⍺ ∇ search ⍵        ⍝ no match: search subtrees.
+         0≡lft:bal rgt rep red           ⍝ no left subtree: replace with right.
+         0≡rgt:bal lft rep red           ⍝ no right subtree: replace with left.
+         kv←left rgt                     ⍝ two subtrees: right-successor node.
+         sub path←rgt ∇ kv               ⍝ right subtree with successor removed.
+         bal(kv red(lft sub))(1,path)    ⍝ replaced with successor's key=val.
+     }                                   ⍝ :: t ∇ k _ → t p
+
+     left←{                              ⍝ left-most key=val in subtree ⍵.
+         kv _(lft _)←⍵                   ⍝ key=val and left subtree.
+         0≡lft:kv                        ⍝ no left node: successor key.
+         ∇ lft                           ⍝ examine left subtree.
+     }                                   ⍝ :: ∇ t → kv
+
+     rep←{                               ⍝ repaint deleted node's child. [rep]
+         ⍵:done ⍺                        ⍝ red X: [C]                    [repR]
+         ⍺≡0:dblk 0                      ⍝ child null: [[∘]]             [repBB]
+         inf red subs←⍺                  ⍝ child non-null.
+         red:done inf 0 subs             ⍝ child red: <C> →  [C]         [repBR]
+         dblk ⍺                          ⍝ child blk: [C] → [[C]]        [repBB]
+     }                                   ⍝ :: t ∇ r → t p
+
+     bal←{                               ⍝ double-black balancing.       [bal]
+         sub path←⍵                      ⍝ subtree and path to new child.
+         2≠⍴path:⍵                       ⍝ not parent: continue.
+         dir dblk←path×¯1 1              ⍝ direction and 0 => double-black.
+         dblk≠0:⍵                        ⍝ not double black: continue.
+         sub isred dir:sub balR dir      ⍝ red sibling: [balR]
+         sub balB dir                    ⍝ blk sibling: [balB]
+     }                                   ⍝ :: ∇ t p → t p
+
+     balR←{                              ⍝ sibling red                   [balR]
+         p0←flip ⍺                       ⍝   [P] → <P>
+         p1←p0 rot-⍵                     ⍝       ⌽ P-S
+         p2←flip p1                      ⍝   <S> → [S]
+         Pinf Pred Psubs←p2              ⍝ new parent node.
+         N S←⍵ wise Psubs                ⍝ [[N]] and [S]
+         N_ path←N balB ⍵                ⍝ sibling now black: [balB]
+         P_subs←⍵ wise N_ S              ⍝ new subtrees.
+         (Pinf Pred P_subs)path          ⍝ balanced tree.
+     }                                   ⍝ :: t ∇ r → t p
+
+     balB←{                              ⍝ sibling black                 [balB]
+         near far←⍺∘isred¨⍵×1,¨¯1 1      ⍝ nephew colours.
+         near⍱far:⍺ balBbb ⍵             ⍝ both nephews black: [balBbb]
+         far:⍺ balB_r ⍵                  ⍝ far nephew red: [balB_r]
+         ⍺ balBrb ⍵                      ⍝ far nephew black: [balBrb]
+     }                                   ⍝ :: t ∇ r → t p
+
+     balBbb←{                            ⍝ both nephews black            [balBbb]
+         pred←⍺ isred ⍬                  ⍝ parent colour.
+         p0←⍺ flip sub ⍵                 ⍝   [S] → <S>
+         pred:done flip p0               ⍝   <P> → [P]
+         dblk p0                         ⍝   [P] → [[P]]
+     }                                   ⍝ :: t ∇ r → t p
+
+     balB_r←{                            ⍝ far nephew red.               [balB_r]
+         colr←{kv _ lr←⍺ ⋄ kv ⍵ lr}      ⍝ ⍵-coloured tree ⍺.
+         pred←⍺ isred ⍬                  ⍝ parent colour.
+         p0←⍺ colr 0                     ⍝   (P) → [P]
+         p1←p0 rot-⍵                     ⍝       ⌽ P-S
+         p2←p1 flip sub ⍵                ⍝   <f> → [f]
+         p3←p2 colr pred                 ⍝   (S) → (P)
+         done p3                         ⍝ balance resolved.
+     }                                   ⍝ :: t ∇ r → t p
+
+     balBrb←{                            ⍝ far nephew black              [balBrb]
+         p0←⍺ flip sub ⍵                 ⍝ [S] → <S>
+         p1←p0 rot∘⍵ sub ⍵               ⍝     ⌽ S-n
+         p2←p1 flip sub ⍵                ⍝ <n> → [n]
+         p2 balB_r ⍵                     ⍝       [balB_r]
+     }                                   ⍝ :: t ∇ r → t p
+
+     root←{                              ⍝ root:
+         0≡⊃⍵:0                          ⍝ null tree: done.
+         (inf _ subs)_←⍵                 ⍝ tree and path.
+         inf 0 subs                      ⍝ root: black - rule [I].
+     }                                   ⍝ t ← ∇ t p
+
+     fmt←{                               ⍝ formatted tree ⍵.
+         null←↑,↓'[∘]'                   ⍝ format of null.
+         ⍵≡0:null                        ⍝ null tree: null format.
+         (key val)red subs←⍵             ⍝ node info.
+         l r←red⊃'[]' '<>'               ⍝ colour: [black] <red>
+         key_val←↑,/⍕¨l key'='val r      ⍝ formatted key=value
+         fmts←{⊖⍵}\'┌└'{                 ⍝ hang subtrees by ┌─ ─┐ branches.
+             0 0≡⍴⍵:⍵                    ⍝ null: done.
+             mask←∧\' '=⊃↓⌽⍉⍵            ⍝ mask of leading blanks.
+             ⍉⌽↑(⊂⌽⍺,mask/'│'),↓⌽⍉⍵      ⍝ subtree suspended by branch.
+         }¨{⊖⍵}\∇¨subs                   ⍝ formatted subtrees.
+         dent←' '⊣¨key_val               ⍝ subtree padding.
+         pads←{↓↑,/dent,⊂⍵}¨fmts         ⍝ left-padded subtrees.
+         ↑↑{⍺,(↓key_val,'┤'),⍵}/pads     ⍝ formatted tree.
+     }                                   ⍝ :: ∇ t → [-;]
+
+     vec←{                               ⍝ vector of key=value pairs.
+         0≡⍵:⍬                           ⍝ null tree: null vector.
+         key_val bal(lft rgt)←⍵          ⍝ node info and subtrees.
+         (∇ lft),(⊂key_val),∇ rgt        ⍝ left_vec, key=val, right_vec.
+     }
+
+     chk←{                               ⍝ tree statistics.
+         0=≡⍵:(0≡⍵)0 0 0,⍬ 1 1           ⍝ null: ok size dep ht range blks isblk.
+         (key _)red subs←⍵               ⍝ parts of node.
+         blk←~red                        ⍝ black node.
+         stats←(⍺+1)∇¨subs               ⍝ subtree stats.
+         oks ss ds hs ks bs bks←↓⍉↑stats ⍝ oks sizes deps hghts keys blks reds.
+         keys←↑key{⍺,(⊂⍺⍺),⍵}/ks         ⍝ subtree key ranges.
+         okK←{⍵≡⍳⍴⍵}⍋↑keys               ⍝ left keys << key >> right keys.
+         okR←blk∨∧/bks                   ⍝ check rule [R].
+         okB←=/bs                        ⍝ check rule [B].
+         ok←okK∧okR∧okB∧∧/oks            ⍝ subtree ok.
+         kr←⌽2⍴¯1⌽keys                   ⍝ key range.
+         blks←blk+⌈/bs                   ⍝ black count increment.
+         ht sz←1+(⌈/hs),+/ss             ⍝ tree height and size.
+         dp←⍺++/ds                       ⍝ total depths.
+         ⍺>0:ok sz dp ht,kr blks blk     ⍝ subtree stats.
+         ok sz(⌊0.5+dp÷sz)ht             ⍝ root: ok size mean_depth height.
+     }                                   ⍝ ok size tot_dep ht rng blks blk ← ∇ t
+
+     search←{                            ⍝ search subtree ⍺ for key ⊃⍵.
+         inf red(lft rgt)←⍺              ⍝ parts of node.
+         dir←1-2×>/⍋↑⊃¨inf ⍵             ⍝ search direction: ¯1 1
+         _ nxt←dir wise lft rgt          ⍝ nxt subtree to search.
+         sub path←nxt ⍺⍺ ⍵               ⍝ new subtree & path.
+         subs←dir wise lft sub rgt       ⍝ new subtrees.
+         (inf red subs)(dir,path)        ⍝ new node and extended path.
+     }                                   ⍝ :: t (t ∇ k v → t p) ∇∇ k v → t p
+
+     rot←{                               ⍝ ⍵-rotation of node ⍺.
+         Ninf Nred Nsubs←⍺               ⍝        N   →   L_
+         (Linf Lred Lsubs)R←⍵ wise Nsubs ⍝       ⌿ \     / \
+         ll lr←⍵ wise Lsubs              ⍝      L   R  ll   N_
+         N_←Ninf Nred(⍵ wise lr R)       ⍝     / \         / \
+         Linf Lred(⍵ wise ll N_)         ⍝   ll   lr     lr   R
+     }                                   ⍝ :: t ∇ r → t
+
+     sub←{                               ⍝ apply ⍺⍺ to subtree ⍵ of tree ⍺.
+         inf red subs←⍺                  ⍝ node info and subs.
+         lft rgt←⍵ wise subs             ⍝ right subtree is target.
+         sub←⍺⍺ rgt                      ⍝ operation on right subtree.
+         inf red(⍵ wise lft sub)         ⍝ reassembled tree.
+     }                                   ⍝ :: t (∇ t → t) ∇∇ dir → t
+
+     isred←{                             ⍝ colour for subtree ⍺, path ⍵.
+         inf col(lft rgt)←⍺              ⍝ (possibly null) node colour and subs.
+         ⍵≡⍬:col                         ⍝ colour of (possibly null) node.
+         (⊃⌽(⊃⍵)wise lft rgt)∇ 1↓⍵       ⍝ examine left or right subtree.
+     }                                   ⍝ :: t ∇ p → red
+
+     wise←{(2×⍺)↑3⍴⍵}                    ⍝ parameterise direction.
+     flip←{kv b lr←⍵ ⋄ kv(~b)lr}         ⍝ flip colour of node ⍵.
+     done←{⍺ ⍵}∘0 0 0                    ⍝ node with long path.
+     base←{⍺ ⍵}∘⍬                        ⍝ new child: node with null path.
+     dblk←{⍺ ⍵}∘(,0)                     ⍝ double black node.
+
+     op←⍺⍺{f←⍺⍺ ⋄ ⊃⎕CR'f'}0              ⍝ operand label.
+
+     '∪'≡op:root ⍺ ins ⍵                 ⍝ insert/replace value in tree.
+     '~'≡op:root ⍺ rem ⍵ 0               ⍝ remove key=value from tree.
+     '⍎'≡op:⍵ get ⍺                      ⍝ search for value for key.
+     '⍕'≡op:fmt ⍵                        ⍝ formatted tree.
+     '∊'≡op:vec ⍵                        ⍝ vector of key=value pairs.
+     '?'≡op:4↑0 chk ⍵                    ⍝ tree stats: ok size mean_depth height.
+ }

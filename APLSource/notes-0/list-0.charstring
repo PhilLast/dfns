@@ -1,0 +1,230 @@
+list ← ##.list vect                     ⍝ list from vector ⍵.
+rslt ← init (acc ##.ltrav) list         ⍝ List traversal.
+
+Function [list] takes a vector as right argument and returns a list.
+
+Operator  [ltrav]  takes  a dyadic [acc]umulating function as left operand, with
+an  initial  accumulator value of [init] as left argument. The right argument is
+the subject [list].
+
+Background
+----------
+APL is pre-eminent when it comes to the processing of arrays. Occasionally, how-
+ever  we encounter a task where the value of the first of a number of items det-
+ermines  how  we  are to interpret any remaining ones. In this case, it might be
+worth  considering representing the items as a list, rather than as a vector. An
+example might be in writing a parser for a sequence of expression tokens.
+
+Definition: A List-of-⍺-s is either Null or a Pair (Head Tail), where Head is an
+⍺ and Tail is a  List-of-⍺-s. More succinctly:
+
+    List ⍺ ::= Null | Pair ⍺ (List ⍺)
+
+Pair is sometimes called "Cons", short for "list constructor".
+
+We  use a nested 2-vector to implement a list with a special value '∘' for Null.
+Note  that the choice of '∘' for Null is arbitrary and could just as well be any
+specific array value, including a 2-vector!
+
+In general, a list has many of the properties of an APL vector, except that:
+
+    Separating the first from any remaining items in a list:
+
+        head tail←⍵
+
+    is quicker and more elegant than the vector equivalent:
+
+        head tail←(⊃⍵)(1↓⍵)
+
+However,
+
+    A list has no prototypical item, so "overtake" must be coded explicitly.
+
+    There is an overhead of around 40 bytes per item  (80 in 64-bit APL),  comp-
+    ared with a simple vector but this overhead is diluted when  compared with a
+    nested vector.
+
+            size←{⎕size'⍵'}                 ⍝ size in bytes.
+
+            size        1e3⍴⎕a              ⍝ size of 1000-vector of bytes.
+        1016
+            size list   1e3⍴⎕a              ⍝ size of 1000-list of bytes.
+        39980
+
+            size      ,¨1e3⍴⎕a              ⍝ size of 1000-vector of 1-vectors.
+        24016
+            size list ,¨1e3⍴⎕a              ⍝ size of 1000-list of 1-vectors.
+        44016
+
+    To  access  the  ⍺'th  item  of a list takes ⍺ iterations, as opposed to the
+    vector's 1.  In  other words, list-item-access is O(n), whereas vector-item-
+    access is O(1). However, in both cases, access-each-item is O(n).
+
+    To process all of the items in a list, a common operation, there is no equi-
+    valent of the array's primitive operator ¨ (each). Instead, an explicit loop
+    must be coded.
+
+    (
+        However,  in  defence  of the list: splitting a problem into what-to-do-
+        with-the-head  together  with what-to-do-with-the-tail is a powerful de-
+        composition  technique. Proponents of the list argue that, in situations
+        where a vector can not be treated as a whole, recurring on a list as op-
+        posed to iterating on the vector leads to many fewer "plus-or-minus-one"
+        problems.
+    )
+
+The following function counts the number of items in a list.
+
+    litems←{                ⍝ No. of list items.
+        ⍺←0                 ⍝ initial count is 0.
+        ⍵≡'∘':⍺             ⍝ null list: accumulated count.
+        head tail←⍵         ⍝ head item and tail.
+        (⍺+1)∇ tail         ⍝ accumulate with tail.
+    }
+
+and this function converts a list to its equivalent vector:
+
+    vect←{                  ⍝ Vector from list.
+        ⍺←⍬                 ⍝ initial vector is ⍬.
+        ⍵≡'∘':⍺             ⍝ null list: accumulated vector.
+        head tail←⍵         ⍝ head item and tail.
+        (⍺,⊂head)∇ tail     ⍝ accumulate with tail.
+    }
+
+leading to operator [ltrav], which abstracts the essence of traversing a list:
+
+    ltrav←{                 ⍝ List traversal.
+        ⍵≡'∘':⍺             ⍝ null list : accumulator.
+        head tail←⍵         ⍝ head item and tail.
+        (⍺ ⍺⍺ head)∇ tail   ⍝ accumulated with tail.
+    }
+
+Note  that  in this general case, the initial accumulator ⍺ must be supplied ex-
+plicitly as the operator can not know its type.
+
+Using such techniques we can show that, in some circumstances, the processing of
+a list can outpace the equivalent (naïvely coded) vector version:
+
+        vsum←{                      ⍝ vector summation.
+            ⍺←0                     ⍝ initial accumulator.
+            0=⍴⍵:⍺                  ⍝ null vector: finished.
+            head tail←(⊃⍵)(1↓⍵)     ⍝ first and remaining items.
+            (⍺+head)∇ tail          ⍝ accumulated sum.
+        }
+
+        lsum←{                      ⍝ list summation.
+            ⍺←0                     ⍝ initial accumulator.
+            ⍵≡'∘':⍺                 ⍝ null list: finished.
+            head tail←⍵             ⍝ first and remaining items.
+            (⍺+head)∇ tail          ⍝ accumulated sum.
+        }
+
+        cmpx'vsum⍳1e4' 'lsum list⍳1e4'
+    vsum⍳1e4      2.2E¯1   0% ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+    lsum list⍳1e4 6.5E¯2 -72% ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+
+The reason why vsum is so much slower is that (1↓⍵), which is executed ⍴⍵ times,
+makes a copy of all but the first item of the vector ⍵.
+
+NB: Of course, there are better ways to sum a numeric vector!
+
+Technical note:
+
+The coding for list is simply:
+
+    list←{              ⍝ list from vector ⍵.
+        ↑{⍺ ⍵}/⍵,'∘'    ⍝ with '∘' as null.
+    }
+
+As {⍺ ⍵} is an idiom, the list function is relatively fast.
+
+Naming leading items
+--------------------
+We  can  name more than one item at the head of the list by using "structure as-
+signment"
+
+    (head tail) ← ⍵                 ⍝ name first item and remainder.
+    (head (next tail)) ← ⍵          ⍝ name first two items and remainder.
+    (a (b (c (d (e ... ))))) ← ⍵    ⍝ name first umpteen items and remainder.
+
+A  rather contrived example of the use of this technique might be to remove adj-
+acent duplicate values from a list:
+
+        rmdups←{                        ⍝ remove adjacent duplicates.
+            ⍺←'∘'                       ⍝ null accumulator.
+            (a(b tail))←⍵               ⍝ a and b are first two items.
+            b≡'∘':'∘'{⍺ ⍵}⍨ltrav a ⍺    ⍝ b null: list-reversed accumulator.
+            a≡b:⍺ ∇ b tail              ⍝ two items match: drop first one.
+            a ⍺ ∇ b tail                ⍝ accumulate first, continue.
+        }
+
+        vect rmdups list 'Mississippi'  ⍝ removal of adjacent duplicates.
+    Misisipi
+
+Handy functions on lists
+------------------------
+Here are some list utility functions:
+
+    rev←{⍺←'∘' ⋄ ⍵≡'∘':⍺ ⋄ hd r←⍵ ⋄ hd ⍺ ∇ tl}  ⍝ reversed list: (⌽⍵),⍺
+    cat←{⍺≡'∘':⍵ ⋄ hd tl←⍺ ⋄ hd(tl ∇ ⍵)}        ⍝ list catenation: ⍺,⍵
+    pop←{⍺=0:⊂⍵ ⋄ hd tl←⍵ ⋄ ((⍺-1)∇ tl),⊂hd}    ⍝ ⍺ items and tail from list ⍵
+
+Examples:
+
+    ltrav←{                         ⍝ List traversal.
+        ⍵≡'∘':⍺                     ⍝ null list : accumulator.
+        head tail←⍵                 ⍝ head item and tail.
+        (⍺ ⍺⍺ head)∇ tail           ⍝ accumulated with tail.
+    }
+
+    0 {⍺+1} ltrav list'hello'       ⍝ length of list.
+5
+    length←0∘( {⍺+1} ltrav )        ⍝ named list-length function.
+
+    length list ⎕a
+26
+    vect←⍬∘( {⍺,⊂⍵} ltrav )         ⍝ vector from list.
+
+    vect list 'hello'               ⍝ round-trip vector.
+hello
+
+    revl←'∘'∘( {⍺ ⍵}⍨ ltrav )       ⍝ reverse of list.
+
+    vect revl list 'hello'          ⍝ vector reverse.
+olleh
+
+⍝ A more substantial example is this little "lambda expression" parser:
+
+    parse←{                                 ⍝ Right-to-left lambda expr parser.
+        ↑{ ⍝ ⎕←⍺'│'⍵                        ⍝ (uncomment to see trace).
+            (toks a)(b(c accs))←⍺ ⍵         ⍝  a│b c : a│b c    3-item window.
+            '⊣'≡a:b                         ⍝  ⊣│*   :  *       finished
+            '()'≡a c:toks ∇ b accs          ⍝  (│* ) :  │* ·
+            '(→'≡a b:⍺ ∇ c accs             ⍝  (│→ * : (│*· ·
+            '→→'≡a b:toks ∇ ⍵               ⍝  →│→ * :  │→ *
+            '→'≡b:toks ∇ b(('→'a c)accs)    ⍝  v│→ b :  │→ v→b  lambda node.
+            '→)'≡a c:toks ∇ a ⍵             ⍝  →│* ) :  │→ * )
+            a∊'→(':⍺ ∇('@'b c)accs          ⍝  (│f a : (│fa     apply node.
+            toks ∇ a ⍵                      ⍝  *│* · :  │* *
+        }/↑{⍺ ⍵}⍨/⌽'⊣(',⍵,')'               ⍝ parse of token list ⍵.
+    }
+
+⍝ Notice that, apart from the last line, there are very few APL primitive funct-
+⍝ ions in the code; most of the action takes place using structure construction
+⍝ and deconstruction by assembling and naming parts of the ⍺ and ⍵ lists.
+
+    )copy min trees                     ⍝ borrow Min's expression tree display.
+
+    trees parse '(t→ttt)(fx→f(fx))+0'   ⍝ parse tree for lambda expression.
+         ┌─@┐
+      ┌──@┐ 0
+ ┌────@─┐ +
+┌→──┐  ┌→─┐
+t ┌─@┐ f ┌→─┐
+ ┌@┐ t   x ┌@─┐
+ t t       f ┌@┐
+             f x
+
+See also: alists parse lisp joy
+
+Index:accumulator|lambda expression|min (workspace)|parsing|lists|cons

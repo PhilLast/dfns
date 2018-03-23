@@ -1,0 +1,19 @@
+⍝ Simple macro processor for bf:
+
+    movl←'l=[-/<+/>] '      ⍝ move left ⍺ cell positions ("/" replicates.).
+
+    mac movl, '2l 1l 0l'    ⍝ move left 2 1 0 (the last of which will hang BF).
+[-<<+>>] [-<+>] [-+]
+
+    mac'a=KO a=OK a'        ⍝ subsequent defns replace previous ones.
+OK
+    mac'a=K (a=O a)a'       ⍝ inner block defns shadow outer ones.
+OK
+    mac'a=OK b=a a=KO b'    ⍝ a expanded at b defn time.
+OK
+    mac'a=KO b=\a a=OK b'   ⍝ a expanded at b dref time.
+OK
+    mac'O=? b=\\\OK b'      ⍝ O not expanded.
+OK
+    mac'a=K b=(a=O a) ba'   ⍝ inner defn is local to block.
+OK

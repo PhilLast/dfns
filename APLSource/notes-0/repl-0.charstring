@@ -1,0 +1,73 @@
+(eval ##.repl)stop                          ⍝ Read-eval-print loop.
+
+[repl] uses quote-quad (⍞) to prompt for, and input, a character vector argument
+for evaluation by operand function [eval].  Output  from the evaluation is disp-
+layed in the session and the loop repeated until character vector [stop] is  in-
+put. In particular, if [stop] is the null vector '', then repl  continues  until
+an empty line is entered.
+
+Ref: http://en.wikipedia.org/wiki/Read-eval-print_loop
+
+Technical note:
+In order to make its error-guard visible from the operand function, [repl] calls
+the function from an ⍎. This bypasses the operator's local-hiding mechanism and
+leaves the error-guard in-scope.
+
+Examples:
+
+      ⌽ repl'→'         ⍝ reverse of input.
+    hello
+olleh
+    world
+dlrow
+    →
+
+      ⎕size repl ')'    ⍝ size of object
+    display
+3588
+    repl
+684
+    notes
+1363400
+    )
+
+      ⍎ repl ''         ⍝ mini-session until null input.
+    2+3
+5
+    ⍳3
+1 2 3
+
+
+      disp∘⍎ repl')'    ⍝ boxed output
+
+    1 2 + 3 4
+4 6
+    1 2 + ⊂3 4
+┌───┬───┐
+│4 5│5 6│
+└───┴───┘
+    }}}                 ⍝ error
+Eh?
+    )
+
+      scripts._defs∘parse repl'→'   ⍝ bind left arg for dyadic fuction: →parse←
+
+    2+3
+  A
+ ┌┴─┐
+┌┴┐ 3
+2 +
+
+    ∘.+/m n
+      A
+   ┌──┴──┐
+ ┌─┴──┐ ┌┴┐
+┌┴─┐  / m n
+∘ ┌┴┐
+  . +
+
+    →
+
+See also: parse esh lisp joy
+
+Index:loop|shell|error-guard, dynamic|REPL|repl

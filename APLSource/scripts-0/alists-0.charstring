@@ -1,0 +1,105 @@
+⍝ Association lists:
+
+    alist←'abc' (1 2 3)     ⍝ association list.
+
+    alist alval'b'          ⍝ find value of 'b'.
+2
+    alist alvals'bcab'      ⍝ find multiple values.
+2 3 1 2
+
+    alist alext 'd'4        ⍝ alist extended with (name value) pair.
+ dabc  4 1 2 3 
+
+    alist alrem 'b'         ⍝ alist with name removed.
+ ac  1 3 
+
+    alist alrems 'ac'       ⍝ alist with multiple names removed.
+ b  2 
+
+    blist←('able' 'baker' 'charlie')(7 8 9)     ⍝ non-scalar names.
+
+    blist alval'baker'
+8
+    blist alvals'able' 'charlie'
+7 9
+
+    blist alext'dog' 10
+  dog  able  baker  charlie   10 7 8 9 
+
+    blist alrem 'baker'
+  able  charlie   7 9 
+
+    blist alrems 'able' 'charlie'
+  baker   8 
+
+
+    stuff←('milly' 'molly' 'may')('star' 'thing' 'stone')
+
+    stuff alval 'may'                           ⍝ thing associated with May.
+stone
+
+    stuff alvals 'may' 'milly'                  ⍝ May and Milly's things.
+ stone  star 
+
+    stuff ← stuff alext 'maggie' 'shell'        ⍝ add Maggie and her thing.
+
+    disp stuff
+┌────────────────────────┬────────────────────────┐
+│┌──────┬─────┬─────┬───┐│┌─────┬────┬─────┬─────┐│
+││maggie│milly│molly│may│││shell│star│thing│stone││
+│└──────┴─────┴─────┴───┘│└─────┴────┴─────┴─────┘│
+└────────────────────────┴────────────────────────┘
+
+    stuff ← stuff alrem'molly'                  ⍝ remove Molly and her thing.
+
+    disp stuff
+┌──────────────────┬──────────────────┐
+│┌──────┬─────┬───┐│┌─────┬────┬─────┐│
+││maggie│milly│may│││shell│star│stone││
+│└──────┴─────┴───┘│└─────┴────┴─────┘│
+└──────────────────┴──────────────────┘
+
+    disp stuff alrems'may' 'maggie'             ⍝ remove May and Maggie.
+┌───────┬──────┐
+│┌─────┐│┌────┐│
+││milly│││star││
+│└─────┘│└────┘│
+└───────┴──────┘
+
+    alist ← 'ABCDE' ('BC' 'C' 'BD' 'AE' 'C')    ⍝ alist for graph "a" above.
+
+    alist alval 'C'                             ⍝ vertices 1 step from 'C'
+BD
+    steps←{↑{∪↑,/alist alvals ⍵}/(⍳⍺),⍵}        ⍝ vertices ⍺ steps from ⍵.
+
+    0 steps 'C'
+C
+    1 steps 'C'
+BD
+    2 steps 'C'
+CAE
+    3 steps 'C'
+BDC
+
+    (''⍬ alext'A' 1)alext'A' 2                  ⍝ check new value is prefix.
+ AA  2 1 
+    ((''⍬ alext'A' 1)alext'A' 2)alrem'A'        ⍝ check leftmost value removed.
+ A  1 
+
+    dups←''⍬ alext foldl 'a',¨0 1 2             ⍝ duplicate a-s.
+
+    dups                                        ⍝ note dups.
+ aaa  2 1 0 
+
+    dups alrem foldl 'a' 'a'                    ⍝ pop 2 a-s.
+ a  0 
+
+    alrep←{                     ⍝ Assoc list ⍺ with (name value) ⍵ replaced.
+        names vals←⍺            ⍝ old alist.
+        name val←⍵              ⍝ new value.
+        vals[names⍳⊂name]←⊂val  ⍝ replace alist value.
+        names vals              ⍝ new alist.
+    }                           ⍝ alist ← alist :: (name value)
+
+    dups alrep 'a' ¯2                           ⍝ replace value of first "a".
+ aaa  ¯2 1 0 

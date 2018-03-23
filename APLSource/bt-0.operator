@@ -1,0 +1,87 @@
+ bt←{⎕IO ⎕ML←0 1                         ⍝ Balanced Ternary Arithmetic.
+
+     monadic←{                           ⍝ ⍺⍺ ⍵, where ⍺⍺ ∊ +-×|
+         fn←⍺⍺{aa←⍺⍺ ⋄ ⊃⎕CR'aa'}⍵        ⍝ char rep of operand function.
+         '+'≡fn:⍵                        ⍝ identity.
+         '-'≡fn:-⍵                       ⍝ negative.
+         '×'≡fn:1↑⍵                      ⍝ signum.
+         '|'≡fn:⍵×⊃⍵                     ⍝ abs value.
+         '⊤'≡fn:encode ⍵                 ⍝ encode BT from int.
+         '⊥'≡fn:3⊥⍵                      ⍝ decode int from BT.
+         err'Can''t do: ',fn             ⍝ :-(
+     }                                   ⍝ :: ∇ bt → bt
+
+     dyadic←{                            ⍝ ⍺ ⍺⍺ ⍵, where ⍺⍺ ∊ +-×÷|* ...
+         fn←⍺⍺{aa←⍺⍺ ⋄ ⊃⎕CR'aa'}⍵        ⍝ char rep of operand function.
+         '+'≡fn:⍺ add ⍵                  ⍝ sum.
+         '-'≡fn:⍺ add-⍵                  ⍝ difference.
+         '×'≡fn:⍺ mul ⍵                  ⍝ product.
+         '÷'≡fn:norm 0⊃⍺ div ⍵           ⍝ quotient.
+         '|'≡fn:⍺ res ⍵                  ⍝ residue.
+         '*'≡fn:⍺ pow ⍵                  ⍝ power.
+         '<≤=≥>≠'∊⍨fn:⍺ ⍺⍺ cmp ⍵         ⍝ relational.
+         '⌊'≡fn:(1+⊃⍺ add-⍵)⊃⍺ ⍺ ⍵       ⍝ min.
+         '⌈'≡fn:(1+⊃⍺ add-⍵)⊃⍵ ⍺ ⍺       ⍝ max.
+         '∨'≡fn:⍺ gcd ⍵                  ⍝ greatest common divisor.
+         '∧'≡fn:⍺ lcm ⍵                  ⍝ least common multiple.
+         err'Can''t do: ',fn             ⍝ :-(
+     }                                   ⍝ :: bt ∇ bt → bt
+
+     div←{                               ⍝ quotient ⍺÷⍵.
+         ⍺≡⍵:1 0                         ⍝ ⍵÷⍵ → 1r0 (includes 0÷0 → 1r0).
+         ⍵ is 0:err'Divide by zero'      ⍝ ÷0 error.
+         q←⍵                             ⍝ named divisor (invariant).
+         part←(⍴⍺)⌊⍴⍵                    ⍝ dividend partition size.
+         0{                              ⍝ result.
+             p s←⍵                       ⍝ partitioned dividend.
+             m←×/⊃¨p q                   ⍝ multiple: ¯1, 0 or 1.
+             i←{(0≤⊃⍺)∧⍺<cmp ⍵}/p q×⊃q   ⍝ p in interval 0≤p<q?
+             ~i:(⍺ add m)∇(p add-m×q)s   ⍝ no: r+←m ⋄ p-←m×q
+             ⍬≡s:⍺ p                     ⍝ s exhausted: quotient and remainder.
+             (⍺,0)∇(tlz p,1↑s)(1↓s)      ⍝  r×←3 ⋄ p,← next digit.
+         }(part↑⍺)(part↓⍺)               ⍝ partitioned dividend.
+     }                                   ⍝ :: bt ∇ bt → bt bt
+
+     res←{                               ⍝ residue.
+         ⍺ is 0:⍵                        ⍝ 0|⍵ → ⍵
+         norm 1⊃⍵ div ⍺                  ⍝ otherwise: remainder from ⍺÷⍵.
+     }                                   ⍝ :: bt ∇ bt → bt
+
+     pow←{                               ⍝ power: ⍺*⍵.
+         ¯1=⊃⍵:err'Negative power'       ⍝ no negative powers.
+         ⍵ is 0:,1                       ⍝ ⍺*0 → 1
+         ⍵ is 1:⍺                        ⍝ ⍺*1 → ⍺
+         ⍵ is 1 ¯1:⍺ mul ⍺               ⍝ ⍺*2 → ⍺×⍺
+         p←⍵ add ¯1                      ⍝ predecessor.
+         q r←⍺∘∇¨(¯1↓p)(1 add ¯1↑p)      ⍝ 0 3⊤⍵ → quotient, remainder.
+         r mul q mul q mul q             ⍝ ⍺*⍵ → (⍺*3|⍵)×{⍵×⍵×⍵}⍺*⌊⍵÷3
+     }                                   ⍝ :: bt ∇ bt → bt
+
+     gcd←{                               ⍝ greatest common divisor (Euclid).
+         ⍵ is 0:⍺×⊃⍺                     ⍝ ⍺∨0 → |⍺
+         ⍵ ∇ norm 1⊃⍺ div ⍵              ⍝ ⍵∨⍵|⍺
+     }                                   ⍝ :: bt ∇ bt → bt
+
+     encode←{                            ⍝ balanced ternary from integer.
+         digs←1+⌈3⍟1⌈|⍵                  ⍝ number of ternary digits.
+         enc←(digs/3)∘⊤                  ⍝ standard base-3 encode.
+         tlz ¯1+enc 3⊥1+enc ⍵            ⍝ vector of bt digits.
+     }                                   ⍝ :: ∇ num → bt
+
+     norm←{                              ⍝ digit-overflow normalisation.
+         2∧.>|⍵:tlz ⍵                    ⍝ normal: done.
+         ∇ ¯1++⌿1 0⌽0 3⊤1+0,⍵            ⍝ carry overflow and try again.
+     }                                   ⍝ :: ∇ bt → bt
+
+     add←{norm+⌿⍺ mat ⍵}                 ⍝ sum.
+     mul←{norm+⌿(⌽⍳⍴⍺)⌽⍺∘.×(0×1↓⍺),⍵}    ⍝ product.
+     lcm←{⍺ mul norm 0⊃⍵ div ⍺ gcd ⍵}    ⍝ least common multiple.
+     cmp←{⍺⍺{⍺⍺/,(<\∨\≠⌿⍵)/⍵}⍺ mat ⍵}    ⍝ relational functions.
+     mat←{⌽↑⌽¨⍺ ⍵}                       ⍝ right-aligned matrix.
+     tlz←{(-1⌈+/∨\0≠⍵)↑⍵}                ⍝ without superfluous leading zeros.
+     is←{∧/=⌿⍺ mat ⍵}                    ⍝ comparison.
+     err←⎕SIGNAL∘11                      ⍝ stop with error msg ⍵.
+
+     0=⎕NC'⍺':⍺⍺ monadic ⍵               ⍝ monadic:
+     ⍺ ⍺⍺ dyadic ⍵                       ⍝ dyadic:
+ }

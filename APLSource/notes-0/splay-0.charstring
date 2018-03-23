@@ -1,0 +1,255 @@
+rslt ← {larg} (op ##.splay) rarg            ⍝ Splay trees.
+
+     T∆ ← T ∪ splay (key val)   ⍝ tree ⍺ with key=val ⍵.
+     T∆ ← T ~ splay key         ⍝ tree ⍺ without key ⍵.
+     T∆ ← T ⍎ splay key         ⍝ value for key ⍵ in tree ⍺.
+    dep ← T ≡ splay key         ⍝ depth of key ⍵ in tree ⍺.
+    fmt ←   ⍕ splay T           ⍝ format of tree ⍵.
+    vec ←   ∊ splay T           ⍝ enlist of tree ⍵.
+    chk ←   ? splay T           ⍝ stats for tree ⍵: ok size mean_depth height.
+
+See →BST←
+
+A splay tree is a self-balancing binary search tree; each time a node is access-
+ed,  it  is rotated nearer to the root. This mean that frequently accessed nodes
+wind up with shorter search paths.
+
+Unlike  →avl← and →redblack← trees, splay trees are not maintained in a state of
+reasonable  balance.  Instead,  nodes  with  frequently  accessed keys _tend_ to
+migrate towards the root, which _tends_ to give them shorter access times.
+
+The performance of a splay tree may not be as optimal as one of its more complex
+relatives, but its implementation is considerably simpler.
+
+Node Access
+-----------
+In the following, node [A] is accessed.  There are three cases, × two left-right
+mirrow-image orientations.
+
+[0] Node [A] is the root node: no change.
+
+[1] Node [A] is the left (right) child of the root.
+
+[2] Node [A] is the left (right) child of a left (right) child.
+                    ¯¯¯¯                    ¯¯¯¯
+[3] Node [A] is the right (left) child of a left (right) child.
+                    ¯¯¯¯¯                   ¯¯¯¯
+Cases [1 2 3] are summarised in the following diagram:
+
+          <--- m i r r o r   i m a g e s --->
+    ┌──────────────────────┬────────────────────────┐
+[1] │      B      [A]      │   B              [A]   │
+    │     / \  →  / \      │  / \      →      / \   │
+    │   [A]  r   p   B     │ r  [A]          B   p  │
+    │   / \         / \    │    / \         / \     │
+    │  p   q       q   r   │   q   p       r   q    │
+    ├──────────────────────┼────────────────────────┤
+[2] │      C      [A]      │   C              [A]   │
+    │     / \  →  / \      │  / \      →      / \   │
+    │    B   s   p   B     │ s   B           B   p  │
+    │   / \         / \    │    / \         / \     │
+    │ [A]  r       q   C   │   r  [A]      C   q    │
+    │ / \             / \  │      / \     / \       │
+    │p   q           r   s │     q   p   s   r      │
+    ├──────────────────────┼────────────────────────┤
+[3] │    C         [A]     │   C             [A]    │
+    │   / \    →   / \     │  / \      →     / \    │
+    │  B   s      /   \    │ s   B          /   \   │
+    │ / \        B     C   │    / \        C     B  │
+    │p  [A]     / \   / \  │  [A]  p      / \   / \ │
+    │   / \    p   q r   s │  / \        s   r q   p│
+    │  q   r               │ r   q                  │
+    └──────────────────────┴────────────────────────┘
+
+Node removal
+------------
+[splay] uses the "quicker" method of node removal. See →BST←.
+
+Technical notes
+---------------
+The tree is implemented as the pair-of-pairs: (key val) (lft rgt)
+
+    key: node key
+    val: node value
+    lft: left subtree or 0
+    rgt: right subtree or 0
+
+The two double rotations are coded by applying function [rot] twice. If speed is
+critical, we could code them directly as follows:
+
+    rotrr←{                             ⍝ double ⍵-⍵-wise rotion of tree ⍺.
+        C(BAr s)←⍵ wise\⍺               ⍝        C       A
+        B(Apq r)←⍵ wise\BAr             ⍝       / \  →  / \
+        A(p q)←⍵ wise\Apq               ⍝      B   s   p   B
+                                        ⍝     / \         / \
+        Crs←⍵ wise\C(r s)               ⍝    A   r       q   C
+        BqC←⍵ wise\B(q Crs)             ⍝   / \             / \
+        ⍵ wise\A(p BqC)                 ⍝  p   q           r   s
+    }
+
+    rotrl←{                             ⍝ double ⍵-¯⍵-rotation of tree ⍺.
+        C(BpA s)←⍵ wise\⍺               ⍝      C          A
+        B(p Aqr)←⍵ wise\BpA             ⍝     / \    →   / \
+        A(q r)←⍵ wise\Aqr               ⍝    B   s      /   \
+                                        ⍝   / \        B     C
+        Bpq←⍵ wise\B(p q)               ⍝  p   A      / \   / \
+        Crs←⍵ wise\C(r s)               ⍝     / \    p   q r   s
+        ⍵ wise\A(Bpq Crs)               ⍝    q   r
+    }
+
+Notice that function ⍵-wise is applied under scan (\),  which means that it aff-
+ects only the second item of the node pair (key val)(lft rgt).
+
+References
+----------
+http://en.wikipedia.org/wiki/Splay_tree
+
+Examples
+--------
+
+⍝ key=value pairs:
+
+    pairs ← ('one'1) ('two'2) ('three'3) ('four'4) ('five'5) ('six'6) ('seven'7)
+
+    tt ← 0 ∪splay foldl pairs   ⍝ insert key=val pairs into a splay tree.
+
+    display ⍕splay tt           ⍝ show resulting tree.
+┌→────────────────────────────────┐
+↓            ┌five=5              │
+│     ┌four=4┘                    │
+│one=1┤                           │
+│     │                   ┌seven=7│
+│     │             ┌six=6┘       │
+│     │     ┌three=3┘             │
+│     └two=2┘                     │
+└─────────────────────────────────┘
+
+    'seven' ≡splay tt               ⍝ depth of key 'seven'.
+5
+    val tt ← 'seven' ⍎splay tt      ⍝ first access of key 'seven',
+
+    display ⍕splay tt               ⍝   moves it towards the root.
+┌→────────────────────────────────┐
+↓            ┌five=5              │
+│     ┌four=4┘                    │
+│one=1┤                           │
+│     │     ┌seven=7┐             │
+│     │     │       └six=6┐       │
+│     │     │             └three=3│
+│     └two=2┘                     │
+└─────────────────────────────────┘
+
+    'seven' ≡splay tt               ⍝ new depth of key 'seven'.
+3
+    val tt ← 'seven' ⍎splay tt      ⍝ second access of key 'seven',
+
+    display ⍕splay tt               ⍝   moves it to the root.
+┌→──────────────────────────┐
+↓                    ┌five=5│
+│             ┌four=4┘      │
+│       ┌one=1┘             │
+│seven=7┤                   │
+│       │     ┌six=6┐       │
+│       │     │     └three=3│
+│       └two=2┘             │
+└───────────────────────────┘
+
+    'seven' ≡splay tt           ⍝ depth of key 'seven'.
+1
+    ?splay tt                   ⍝ tree is: ok size=7, mean_depth=2, height=4.
+1 7 2 4
+
+    tt ← tt ~splay 'seven'      ⍝ tree with key 'seven' removed.
+
+    display ⍕splay tt
+┌→────────────────────────┐
+↓                  ┌five=5│
+│           ┌four=4┘      │
+│     ┌one=1┘             │
+│six=6┤                   │
+│     │     ┌three=3      │
+│     └two=2┘             │
+└─────────────────────────┘
+
+    ∊ splay tt                  ⍝ enlist of tree key=val pairs.
+┌────────┬────────┬───────┬───────┬─────────┬───────┐
+│┌────┬─┐│┌────┬─┐│┌───┬─┐│┌───┬─┐│┌─────┬─┐│┌───┬─┐│
+││five│5│││four│4│││one│1│││six│6│││three│3│││two│2││
+│└────┴─┘│└────┴─┘│└───┴─┘│└───┴─┘│└─────┴─┘│└───┴─┘│
+└────────┴────────┴───────┴───────┴─────────┴───────┘
+
+⍝ Notice how repeated retrieval of a particular key
+⍝ lifts its node towards the root:
+
+    ↑⍕splay\¨↑∘(⍎splay/)traj 10,⊂0 ∪splay foldl ⍳10             ⍝ see →traj←
+┌──┬─────────────────────────────────────────┐
+│10│1=1┐                                     │
+│  │   └2=2┐                                 │
+│  │       └3=3┐                             │
+│  │           └4=4┐                         │
+│  │               └5=5┐                     │
+│  │                   └6=6┐                 │
+│  │                       └7=7┐             │
+│  │                           └8=8┐         │
+│  │                               └9=9┐     │
+│  │                                   └10=10│
+├──┼─────────────────────────────────────────┤
+│10│1=1┐                                     │
+│  │   └2=2┐                                 │
+│  │       └3=3┐                             │
+│  │           └4=4┐                         │
+│  │               └5=5┐                     │
+│  │                   └6=6┐                 │
+│  │                       └7=7┐             │
+│  │                           │         ┌8=8│
+│  │                           │     ┌9=9┘   │
+│  │                           └10=10┘       │
+├──┼─────────────────────────────────────────┤
+│10│1=1┐                                     │
+│  │   └2=2┐                                 │
+│  │       └3=3┐                             │
+│  │           └4=4┐                         │
+│  │               └5=5┐                     │
+│  │                   │         ┌6=6        │
+│  │                   │     ┌7=7┤           │
+│  │                   │     │   │   ┌8=8    │
+│  │                   │     │   └9=9┘       │
+│  │                   └10=10┘               │
+├──┼─────────────────────────────────────────┤
+│10│1=1┐                                     │
+│  │   └2=2┐                                 │
+│  │       └3=3┐                             │
+│  │           │         ┌4=4                │
+│  │           │     ┌5=5┤                   │
+│  │           │     │   │   ┌6=6            │
+│  │           │     │   └7=7┤               │
+│  │           │     │       │   ┌8=8        │
+│  │           │     │       └9=9┘           │
+│  │           └10=10┘                       │
+├──┼─────────────────────────────────────────┤
+│10│1=1┐                                     │
+│  │   │         ┌2=2                        │
+│  │   │     ┌3=3┤                           │
+│  │   │     │   │   ┌4=4                    │
+│  │   │     │   └5=5┤                       │
+│  │   │     │       │   ┌6=6                │
+│  │   │     │       └7=7┤                   │
+│  │   │     │           │   ┌8=8            │
+│  │   │     │           └9=9┘               │
+│  │   └10=10┘                               │
+├──┼─────────────────────────────────────────┤
+│10│     ┌1=1┐                               │
+│  │     │   │   ┌2=2                        │
+│  │     │   └3=3┤                           │
+│  │     │       │   ┌4=4                    │
+│  │     │       └5=5┤                       │
+│  │     │           │   ┌6=6                │
+│  │     │           └7=7┤                   │
+│  │     │               │   ┌8=8            │
+│  │     │               └9=9┘               │
+│  │10=10┘                                   │
+└──┴─────────────────────────────────────────┘
+
+See also: BST alists sbst avl redblack foldl traj
+
+Index:tree|binary search tree|enlist

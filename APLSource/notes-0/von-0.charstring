@@ -1,0 +1,56 @@
+caps ← {ack ign←'' ''} ##.von chars         ⍝ Capitalise first letters of names.
+
+Suggested  by  Dick Bowman, this function by Veli-Matti Jantunen produces appro-
+priate capitalisation of a name. The function may be made to capitalise a "root"
+name  following  a prefix such as Mc or Mac, but leave separators such as le and
+von in lower case.
+
+The  optional  left argument is a 2-item, depth-3 vector of prefixes to acknowl-
+edge (ack) and ignore (ign). The argument is permissive in accepting less deeply
+nested vectors:
+
+    Depth-3 vector general case:    ·   ·   ·   ·   (ack ack ...) (ign ign ...)
+    Depth-2 vector 'one' 'two' ... is intepreted:   (one two ...) (           )
+    Depth-1 vector 'one' is interpreted:    ·   ·   (one        ) (           )
+    Missing left argument:                          (           ) (           )
+
+Examples:
+
+      titles←'margaretha von bahr' 'ahti von toilet' 'leonardo da vinci' 'william of orange' 'llywelyn ap gruffudd' 'guzman el bueno' 'winnie the pooh'
+
+      ↑von¨titles                                   ⍝ default capitalisation.
+Margaretha von Bahr
+Ahti von Toilet
+Leonardo da Vinci
+William of Orange
+Llywelyn ap Gruffudd
+Guzman el Bueno
+Winnie the Pooh
+
+      von'd''annunzio t''haarlem'                   ⍝ caps after "'".
+d'Annunzio t'Haarlem
+
+      von'åkerlund æsop'                            ⍝ national language caps.
+Åkerlund Æsop
+
+      'Mc'von'nasty norman mctavish o''reilly'      ⍝ acknowledge "Mc" prefix.
+Nasty Norman McTavish O'Reilly
+
+      von 'Lorenzo de'' Medici  Mohammed el-Gerousch c/o al-Ahram'
+Lorenzo de' Medici  Mohammed el-Gerousch c/o al-Ahram
+
+      names←'mcgryver macintosh macho dicaprio dickens'
+
+      von names                                     ⍝ default caps,
+Mcgryver Macintosh Macho Dicaprio Dickens
+
+      'mc' 'mac' 'di' von names                     ⍝ ... with Mc, Mac, Di,
+McGryver MacIntosh MacHo DiCaprio DiCkens
+
+      ('Mc' 'Mac' 'Di')('Mach' 'Dick') von names    ⍝ ... except MacH, DiCk.
+McGryver MacIntosh Macho DiCaprio Dickens
+
+See also: lcase ucase words
+
+Index:diversions|capitalisation
+Index;Bowman D.|Jantunen V-M.

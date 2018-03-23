@@ -1,0 +1,69 @@
+⍝ Operand function applied to argument rows:
+
+      ⎕ml←0
+
+      {'<',⍵,'>'} rows 'ten' 'a' 'penny'    ⍝ Scalars are OK, too.
+ <ten>  <a>  <penny> 
+
+      mats←↑¨('eight' 'nine' 'ten')('hovera' 'dovera' 'dik')('hickory' 'dickory' 'dock')
+
+      disp mats                             ⍝ A vector of matrices.
+┌─────┬──────┬───────┐
+│eight│hovera│hickory│
+│nine │dovera│dickory│
+│ten  │dik   │dock   │
+└─────┴──────┴───────┘
+
+      disp {⍴⍵~' '} rows mats               ⍝ Fn applied to each matrix row.
+┌─┬─┬─┐
+│5│6│7│
+│4│6│7│
+│3│3│4│
+└─┴─┴─┘
+
+      disp {+/⍵≠' '} rows mats              ⍝ Rows collapse to scalars.
+┌─────┬─────┬─────┐
+│5 4 3│6 6 3│7 7 4│
+└─────┴─────┴─────┘
+
+      disp {⍵[⍋⍵]} rows mats                ⍝ Sort each row.
+┌─────┬──────┬───────┐
+│eghit│aehorv│chikory│
+│ einn│adeorv│cdikory│
+│  ent│   dik│   cdko│
+└─────┴──────┴───────┘
+
+      display rows mats                     ⍝ Display each row.
+ ┌→────┐  ┌→─────┐  ┌→──────┐ 
+ │eight│  │hovera│  │hickory│ 
+ └─────┘  └──────┘  └───────┘ 
+                              
+ ┌→────┐  ┌→─────┐  ┌→──────┐ 
+ │nine │  │dovera│  │dickory│ 
+ └─────┘  └──────┘  └───────┘ 
+                              
+ ┌→────┐  ┌→─────┐  ┌→──────┐ 
+ │ten  │  │dik   │  │dock   │ 
+ └─────┘  └──────┘  └───────┘ 
+
+       cuboid←3 4 5⍴1 to 60                 ⍝ Numeric 3×4×5-array.
+       cuboid
+ 1  2  3  4  5
+ 6  7  8  9 10
+11 12 13 14 15
+16 17 18 19 20
+              
+21 22 23 24 25
+26 27 28 29 30
+31 32 33 34 35
+36 37 38 39 40
+              
+41 42 43 44 45
+46 47 48 49 50
+51 52 53 54 55
+56 57 58 59 60
+
+      {+/⍵÷⍴⍵} rows cuboid                  ⍝ Row-averages.
+ 3  8 13 18
+23 28 33 38
+43 48 53 58

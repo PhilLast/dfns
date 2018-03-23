@@ -1,0 +1,45 @@
+cnos ← file ##.filefind string          ⍝ Find 'string' ⍵ in component file ⍺.
+
+Returns  a  vector of the indices of components in [file] that contain [string].
+[string] may be an array of any shape or depth. [file] may be a character string
+file name or the tie number of an already tied file.
+
+If a file _name_ is presented as left argument, the file is tied, then searched,
+then untied.
+
+If  a  file  _tie number_  is  presented as left argument, the file remains tied
+after the search has completed.
+
+Examples:
+
+      tie←'temp'⎕fcreate 0                      ⍝ Create temp file.
+      app←⎕fappend∘tie                          ⍝ Append to file.
+
+      app'hello'                                ⍝ component 1.
+      app'world'                                ⍝ component 2.
+      app'hello' 'world'                        ⍝ component 3.
+      app'bonjour' 'monde'                      ⍝ component 4.
+      app('hello' 'world')('bonjour' 'monde')   ⍝ component 5.
+
+      tie filefind'hello'                       ⍝ components with 'hello'
+1 3 5
+      tie filefind'bonjour'                     ⍝ etc.
+4 5
+      tie filefind'hello' 'world'
+3 5
+      tie filefind'o'
+1 2 3 4 5
+      tie filefind'e'
+1 3 4 5
+
+      ⎕funtie tie                               ⍝ release file tie.
+
+      'temp'filefind'monde'                     ⍝ after using file [name],
+4 5
+      ⎕fnums                                    ⍝ no residual file tie.
+
+      'temp'⎕ferase'temp'⎕ftie 0                ⍝ remove temp file.
+
+See also: find
+
+Index:find|component file

@@ -1,0 +1,31 @@
+nvec ← ##.roots triple                      ⍝ Real roots of quadratic.
+
+An illustration of a 'typical' D-function:
+
+    roots←{                         ⍝ Real roots of quadratic.
+        a b c←⍵                     ⍝ Coefficients.
+        d←(b*2)-4×a×c               ⍝ Discriminant.
+
+        d<0:⍬                       ⍝ No roots
+        d=0:-b÷2×a                  ⍝ One root
+        d>0:(-b+¯1 1×d*0.5)÷2×a     ⍝ Two roots
+    }
+
+NB: From Dyalog V13, this function can be recoded so that it always returns two,
+possibly complex, roots:
+
+        roots←{                     ⍝ Roots of quadratic.
+            a b c←⍵                 ⍝ coefficients.
+            d←(b*2)-4×a×c           ⍝ discriminant.
+            (-b+¯1 1×d*0.5)÷2×a     ⍝ both roots.
+        }
+then
+        roots 1 2 3
+    ¯1J1.414213562 ¯1J¯1.414213562
+
+Example:
+
+      roots 2 1 ¯3
+1 ¯1.5
+
+Index:quadratic, real roots of|complex numbers

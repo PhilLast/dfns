@@ -1,0 +1,4 @@
+ alval←{                 ⍝ Value of name ⍵ in association list ⍺.
+     names vals←⍺        ⍝ name vector and corresponding values.
+     (names⍳⊂⍵)⊃vals     ⍝ value corresponding to leftmost name.
+ }

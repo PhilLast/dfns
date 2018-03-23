@@ -1,0 +1,27 @@
+⍝ Fast each for pure operand function:
+
+    count←0                             ⍝ count of operand function calls.
+
+    {count+←1 ⋄ ⍵+1}¨ 5 5⍴1 2 3         ⍝ primitive each:
+2 3 4 2 3
+4 2 3 4 2
+3 4 2 3 4
+2 3 4 2 3
+4 2 3 4 2
+
+    count                               ⍝ operand function called 25 times.
+25
+    count←0
+
+    {count+←1 ⋄ ⍵+1}each 5 5⍴1 2 3      ⍝ [each]: same result:
+2 3 4 2 3
+4 2 3 4 2
+3 4 2 3 4
+2 3 4 2 3
+4 2 3 4 2
+
+    count                               ⍝ operand function called only 3 times.
+3
+
+    ≡∘(+each¨)⍨ ⍴∘3¨(0 to 15)↑¨⊂1+15↑1  ⍝ check ranks 0..15
+1

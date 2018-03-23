@@ -1,0 +1,10 @@
+cmat ← ##.tfmt tree                         ⍝ Char matrix from tree(s).
+
+The  character  matrix result is an indented representation of the nested format
+tree argument.
+
+Examples, See: Trees
+
+See also: tnest tview
+
+Index:formatting, trees|tree

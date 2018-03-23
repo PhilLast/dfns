@@ -1,0 +1,56 @@
+ attrib←{⎕IO ⎕ML←0 1                         ⍝ Function/operator attributes.
+                                            ⍝ left arg: n d t i r c s ∇ ⍝ ⍋ ^.
+     ⍺←'⍋d^t  n  ⍝'                          ⍝ date-time-sorted: date name comment.
+                                            ⍝ late binding => no name clashes.
+     names lines sntx time ids sizes←{       ⍝ function attributes.
+         (⊂↓⍵){⍺,⍵                           ⍝   names,
+         }(⊂⎕NR¨↓⍵){⍺,⍵                      ⍝   lines,
+         }(1 1 0 1/↓⍉↑,↓⎕AT ⍵){⍺,⍵           ⍝   syntax, time, user-ids,
+         }⊂⎕SIZE ⍵                           ⍝   sizes.
+     }⎕FMT↑⍵                                 ⍝ matrix of names.
+
+     sxfmt←{                                 ⍝ syntax formatter.
+         ∊'⍴⍺∇⍵'{                            ⍝ rslt larg func rarg,
+             '⍴'=⍺:(1 ¯1⍳⍵)⊃'⍴←' '{⍴←}' ''   ⍝ rslt explicit, shy, none,
+             '⍺'=⍺:(2 ¯2⍳⍵)⊃'⍺' '{⍺}' ''     ⍝ larg required or optional,
+             '∇'=⍺:⍵⊃'∇' '(⍺⍺∇∇)' '(⍺⍺∇∇⍵⍵)' ⍝ function or operator,
+             '⍵'=⍺:(⍵≠0)/'⍵'                 ⍝ rarg or niladic.
+         }¨0 1 2 1⊃¨⊂⍵                       ⍝ syntax of function.
+     }
+
+     comment←{                               ⍝ first comment.
+         0=⍴⍵:''                             ⍝ no comments: give up.
+         1≠≡⊃⍵:''                            ⍝ derived function: give up.
+         mask←~≠\''''=⊃⍵                     ⍝ mask of unquoted chars.
+         line←mask\mask/⊃⍵                   ⍝ first line with strings blanked.
+         ~'⍝'∊line:∇ 1↓⍵                     ⍝ no comment: try following lines.
+         (∨\line='⍝')/⊃⍵                     ⍝ comment from line.
+     }
+
+     cols←{                                  ⍝ format columns:
+         join←{↑⍺{⍺,⍺⍺,⍵}/⍵}                 ⍝ ⍵'s interspersed with ⍺.
+         nfmt←{(-2⌈⍴⍵)↑'0',⍵}∘⍕¨             ⍝ number formatter.
+         'n'=⍵:names                         ⍝ name of function or oper,
+         'd'=⍵:{'-'join nfmt 3↑⍵}¨time       ⍝ date of fix yyyy-mm-dd,
+         't'=⍵:{':'join nfmt 3↑3↓⍵}¨time     ⍝ time of fix   hh:mm:ss,
+         'i'=⍵:ids                           ⍝ id of fixer,
+         'r'=⍵:⍕,[0.5]{0⊃⍴⍵}¨lines           ⍝ number of rows,
+         'c'=⍵:⍕,[0.5]{1⊃⍴↑⍵}¨lines          ⍝ number of cols,
+         's'=⍵:⍕,[0.5]sizes                  ⍝ workspace footprint.
+         '∇'=⍵:sxfmt¨sntx                    ⍝ function syntax,
+         '⍝'=⍵:comment¨lines                 ⍝ first line comment,
+         ⍵                                   ⍝ decoration character.
+     }
+
+     sort←{                                  ⍝ sorted accumulated rows:
+         collect←{0 ¯1↓↑,/⍵,⊂,[0.5]sizes}    ⍝ collect cols.
+         smask←⍺∊'⍋^∧'                       ⍝ mask of sort ctrl chars.
+         ~1∊smask:collect ⍵                  ⍝ no sort chars: finished.
+         xcols←(~smask)\⍵                    ⍝ ctrl-expanded cols
+         scols←(¯1⌽smask)/xcols              ⍝ sort column(s).
+         vcols←(~smask∨¯1⌽⍺∊'^∧')/xcols      ⍝ visible column(s).
+         (collect vcols)[⍋↑,/scols;]         ⍝ sorted char matrix.
+     }
+
+     ⍺ sort↑∘cols¨⍺~'⍋^∧'                    ⍝ concatenate and sort columns.
+ }

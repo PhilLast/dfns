@@ -1,0 +1,4 @@
+ dscan←{                     ⍝ Divide scan
+     ⍺←⍬⍴⌽⍳⍴⍴⍵               ⍝ ⍺ is axis (default last).
+     ×\[⍺]⍵*[⍺](⍺⊃⍴⍵)⍴1,-1
+ }

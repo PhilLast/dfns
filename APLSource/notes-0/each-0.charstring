@@ -1,0 +1,56 @@
+rslt ← (⍺⍺ ##.each) array               ⍝ Fast each for pure operand function.
+
+Mike Day's each operator indentifies unique items in its  argument  [array]  and
+applies monadic operand function ⍺⍺ only once to each in turn.  It then distrib-
+utes the resulting items among any duplicates.
+
+If
+    The operand function takes a significant time to evaluate,
+    But has no side-effects,
+    And the argument array has a significant number of duplicate items,
+Then
+    [each] may produce a significant time saving.
+
+Examples:
+
+⍝ This rather contrived example takes only 3 seconds to run:
+
+      ⎕ ← ⎕dl each time ?10 10⍴2
+03.00
+1 2 1 2 1 1 2 2 2 1
+2 2 1 1 2 2 1 1 1 1
+2 2 2 2 2 1 2 1 2 2
+2 1 1 2 1 2 2 2 1 1
+2 2 2 2 1 2 2 1 1 2
+1 1 1 1 1 1 2 2 1 2
+2 2 1 2 1 1 1 2 1 2
+1 1 2 2 1 2 1 2 2 2
+1 1 2 2 2 2 2 2 2 1
+1 1 2 2 2 1 2 1 1 2
+
+    count←0                             ⍝ count of operand function calls.
+
+    {count+←1 ⋄ ⍵+1}¨ 5 5⍴1 2 3         ⍝ primitive each:
+2 3 4 2 3
+4 2 3 4 2
+3 4 2 3 4
+2 3 4 2 3
+4 2 3 4 2
+
+    ⎕ count ← count 0                   ⍝ operand function called 25 times.
+25
+
+    {count+←1 ⋄ ⍵+1}each 5 5⍴1 2 3      ⍝ [each]: same result:
+2 3 4 2 3
+4 2 3 4 2
+3 4 2 3 4
+2 3 4 2 3
+4 2 3 4 2
+
+    count                               ⍝ operand functin called only 3 times.
+3
+
+See also: sam time
+
+Index:each|pure function
+Index;Day M.

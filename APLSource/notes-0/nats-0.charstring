@@ -1,0 +1,316 @@
+cvec ← larg (fn ##.nats) rarg               ⍝ Natural number arithmetic.
+
+Nats  applies  its operand function between natural (non-negative, whole) number
+arguments. The operand may be one of:
+
+    +       sum
+    -       difference
+    ×       product
+    ÷       quotient
+    *       exponent
+    ⌊       min
+    ⌈       max
+    |       residue
+    ∨       greatest common divisor
+    ∧       least common multiple
+    <≤=≥>≠  relational
+
+Arguments  [larg] and [rarg] are typically vectors of characters '0'-'9' but may
+be numeric for (natural) numbers with no more than ⎕PP digits.
+
+NB: [nats] deals only in single (scalar) numbers, rather than whole arrays.
+
+The result is a character vector of decimal digits.
+
+        1234567890 ×nats '12345678901234567890'
+    15241578751714678875019052100
+
+[nats] is similar to operator →big← except that it:
+
+    - deals only in non-negative numbers,
+    - accepts only dyadic operand functions,
+    - is quicker for large numbers.
+
+Operand (-) takes the "elementary school" approach of returning 0 if the minuend
+is smaller than the subtrahend (larg<rarg).
+
+          2 -nats 3         ⍝ larg < rarg
+    0
+
+Operand (÷) returns the floor of the real quotient:
+
+        100 ÷nats 13        ⍝ floor of real quotient.
+    7
+        13 |nats 100        ⍝ residue (remainder).
+    9
+        9 +nats 7 ×nats 13  ⍝ dividend = remainder + quotient × divisor
+    100
+
+Gianluigi Quario comments that it is difficult to enter large-magnitude numbers:
+
+        456 +nats 123E20                        ⍝ raw E-notation won't work.
+    Bad number: 1.23E22
+        456+nats 1.23E22
+       ∧
+
+        456 +nats '12300000000000000000000'     ⍝ this works but is ungainly.
+    12300000000000000000456
+
+        456+nats 123×nats 10*nats 20            ⍝ OK but inconvenient.
+    12300000000000000000456
+
+Gianluigi suggests this function:
+
+    pfmt←{⎕IO ⎕ML ⎕PP←0 0 16            ⍝ plain format of a numeric scalar.
+        rep←⍕⍵
+        ⍵≡rep:⍵
+        ~'E'∊rep:rep
+        exp←⍎(1+rep⍳'E')↓rep
+        0>exp:'_ '~⍨(⎕PP-exp)⍕⍵
+        sig←'¯'=⊃rep
+        man←⎕PP↑'.'~⍨(sig↓(rep⍳'E')↑rep),⎕PP⍴'0'  ⍝ mantissa
+        (sig⍴'¯'),(1+exp)↑man,exp⍴'0'
+    }
+
+Then:
+        456 +nats pfmt 123E20
+    12300000000000000000456
+
+        456 +nats pfmt 1.23E22
+    12300000000000000000456
+
+Technical notes:
+
+Performance  benefits from representing the numbers internally in a fairly large
+base  (radix).  However, if too large a base is chosen, intermediate results run
+the risk of exceeding the 53-bit precision of IEEE floating point arithmetic and
+so losing accuracy.  A base of 10*6 seems optimal.  A power of 10 base is chosen
+to simplify conversion to and from internal format.
+
+Product
+-------
+Roger Hui points out that however small a base we choose, the product of suffic-
+iently long vectors of digits will cause 53-bit overflow.  To avoid this loss of
+precision, inner function "mul" tests the lengths of its arguments and, if  nec-
+essary, splits them into sub-products of shorter vectors. If ⍺ and ⍵ are vectors
+of radix-rx digits, and + and × are vector sum and product respectively, then:
+                        ¯     ¯
+    ⍺ × ⍵  ←→  ((⍺ × s↑⍵),s↓⍵⍴0)  +  ⍺ × s↓⍵
+      ¯            ¯              ¯    ¯
+For example,  suppose a 7-digit product were enough to cause overflow.  We could
+avoid the overflow  by splitting the product  into the sum of a 3-digit and a 4-
+digit product, like so:
+
+    1 2 × 3 4 5 6 7 8 9  ←→  ((1 2 × 3 4 5),0 0 0 0)  +  1 2 × 6 7 8 9
+        ¯ └─────7─────┘            ¯ └─3─┘            ¯      ¯ └──4──┘
+
+As a test case,  Roger  observes  that  the  square  of  natural number ⍵/'9' is
+(⍵ 2 ⍵ 2-1)/'9801':
+
+          ×nats⍨'9'
+    81
+          ×nats⍨'99'
+    9801
+          ×nats⍨'999'
+    998001
+          ×nats⍨'99999999'
+    9999999800000001
+
+With nat's radix of 10*6,  the square of 999...9 is sufficent  to require split-
+ting:                                    └60000┘
+
+    (×nats⍨6e4/'9')≡(6e4 2 6e4 2-1)/'9801'      ⍝ (takes around a minute).
+1
+
+See →xtimes← for a faster multi-digit product.
+
+Exponent
+--------
+For  ⍺*⍵, we avoid calculating ⍵ products  ⍺ × ⍺ × ···,  by using the recurrence
+relation:                                  └─── ⍵ ───┘
+
+    ⍺*0 = 1
+    ⍺*1 = ⍺
+    ⍺*⍵ = (⍺*2|⍵) × {⍵×⍵} ⍺*⌊⍵÷2
+
+which needs only O(2⍟⍵) products.
+
+(muse:
+
+    Notice in the examples below that */5/2 is a number with 19,729 decimal dig-
+    its.  An amusing way to distinguish mathematicians from computer programmers
+    at  a social gathering (perhaps a cocktail party or wedding reception) is to
+    sing this little song (to the tune of "The Grand old Duke of York"):
+
+        Two,
+        Two-to-the-two,
+        Two-to-the-two-to-the-two,
+        Two-to-the-two-to-the-two-to-the-two,
+        Two-to-the-two-to-the-two-to-the-two-to-the-two,
+        ...
+
+    You  will  find  that  after six or seven lines, the mathematicians begin to
+    look bored, while the computer programmers turn pale and start to faint.
+
+    See also: staples
+)
+
+Quotient
+--------
+We  use  the traditional "high-school" long division method (invented by Charles
+Babbage,  see: eval.dws/notes.Long_division). A minor refinement is that, as the
+radix  is  large, it pays to do a binary, rather than linear search for the next
+"digit" of the result. With a radix of 10*6 (around 2*20), we can find the digit
+in  about  20  comparisons when using (0, radix-1) as the lower and upper search
+bounds.
+
+But  we  can  do a little better. We take the two most significant digits of the
+dividend  and  divisor  ((p0 p1 ···)(q0 q1 ···))  and decode each pair using the
+radix.  This gives a pair of numbers (pp qq), each in the range 0,radix*2, which
+is still well within our required 53-bit precision limit.
+
+To  find  a lower bound, we assume that all digits following p0 and p1 are 0 and
+that  all  those  following q0 and q1 are (radix-1). This gives a lower bound of
+(⌊pp÷qq+1).
+
+Likewise,  an  upper  bound assumes all digits following p0 and p1 are (radix-1)
+and  all  those following q0 and q1 are 0, giving a upper bound of (⌈(pp+1)÷qq).
+It  makes  things a little easier if we soften this upper bound very slightly by
+observing that:
+
+    (  ⌈⍵) = ⌊1+⍵   ⍝ for non-integer ⍵
+    (1+⌈⍵) = ⌊1+⍵   ⍝ for integer ⍵
+
+so we can reasonably take an upper bound of: (⌊1+(pp+1)÷qq).
+
+In other words, the lower-upper bound pair is (⌊pp÷qq+1) (⌊1+(pp+1)÷qq).
+
+Then, using expression transformation to simplify:
+
+    (⌊pp÷qq+1) (⌊1+(pp+1)÷qq)       ⍝ (⌊⍺)(⌊⍵) = ⌊⍺ ⍵
+    _¯          ¯
+=   ⌊(pp÷qq+1) (1+(pp+1)÷qq)        ⍝ (0+⍺)(1+⍵) = 0 1+⍺ ⍵
+     ____       ¯¯
+=   ⌊0 1+(pp÷qq+1) ((pp+1)÷qq)      ⍝ (⍺÷⍵)(∊÷⍴) = (⍺ ∊)÷(⍵ ⍴)
+            ¯             ¯
+=   ⌊0 1+(pp(pp+1))÷(qq+1)qq        ⍝ ⍺(⍺+1) = ⍺+0 1,  if ⍺ scalar.
+          ¯¯¯¯¯¯¯¯  ¯¯¯¯¯¯¯¯
+=   ⌊0 1+(pp+0 1) ÷ qq+1 0          ⍝ ⍺÷⍵ = ↑÷/⍺ ⍵
+                  ¯
+=   ⌊0 1+↑÷/(pp+0 1) (qq+1 0)       ⍝ (⍺+⍵)(∊+⍴) = ⍺ ⍵+∊ ⍴
+               ¯        ¯
+=   ⌊0 1+↑÷/pp qq+(0 1)(1 0)        ⍝ thus (pp qq) can use a single name ppqq.
+
+Examples:
+
+    ⎕d ×nats ⎕d                     ⍝ 123456789 * 2
+15241578750190521
+
+    2*nats 1024                     ⍝ 2*1024
+17976931348623159077293051907890247336179769789423065727343008115773267580550096
+      31327084773224075360211201138798713933576587897688144166224928474306394741
+      24377767893424865485276302219601246094119453082952085005768838150682342462
+      88147391311054082723716335051068458629823994724593847971630483535632962422
+      4137216
+
+    ⍴↑*nats/5/2                     ⍝ */5/2 has 19,729 decimal digits.
+19729
+
+    ⎕d *nats 8                      ⍝ 123456789 * 8
+53965948844821664748141453212125737955899777414752273389058576481
+
+    ↑÷nats/⎕d ⎕d *nats¨ 101 100     ⍝ test accuracy
+123456789
+
+    0 1{⍵=0:⊃⍺ ⋄ (1↓⍺,+nats/⍺)∇ ⍵-1}1000    ⍝ 1,000th Fibonacci number (JRC).
+43466557686937456435688527675040625802564660517371780402481729089536555417949051
+      89040387984007925516929592259308032263477520968962323987332247116164299644
+      0906533187938298969649928516003704476137795166849228875
+
+    factorial ← ↑∘(×nats/)∘⍳        ⍝ !⍵
+
+    factorial 1000                  ⍝ !1000
+40238726007709377354370243392300398571937486421071463254379991042993851239862902
+      05920442084869694048004799886101971960586316668729948085589013238296699445
+      90997424504087073759918823627727188732519779505950995276120874975462497043
+      60141827809464649629105639388743788648733711918104582578364784997701247663
+      28898359557354325131853239584630755574091142624174743493475534286465766116
+      67797396668820291207379143853719588249808126867838374559731746136085379534
+      52422158659320192809087829730843139284440328123155861103697680135730421616
+      87476096758713483120254785893207671691324484262361314125087802080002616831
+      51027341827977704784635868170164365024153691398281264810213092761244896359
+      92870511496497541990934222156683257208082133318611681155361583654698404670
+      89756029009505376164758477284218896796462449451607653534081989013854424879
+      84959953319101723355556602139450399736280750137837615307127761926849034352
+      62520001588853514733161170210396817592151090778801939317811419454525722386
+      55414610628921879602238389714760885062768629671466746975629112340824392081
+      60153780889893964518263243671616762179168909779911903754031274622289988005
+      19544441428201218736174599264295658174662830295557029902432415318161721046
+      58320367869061172601587835207515162842255402651704833042261439742869330616
+      90897968482590125458327168226458066526769958652682272807075781391858178889
+      65220816434834482599326604336766017699961283186078838615027946595513115655
+      20360939881806121385586003014356945272242063446317974605946825731037900840
+      24432438465657245014402821885252470935190620929023136493273497565513958720
+      55965422874977401141334696271542284586237738753823048386568897646192738381
+      49001407673104466402598994902222217659043399018860185665264850617997023561
+      93897017860040811889729918311021171229845901641921068884387121855646124960
+      79872290851929681937238864261483965738229112312502418664935314397013742853
+      19266498753372189406942814341185201580141233448280150513996942901534830776
+      44569099073152433278288269864602789864321139083506217095002597389863554277
+      19674282224875758676575234422020757363056949882508796892816275384886339690
+      99598262809561214509948717012445164612603790293091208890869420285106401821
+      54399457156805941872748998094254742173582401063677404595741785160829230135
+      35808184009699637252423056085590370062427124341690900415369010593398383577
+      79394109700277534720000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000
+
+    binomial ← {(factorial ⍵)÷nats(factorial ⍺)×nats factorial ⍵-⍺}     ⍝ ⍺!⍵
+
+    1000 binomial 2000
+20481516269894897143351625029808250443964248879813970338203826376717481862020837
+      55828932994182610206201464766319998023692415481798004524792018047549769261
+      57856301289663432064714851152395251651227768588611539546256147907378668464
+      15444453361761377007385567381458963007130651045595951447988874620636871851
+      45518285511731662762536637730846829322553890497438594814317550307837964443
+      70810085163724827462791417016619883764840843541430817785947037746565188475
+      51468074969467492380303310181872329800966856745856025254991011811352535346
+      58887941966653674904511306110096311906270342502293155911108976733963991149
+      120
+
+⍝ Handy prefixes for the first few 2*10×⍵:
+⍝
+    prefs ← 'kilo' 'mega' 'giga' 'tera' 'peta' 'exa' 'zetta' 'yotta' '...'
+
+    ⍉↑prefs{⍺ ⍵}2*nats¨ 10 20 to 200
+ kilo   1024
+ mega   1048576
+ giga   1073741824
+ tera   1099511627776
+ peta   1125899906842624
+ exa    1152921504606846976
+ zetta  1180591620717411303424
+ yotta  1208925819614629174706176
+ ...    1237940039285380274899124224
+        1267650600228229401496703205376
+        1298074214633706907132624082305024
+        1329227995784915872903807060280344576
+        1361129467683753853853498429727072845824
+        1393796574908163946345982392040522594123776
+        1427247692705959881058285969449495136382746624
+        1461501637330902918203684832716283019655932542976
+        1496577676626844588240573268701473812127674924007424
+        1532495540865888858358347027150309183618739122183602176
+        1569275433846670190958947355801916604025588861116008628224
+        1606938044258990275541962092341162602522202993782792835301376
+
+See also: xtimes xpower big gcd rats bt adic
+See also: numbers
+
+Index:natural number|infinite precision|expression transformation
+Index:greatest common divisor|least common multiple|IEEE FP precision
+Index:factorial|binomial|fibonacci number|division, long
+Index:kilo-|mega-|giga-|tera-|peta-|exa-|zetta-|yotta-
+Index:computer programmers|mathematicians
+Index;Babbage C.|Fibonacci L.|York, Grand old Duke of|Hui R.K.W.|Quario G.

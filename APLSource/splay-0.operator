@@ -1,0 +1,125 @@
+ splay←{⎕IO ⎕ML←0 1                      ⍝ Splay trees.
+
+     put←{                               ⍝ tree ⍺ with key=value ⍵.
+         ⍺≡0:⍵(0 0)                      ⍝ null: new leaf.
+         ((nxt _)subs)(key _)←⍺ ⍵        ⍝ node info and subtrees.
+         nxt≡key:⍵ subs                  ⍝ match: new value.
+         ⍺ ∇ search ⍵                    ⍝ natch: search subtrees.
+     }                                   ⍝ :: t ∇ k v → t
+
+     rem←{                               ⍝ tree ⍺ without key ⍵.
+         ⍺≡0:0                           ⍝ null: key not in tree: no change.
+         ((nxt _)subs)(key _)←⍺ ⍵        ⍝ node and search key.
+         ~nxt≡key:⍺ ∇ search ⍵           ⍝ natch: remove from subtree.
+         0 0≡subs:0                      ⍝ leaf: replace with null.
+         0∊subs:(subs⍳0)⊃⌽subs           ⍝ one null: use the other.
+         (⍺ rot 1)∇ ⍵                    ⍝ neither: remove from rotated tree.
+     }                                   ⍝ :: t ∇ k → t
+
+     search←{                            ⍝ search subtree ⍺ for key ⊃⍵.
+         inf(lft rgt)←⍺                  ⍝ parts of node.
+         dir←1-2×>/⍋↑⊃¨inf ⍵             ⍝ search direction: ¯1 1
+         _ nxt←dir wise lft rgt          ⍝ nxt subtree to search.
+         sub←nxt ⍺⍺ ⍵                    ⍝ new subtree.
+         inf(dir wise lft sub rgt)       ⍝ new node.
+     }                                   ⍝ :: t (t ∇ k _ → t) ∇∇ k _ → t
+
+     get←{                               ⍝ value for key ⍵ from tree ⍺.
+         ⍺≡0:0 0 0                       ⍝ null: no value.
+         (key val)(lft rgt)←⍺            ⍝ parts of node.
+         key≡⍵:val ⍺ ⍬                   ⍝ match: value tree path.
+         dir←1-2×>/⍋↑key ⍵               ⍝ search direction: ¯1 1
+         _ nxt←dir wise lft rgt          ⍝ next subtree to search.
+         rslt sub path←nxt ∇ ⍵           ⍝ value, subtree and path to value.
+         ∆path←dir,path                  ⍝ extended path to target.
+         cand←(key val)(lft sub rgt)     ⍝ node info and subtree candidates.
+         tree←(dir wise\cand)bal ∆path   ⍝ possibly rebalanced tree.
+         rslt tree ∆path                 ⍝ value, tree and path to value.
+     }                                   ⍝ :: t ∇ k → v t p
+
+     bal←{                               ⍝ improve balance of tree.
+         2≠⍴⍵:⍺                          ⍝ not grandchild: continue.
+         pos neg←1 ¯1×⊃⍵                 ⍝ +/- rotation direction.
+         =/⍵:(⍺ rot neg)rot neg          ⍝ same dirns: double ¯⍵-rotation.
+         C(BpA s)←neg wise\⍺             ⍝ diff dirns:
+         ∆C←neg wise\C((BpA rot pos)s)   ⍝
+         ∆C rot neg                      ⍝   ¯⍵-⍵-rotation.       (see notes)
+     }                                   ⍝ :: t ∇ p → t
+
+     rot←{                               ⍝ single ⍵-wise rotation of tree ⍺.
+         B(Apq r)←⍵ wise\⍺               ⍝       B       A
+         A(p q)←⍵ wise\Apq               ⍝      / \  →  / \
+                                        ⍝     A   r   p   B
+         Bqr←⍵ wise\B(q r)               ⍝    / \         / \
+         ⍵ wise\A(p Bqr)                 ⍝   p   q       q   r
+     }                                   ⍝ :: t ∇ r → t
+
+     vec←{                               ⍝ vector of key=value pairs.
+         ⍵≡0:⍬                           ⍝ null tree: null vector.
+         key_val(lft rgt)←⍵              ⍝ key=val and subtrees.
+         (∇ lft),(⊂key_val),∇ rgt        ⍝ left_vec, key=val, right_vec.
+     }                                   ⍝ :: ∇ t → [k v]
+
+     lift←{                              ⍝ lift child of root.
+         val root path←⍵                 ⍝ val and revised tree.
+         0∊path:                         ⍝ no value: quit.
+         1≠⍴path:val root                ⍝ val not child of root: done.
+         val(root rot-⊃path)             ⍝ rotate root.
+     }                                   ⍝ :: ∇ v t p → v t
+
+     fmt←{                               ⍝ formatted tree ⍵.
+         null←0 0⍴''                     ⍝ format of null tree.
+         ⍵≡0:null                        ⍝ null tree: null format.
+         (key val)subs←⍵                 ⍝ node info.
+         key_val←↑,/⍕¨key'='val          ⍝ formatted key=value
+         fmts←{⊖⍵}\'┌└'{                 ⍝ hang subtrees by ┌─ ─┐ branches.
+             0 0≡⍴⍵:⍵                    ⍝ null: done.
+             mask←∧\' '=⊃↓⌽⍉⍵            ⍝ mask of leading blanks.
+             ⍉⌽↑(⊂⌽⍺,mask/'│'),↓⌽⍉⍵      ⍝ subtree suspended by branch.
+         }¨{⊖⍵}\∇¨subs                   ⍝ formatted subtrees.
+         case←~null null≡¨fmts           ⍝ non-null subtree cases.
+         join←(2⊥case)⊃'∘┐┘┤'            ⍝ subtree joining char.
+         join≡'∘':↑,↓key_val             ⍝ leaf: done.
+         dent←' '⊣¨key_val               ⍝ subtree padding.
+         pads←{↓↑,/dent,⊂⍵}¨fmts         ⍝ left-padded subtrees.
+         ↑↑{⍺,(↓key_val,join),⍵}/pads    ⍝ formatted tree.
+     }                                   ⍝ :: ∇ t → [-;]
+
+     dep←{                               ⍝ depth of key ⍵ in tree ⍺.
+         ⍺≡0:0                           ⍝ key not found: failure.
+         (key val)subs←⍺                 ⍝ parts of tree.
+         key≡⍵:1                         ⍝ key found: at depth 1.
+         dir←1-2×>/⍋↑key ⍵               ⍝ search direction: ¯1 1
+         _ sub←dir wise subs             ⍝ next subtree to search.
+         {⍵+×⍵}sub ∇ ⍵                   ⍝ incremental depth.
+     }                                   ⍝ :: t ∇ k → d
+
+     chk←{                               ⍝ tree stats / integrity check.
+         0=≡⍵:(0≡⍵)0 0 0 ⍬               ⍝ null: ok ht=0 sz=0 depth=0 range=⍬.
+         (key _)subs←⍵                   ⍝ node info and subtrees.
+         stats←(⍺+1)∇¨subs               ⍝ subtree stats.
+         oks szs dps hts krs←↓⍉↑stats    ⍝ individual stats.
+         keys←↑key{⍺,(⊂⍺⍺),⍵}/krs        ⍝ subtree key ranges.
+         okkey←{⍵≡⍳⍴⍵}⍋↑keys             ⍝ left keys << key >> right keys.
+         okstr←2 2≡(⍴⍵),⍴⊃⌽⍵             ⍝ node struct is ok.
+         ok←okkey∧okstr∧∧/oks            ⍝ good tree.
+         sz←1++/szs                      ⍝ subtree size.
+         dp←⍺++/dps                      ⍝ total node depth.
+         ht←1+⌈/hts                      ⍝ node height.
+         kr←⌽2⍴¯1⌽keys                   ⍝ key range for subtree.
+         ⍺>0:ok sz dp ht kr              ⍝ subtree: ok size tot_dep height range.
+         ok sz(⌊0.5+dp÷sz)ht             ⍝ root: ok size mean_depth height.
+     }                                   ⍝ :: ∇ t → y s d h {r}
+
+     wise←{(2×⍺⍺)↑3⍴⍵}                   ⍝ parameterise direction.
+
+     op←⍺⍺{f←⍺⍺ ⋄ ⊃⎕CR'f'}0              ⍝ operand label.
+
+     '∪'≡op:⍺ put ⍵                      ⍝ insert/replace value in tree.
+     '⍎'≡op:lift ⍵ get ⍺                 ⍝ search for value for key.
+     '~'≡op:⍺ rem ⍵ 0                    ⍝ remove key=value from tree.
+     '?'≡op:4↑0 chk ⍵                    ⍝ tree stats: ok size depth height.
+     '⍕'≡op:fmt ⍵                        ⍝ formatted tree.
+     '∊'≡op:vec ⍵                        ⍝ list of key=value pairs.
+     '≡'≡op:⍵ dep ⍺                      ⍝ depth of key ⍺ in tree ⍵.
+ }

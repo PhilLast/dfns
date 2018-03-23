@@ -1,0 +1,168 @@
+value  ← alist ##.alval name            ⍝ Value of name ⍵ in assoc list ⍺.
+alist  ← alist ##.alext (name value)    ⍝ Assoc list ⍺ extended with pair ⍵.
+alist  ← alist ##.alrem name            ⍝ Assoc list ⍺ with name ⍵ removed.
+values ← alist ##.alvals names          ⍝ Values of names ⍵ in assoc list ⍺.
+alist  ← alist ##.alrems names          ⍝ Assoc list ⍺ with names ⍵ removed.
+
+An  association list (AKA: symbol table, dictionary, look-up table) is a classic
+and  generally  useful  structure. It is implemented as a pair of (names values)
+vectors. Each item in the names vector would typically be a character vector but
+it could be anything.
+
+An example might be an object owned by each of a number of people:
+
+    stuff ← ('milly' 'molly' 'may') ('star' 'thing' 'stone')
+
+    stuff alval 'may'                           ⍝ thing associated with May.
+stone
+
+    stuff alvals 'may' 'milly'                  ⍝ May and Milly's things.
+ stone  star
+
+[alext] and [alrem] extend and remove names from the list, respectively.
+
+    ⊢ stuff ← stuff alext 'maggie' 'shell'      ⍝ add Maggie and her thing.
+┌────────────────────────┬────────────────────────┐
+│┌──────┬─────┬─────┬───┐│┌─────┬────┬─────┬─────┐│
+││maggie│milly│molly│may│││shell│star│thing│stone││
+│└──────┴─────┴─────┴───┘│└─────┴────┴─────┴─────┘│
+└────────────────────────┴────────────────────────┘
+
+    ⊢ stuff ← stuff alrem'molly'                ⍝ remove Molly and her thing.
+┌──────────────────┬──────────────────┐
+│┌──────┬─────┬───┐│┌─────┬────┬─────┐│
+││maggie│milly│may│││shell│star│stone││
+│└──────┴─────┴───┘│└─────┴────┴─────┘│
+└──────────────────┴──────────────────┘
+
+Multiple names may be removed using [alrems]:
+
+    stuff alrems'may' 'maggie'
+┌───────┬──────┐
+│┌─────┐│┌────┐│
+││milly│││star││
+│└─────┘│└────┘│
+└───────┴──────┘
+
+Duplicate Names
+---------------
+[alext]  _prefixes_  a  new value to the list. This means that a new association
+"shadows"  an  existing  one of the same name as far as [alval] and [alvals] are
+concerned.  [alrem]  removes the most recently prefixed name, thus "unshadowing"
+it.
+
+In contrast, [alrems] removes _all_ values associated with the given names.
+
+    alist alrem 'n1'            ⍝ pop leftmost n1.
+    alist alrem 'n1'            ⍝ pop leftmost remaining n1 (if any).
+    alist alrem 'n2'            ⍝ pop leftmost n2.
+
+    alist alrems 'n1' 'n2'      ⍝ expunge ALL n1s and ALL n2s.
+
+To  unshadow, as opposed to expunge, a number of names, use [alrem] with reduct-
+ion:
+
+    ↑alrem⍨/⌽alist 'n1' 'n1' 'n2' ...           ⍝ unshadow (pop) several names.
+or
+    alist alrem foldl 'n1' 'n1' 'n2' ...        ⍝ unshadow (pop) several names.
+
+Technical notes:
+
+[alval] is coded:
+
+    alval←{names vals←⍺ ⋄ (names⍳⊂⍵)⊃vals}
+
+it could be coded with the more obscure (and marginally slower):
+
+    alval←{↑⍵{(⍺⍳⊂⍺⍺)⊃⍵}/⍺}
+
+If the sought name is not in the list, both  codings generate INDEX ERROR. It is
+easy to tweak the functions to return a special "not found" value instead:
+
+    alval←{names vals←⍺ ⋄ (names⍳⊂⍵)⊃vals,⊂'Eh?'}
+or:                                      ¯¯¯¯¯¯¯
+    alval←{↑⍵{(⍺⍳⊂⍺⍺)⊃⍵,⊂'Eh?'}/⍺}
+                       ¯¯¯¯¯¯¯
+Destructive Assignment
+----------------------
+No function is provided to replace the value of an association. If such an oper-
+ation were needed, it could be coded:
+
+    alrep←{                     ⍝ Assoc list ⍺ with (name value) ⍵ replaced.
+        names vals←⍺            ⍝ old alist.
+        name val←⍵              ⍝ new value.
+        vals[names⍳⊂name]←⊂val  ⍝ replace alist value.
+        names vals              ⍝ new alist.
+    }                           ⍝ alist ← alist :: (name value)
+
+Note that, in the case of duplicate names, [alrep] will replace the value of the
+most recently associated pair.
+
+Graphs
+------
+An  association  list might be used to implement a directed graph. In this case,
+each  name  is  a vertex of the graph and the corresponding value is a vector of
+the vertices of connecting edges. For example:
+
+      Graph "a".
+    ┌─────A←────┐
+    │     │     │   5 vertices: A B C D E
+    ↓     ↓     │
+    B←───→C────→D   8 edges:    A→B  A→C  B→C  C→B
+          ↑     │               C→D  D→A  D→E  E→C
+          │     ↓
+          └─────E
+
+Corresponding association list:
+
+    alist ← 'ABCDE' ('BC' 'C' 'BD' 'AE' 'C')    ⍝ alist for graph "a" above.
+
+    alist alval 'C'                             ⍝ vertices 1 step from 'C'
+BD
+    steps←{↑{∪↑,/alist alvals ⍵}/(⍳⍺),⍵}        ⍝ vertices ⍺ steps from ⍵.
+
+    0 steps 'C'
+C
+    1 steps 'C'
+BD
+    2 steps 'C'
+CAE
+    3 steps 'C'
+BDC
+
+Examples:
+
+    stuff←('milly' 'molly' 'may')('star' 'thing' 'stone')
+
+    stuff alval 'may'                           ⍝ thing associated with May.
+stone
+
+    stuff alvals 'may' 'milly'                  ⍝ May and Milly's things.
+ stone  star
+
+    ⊢ stuff ← stuff alext 'maggie' 'shell'      ⍝ add Maggie and her thing.
+┌────────────────────────┬────────────────────────┐
+│┌──────┬─────┬─────┬───┐│┌─────┬────┬─────┬─────┐│
+││maggie│milly│molly│may│││shell│star│thing│stone││
+│└──────┴─────┴─────┴───┘│└─────┴────┴─────┴─────┘│
+└────────────────────────┴────────────────────────┘
+
+    ⊢ stuff ← stuff alrem'molly'                ⍝ remove Molly and her thing.
+┌──────────────────┬──────────────────┐
+│┌──────┬─────┬───┐│┌─────┬────┬─────┐│
+││maggie│milly│may│││shell│star│stone││
+│└──────┴─────┴───┘│└─────┴────┴─────┘│
+└──────────────────┴──────────────────┘
+
+    stuff alrems'may' 'maggie'                  ⍝ remove May and Maggie.
+┌───────┬──────┐
+│┌─────┐│┌────┐│
+││milly│││star││
+│└─────┘│└────┘│
+└───────┴──────┘
+
+See also: Graphs list key foldl
+
+Index:association list|dictionary|look-up table|symbol table|graph|lists
+Index:assignment, destructive|stuff
+Index;cummings e.e.

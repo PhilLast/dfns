@@ -1,0 +1,32 @@
+ wrapnote←{⎕ML←1                         ⍝ Wrap text paragraphs in note vector.
+     ⍺←⎕PW                               ⍝ by default: wrap to print width.
+     0::'bad note'⎕SIGNAL 11             ⍝ catchall for unexpected note format.
+     split←{{1↓¨(1,1↓⍵∊nls)⊂⍵}' ',⍵}     ⍝ partition at newline.
+     join←{¯1↓↑⍺{⍺,⍺⍺,⍵}/⍵,⊂''}          ⍝ collect with ⍺-separator.
+     jrgt←{fm=⊃⍴⍵}                       ⍝ line justified right?
+     jlft←{' '≠⊃⍵}                       ⍝ line justified left?
+     pics←{1∊'┌┬┐├┼┤└┴┘│─'∊⍵}            ⍝ line contains box-drawing chars?
+     and←{(⍺⍺ ⍵)∧⍵⍵ ⍵}                   ⍝ test combiner.
+     test←~∘pics and jlft and jrgt       ⍝ test for flowtext.
+     first←{(1+⍵⍳0)⊃⍵}∘{⊃∘⍴¨⍵}           ⍝ length of first non-blank line.
+     spill←{⍵∨¯1⌽⍵}                      ⍝ include next item to right.
+     list←{squeeze dehyph' 'join ⍵}      ⍝ first enlist, then
+     fold←{split to wrap ⍵}              ⍝ re-wrap paragraph.
+     dehyph←{(~spill'- '⍷⍵)/⍵}           ⍝ re-join hyphen-separated words.
+
+     nls←⎕UCS 13 133                     ⍝ version-proof newlines.
+     nl←⊃nls∩⍵                           ⍝ newline separator.
+     to fm←2↑⍺,first 1↓split ⍵~'─'       ⍝ to and from notes width.
+     vex←split ⍵                         ⍝ line_vector notes to vec-of-vecs.
+     text←0,1↓spill test¨vex             ⍝ mask of lines of flowtext.
+     segs←1,1↓¯1⌽0 1⍷text                ⍝ partition at start of flowtext.
+
+     vtrim nl join↑,/(segs⊂text){        ⍝ re-collect lines of notes.
+         0=⊃⍺:⍵                          ⍝ no flowtext here: continue.
+         flow rest←(1 0=⊂⍺)/¨⊂⍵          ⍝ separate flowtext from the rest.
+         vex←fold list flow              ⍝ refold paragraph.
+         wrp←to wrap' 'join vex          ⍝ re-re-wrap text.
+         new←split to justify wrp        ⍝ justify.
+         new,rest                        ⍝ re-collect segment.
+     }¨segs⊂vex                          ⍝ for each flowtext segment.
+ }

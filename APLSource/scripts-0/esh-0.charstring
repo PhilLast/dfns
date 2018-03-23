@@ -1,0 +1,123 @@
+⍝ Shell for Eide-number sums:
+
+⍝ Esh uses quote-quad input and output. For testing, we modify a copy
+⍝ of the function to input from variable ∆i and output to variable ∆o.
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+    ∆in←{                               ⍝ input from buffer         ⍝
+        buf←⍵,⊃∆i                                                   ⍝
+        ∆o,←⊂buf                                                    ⍝
+        ∆i↓⍨←1                                                      ⍝
+        buf                                                         ⍝
+    }                                                               ⍝
+                                                                    ⍝
+    qp←'⍞⊣⍞←' ' ∆in'∘subs               ⍝ subs quote-quad prompt    ⍝
+    qt←'⍞←⍵,⊃⌽⎕TC' '∆o,←⊂⍵'∘subs        ⍝ subs quote-quad output    ⍝
+    qz←':  ' ':0'∘subs                  ⍝ subs void to 0 result     ⍝
+                                                                    ⍝
+    esh_←esh                            ⍝ copy for modification     ⍝
+                                                                    ⍝
+    _←⎕fx qz qt qp ⎕cr'esh_'            ⍝ modify function.          ⍝
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+    ∆i ∆o←⍬ ⍬                   ⍝ input/output buffers.
+
+    ∆i,←⊂''
+    ∆i,←⊂'1 2 3 4'
+    ∆i,←⊂'¯5 ¯5'
+    ∆i,←⊂'..99'
+    ∆i,←⊂'..123123.123123..     ⍝ Euler''s Claim'
+    ∆i,←⊂'<12|3|45>'
+    ∆i,←⊂''
+    ∆i,←⊂'{-0+} ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Balanced Ternary'
+    ∆i,←⊂''
+    ∆i,←⊂'..-- 0.++..                           ⍝ 2×÷2'
+    ∆i,←⊂'0.+ 0.+ 0.+                           ⍝ 3×÷3'
+    ∆i,←⊂'0.+-+-.. 0.+-+-.. 0.+-+-.. 0.+-+-..   ⍝ 4×÷4'
+    ∆i,←⊂''
+    ∆i,←⊂'{=-0} ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Inverted Ternary'
+    ∆i,←⊂''
+    ∆i,←⊂'<-|0|->'
+    ∆i,←⊂'<=|-|=>'
+    ∆i,←⊂'{-0+#} ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Pos-skewed four'
+    ∆i,←⊂''
+    ∆i,←⊂'..##0           ⍝ lru-clearing'
+    ∆i,←⊂''
+    ∆i,←⊂'0.# 0.#         ⍝ one-half'
+    ∆i,←⊂''
+    ∆i,←⊂'{=-0+} ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Neg-skewed four'
+    ∆i,←⊂''
+    ∆i,←⊂'+.= +.=         ⍝ one-half'
+    ∆i,←⊂''
+    ∆i,←⊂'⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Errors:'
+    ∆i,←⊂'{0123456789}'
+    ∆i,←⊂''
+    ∆i,←⊂'{123'
+    ∆i,←⊂'{123}'
+    ∆i,←⊂'{010}'
+    ∆i,←⊂'{01|}'
+    ∆i,←⊂''
+    ∆i,←⊂'99..'
+    ∆i,←⊂'1.2.3'
+    ∆i,←⊂''
+    ∆i,←⊂')'
+
+    ↑∆o⊣esh_ ⎕d                 ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ emulate esh session.
+                                                
+    1 2 3 4                                     
+10                                              
+    ¯5 ¯5                                       
+¯10                                             
+    ..99                                        
+¯1                                              
+    ..123123.123123..     ⍝ Euler's Claim       
+0                                               
+    <12|3|45>                                   
+2.2424..                                        
+                                                
+    {-0+} ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Balanced Ternary    
+                                                
+    ..-- 0.++..                           ⍝ 2×÷2
++                                               
+    0.+ 0.+ 0.+                           ⍝ 3×÷3
++                                               
+    0.+-+-.. 0.+-+-.. 0.+-+-.. 0.+-+-..   ⍝ 4×÷4
++                                               
+                                                
+    {=-0} ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Inverted Ternary    
+                                                
+    <-|0|->                                     
+¯-                                              
+    <=|-|=>                                     
+¯-                                              
+    {-0+#} ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Pos-skewed four     
+                                                
+    ..##0           ⍝ lru-clearing              
+-+.++..                                         
+                                                
+    0.# 0.#         ⍝ one-half                  
++                                               
+                                                
+    {=-0+} ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Neg-skewed four     
+                                                
+    +.= +.=         ⍝ one-half                  
++                                               
+                                                
+    ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Errors:             
+    {0123456789}                                
+                                                
+    {123                                        
+bad {}s                                         
+    {123}                                       
+missing 0                                       
+    {010}                                       
+duplicate digits                                
+    {01|}                                       
+bad char                                        
+                                                
+    99..                                        
+bad number                                      
+    1.2.3                                       
+bad number                                      
+                                                
+    )                                           

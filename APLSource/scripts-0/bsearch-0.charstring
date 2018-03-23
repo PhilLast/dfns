@@ -1,0 +1,8 @@
+⍝ Binary search:
+
+    {⍵≥5} bsearch 3 7
+5
+    {⍵≥9} bsearch 3 7
+8
+    {⍵≥1} bsearch 3 7
+3

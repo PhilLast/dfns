@@ -1,0 +1,55 @@
+─────
+Trees
+─────
+Tree  structures can be represented in APL in many ways. Two popular methods are
+to  use  array  nesting,  or "TreeView"  style depth and leaf vectors. Functions
+→tview←  and  →tnest←  swap between these two styles and →tfmt← takes the nested
+representation and renders it as an indented character matrix suitable for disp-
+lay in the session.
+
+We  can represent a tree as a vector, where at each level, the first item is the
+tree  node  and  subsequent items are sub-trees. Leaves are identified by having
+depth=1. For example, the following tree:
+
+                  drink
+           ┌────────┴────────┐
+          hot               cold
+       ┌───┴───┐         ┌───┴───┐
+      tea    coffee     milk    beer
+
+
+... might be represented thus:
+
+    nested←'drink'('hot' 'tea' 'coffee')('cold' 'milk' 'beer')
+
+    disp nested                             ⍝ Nested format.
+┌─────┬────────────────┬────────────────┐
+│drink│┌───┬───┬──────┐│┌────┬────┬────┐│
+│     ││hot│tea│coffee│││cold│milk│beer││
+│     │└───┴───┴──────┘│└────┴────┴────┘│
+└─────┴────────────────┴────────────────┘
+
+    disp tview nested                       ⍝ TreeView format.
+┌─────────────┬─────────────────────────────────────┐
+│0 1 2 2 1 2 2│┌─────┬───┬───┬──────┬────┬────┬────┐│
+│             ││drink│hot│tea│coffee│cold│milk│beer││
+│             │└─────┴───┴───┴──────┴────┴────┴────┘│
+└─────────────┴─────────────────────────────────────┘
+
+      display tfmt nested               ⍝ Indented format.
+┌→─────────────┐
+↓drink         │
+│·   hot       │
+│·   ·   tea   │
+│·   ·   coffee│
+│·   cold      │
+│·   ·   milk  │
+│·   ·   beer  │
+└──────────────┘
+
+      nested ≡ tnest tview nested       ⍝ Full circle
+1
+
+See also: tnest tview tfmt span dft BST trav
+
+Index:tree

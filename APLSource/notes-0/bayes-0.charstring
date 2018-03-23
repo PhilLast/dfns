@@ -1,0 +1,95 @@
+prob ← cond ##.bayes prior                  ⍝ Bayes' formula
+
+Bayesian Statistics using a Fork by Steve Mansour
+¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+Suppose the probability that a person has cancer is 3%.   A certain test will be
+positive 90% of the time when a person has cancer.   But there is a 2% chance of
+a false positive. What is the probability that a person actually has the disease
+if the result is positive?  We know  P(Test|Disease) = 0.9.   What we are trying
+to find is P(Disease|Test).
+
+We use the conditional rule: P(A|B) = P(A∩B)/P(B) and P(B|A) = P(A∩B)/P(A).
+
+From this we can show:
+
+    P(A|B) P(B) = P(A∩B) = P(B|A) P(A)
+
+We can then show that: P(B|A) = P(A|B)P(B)/P(A).
+
+The marginal probability P(A) = SUMi[P(A∩Bi)] = SUMi[P(A|Bi)P(Bi)]
+
+This allows us to derive Bayes' Formula:
+
+                     P(A|Bi)P(Bi)
+        P(Bi|A) = -------------------
+                  SUMi[P(A|Bi)P(Bi)]
+
+Let us first set the prior probabilities.
+
+We can create a vector: P(Cancer), P(No Cancer)
+
+    C←0.03                  ⍝ Probability of Cancer
+
+    ⎕←PRIOR←C,1-C           ⍝ Prior probabilities
+0.03 0.97
+
+Now let us set the conditional probabilities.
+Again, we create a vector: P(Positive|Cancer), P(Postive|No Cancer)
+
+    COND←0.9 0.02           ⍝ Conditional probabilities
+
+Now let find the Bayesian probabilities.
+The result will be a vector: P(Cancer|Positive),P(No Cancer|Positive).
+
+Observe that Bayes' Formula above consists of a product divided by an inner pro-
+duct. Let us define the function bayes as a fork:
+
+    bayes ← × ÷ +.×         ⍝ times div sumProduct
+
+We the use the conditional probabilities as the left argument and the prior
+probabilities as the right argument:
+
+    COND bayes PRIOR        ⍝ Bayes Formula
+0.5819 0.4181
+
+The answer is quite surprising. Given that the test is positive, the probability
+of cancer is less than 60%  which means there is greater than a 40%  chance that
+the patient does not have cancer.
+
+Bayes' formula  can  be applied to situations where there are more than two out-
+comes.   Consider  the  following table showing the breakdown of students by Sex
+(F=Female,M=Male) and Party (D=Democrat, I=Independent, R=Republican):
+
+     frequency show D.Sex D.Party
+
+ Count     |         D         I         R |   Total
+ ------------------------------------------|--------
+ F         |         3         2         4 |       9
+ M         |         8         9        12 |      29
+ ------------------------------------------|--------
+ Total     |        11        11        16 |      38
+
+Suppose we know that Pr(Sex|Party)  what is Pr(Party|Sex)? From Bayes' Formula
+we need the prior probabilities for Female:
+
+    ⎕←PRIORF←11 11 16÷38        ⍝ Pr(Party)
+0.28947 0.28947 0.42105
+
+We also need the conditional probabilities for female given party:
+
+    ⎕←CONDF←3 2 4÷11 11 16      ⍝ Pr(F|D),Pr(F|I),Pr(F|R)
+0.27273 0.18182 0.25
+
+Applying Bayes' formula, we obtain a vector of posterior probabilities:
+
+    CONDF bayes PRIORF          ⍝ Pr(D|F),Pr(I|F),Pr(R|F)
+0.33333 0.22222 0.44444
+
+Observe that we can obtain the same result by dividing the joint frequencies by
+the marginal frequency for female:
+
+    ⎕←3 2 4÷9                   ⍝ Pr(Party|Female)
+0.33333 0.22222 0.44444
+
+Index:Bayes formula
+Index;Mansour S.M.|Bayes T.

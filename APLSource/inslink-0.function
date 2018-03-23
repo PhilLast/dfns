@@ -1,0 +1,4 @@
+ inslink←{                   ⍝ Insert edge ⍵ in graph ⍺.
+     graph←⍺ ⋄ fm to←⍵       ⍝ graph and edge.
+     graph⊣(fm⊃graph)∪←to    ⍝ overwrite vertex with new edge.               <V>@
+ }

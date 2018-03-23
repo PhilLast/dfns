@@ -1,0 +1,13 @@
+⍝ Encapsulate function/operator:
+
+      _←⎕fx'z←tfn' 'z←⎕ts'      ⍝ trad fn.
+      dfn←{3↑⍵}                 ⍝ dynamic fn.
+      afn←×/                    ⍝ assigned fn.
+
+      1 disp rep¨'tfn' 'dfn' 'afn'
+┌→─────┬──────┬──────────┐
+│ ∇tfn │ ∇dfn │┌→──┬────┐│
+│      │      ││afn│ ×/ ││
+│      │      │└──→┴∇───┘│
+└∇─────┴∇─────┴─────────→┘
+

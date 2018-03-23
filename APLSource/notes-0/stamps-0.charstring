@@ -1,0 +1,60 @@
+nvec ← {denoms←1 5 6 10 26 39 43} ##.stamps value   ⍝ Postage stamps for ⍵.
+
+Returns a vector of stamps whose total value is the right argument. The optional
+left  argument is a vector of distinct stamp values and defaults to those denom-
+inations prevalent in the UK circa 1998:
+
+    ⍺←1 5 6 10 26 39 43         ⍝ Default UK stamp denominations.
+
+Technical note:
+
+Notice  that  the  graph  approach is, in general, better than a simple "greedy"
+algorithm, which repeatedly subtracts the largest possible remaining value:
+
+    stomps←{                    ⍝ stamps - greedy algorithm.
+        ⍺←1 5 6 10 26 39 43     ⍝ default UK stamp denominations.
+        svec←⍺                  ⍝ stamp vector.
+        ⍬{                      ⍝ stamp accumulator.
+            ⍵=0:⍺               ⍝ no remaining value: done.
+            next←⌈/svec×svec≤⍵  ⍝ largest possible stamp.
+            (⍺,next)∇ ⍵-next    ⍝ next stamp and remainder.
+        }⍵
+    }
+
+    {disp 2 0∘⍕¨stomps ⍵}¨50 51 52 53           ⍝ less-than-optimal postage.
+ ┌──┬──┬──┐  ┌──┬──┬──┬──┐  ┌──┬──┬──┬──┬──┐  ┌──┬──┐
+ │43│ 6│ 1│  │43│ 6│ 1│ 1│  │43│ 6│ 1│ 1│ 1│  │43│10│
+ └──┴──┴──┘  └──┴──┴──┴──┘  └──┴──┴──┴──┴──┘  └──┴──┘
+
+Examples:
+
+    {disp 2 0∘⍕¨stamps ⍵}¨ 50 51 52 53          ⍝ default UK(1998) stamps.
+ ┌──┬──┬──┐  ┌──┬──┬──┐  ┌──┬──┐  ┌──┬──┐
+ │43│ 6│ 1│  │39│ 6│ 6│  │26│26│  │43│10│
+ └──┴──┴──┘  └──┴──┴──┘  └──┴──┘  └──┴──┘
+
+    bins←1 2 4 8 16 32                          ⍝ "binary" stamps:
+
+    {disp 2 0∘⍕¨bins stamps ⍵}¨ 15 16 17 18
+ ┌──┬──┬──┬──┐  ┌──┐  ┌──┬──┐  ┌──┬──┐
+ │ 8│ 4│ 2│ 1│  │16│  │16│ 1│  │16│ 2│
+ └──┴──┴──┴──┘  └──┘  └──┴──┘  └──┴──┘
+
+⍝ Stamps with a negative face value would be quite handy:
+
+    bts←1 ¯1 3 ¯3 9 ¯9 27 ¯27                   ⍝ "balanced ternary" stamps.
+
+    {disp 2 0∘⍕¨bts stamps ⍵}¨12 13 14 15       ⍝ see →bt←
+ ┌──┬──┐  ┌──┬──┬──┐  ┌──┬──┬──┬──┐  ┌──┬──┬──┐
+ │ 9│ 3│  │ 9│ 3│ 1│  │27│¯1│¯3│¯9│  │27│¯3│¯9│
+ └──┴──┘  └──┴──┴──┘  └──┴──┴──┴──┘  └──┴──┴──┘
+
+⍝ ... although they are unlikely to catch on:
+⍝
+⍝   "I'd like a 27p stamp please. Oh yeah, and two ¯9s and a ¯3."
+⍝   "Thank you sir, that'll be 6p; will there be anything else?"
+
+See also: Graphs bt
+See also: eval.dws/notes.bta
+
+Index:postage stamps|graph|balanced ternary

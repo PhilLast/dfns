@@ -1,0 +1,65 @@
+ quzzle←{⎕IO ⎕ML←1                                       ⍝ A hard, simple puzzle.
+     extend←{⍝ extend shortest path
+         (⍴Fin)<p←1⍳⍨(Fin=0)∧NPath=⌊/(Fin=0)/NPath:0     ⍝ select min path to extend
+         (⍴Target)=+/NPath[p]≥(Fin>0)/NPath:0            ⍝ shortest paths found ?
+         n←⊃¯1↑p⊃Path                                    ⍝ last node in selected path
+         ∇ delpath p,↑,/p next¨↑,/n moves¨Tiles          ⍝ extend this path
+     }
+     moves←{⍝ possible moves for a tile. ⍺:Node index, ⍵:tile id
+         ⍵,¨((,1 ¯1∘.×1,1+2⊃Shape)((,'_'⍪'∣',Shape⍴State[⍺;]){∧/((⍵=⍺⌽⍺⍺)/⍺⍺)∊⍵,' '})¨⍵)/'←↑→↓'
+     }
+     next←{⍝ add state at next level. ⍺:Path ID, ⍵:tile,direction
+         ' '=t←⊃⍵:0                                      ⍝ nothing to add
+         x←y←State[⊃¯1↑⍺⊃Path;]                          ⍝ state before ...
+         ((t=y)/x)←' '                                   ⍝ and ...
+         (((,1 ¯1∘.×1,2⊃Shape)['←↑→↓'⍳2⊃⍵]⌽,t=y)/x)←t    ⍝ after move
+         0=n←(1∊n)×1⍳⍨n←State∧.=x:0×(addnode x)addpath ⍺ ⍵ ⍝ new state: append node and path
+         ⍺∊i←i/⍳⍴i←n∊¨Path:0                             ⍝ node already in current path
+         0∊⍴i:0×n addpath ⍺ ⍵                            ⍝ node not in any path
+         NPath[⍺]≥¯2+⌊/Path[i]⍳¨n:0                      ⍝ shorter path to node exists
+         (n addpath ⍺ ⍵)modpath¨i                        ⍝ modify existing paths
+     }
+     addnode←{⍝ add a new node ie unique state. ⍵:new state
+         (⍬⊃State)←State⍪⍵                               ⍝ state
+         i←⍵[(i,(1+⍴⍵)-(i←2⊃Shape),1)[Target]]⍳⊃Tiles    ⍝ tile in an end corner?
+         ENode,←i×i≤⍴Target                              ⍝ end node
+         NMoves,←⌊/⍬                                     ⍝ min nr of moves to node
+         ⊃⍴ENode                                         ⍝ node number
+     }
+     addpath←{⍝ add a new path ⍺:node ⍵:(path nr to append to)(move tile,direction)
+         p m←⍵ ⋄ e←⍺⊃ENode ⋄ n←⊃⍴p⊃Path
+         (e>0)∧(e∊Fin)∧n≥(Fin⍳e)⊃NPath,0:0               ⍝ path to corner already found
+         Path,←⊂(p⊃Path),⍺                               ⍝ full path
+         Moves,←⊂(p⊃Moves)⍪m                             ⍝ moves
+         Fin,←⍺⊃ENode                                    ⍝ completed if node is a corner
+         NPath,←n                                        ⍝ nr of moves for path
+         NMoves[⍺]⌊←n                                    ⍝ min path length for node
+         ⊃⍴Path                                          ⍝ new path index
+     }
+     modpath←{⍝ modify path with shorter sub-path. ⍺:shortest path index, ⍵:path to modify
+         ⍺=0:0                                           ⍝ cancel this action
+         (i←x⍳¯1↑⍺⊃Path)=⍴x←⍵⊃Path:⍺                     ⍝ mark longer full path to delete
+         (⍵⊃Path)←(⍺⊃Path),i↓x                           ⍝ mod path
+         (⍵⊃Moves)←(⍺⊃Moves)⍪i 0↓⍵⊃Moves                 ⍝ mod move sequence
+         (⍵⊃NPath)←¯1+⊃⍴⍵⊃Path                           ⍝ mod path length
+         0
+     }
+     delpath←{⍝ delete path(s) ⍵: path indices
+         ~0∊i←~(⍳⍴Path)∊⍵:0                              ⍝ nothing to delete
+         Path∘←i/Path                                    ⍝ del paths
+         Moves∘←i/Moves                                  ⍝ del moves
+         NPath∘←i/NPath                                  ⍝ del path lengths
+         Fin∘←i/Fin                                      ⍝ del complete path indicators
+         0
+     }
+     ⍺←⍳3 ⋄ Target←,⍺
+     Tiles←(∪,⍵)~' ' ⋄ Shape←⍴⍵                          ⍝ tile labels
+     Path←,⊂,1 ⋄ Moves←,⊂1 2⍴' ' ⋄ NPath←,0 ⋄ Fin←,0     ⍝ paths and moves
+     State←(1,⍴,⍵)⍴⍵ ⋄ NMoves←,0 ⋄ ENode←,0              ⍝ nodes, states, nr-moves, Solution
+     x←extend 0                                          ⍝ solve
+     ∧/Fin=0:'There are no solutions'
+     i←⊃∨/{i\n=⌊/n←(i←Fin=⍵)/NPath}¨⍳⍴Target             ⍝ best solutions
+     x←'Top-right' 'Bottom-left' 'Bottom-right'[Target[i/Fin]] ⍝ display
+     x←x,[0.5](⊂'in '),¨(⍕¨i/NPath),¨⊂' moves'
+     x⍪i/Moves
+ }

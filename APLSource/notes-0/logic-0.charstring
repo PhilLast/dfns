@@ -1,0 +1,134 @@
+rslt ← larg (selector ##.logic) rarg        ⍝ logical function array.
+
+Supplied by Phil Last, who says:
+
+Logical  dyadic  functions each take two boolean args and return one. The domain
+of  scalar  argument pairs is therefore (0 0)(0 1)(1 0)(1 1) and the codomain of
+scalar  results  is 0 1. The results from one particular function for the 4 mem-
+bers of the domain can be used to characterise the function. e.g.:
+
+       =/¨(0 0)(0 1)(1 0)(1 1)
+1 0 0 1
+
+We  can conveniently 2∘⊥ this result to give us a single integer that completely
+identifies  the  function  (in the above case, 9). There must therefore be (2*4)
+i.e. 16 possible logical dyadic functions. The mapping is shown in the table ...
+
+    ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐
+    │ 0 │ 1 │ 2 │ 3 │ 4 │ 5 │ 6 │ 7 │ 8 │ 9 │10 │11 │12 │13 │14 │15 │
+    ├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+    │ 0 │ ∧ │ > │ ⍺ │ < │ ⍵ │ ≠ │ ∨ │ ⍱ │ = │~⍵ │ ≥ │~⍺ │ ≤ │ ⍲ │ 1 │
+    └───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┘
+
+Functions  0, 3, 5, 10, 12 and 15 are the 6 that most APLs don't implement leav-
+ing the 10 logical functions in the standard. Nowhere are any of them implement-
+ed  as  true  scalar functions notwithstanding ← and → in Sharp APL, and ⊣ and ⊢
+in D:
+
+(
+    Perhaps  a  little tongue-in-cheek, Phil suggests that "notwithstanding" and
+    "nevertheless" might be apt names for functions ⊣ and ⊢ respectively:
+
+    "this notwithstanding that" implies "this",
+    "this nevertheless that"    implies "that".
+
+    Interestingly, both the Oxford and Collins dictionaries imply that the words
+    are synonymous, whereas it is clear from the above that.
+
+        notwithstanding ←→ nevertheless ⍨
+        nevertheless ←→ notwithstanding ⍨
+
+    As Phil says, this feels a little like saying that "because" and "therefore"
+    mean the same thing.
+)
+
+Here they are as D:fns
+
+      f0←{0∧⍺=⍵}
+      f3←{⍺=⍵=⍵}
+      f5←{⍵=⍺=⍺}
+      fa←{⍵≠⍺=⍺}
+      fc←{⍺≠⍵=⍵}
+      ff←{1∨⍺=⍵}
+
+D:op (logic) supplies any or all of them according to its operand.
+
+⍺ and ⍵ are conformable logical arrays, any rank, any depth. ⍺⍺ is a function
+that returns a simple integer array conformable with ⍺ and ⍵.
+
+Thus:
+
+    {1}logic is ∧ and {7}logic is ∨,
+
+    {6 11 13}logic is a 3 item function array of ≠ ≥ ≤,
+
+    {4 4⍴16?16}logic is a 4x4 array of all the logical functions in some order.
+
+Technical notes:
+
+    logic←{                         ⍝ logical function array
+        ⊃(0 1 2 3=+/⍺ ⍺ ⍵)∨.∧{
+            ⊂[1+⍳⍴⍴⍵]2 2 2 2⊤⍵
+        }⍺ ⍺⍺ ⍵
+    }
+
+The ⊃ acts on a scalar, so is ⎕ML-proof.
+
+The 1+⍳... is an axis spec, so is ⎕IO-proof.
+
+The }⍺ ⍺⍺ ⍵ is in case the shapes of ⍺ and ⍵ are required to select or reshape
+the integer array inside ⍺⍺. e.g.
+
+    {(⍴⍺=⍵){⍺⍴(0⊥⍺)⍴⍵}integers}logic    ⍝ a function for each column
+
+Examples:
+
+      0 0 1 1  {0}logic 0 1 0 1     ⍝  0    0
+0 0 0 0
+      0 0 1 1  {1}logic 0 1 0 1     ⍝  1    ∧
+0 0 0 1
+      0 0 1 1  {2}logic 0 1 0 1     ⍝  2    >
+0 0 1 0
+      0 0 1 1  {3}logic 0 1 0 1     ⍝  3    ⍺
+0 0 1 1
+      0 0 1 1  {4}logic 0 1 0 1     ⍝  4    <
+0 1 0 0
+      0 0 1 1  {5}logic 0 1 0 1     ⍝  5    ⍵
+0 1 0 1
+      0 0 1 1  {6}logic 0 1 0 1     ⍝  6    ≠
+0 1 1 0
+      0 0 1 1  {7}logic 0 1 0 1     ⍝  7    ∨
+0 1 1 1
+      0 0 1 1  {8}logic 0 1 0 1     ⍝  8    ⍱
+1 0 0 0
+      0 0 1 1  {9}logic 0 1 0 1     ⍝  9    =
+1 0 0 1
+      0 0 1 1 {10}logic 0 1 0 1     ⍝ 10   ~⍵
+1 0 1 0
+      0 0 1 1 {11}logic 0 1 0 1     ⍝ 11    ≥
+1 0 1 1
+      0 0 1 1 {12}logic 0 1 0 1     ⍝ 12   ~⍺
+1 1 0 0
+      0 0 1 1 {13}logic 0 1 0 1     ⍝ 13    ≤
+1 1 0 1
+      0 0 1 1 {14}logic 0 1 0 1     ⍝ 14    ⍲
+1 1 1 0
+      0 0 1 1 {15}logic 0 1 0 1     ⍝ 15    1
+1 1 1 1
+
+      disp l n r←(3 4⍴0 0 1 1)(⍉4 3⍴6 11 13)(3 4⍴0 1 0 1)
+┌───────┬───────────┬───────┐
+│0 0 1 1│ 6  6  6  6│0 1 0 1│
+│0 0 1 1│11 11 11 11│0 1 0 1│
+│0 0 1 1│13 13 13 13│0 1 0 1│
+└───────┴───────────┴───────┘
+
+      l,'≠≥≤',r,'→',l{n}logic r     ⍝ apply functions in parallel.
+0 0 1 1 ≠ 0 1 0 1 → 0 1 1 0
+0 0 1 1 ≥ 0 1 0 1 → 1 0 1 1
+0 0 1 1 ≤ 0 1 0 1 → 1 1 0 1
+
+See also: truth_tables
+
+Index:conditional operator|boolean functions|truth tables|⎕ML
+Index;Last P.

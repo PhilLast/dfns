@@ -1,0 +1,91 @@
+bfobj ← (##.mac) src                        ⍝ Simple macro processor for bf.
+
+[mac] is a simple macro processor intended for use with →bf←.
+
+Only  single  characters may be used as names for definitions.  For example,  we
+could define ';' to generate the BF code to input a single character '0'-'9' and
+to subtract '0', leaving a number 0-9 in the current cell. This version uses its
+right neighbour as a temporary loop counter.
+
+    ;=,>------[+<-------->]<
+
+The body of a macro definition extends from the '=' character to the first white
+space character (blank or newline).
+
+A macro body may be parenthesised in order to include white space or inner local
+definitions.
+
+\ Backslash prevents expansion of the immediately following character.
+
+        mac '?=x  ?? \??\? ??'              ⍝ suppressed expansion of some ?s.
+     xx ?x? xx
+
+/ Forward slash within a macro body replicates its immediately  following  char-
+  acter by the number immediately to the left of the  macro  name in the calling
+  context. If no number precedes the macro name, a replication of 0 is assumed:
+
+
+        mac' ∆=/+ <1∆> <2∆> <3 ∆> <4∆>'     ⍝ 1, 2, 0 and 4 +s.
+     <+> <++> <3 > <++++>
+
+Combining  all of these techniques, here is a macro, which outputs a single num-
+eric digit. It contains a local macro definition ∆:
+
+    :=(∆=/+ >6∆[-<8∆>]< .)
+
+Technical note:
+
+Mac's  principal  function [mexp]'s use of sub-functions [defn] and [dref] illu-
+strate a technique called "continuation-passing style" or CPS.
+
+[mexp]  uses  [defn]  and  [dref] respectively, to define and dereference names.
+Conceptually,  the  subfunctions each _return_ two lists of already- and yet-to-
+be- processed tokens, with which [mexp] dyadically, and tail-recursively,  calls
+itself.
+
+We can arrange that the calls on [defn] and [dref] are themselves tail-calls, if
+we have them _call_ [mexp] rather than _return_ to it.  In other words, [mexp]'s
+tail-recursive call, following evaluation of its subfunctions is devolved to the
+subfunctions.  We do this by passing [mexp] as operand (∇) to the  subfunctions,
+which then become suboperators:
+
+        b≡'=':⍺ ∇ defn ⍵            ⍝ = defn: accumulate.
+                ¯
+        a∊⊃⍺:⍺ ∇ dref ⍵             ⍝ ⍺ name: expand.
+               ¯
+Now [defn] and [dref] can tail-call [mexp], as ⍺⍺, rather than to return to it:
+
+        (⍺,⍨∘⊂¨name val)⍺⍺ dd uuu   ⍝ extended association vectors.
+                        ¯¯
+        ⍺ ⍺⍺ ddd(val(n copy)uu)     ⍝ expanded macro insert.
+          ¯¯
+Though used explicitly in this example, CPS is more frequently  employed  behind
+the scenes by compiler-optimisers to transform stack-calls into tail-calls.
+
+See: http://en.wikipedia.org/wiki/Continuation-passing_style
+
+Examples:
+
+    movl←'l=[-/<+/>] '      ⍝ move left ⍺ cell positions ("/" replicates.).
+
+    mac movl, '2l 1l 0l'    ⍝ move left 2 1 0 (the last of which will hang BF).
+[-<<+>>] [-<+>] [-+]
+
+    mac'a=KO a=OK a'        ⍝ subsequent defns replace previous ones.
+OK
+    mac'a=K (a=O a)a'       ⍝ inner block defns shadow outer ones.
+OK
+    mac'a=OK b=a a=KO b'    ⍝ a expanded at b defn time.
+OK
+    mac'a=KO b=\a a=OK b'   ⍝ a expanded at b dref time.
+OK
+    mac'O=? b=\\\OK b'      ⍝ O not expanded.
+OK
+    mac'a=K b=(a=O a) ba'   ⍝ inner defn is local to block.
+OK
+
+⍝ See →bfack← and →balm← for some more substantial examples.
+
+See also: bfack balm bf
+
+Index:Brainfuck|macro|continuation-passing style

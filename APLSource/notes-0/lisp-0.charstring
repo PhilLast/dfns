@@ -1,0 +1,114 @@
+rslt ← {eval←1} ##.lisp expr                ⍝ Evaluator for a subset of Scheme.
+
+From Nick Nickolov, this function evaluates character vector  [expr],  which  is
+an expression written in a subset of the Scheme language.
+
+Special forms:
+
+    lambda  (alias \)
+    quote
+    cond    else
+
+A small set of primitive functions is provided. This can be easily extended:
+
+    +   sum
+    -   difference
+    *   product
+    =   equal
+write   display using ⎕←
+
+If optional left argument [eval] is set to 0, [lisp] returns the parse tree
+prior to evaluation.
+
+Technical note:
+
+Roughly,  it follows the structure of the metacircular evaluator from SICP.
+See Gerald Jay Sussman's lecture: https://www.youtube.com/watch?v=0m6hoOelZH8
+
+Lisp structures are represented as follows:
+
+    Lisp   APL
+    ----   ---
+    123    123
+    atom   'atom'
+    (x y)  (x y)
+    'x     ('quote' x)
+
+Procedures are represented as 4-vectors of:
+
+    'closure' environment parameters body
+
+Environments are two-column matrices of names and values.
+
+Examples:
+
+    lisp '(+ 1 2 3)'                    ⍝ expression evaluation
+6
+    lisp '((lambda(m n)(+ m n))3 4)'    ⍝ lambda application
+7
+    0 lisp '((\(m n)(+ m n))3 4)'       ⍝ parse tree (AST)
+┌─────────────────┬─┬─┐
+│┌─┬─────┬───────┐│3│4│
+││\│┌─┬─┐│┌─┬─┬─┐││ │ │
+││ ││m│n│││+│m│n│││ │ │
+││ │└─┴─┘│└─┴─┴─┘││ │ │
+│└─┴─────┴───────┘│ │ │
+└─────────────────┴─┴─┘
+
+      lisp repl '→'                     ⍝ mini session using →repl← operator.
+
+    (* 2 3 4)
+24
+    ((\(m n)(* m n))3 4)                ⍝ using "\" shorthand for "lambda"
+12
+    (quote (+ 1 2))                     ⍝ quoted list
++ 1 2
+    '(* 4 5)                            ⍝ using "'" shorthand
+* 4 5
+    →
+                                        ⍝ Nick's example:
+    s ← ' ((lambda (cons car cdr)                            '
+    s,← '          (car  (cons 123 456)))                    '
+    s,← '                                                    '
+    s,← '  (lambda (x y) (lambda (i) (cond (i x) (else y)))) '
+    s,← '  (lambda (xy) (xy 0))                              '
+    s,← '  (lambda (xy) (xy 1)))                             '
+
+    lisp s
+456
+      ⍝ Applicative-order Y combinator:
+
+      Y←'(\(f)((\(x)(x x))(\(x)(f(\(y)((x x)y))))))'
+
+      fac←'(\(f)(\(n)(cond((= n 0)1)(else(* n(f(- n 1)))))))'   ⍝ factorial
+
+      lisp '((',Y,fac,')4)'             ⍝ !4
+24
+      ⍝ Fibonacci:
+      fib ← '(\(f)(\(n)(cond((= n 0)0)((= n 1)1)(else(+(f(- n 1))(f(- n 2)))))))'
+
+      lisp '((',Y,fib,')8)'
+21
+      ⍝ Ackermann:
+      ack  ← '(\(a)(\(m)(\(n)(cond((= m 0)(+ n 1))'
+      ack ,← '                    ((= n 0)((a(- m 1))1))'
+      ack ,← '                    (else((a(- m 1))((a m)(- n 1))))))))'
+      lisp'(((',Y,ack,')3)3)'
+61
+      rec←Y{'((',⍺⍺,⍺,')',⍵,')'}        ⍝ Y applicator
+
+      lisp¨ fib∘rec¨ ⎕D                 ⍝ fib¨ 0..9
+0 1 1 2 3 5 8 13 21 34
+
+      pchk←{0 ¯1↓1 0⌽' ',⍕↑⍵(+\1 ¯1 0['()'⍳⍵])}
+
+      pchk Y                            ⍝ handy parenthesis depth checker
+( \ ( f ) ( ( \ ( x ) ( x   x ) ) ( \ ( x ) ( f ( \ ( y ) ( ( x   x ) y ) ) ) ) ) )
+ 1 1 2 2 1 2 3 3 4 4 3 4 4 4 4 3 2 3 3 4 4 3 4 4 5 5 6 6 5 6 7 7 7 7 6 6 5 4 3 2 1
+
+See also: repl parse bf baby joy
+See https://github.com/ngn/only-tools-and-sources/tree/master/lib/lisp
+
+Index:Lisp|Scheme|closure|Metacircular|SICP|lambda|evaluator|fibonacci number
+Index:factorial|Y combinator|Ackermann's function
+Index;Abelson H.|Sussman G.J.|Nickolov N.

@@ -1,0 +1,11 @@
+ mns←{                                         ⍝ Make NS from association list ⍵.
+     ⍺←⎕NS''                                   ⍝ default new space.
+     0=⍴⍵:⍺                                    ⍝ list exhausted: finished.
+     name class value←⎕IO⊃⍵                    ⍝ first triple.
+     class=2:⍺ ∇ 1↓⍵⊣name ⍺.{⍎⍺,'←⍵'}value     ⍝ var: assign.
+     class∊3 4:⍺ ∇ 1↓⍵⊣⍺.⎕FX value             ⍝ fn or op: fix.
+     class=9:⍺ ∇ 1↓⍵⊣name ∇ ⍺.{                ⍝ space: recursively process,
+         (⍎⍺,'←⎕NS ⍬')⍺⍺ ⍵                     ⍝   in new sub-space,
+     }value                                    ⍝   the sub-list.
+     'Eh?'⎕SIGNAL 11                           ⍝ unrecognised class: abort.
+ }

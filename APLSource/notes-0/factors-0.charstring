@@ -1,0 +1,67 @@
+nvec ← ##.factors numb                      ⍝ Prime factors of ⍵
+
+[factors]  takes  an  integer  scalar argument and returns a vector of ascending
+prime numbers whose product is ⍵.
+
+The stages in the process are:
+
+    1. Sequence: (2 .. ⍵*÷2),⍵  must contain all but at most one factor.
+    2. Extract those that divide ⍵ exactly.
+    3. Sieve out any multiples leaving only primes.
+    4. For each prime factor, replicate those powers that divide ⍵.
+    5. Append single factor greater than ⍵*÷2, if there is one.
+
+One  weakness of this approach is that the vector generated in step 1 uses a lot
+of  workspace, and will cause a WS FULL if ⍵ is more than about (⎕wa*2)÷2*8. For
+example,  to  extract  the  factors of a 10-digit phone number, we need around a
+megabyte and a half of available workspace.
+
+VMJ suggests that the initial sequence: (2 3 4 5 6 7 .. ⍵*÷2) be replaced by the
+sparser: (2,3 5 7 .. ⍵*÷2). This reduces both execution time and memory usage by
+a factor of around 2. In other words, the naïve coding:
+
+    }(1↓⍳⌊⍵*÷2),⍵           ⍝ 2 .. sqrt(⍵),⍵
+
+is replaced with:
+
+    }2,(1+2×⍳⌊0.5×⍵*÷2)     ⍝ 2,3 5 .. sqrt(⍵),⍵
+
+The code could have been written as a series of assignments to local variables:
+
+    seq0←2,(1+2×⍳⌊0.5×⍵*÷2)     ⍝ 2,3 5 .. sqrt(⍵),⍵
+    seq1←(0=seq0|⍵)/seq0        ⍝ divisors of ⍵ in:
+    ···
+However, the large amount of workspace used for the first result would then have
+endured for  the  rest of the process. The approach taken here of using a "pipe-
+line" of functions:
+
+    }{
+        ···
+    }{
+        ···
+    }{
+
+... ensures that intermediate results are released as soon as possible.
+
+Examples:
+
+    factors +441256830030           ⍝ Dyalog phone number factors.
+2 3 3 5 71 73 945949
+
+    factors +441256830031           ⍝ Dyalog fax number factors.
+587 9007 83459
+
+    factors 4294967297              ⍝ 5th Fermat number, factored by Euler 1732.
+641 6700417
+
+    {⍵≡factors×/⍵}sieve 2 to 30     ⍝ Factors of product of primes.
+1
+    2 3 5{⍺≡∪factors×/⍺*⍵}4 5 6     ⍝ Unique factors of product of prime powers.
+1
+    factors ⎕rl                     ⍝ Initial ⎕rl is 7*5.
+7 7 7 7 7
+
+See also: pco gcd sieve rational cfract nats rats
+
+Index:prime number
+Index;Jantunen V-M.|Fermat P. de|Euler L.

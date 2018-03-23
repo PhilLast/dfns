@@ -1,0 +1,5 @@
+ kball←{⎕ML←3                ⍝ Relationship between point and k-ball.
+     ⍺←1 ⋄ r←↑⍺ ⋄ p←1/⍵      ⍝ Default is ball w/radius 1 at origin.
+     c←(↑⍴p)↑1↓⍺             ⍝ Remaining coordinates are center.
+     ×⊃-/(⍉p-[⎕IO]c)r+.*¨2   ⍝ Perform signum difference.
+ }

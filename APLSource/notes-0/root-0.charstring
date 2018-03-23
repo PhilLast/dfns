@@ -1,0 +1,12 @@
+num ← {num←2} ##.root num                   ⍝ ⍺'th root.
+
+An illustration of the default left argument construct.
+
+Examples:
+
+      root 64       ⍝ square root.
+8
+      3 root 64     ⍝ cube root.
+4
+
+Index:default left argument|⍺th root

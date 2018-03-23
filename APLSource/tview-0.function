@@ -1,0 +1,7 @@
+ tview←{⎕ML←1            ⍝ TreeView style tree from nested array.
+     ⍺←0                 ⍝ default depth 0.
+     1=≡,⍵:⍺,⊂,⊂⍵        ⍝ atom: leaf node depth and value.
+     node←⍺,⊂1↑⍵         ⍝ tree:      node depth and value.
+     subs←(⍺+1)∇¨1↓⍵     ⍝ sub-trees.
+     ,⌿node⍪↑subs        ⍝ node together with subtrees.
+ }

@@ -1,0 +1,4 @@
+ root←{      ⍝ ⍺'th root.
+     ⍺←2     ⍝ Default to sqrt.
+     ⍵*÷⍺
+ }

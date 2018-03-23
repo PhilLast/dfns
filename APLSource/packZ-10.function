@@ -1,0 +1,60 @@
+ packZ←{⎕IO ⎕ML←0 1                          ⍝ Lempel-Ziv-Welch compression.
+
+     cmp←{                                   ⍝ Compression.
+         compress←{                          ⍝ compress source string.
+             fm next dict←⍵                  ⍝ index, next code, dict.
+             fm=⍴srce:⍺ dict                 ⍝ done: code vector and dictionary.
+             to dext code←fm{                ⍝ extended dictionary:
+                 ⍵≡⍬:(⍺-1){⍺ ⍵ ¯1}{          ⍝ leaf of dictionary tree:
+                     ⍵≥maxdict:⍬             ⍝ dictionary full: no change,
+                     ⍵,leaf                  ⍝ otherwise: extend tree,
+                 }next                       ⍝ ... with next code.
+                 ⍺=⍴srce:⍺ ⍵,⊃⍵              ⍝ end of string: stop.
+                 posn←1+alph⍳⊂⍺⊃srce         ⍝ next item from input string.
+                 to sub code←(⍺+1)∇ posn⊃⍵   ⍝ examine subtree.
+                 tree←⍵ ⋄ tree[posn]←⊂sub    ⍝ update dictionary tree.
+                 to tree,(code=¯1)⊃code,⊃⍵   ⍝ value from dictionary.
+             }dict                           ⍝ extend dictionary.
+             (⍺,code)∇ to(next+1)dext        ⍝ ⍺-accumulated output string.
+         }
+
+         decode←{                            ⍝ dictionary decode.
+             1↓↑{⍵[⍋⍺]}/↓⍉↑⍬{                ⍝ sorted dictionary entries.
+                 ⍵≡⍬:⍬                       ⍝ null leaf: finished.
+                 code subs←(⊃⍵)(1↓⍵)         ⍝ code value and subtrees.
+                 strings←⍺∘,¨alph            ⍝ extended strings.
+                 (⊂code ⍺),↑,/strings ∇¨subs ⍝ enlisted tree.
+             }⍵
+         }
+
+         maxdict←2*|⍺                        ⍝ |⍺ is max code width in bits.
+         shape←⍴⍵                            ⍝ save shape.
+         alph←∪srce←,⍵                       ⍝ source vector and "alphabet".
+         leaf←{⍬}¨alph                       ⍝ new tree leaf.
+         root←¯1,,∘leaf¨⍳⍴alph               ⍝ dictionary of "root" strings.
+         bool←{1=((⌊1+2⍟⌈/⍵,1)/2)⊤⍵}         ⍝ boolean matrix result.
+         minpos maxneg←1 ¯1×2⍟1⌈⍴alph        ⍝ ⍺-domain.
+
+         codes dict←⍬ compress 0(⍴alph)root  ⍝ codes vector and final dictionary.
+
+         ⍺≥minpos:shape(bool codes)alph      ⍝ +ive ⍺: compressed output.
+         ⍺≤maxneg:decode dict                ⍝ -ive ⍺: final dictionary.
+         '⍺ too small'⎕SIGNAL 11             ⍝ data-loss would occur.
+     }
+
+     exp←{                                   ⍝ Expansion.
+         shape←0⊃⍵                           ⍝ shape,
+         codes←(2⊥1⊃⍵),0                     ⍝ code vector and
+         dict←,∘⊂¨2⊃⍵                        ⍝ initial dictionary.
+         shape⍴(0⍴1⊃⍵){                      ⍝ initial output string.
+             indx dict←⍵                     ⍝ code index and  dictionary.
+             indx=¯1+⍴codes:⍺                ⍝ all codes done: finished.
+             code next←codes[indx+0 1]       ⍝ current and next code word.
+             strg←code⊃dict                  ⍝ next output string.
+             dent←strg,1↑next⊃dict,⊂strg     ⍝ new dictionary entry.
+             (⍺,strg)∇(indx+1)(dict,⊂dent)   ⍝ ⍺-accumulated output string.
+         }0 dict                             ⍝ initial index and dictionary.
+     }
+
+     ⍺←12 ⋄ ⍺=0:exp ⍵ ⋄ ⍺ cmp ⍵              ⍝ expand or compress.
+ }

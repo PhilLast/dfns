@@ -1,0 +1,22 @@
+⍝ Matrix search/replace:
+
+      ssmat(2 12⍴'Is you is oris you aint?')'is' 'was'
+Is you was or
+was you aint?
+
+      nmat←3 5⍴1 to 15                      ⍝ numeric matrix.
+
+      ssmat nmat (7 8 9) (70 80 90)         ⍝ Numeric replacement.
+ 1  2  3  4  5
+ 6 70 80 90 10
+11 12 13 14 15
+
+      ssmat nmat (7 8 9) 'repl'             ⍝ Replace with longer string.
+ 1  2  3  4  5  0
+ 6  r  e  p  l 10
+11 12 13 14 15  0
+
+      ssmat nmat (7 8 9) 'r'                ⍝ Replace with shorter string.
+ 1  2  3  4  5
+ 6  r 10  0  0
+11 12 13 14 15

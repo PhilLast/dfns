@@ -1,0 +1,109 @@
+rslt ← (func ##.acc) argt               ⍝ Accumulating reduction.
+
+Phil Last's  operator applies its function operand cumulatively between pairs of
+items in its vector argument.
+
+Technical note:
+
+For  a  side-effect-free  associative operand function, this operator _could_ be
+coded  in  terms  of primitive scan. However, this scan would be evaluated using
+(0.5××/0 ¯1+⍴⍵) reductions, resulting in an O(n*2) algorithm.
+
+    acc←{⌽⍺⍺⍨\⌽⍵}           ⍝ slow O(n*2) coding.
+
+Gianluigi Quario adds this nice surprise:
+
+(
+    A few months ago I received some helpful suggestions about polynomial evalu-
+    ation when the polynomial P(Y) is represented (in ascending order) by a vec-
+    tor "poly".
+
+        P(Y) :  poly[0] + Y×poly[1]  + Y×poly[2] + ..... +Y×poly[N]
+
+    I was impressed by this idiom:
+
+        value ← point {⍺+⍺⍺×⍵}/poly
+
+    which  calculates  the value of a real polynomial "poly" at point "point" by
+    means of Ruffini's rule and Horner's  {⍺+⍺⍺×⍵}/  algorithm.
+
+    I  think  that  this idiom has a greater semantic clarity than the primitive
+    "base value":
+
+        value ← point ⊥ ⌽poly
+
+    which internally uses <but externally hides> Horner's algorithm.
+
+    Over  and  above it can easily be extended to rectangular arrays by means of
+    the following D-fn:
+
+        PolyEval ← {⊃⍵{⍺+⍺⍺×⍵}/⍺}
+
+    In fact we can play:
+
+        values ← poly PolyEval points
+
+    even when "points" is an array .
+
+    But I had another surprise when I matched the Horner's algorithm with [acc].
+
+    If we write:
+
+        point {⍺+⍺⍺×⍵} acc poly
+
+    instead of
+
+        point {⍺+⍺⍺×⍵} / poly
+
+    we  obtain  not  only the value of the polynomial at point "point", i.e. the
+    remainder  of  division of poly with monomial "Y-point" , but also the quot-
+    ient polynomial according to Ruffini's rule, which we studied at school.
+
+    If  P(Y)  is  a  polynomial  and  "Y - point" a monomial,  then substituting
+    "{⍺+⍺⍺×⍵}/" with "{⍺+⍺⍺×⍵} acc" returns the quotient polynomial Q(Y) and the
+    remainder polynomial  R(Y) of the polynomial division.
+
+    By  means  of the simple idiom {⍺+⍺⍺×⍵} and operator "acc" it is possible to
+    implement  the Ruffini simple_division_rule between a polynomial and a mono-
+    mial with neither iterations nor recursions.
+
+    The use of operator "acc" is performing something similar to:
+
+        ⎕←poly[0] + point×⎕←poly[1]  +point×⎕←poly[2] + ..... + point×⎕←poly[N]
+
+    Now  we  are  the  masters of a holistic window on Ruffini's rule for simple
+    division.
+
+        "** APL is an actual tool for supporting the chains of reasoning and
+         creating knowledge **" - Gianluigi Quario.
+)
+
+Examples:
+
+    {⍺,'f',⍵}acc'abcd'
+┌───────┬─────┬───┬─┐
+│afbfcfd│bfcfd│cfd│d│
+└───────┴─────┴───┴─┘
+
+    ,acc ⍳4
+┌───────┬─────┬───┬─┐
+│1 2 3 4│2 3 4│3 4│4│
+└───────┴─────┴───┴─┘
+
+    slow←{⌽⍺⍺⍨\⌽⍵}          ⍝ O(n*2) coding.
+
+    disp ,slow ⍳4           ⍝ slow coding concurs for associative operand fn.
+┌───────┬─────┬───┬─┐
+│1 2 3 4│2 3 4│3 4│4│
+└───────┴─────┴───┴─┘
+
+    ⍲acc 1 0 0              ⍝ ⍲ is non-associative (although it is commutative).
+0 1 0
+
+    ⍲slow 1 0 0             ⍝ slow coding differs for non-associative operand.
+1 1 0
+
+See also: pred scan traj while foldl trav
+
+Index:reduction
+Index;Last P.|Quario G.

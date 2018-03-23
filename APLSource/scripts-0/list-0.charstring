@@ -1,0 +1,73 @@
+⍝ List from vector ⍵:
+
+      disp list'hello'
+┌─┬──────────────┐
+│h│┌─┬──────────┐│
+│ ││e│┌─┬──────┐││
+│ ││ ││l│┌─┬──┐│││
+│ ││ ││ ││l│o∘││││
+│ ││ ││ │└─┴──┘│││
+│ ││ │└─┴──────┘││
+│ │└─┴──────────┘│
+└─┴──────────────┘
+
+    0 {⍺+1} ltrav list'hello'   ⍝ length of list.
+5
+    length←0∘({⍺+1} ltrav)      ⍝ ditto
+
+    length list ⎕a
+26
+    vect←⍬∘({⍺,⊂⍵} ltrav)       ⍝ vector from list.
+
+    vect list 'hello'
+hello
+
+    {⍵≡vect list ⍵},\⎕a         ⍝ nested argument vector.
+1
+    revl←'∘'∘({⍺ ⍵}⍨ ltrav)     ⍝ reverse of list.
+
+    vect revl list 'hello'
+olleh
+
+    rmdups←{                    ⍝ remove adjacent duplicates.
+        ⍺←'∘'                   ⍝ null accumulator.
+        (a(b tail))←⍵           ⍝ first two items.
+        b≡'∘': revl a ⍺         ⍝ b null: list expired.
+        a≡b:⍺ ∇ b tail          ⍝ two items match: drop first one.
+        a ⍺ ∇ b tail            ⍝ accumulate first, continue.
+    }                   
+
+    vect rmdups list'Mississippi'
+Misisipi
+
+    parse←{                                 ⍝ Right-to-left lambda expr parser.
+        ↑{ ⍝ ⎕←⍺'│'⍵                        ⍝ (uncomment to see trace).
+            (toks a)(b(c accs))←⍺ ⍵         ⍝  a│b c : a│b c    3-item window.
+            '⊣'≡a:b                         ⍝  ⊣│*   :  *       finished
+            '()'≡a c:toks ∇ b accs          ⍝  (│* ) :  │* ·
+            '(→'≡a b:⍺ ∇ c accs             ⍝  (│→ * : (│*· ·
+            '→→'≡a b:toks ∇ ⍵               ⍝  →│→ * :  │→ *
+            '→'≡b:toks ∇ b(('→'a c)accs)    ⍝  v│→ b :  │→ v→b  lambda node.
+            '→)'≡a c:toks ∇ a ⍵             ⍝  →│* ) :  │→ * )
+            a∊'→(':⍺ ∇('@'b c)accs          ⍝  (│f a : (│fa     apply node.
+            toks ∇ a ⍵                      ⍝  *│* · :  │* *
+        }/↑{⍺ ⍵}⍨/⌽'⊣(',⍵,')'               ⍝ parse of token list ⍵.
+    }
+
+    ∆CY←{                   ⍝ Extension-tolerant ⎕CY.
+        6::                 ⍝ :-( no result from ⎕CY.
+        11:: ⍺ ⎕CY ⍵        ⍝ try to copy from 'wsid' only
+             ⍺ ⎕CY ⍵,'.dws' ⍝    if can't find 'wsid.dws'.
+    }
+
+    'trees'∆CY'min'                     ⍝  borrow Min's expression tree display.
+
+    trees parse '(t→ttt)(fx→f(fx))+0'   ⍝ parse tree for lambda expression.
+         ┌─@┐   
+      ┌──@┐ 0   
+ ┌────@─┐ +     
+┌→──┐  ┌→─┐     
+t ┌─@┐ f ┌→─┐   
+ ┌@┐ t   x ┌@─┐ 
+ t t       f ┌@┐
+             f x

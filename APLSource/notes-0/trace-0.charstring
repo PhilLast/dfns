@@ -1,0 +1,96 @@
+rslt ← {larg} (func ##.trace) rarg          ⍝ Trace function application.
+
+Trace  applies  its function operand to (or between) its argument(s). As a side-
+effect the argument(s), function and result are displayed in the session.
+
+Trace  can  be used as a debugging aid and to observe the behaviour of primitive
+or defined operators.
+
+In  the case of a _primitive_ operator, trace shows its _formal_ reduction sequ-
+ence.  When  unobserved by trace, the interpreter is free to "cheat" in a number
+of  ways. For example, +/ of a boolean array is actually performed 8-items-at-a-
+time,  and for associative functions such as + and ×, scan (\) operates cumulat-
+ively in one pass from left to right.
+
+Technical note:
+
+    trace←{⍺←⊢                          ⍝ Trace of function application.
+        fn←⍺⍺{⍙←⍺⍺ ⋄ ~∘' ⍙'⍕⊂⎕OR'⍙'}⍵   ⍝ function representation.
+        ↑⊢/⎕←⍺ fn ⍵'=>',⊂⍺ ⍺⍺ ⍵         ⍝ display and result.
+    }
+
+As '⍺⍺' is outside the domain of ⎕OR, the function representation is produced by
+naming the operand function within an inner operator.
+
+        fn←⍺⍺{⍙←⍺⍺ ⋄ ········⎕OR'⍙'}⍵   ⍝ function representation.
+
+The other part of this inner function:
+
+        fn←⍺⍺{·······~∘' ⍙'⍕⊂······}⍵   ⍝ function representation.
+
+Removes the assigned name (⍙) and superfluous blanks  from the format of the ⎕OR
+of a defined function, leaving it represented by a single ∇ character.
+
+Examples:
+
+      1 2 3 +trace 4 5 6            ⍝ vector addition.
+ 1 2 3  +  4 5 6  =>  5 7 9
+5 7 9
+
+      1 2 3 +trace¨ 4 5 6           ⍝ item-wise addition.
+1  +  4  =>  5
+2  +  5  =>  7
+3  +  6  =>  9
+5 7 9
+
+      ⍳trace¨2 3                    ⍝ monadic function application.
+ ⍳  2  =>  1 2
+ ⍳  3  =>  1 2 3
+┌───┬─────┐
+│1 2│1 2 3│
+└───┴─────┘
+
+      ×trace/⍳5                     ⍝ reduce
+4  ×  5  =>  20
+3  ×  20  =>  60
+2  ×  60  =>  120
+1  ×  120  =>  120
+120
+      ×trace\⍳5                     ⍝ scan
+1  ×  2  =>  2
+2  ×  3  =>  6
+1  ×  6  =>  6
+3  ×  4  =>  12
+2  ×  12  =>  24
+1  ×  24  =>  24
+4  ×  5  =>  20
+3  ×  20  =>  60
+2  ×  60  =>  120
+1  ×  120  =>  120
+1 2 6 24 120
+
+    0 +trace foldl ⍳5               ⍝ +foldl: fold from left
+0  +  1  =>  1
+1  +  2  =>  3
+3  +  3  =>  6
+6  +  4  =>  10
+10  +  5  =>  15
+15
+      +trace/⍳5                     ⍝ compare with reduce (fold from right).
+4  +  5  =>  9
+3  +  9  =>  12
+2  +  12  =>  14
+1  +  14  =>  15
+15
+
+      {⍵ ⍵}trace¨⍳3                 ⍝ non-primitive operand represented as '∇'
+ ∇  1  =>  1 1
+ ∇  2  =>  2 2
+ ∇  3  =>  3 3
+┌───┬───┬───┐
+│1 1│2 2│3 3│
+└───┴───┴───┘
+
+See also: foldl scan
+
+Index:monitor|debugging

@@ -1,0 +1,14 @@
+⍝ Assorted uniQues packer:
+
+    disp packQ'Mississippi'             ⍝ Assorted uniQues packer.
+┌────┬────┬───────────────────────────────────────────────────────────┐
+│ispM│1 11│1 0 0 0 1 0 1 0 0 1 0 0 1 0 1 0 0 1 0 0 1 0 1 1 0 1 1 0 1 0│
+└────┴────┴───────────────────────────────────────────────────────────┘
+
+    chk←{
+        ⍵≡0 ⍺⍺ ⍺⍺ ⍵:'ok'
+        ' Error: compression round-trip fails'
+    }
+
+    packQ chk ⎕fmt notes.Marilyn        ⍝ simple text matrix
+ok

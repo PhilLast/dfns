@@ -1,0 +1,6 @@
+ until←{         ⍝ Conditional function power.
+     ⍺⍺{         ⍝ sub-operator for initial application:
+         ⍵⍵ ⍵:⍵  ⍝ Until ⍵⍵,
+         ∇ ⍺⍺ ⍵  ⍝ Apply ⍺⍺ ⍺⍺ ...
+     }⍵⍵ ⍺⍺ ⍵    ⍝ initial application.
+ }

@@ -1,0 +1,50 @@
+match ← this ##.refmatch that           ⍝ Space reference match.
+
+The  arguments are references to namespaces to be compared. [refmatch] deems the
+refs matching iff:
+
+[1.0] They are refs to the same space, or
+[2.1] The namelists for all classes are identical, and
+[2.2] Variables in both spaces match, and
+[2.3] Those System variables with namespace extent in both spaces match.
+[2.4] Function and operator source (⎕CR) in both spaces match, and
+[2.5] Any sub-spaces match, using the same criteria.
+
+Note that in comparing namespaces, this function ignores:
+
+- GUI properties, such as Posn, Size, Handle, ···
+- Timestamps and User IDs in functions.
+- ⎕stop, ⎕trace, ⎕monitor settings on functions.
+
+Example:
+
+    notes refmatch notes        ⍝ match on criterion [1]
+1
+    notes refmatch ⎕ns notes    ⍝ clone matches on criteria [2].
+1
+    notes refmatch {⍵⊣⍵.⎕io←0} ⎕ns notes    ⍝ disturbed clone: mismatch.
+0
+    'x.z' 'y.z'⎕ns¨⊂''          ⍝ create spaces.
+    (x y).hello←⊂'hello'        ⍝ identical vars in x & y.
+    (x y).z.world←⊂'world'      ⍝   ..      ..   in x.z & y.z.
+    (x y).z.(dup←{⍵ ⍵})         ⍝   ..      fns     ..      ..
+
+    tree¨ x y
+┌───────────────┬───────────────┐
+│#.x            │#.y            │
+│·   ~ hello    │·   ~ hello    │
+│·   z          │·   z          │
+│·   ·   ~ world│·   ·   ~ world│
+│·   ·   ∇ dup  │·   ·   ∇ dup  │
+└───────────────┴───────────────┘
+
+    x refmatch y    ⍝ spaces match.
+1
+    x.z.world←''    ⍝ zap x.z's world.
+
+    x refmatch y    ⍝ spaces no longer match.
+0
+
+See also: le tree
+
+Index:compare namespaces|namespace comparison

@@ -1,0 +1,607 @@
+rslt ← {larg) (op ##.redblack) rarg                 ⍝ Red-black trees.
+
+     T∆ ← T ∪ avl (key val)     ⍝ tree ⍺ with key=val ⍵.
+     T∆ ← T ~ avl key           ⍝ tree ⍺ without key ⍵.
+     T∆ ← T ⍎ avl key           ⍝ value for key ⍵ in tree ⍺.
+    fmt ←   ⍕ avl T             ⍝ format of tree ⍵.
+    vec ←   ∊ avl T             ⍝ enlist of tree ⍵.
+    chk ←   ? avl T             ⍝ stats for tree ⍵: ok size mean_depth height.
+
+See →BST←
+
+In  contrast  with the notes for →sbst←, →splay← and →avl←, when discussing red-
+blacktrees, it is convenient to show null subtrees (nulls) explicitly.
+
+    AVL/Splay diagram           Equivalent Red-black diagram
+    -----------------           ----------------------------
+            E                             E
+           / \                           / \
+          /   \                         /   \
+         /     \                       /     \
+        B       F                     B       F
+       / \                           / \     / \
+      /   \                         /   \   ∘   ∘
+     /     \                       /     \
+    A       C                     A       C
+             \                   / \     / \
+              D                 ∘   ∘   ∘   D
+                                           / \
+                                          ∘   ∘
+
+Defn:  A  red-black tree is a binary search tree (→BST←) with the properties (or
+"restrictions" or "rules"):
+
+[C] Every node is coloured either <red> or [black],
+[I] Only internal nodes (other than the root or nulls) may be <red>,
+[R] Both children of a <red> node are [black],
+[B] The path from a node to any leaf contains the same number of [black] nodes.
+
+Red  nodes  are  annotated <N> and black nodes [N]. The following tree satisfies
+rules C-B:
+               ·
+              [E]
+              / \
+             /   \
+            /     \
+          <B>     [F]
+          / \     / \
+         /   \  [∘] [∘]
+        /     \
+      [A]     [C]
+      / \     / \
+    [∘] [∘] [∘] <D>
+                / \
+              [∘] [∘]
+
+Rules  R  and  B  keep the tree in reasonable balance; to construct a worst case
+(greatest height/size ratio), we could take an all-black (and therefore, by rule
+B, perfectly balanced) tree and increase its height by injecting red nodes (only
+alternately by rule R) all down one side.
+                 ·
+                [b]
+                / \
+               /   \                Height 4
+              /     \               Size   6 (excluding nulls).
+             /       \
+            /         \
+           /           \            In general, a red-black tree with ⍵ non-
+          /             \           null nodes has height at most 2×2⍟⍵+1.
+        [b]             <r>
+        / \             / \
+       /   \           /   \
+      /     \         /     \
+    [∘]     [∘]     [b]     [b]
+                    / \     / \
+                  [∘] [∘] [∘] <r>
+                              / \
+                            [∘] [∘]
+
+Red-black  trees are implemented here using a recursive triple with 0 represent-
+ing the null tree:
+
+    (key val) red (lft rgt)
+
+where:
+
+    key : numeric scalar or character vector
+    val : any array value
+    red : colour of node 0=black, 1=red *
+    lft : left subtree or 0 (null).
+    rgt : right subtree or 0 (null)
+
+* The  choice  of  0  for black means that a structure assignment of a null node
+  shows it as black:
+
+        inf col(lft rgt)←⍺      ⍝ (possibly null) node colour and subs.
+
+Insertion
+---------
+Three generations of node are of interest:
+
+    G grandparent
+    P parent
+    C child
+
+New node C is inserted in the normal fashion (see →BST←) and coloured red <C>.
+
+There are 4 cases: [ins#] [insB] [insRR] [insRB].
+Case [insRB] has 2 subcases: [insRBo] [insRBi].
+
+If <C> is the root: recolour it [black].                                [ins#]
+·
+        <C>     →   [C]                             <C> → [C]
+        / \         / \
+      [∘] [∘]     [∘] [∘]
+
+Otherwise, <C> has a parent:
+
+If <C>'s parent [P] is black: no change.                                [insB]
+·
+        [P]     →       [P]                         (no change)
+        /               /
+      <C>             <C>
+      / \             / \
+    [∘] [∘]         [∘] [∘]
+
+Otherwise, <C>'s parent <P> is red.                                     [insR]
+
+This  means  that, from rule I, <P> cannot be the root and so must itself have a
+parent G, which is <C>'s grandparent.
+·
+           G
+          /
+        <P>
+        /
+      <C>
+      / \
+    [∘] [∘]
+
+Rule [R] ensures that [G] must be black as its child <P> is red.
+·
+          [G]
+          /
+        <P>
+        /
+      <C>
+      / \
+    [∘] [∘]
+
+Call <P>'s possibly null sibling U (C's Uncle).
+·
+          [G]
+          / \
+        <P>  U
+        /
+      <C>
+      / \
+    [∘] [∘]
+                                        ¯
+If <U> is red, change the colours of G, P and U.                        [insRR]
+·
+          [G]       →       <G>                     [G] → <G>
+          / \               / \                     <P> → [P]
+        <P> <U>           [P] [U]                   <U> → [U]
+        / \               / \
+      <C>  S            <C>  S
+      / \               / \
+    [∘] [∘]           [∘] [∘]
+
+    In this case, <G> becomes the new <red> node and is
+    handled  recursively  as  if _it_ had been inserted.
+    In  other  words, the algorithm next looks at <G>'s
+    parent  and  grandparent  to  determine  if further
+    balancing is necessary, and so on.
+
+Otherwise, [U] is black.                                                [inaRB]
+
+If <C> is <P>'s outer child, swap colours and rotate G-P.               [insRBo]
+                ¯¯¯¯¯
+          [G]       →       [P]                     [G] → <G>
+          / \               / \                     <P> → [P]
+        <P> [U]           <C> <G>                       ⌽ G-P
+        / \                   / \
+      <C> [S]               [S] [U]
+
+Otherwise <C> is inner child, rotate P-C and proceed as in [insRBo].    [insRBi]
+                 ¯¯¯¯¯
+          [G]       →       [G]                     ⌽ P-C
+          / \               / \                       [insRBo]
+        <P> [U]           <C> [U]
+        / \               / \
+       S  <C>           <P>  q
+          / \           / \
+         p   q         S   p
+
+All possibilities are covered:
+                                                          [ins]
+    C is the root:          [ins#]                       / \
+    C's parent black:       [insB]                 [insR]   [insB]
+    C's uncle red:          [insRR]                   / \
+    C is P's inner child:   [insRBi]           [insRR]   [insRB]
+    Otherwise:              [insRBo]                     / \
+                                                 [insRBi]   [insRBo]
+Removal
+-------
+To remove a node from a red-black tree, there are three phases:
+
+[loc] Locate X, the node to be deleted.
+[rep] Repaint the removed node's child.
+[bal] Rebalance the tree by absorbing any "double-black" nodes.
+
+[loc]----------------------------------------------------------------------[loc]
+
+Search the tree for the node to be deleted in the normal way (→BST←):
+
+    If the node is a leaf (only null subtrees),                         [loc0]
+        replace it with a null:
+·
+           X    =>      [∘]
+          / \
+        [∘] [∘]
+
+    Otherwise, if the node has only a single (non-null) child,          [loc1]
+        replace the node with its child:
+·
+            X   =>  C               X   =>  C
+           / \                     / \
+         [∘]  C                   C  [∘]
+
+    Otherwise (the node has two non-null children),                     [loc2]
+        exchange the node key=value with that of its right (say) successor node,
+        which  by  definition  does not have a left (say) child, then remove the
+        successor as in [loc0] or [loc1] above:
+
+             target node X:      X  ~ X     =>     X∆ ~ X    =>     X∆
+                                / \               / \              / \
+                               A   B             A   B            A   B
+                                  / \               /                /
+                                ...               ...              ...
+                                /                 /                /
+    X's right successor:       X∆                X                X  ~ X
+                              / \               / \              / \
+                            [∘]  C            [∘]  C           [∘]  C
+
+All possibilities are covered:
+
+    Both subtrees null:     [loc0]
+    One subtree null:       [loc1]
+    Neither sutree null:    [loc2]
+
+On deletion of X, it may be necessary to repaint X's child C:
+
+[rep]----------------------------------------------------------------------[rep]
+
+Repaint the removed node's child.
+
+If X was red, no more need be done:                                     [repR]
+·
+        <X>     =>      [C]
+          \
+          [C]
+
+Otherwise, if [X]'s child C is red, paint it black:                     [repBR]
+·
+        [X]     =>      [C]
+          \
+          <C>
+
+Otherwise, repaint [C] double-black.                                    [repBB]
+·
+        [X]     =>      [[C]]
+          \
+          [C]
+
+In all cases, if we count double-black as 2, rule B continues to hold.
+
+All possibilities are covered:
+                                                      [rep]
+    X red:      [repR]                               / \
+    C red:      [repBR]                        [repR]   [repB]
+    C black:    [repBB]                                 / \
+                                                 [repBR]   [repBB]
+(
+    In some treatments,  the double-black node is described as a separate "black
+    token", which is associated with the node. It amounts to the same thing:
+·
+        [X]     =>      [[C]]       <= double-black node.
+          \
+          [C]
+
+
+        [X]     =>      [C] []      <= black node with associated black token.
+          \
+          [C]
+
+    In a particular implementation, the choice probably depends on how a null is
+    represented.  As  we use a scalar 0 for null, there is no structure in which
+    to  keep the double-blackness property, so a separate black token is prefer-
+    able.  However, the double brackets look more pleasing in diagrams, where we
+    will continue to use them ...
+)
+
+[bal]----------------------------------------------------------------------[bal]
+
+Rebalance the tree by absorbing any double-black nodes [[N]].
+
+Notice how each of the transformations below preserves rules [C] [I] [R] & [B].
+In particular:
+
+    The colour of the root of the subtree remains unchanged for rule R.
+
+    Apart from the root case [bal#], the  number of black nodes (square brack-
+    ets) from the root of the subtree downwards remains unchanged for rule B.
+
+In  the  following diagrams, (N) means that the colour of N is immaterial to the
+transformation.
+
+If [[N]] is the root, repaint it black:                                 [bal#]
+·
+        [[N]]   =>  [N]
+         / \        / \
+
+    (this maintains rule B by decrementing the black count on every path).
+
+Otherwise, N has a parent and a (possibly null) sibling.
+
+If N's sibling S is red,
+    Swap the colours of P and S and rotate P left.                      [balR]
+    N's new sibling is black, so proceed from [balB].
+·
+        [P]         =>     [S]                      [P] → <P>
+        / \                / \                      <S> → [S]
+       /   \              /   \                         ⌽ P-S
+    [[N]]  <S>          <P>   [f]                         [balB]
+           / \          / \
+          /   \        /   \
+        [n]   [f]   [[N]]  [n]
+
+    Note that, after the transformation, [[N]]'s parent <P> is red.
+    This means that [balB] will, at worst,  produce a singly-black
+    parent and so complete the rebalance. In particular, it is not
+    necessary  to check for double-blackness on return of [balR]'s
+    call to [balB].
+
+Otherwise N's sibling is black.                                         [balB]
+
+If both nephews are black,
+    paint sibling S red and blacken parent P.                           [balBbb]
+·
+        (P)     =>    [(P)]                         (P) → [(P)] *
+        / \            / \                        [[N]] →  [N]
+       /   \          /   \                         [S] →  <S>
+    [[N]]  [S]      [N]  <S>
+           / \           / \
+         [n] [f]       [n] [f]
+
+    * (P) => [(P)] means "blacken",
+      red goes to black      <P> → [P]
+      black to double-black  [P] → [[P]]
+
+Otherwise, if the far nephew f is red,
+    Move N's extra brackets to the far nephew and rotate P-S.           [balB_r]
+·
+        (P)         =>       (S)                    (S) → (P) *
+        / \                  / \                    (P) → [P]
+       /   \                /   \                 [[N]] → [N]
+      /     \              /     \                  <f> → [f]
+   [[N]]    [S]          [P]     [f]                    ⌽ P-S
+             / \         / \     / \
+           (n) <f>     [N] (n) [a] [b]
+·   ·   ·      / \
+             [a] [b]
+
+    * (P) → (S) means that P's colour is transferred to S.
+
+Otherwise, the far nephew f is black (and the near one must be red),
+    Swap the colours of S and l and rotate S right.                     [balBrb]
+    Then proceed as in [balB_r].
+·
+        (P)         =>     (P)                      [S] → <S>
+        / \                / \                      <n> → [n]
+       /   \              /   \                         ⌽ S-n
+    [[N]]  [S]         [[N]]  [n]                         [balB_r]
+           / \                / \
+         <n> [f]            [a] <S>
+         / \                    / \
+       [a] [b]                [b] [f]
+
+All possibilities are covered:                            [bal]
+                                                          / \
+    [[N]] is the root:  [bal#]                      [balR]   [balB]
+    N's sibling red:    [balR]      [1]                      / \
+    Both nephews black: [balBbb]    [2]              [balB_r]   [balB_b]
+    Far nephew red:     [balB_r]                                / \
+    Otherwise           [balBrb]                        [balBrb]   [balBbb]
+
+[1] If N has a parent, it must have a (possibly null) sibling.
+
+[2] As N is double-black,  its parent must have had at least two black
+    nodes in each subtree (rule B). Therefore, N's sibling is not null
+    and so has two (possibly null) nephews.
+
+Technical notes:
+
+Insertion  and removal require information about the node's parent, grandparent,
+uncle  or  nephews. In a language with pointers, we might arrange that each node
+include  a  pointer  to  its  parent,  although  this would increase complexity.
+Similarly,  we  could use namespaces to implement nodes and include a ref to the
+parent space.
+
+We  choose  instead, to have the subject node's (grand) parent do the processing
+by returning a path (vector of directions) to the child in question. The (grand)
+parent  can then check the length of this path to see if it must accommodate any
+changes.  Any node that decides that no further attention is required, returns a
+path  that is long enough to be ignored by all ancestors. (0 0 0) will always do
+the trick.
+
+References:
+
+[1] http://en.wikipedia.org/wiki/Red-black_tree
+[2] Internet: search for "red black tree"
+[3] "Paint It Black/Long Long While", Jagger/Richards, Decca F12395 (1966).
+
+Examples:
+
+⍝ derive red-black tree functions:
+
+    put ← ∪ redblack            ⍝ tree ⍺ with key=val ⍵.
+    rem ← ~ redblack            ⍝ tree ⍺ without key ⍵.
+    get ← ⍎ redblack            ⍝ value for key ⍺ from tree ⍵.
+    fmt ← ⍕ redblack            ⍝ format of tree ⍵.
+    vec ← ~ redblack            ⍝ enlist of tree ⍵.
+    chk ← ? redblack            ⍝ stats for tree ⍵: ok size mean_depth height.
+
+    tt ← 0                      ⍝ null tree
+
+    tt ← tt put 'one' 1         ⍝ single node tree: (key val) red (lft rgt)
+
+    fmt tt                      ⍝ root is [black]
+       ┌[∘]
+[one=1]┤
+       └[∘]
+
+    tt ← tt put 'two'   2       ⍝ insert second node
+
+    fmt tt                      ⍝ new node is <red>
+       ┌[∘]
+[one=1]┤
+       │       ┌[∘]
+       └<two=2>┤
+               └[∘]
+
+    tt ← tt put 'three' 3       ⍝ insert third node.
+
+    fmt tt
+                 ┌[∘]
+         ┌<one=1>┤
+         │       └[∘]
+[three=3]┤
+         │       ┌[∘]
+         └<two=2>┤
+                 └[∘]
+
+    tt ← tt put foldl ('four' 4) ('five' 5) ('six' 6) ('seven' 7)
+
+    fmt tt
+                           ┌[∘]
+                  ┌[five=5]┤
+                  │        └[∘]
+         ┌<four=4>┤
+         │        │                 ┌[∘]
+         │        │         ┌<one=1>┤
+         │        │         │       └[∘]
+         │        └[seven=7]┤
+         │                  │       ┌[∘]
+         │                  └<six=6>┤
+         │                          └[∘]
+[three=3]┤
+         │       ┌[∘]
+         └[two=2]┤
+                 └[∘]
+
+    chk tt                      ⍝ tree stats.
+1 7 2 4
+
+    ⍪ fmt¨ 0 put foldl¨ 1↓¨,\0,⍳6               ⍝ successive inserts 1 2 .. 6
+┌───────────────────────────┐
+│[∘]                        │
+├───────────────────────────┤
+│     ┌[∘]                  │
+│[1=1]┤                     │
+│     └[∘]                  │
+├───────────────────────────┤
+│     ┌[∘]                  │
+│[1=1]┤                     │
+│     │     ┌[∘]            │
+│     └<2=2>┤               │
+│           └[∘]            │
+├───────────────────────────┤
+│           ┌[∘]            │
+│     ┌<1=1>┤               │
+│     │     └[∘]            │
+│[2=2]┤                     │
+│     │     ┌[∘]            │
+│     └<3=3>┤               │
+│           └[∘]            │
+├───────────────────────────┤
+│           ┌[∘]            │
+│     ┌[1=1]┤               │
+│     │     └[∘]            │
+│[2=2]┤                     │
+│     │     ┌[∘]            │
+│     └[3=3]┤               │
+│           │     ┌[∘]      │
+│           └<4=4>┤         │
+│                 └[∘]      │
+├───────────────────────────┤
+│           ┌[∘]            │
+│     ┌[1=1]┤               │
+│     │     └[∘]            │
+│[2=2]┤                     │
+│     │           ┌[∘]      │
+│     │     ┌<3=3>┤         │
+│     │     │     └[∘]      │
+│     └[4=4]┤               │
+│           │     ┌[∘]      │
+│           └<5=5>┤         │
+│                 └[∘]      │
+├───────────────────────────┤
+│           ┌[∘]            │
+│     ┌[1=1]┤               │
+│     │     └[∘]            │
+│[2=2]┤                     │
+│     │           ┌[∘]      │
+│     │     ┌[3=3]┤         │
+│     │     │     └[∘]      │
+│     └<4=4>┤               │
+│           │     ┌[∘]      │
+│           └[5=5]┤         │
+│                 │     ┌[∘]│
+│                 └<6=6>┤   │
+│                       └[∘]│
+└───────────────────────────┘
+
+    tt ← 0 put foldl ⍳6                         ⍝ 6 nodes, ascending order.
+
+    ⍪ fmt¨(⊂tt)rem foldl¨1↓¨,\0,⍳6              ⍝ successive removals 1 2 .. 6
+┌───────────────────────────┐
+│           ┌[∘]            │
+│     ┌[1=1]┤               │
+│     │     └[∘]            │
+│[2=2]┤                     │
+│     │           ┌[∘]      │
+│     │     ┌[3=3]┤         │
+│     │     │     └[∘]      │
+│     └<4=4>┤               │
+│           │     ┌[∘]      │
+│           └[5=5]┤         │
+│                 │     ┌[∘]│
+│                 └<6=6>┤   │
+│                       └[∘]│
+├───────────────────────────┤
+│           ┌[∘]            │
+│     ┌[2=2]┤               │
+│     │     │     ┌[∘]      │
+│     │     └<3=3>┤         │
+│     │           └[∘]      │
+│[4=4]┤                     │
+│     │     ┌[∘]            │
+│     └[5=5]┤               │
+│           │     ┌[∘]      │
+│           └<6=6>┤         │
+│                 └[∘]      │
+├───────────────────────────┤
+│           ┌[∘]            │
+│     ┌[3=3]┤               │
+│     │     └[∘]            │
+│[4=4]┤                     │
+│     │     ┌[∘]            │
+│     └[5=5]┤               │
+│           │     ┌[∘]      │
+│           └<6=6>┤         │
+│                 └[∘]      │
+├───────────────────────────┤
+│           ┌[∘]            │
+│     ┌[4=4]┤               │
+│     │     └[∘]            │
+│[5=5]┤                     │
+│     │     ┌[∘]            │
+│     └[6=6]┤               │
+│           └[∘]            │
+├───────────────────────────┤
+│     ┌[∘]                  │
+│[5=5]┤                     │
+│     │     ┌[∘]            │
+│     └<6=6>┤               │
+│           └[∘]            │
+├───────────────────────────┤
+│     ┌[∘]                  │
+│[6=6]┤                     │
+│     └[∘]                  │
+├───────────────────────────┤
+│[∘]                        │
+└───────────────────────────┘
+
+See also: BST sbst avl splay foldl alists
+
+Index:tree|red-black trees|binary search tree|enlist

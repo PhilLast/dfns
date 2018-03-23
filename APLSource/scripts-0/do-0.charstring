@@ -1,0 +1,10 @@
+⍝ Non-result-returning "function".
+
+    dm←⎕dm
+
+    ''≡⍎do''
+1
+    1≡{}do 1
+1
+    dm≡⎕dm      ⍝ above examples didn't generate errors.
+1

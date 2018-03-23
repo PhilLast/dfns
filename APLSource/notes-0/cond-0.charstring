@@ -1,0 +1,180 @@
+rslt ← (if ##.cond then cond else) arg     ⍝ proposition:consequence:alternative
+
+Phil Last says: this operator implements the triadic structure:
+
+    [if] proposition [then] consequence [else] alternative.
+
+The  correct way to call it is as above, monadically with two calls to the oper-
+ator  separating the three operands.  The resulting derived conditional function
+is similar to the D: guard construct ...
+
+    proposition : consequence ⋄ alternative
+
+excepting  that it is a function, can be assigned a name, and within the D: con-
+text its result is captured regardless of the truth of the proposition or not at
+all.  Any  of the three, proposition, consequence and alternative, can be either
+arrays  or  monadic (ambivalent) functions on arg. (proposition) or (proposition
+arg)  must  be a boolean singleton. Any of them can of course be further (paren-
+thesised) or named conditionals on arg.
+
+The development started two decades ago in APL2 with defined operators such as:
+
+        ┌──────────────────────┬────────────────────────────────┐
+        │ ∇ r←(f then g)w      │ ∇ r←a(f else g)w               │
+        │   r←↑g mon/(⍳f w),⊂w │   r←↑f mon/(⍳a),g mon/(⍳~a),⊂w │
+        │ ∇                    │ ∇                              │
+        └──────────────────────┴────────────────────────────────┘
+where:
+        ┌───────────────┐
+        │ ∇ r←a(f mon)w │
+        │   r←f w       │
+        │ ∇             │
+        └───────────────┘
+
+    rslt ← (proposition then consequence) arg
+
+    rslt ← test (consequence else alternative) arg
+
+In  different  versions  of  both operators the control, here effected by use of
+reduction  on  a  one   or two item vector, could instead be by branching, using
+:If &c. control structures or latterly by use of a guard in a D:op. The idea was
+to  make all of these methods redundant. The operators, (then) and (else), could
+not  be  used together because the derived function (f then g else h) is dyadic,
+as it is derived from (else), and will run either (f then g) or (h) according to
+its  boolean  left argument where what is required is to run (f) unconditionally
+followed by (g) or (h) according to its boolean result.
+
+A  breakthrough was made on a napkin in Helsingør, a day or two earlier in truth
+and  a  notebook,  by  coding  the two operators to work together to produce the
+MONADIC  derived function (f then g else h) fulfilling these criteria. To do so,
+arguments  were  passed from (else) to (then) to control the calling of the pro-
+position  and consequence separately if at all. These worked exactly as expected
+and  were  also  upwardly  compatible with the definitions above. Here are their
+definitions ...
+
+    ┌─────────────────────┬───────────────────────┐
+    │ then←{⍺←'M'         │ else←{⍺←'M'           │
+    │     ⍺='Q':(⊢∘⍺⍺)⍵   │     ⍺=1:(⊢∘⍺⍺)⍵       │
+    │     ⍺='Y':(⊢∘⍵⍵)⍵   │     ⍺=0:(⊢∘⍵⍵)⍵       │
+    │     (⊢∘⍺⍺)⍵:(⊢∘⍵⍵)⍵ │     'Q' ⍺⍺ ⍵:'Y' ⍺⍺ ⍵ │
+    │     ⍵               │     (⊢∘⍵⍵)⍵           │
+    │ }                   │ }                     │
+    └─────────────────────┴───────────────────────┘
+
+Notice the (almost) identical lines in each.
+
+In  (else)  these operate the older standalone use where a boolean left argument
+determines  whether  the consequence or the alternative should be run. In (then)
+these carry out the instruction passed in the left argument by the third line of
+(else)  to  run the proposition and possibly the consequence. The other lines of
+(then)  operate  the  older  standalone monadic use. However rigorously defined,
+having  two  disparate  operators which can both be used independently but which
+CAN  work  in  concert  and  must  agree  on an arbitrary protocol to do so goes
+against the spirit if not the letter of good functional programming.
+
+Also,  a conditional without an alternative, (proposition then consequence), can
+be  considered  in  the same dim light. Nevertheless they lasted a month before,
+walking  around  Københavns  Søen, I realised this weakness could be overcome by
+producing a single operator that implements the best of both without any depend-
+encies.  In  fact  the  napkin coding of (else) as it stood was adequate for the
+task after substituting 2, 1 and 0 for 'M', 'Q' and 'Y' but the clause ...
+
+    rslt ← (proposition else consequence else alternative) arg
+
+has  lost  its meaning and confuses more by the fact that it SEEMS to mean some-
+thing while not actually doing so.
+
+(
+    This  may be the prejudice of a native English speaker; I have heard, though
+    I  think  it's probably a misunderstanding, that some eastern languages lack
+    words  for  the  concepts  carried by "therefore" and "because". I have also
+    heard  that programmers in eastern countries prefer the APL language because
+    it is not encumbered with English (or western) language contructs.
+)
+
+The  final  coding  of  the  operator  dispenses with the standalone use of both
+(then) and (else). Thus it is always coded twice separating the three operands.
+
+I  decided  that  using  the left argument as an "internal" flag really aught to
+preclude  its  use otherwise so although it's not impossible to call the derived
+function  dyadically its use is deprecated and its results are rather unpredict-
+able.  Including the different permutations of array and function operands there
+were sixteen calling sequences for the (then) and (else) operators used individ-
+ually  and in combination. With the restrictions imposed by a single conditional
+symbol only usable in combination we are left with eight ...
+
+    RSLT ← (proposition cond consequence cond alternative) ARG
+    RSLT ← (proposition cond consequence cond OTHER) ARG
+    RSLT ← (proposition cond VALUE cond alternative) ARG
+    RSLT ← (proposition cond VALUE cond OTHER) ARG
+    RSLT ← (TEST cond consequence cond alternative) ARG
+    RSLT ← (TEST cond consequence cond OTHER) ARG
+    RSLT ← (TEST cond VALUE cond alternative) ARG
+    RSLT ← (TEST cond VALUE cond OTHER) ARG
+
+Some of the parentheses in the above are redundant. If you don't know which, you
+are  best  to leave them in. The last clause makes no use of ARG except to force
+APL to call the derived function rather than assigning it into RSLT!
+
+An alternative coding
+---------------------
+An alternative, if slightly more challenging, coding of cond might be:
+
+    cond←{ ⍝ proposition : consequence : alternative
+        m q y←147036925 258147036 369258147
+        ⍺←m
+        ⊢∘⍺⍺⍣(⍺=q)⊢⊢∘⍵⍵⍣(⍺=y)⊢⍺⍺{(q ⍺⍺ ⍵)⍺⍺{y∘⍺⍺⍣⍺⊢⊢∘⍵⍵⍣(~⍺)⊢⍵}⍵⍵ ⍵}⍵⍵⍣(⍺=m)⊢⍵
+    }
+
+Examples:
+
+    eis←1∘=∘≡cond⊂cond⊢         ⍝ enclose if depth=1.
+
+    1 disp      1 (,1) (⊂,1)    ⍝ items have depth 0 1 2
+┌→┬─┬───┐
+│ │ │┌─┐│
+│1│1││1││
+│ │ │└→┘│
+└─┴→┴───┘
+    1 disp eis¨ 1 (,1) (⊂,1)    ⍝ enclose depth-1 items.
+┌→┬───┬───┐
+│ │┌─┐│┌─┐│
+│1││1│││1││
+│ │└→┘│└→┘│
+└─┴───┴───┘
+
+    unless←{~∘⍵⍵ cond ⍺⍺ cond⊢⍵}
+
+    log←⍟unless(≤∘0)
+
+    log 3
+1.098612289
+
+    log 0
+0
+    or←{(∨/⍺)cond((0⊥⍺)cond ⍵⍵ cond((2=⍴⍺)cond ⍺⍺ cond((¯1↓⍺)∘⍺⍺)))cond⊢⍵}
+
+    0 0 0 0-or×or⌈or⌊7.5
+7.5
+    0 0 0 1-or×or⌈or⌊7.5
+7
+    0 0 1 0-or×or⌈or⌊7.5
+8
+    0 1 0 0-or×or⌈or⌊7.5
+1
+    1 0 0 0-or×or⌈or⌊7.5
+¯7.5
+
+    ⍝ Used as a dyadic, rather than "triadic" construct,
+    ⍝ cond is equivalent to →else←:
+
+    0 1 ÷cond-¨ 3
+¯3 0.3333333333
+
+    0 1 ÷else-¨ 3
+¯3 0.3333333333
+
+See also: while until else and or co_ops
+
+Index:conditional operator|Helsingør|hyperator|co-operator
+Index;Last P.

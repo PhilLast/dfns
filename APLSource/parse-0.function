@@ -1,0 +1,130 @@
+ parse←{⎕IO ⎕ML←0 1                              ⍝ Bunda-Gerth parsing.
+
+     opt defs←(⍵≡'')({⍺ ⍵}⍣(~0≡⊃0⍴⍺))⍺           ⍝ trace/format option and defns.
+
+     defn←{                                      ⍝ binding table definition.
+         words←' 'segs¨⊃¨'⍝'segs¨⍵               ⍝ blank-delimited words.
+         pop←{(⊃⍵)(1↓⍵)}                         ⍝ head & tail of list.
+         sects←(⊂0⍴⊂'')segs words                ⍝ sections.
+         csect defs←pop sects                    ⍝ separation of sections.
+         bindx←(⊃¨csect)⍳⊂'()'                   ⍝ index of bracket defn.
+         bsegs←bindx⊃csect,⊂,⊂'()'               ⍝ bracket pairs: () [] <> ...
+         bkts blabs←↓⍉↑{(⌽2↑⍵)(2↓⍵)}¨¯1⌽¨bsegs   ⍝ brackets and their cat labels.
+         cats reps←↓⍉↑pop¨csect~⊂bsegs           ⍝ categories & representatives.
+         insert←{                                ⍝ binding table from defns.
+             fm to rslt←⍵                        ⍝ binding and resulting cats.
+             ⊃bmat[⊂fm,to]←⊂⍺,rslt               ⍝ populate cell.
+         }                                       ⍝
+         bonds←(⍴defs)-⍳⍴defs                    ⍝ binding strengths.
+         bmat←cats∘.{0}cats                      ⍝ initialised binding table.
+         defn←{cats∘⍳¨'.'segs¨':→'segs ⍵}        ⍝ split a.b:c.d→z defn
+         dist←{(,↑∘.,/2↑⍵),¨⊃⌽⍵}                 ⍝ distribution of productions.
+         _←bonds insert¨∘dist∘defn¨¨¨defs        ⍝ insert into binding matrix.
+         cats reps bkts blabs,⊂[⍳2]↑bmat         ⍝ binding structure.
+     }∘{                                         ⍝ pre-process alias=... lines.
+         lines←↓' ',⎕FMT↑⍵                       ⍝ lines from char array.
+         wds←⊃¨' 'segs¨lines                     ⍝ first word from each line.
+         msk nsk←1 0=⊂'='∊¨wds                   ⍝ mask of alias lines.
+         dict←'='segs¨msk/wds                    ⍝ (fm to) substitution pairs.
+         {↑subs/dict,⊂⍵}¨nsk/lines               ⍝ lines with expanded aliases.
+     }⍣(2≠⊃⍴⍴⊃⌽defs)                             ⍝ compile unless compiled.
+
+     table←{                                     ⍝ formatted Bunda-Gerth table.
+         (cats bmat zmat)←⍵                      ⍝ categories and binding matrix.
+         fmt←{(×⍺)/(⍕⍺),' ',⍵⊃cats,'?'}          ⍝ bond and category.
+         ttl←{↑' '⍺,.⍪⍺ ⍵}                       ⍝ row and column headers.
+         cats ttl bmat fmt¨(1+⍴cats)|zmat        ⍝ formatted bonds & categories.
+     }
+
+     grid←0 0∘disp                               ⍝ grid without decorators.
+
+     (cats reps bkts blabs bmat zmat)←defn defs  ⍝ definition structure.
+
+     ⍵≡'':{                                      ⍝ null expr: binding matrix.
+         ⍵=0:cats reps bkts blabs bmat zmat      ⍝ raw binding struct.
+         trim←{                                  ⍝ without empty rows and cols.
+             r c←1,¨1 0{∨/[⍺]⍵}¨⊂1 1↓~⍵∊⊂''      ⍝ occupied rows and cols.
+             r⌿c/⍵                               ⍝ masked out empties.
+         }                                       ⍝ :: ∇ cells → cells
+         snip←{                                  ⍝ snip out top corner.
+             t←(,⍵)⍳'┬'                          ⍝ uppermost, leftmost ┬
+             mat←⍵                               ⍝ oh, for a merge operator!
+             cnr←↑1(t-1)1∘/¨'  ┌' '  │' '┌─┼'    ⍝ empty corner.
+             mat⊣mat[⍳3;⍳t+1]←cnr                ⍝ snipped formatted matrix.
+         }                                       ⍝ cmat ← ∇ cmat
+         bfmt←snip∘grid∘(⍕¨)∘trim∘table          ⍝ binding matrix formatting.
+         bfmt cats bmat zmat                     ⍝ formatted table.
+     }opt                                        ⍝ opt-ional formatting.
+
+     reduce←{                                    ⍝ 2-by-2 parsing.
+         (∆_ L)Aa Bb Cc(R _∆)←⍵                  ⍝ 3-token window on stream.
+         Aa Cc∧.≡eos:Bb                          ⍝ single node: done.
+         Aa Bb∧.≡eos:⍵                           ⍝ error: partial parse.
+         (A a)(B b)(C c)←Aa Bb Cc                ⍝ cats and toks.
+         (⊂b c)∊1↓bkts:∇ rgt(∆_ L)Aa(ebk b)R _∆  ⍝ empty brackets [].
+         (⊂a c)∊bkts:∇ rgt ∆_ L(a bkt Bb)R _∆    ⍝ bracketed single value Bb.
+         (⊂a)∊rbs:∇ lft lft ⍵                    ⍝ right bracket: skip left.
+         ≥/xmat[(A B)(B C)+1]:∇ lft ⍵            ⍝ A:B ≥ B:C → skip left.
+         BbCc←zmat[B;C],⊂b c                     ⍝ B bound with C.
+         ∇ show(∆_ L)Aa BbCc R _∆                ⍝ binds with token to the right?
+     }                                           ⍝ :: ∇ stream → stream
+
+     show←⊣∘{⎕←sfmt lft⍣{eos≡⊃⍺}⍵}⍣opt⍨          ⍝ optional tracing, en passant.
+
+     bkt←{                                       ⍝ bind of bracketed node [ ⍵ ].
+         cat expr←⍵                              ⍝ category of bracketed expr.
+         zcat←(cat,1↓bcats)[lbs⍳⍺]               ⍝ resulting category.
+         zcat(⍺ expr)                            ⍝ ⍺-bracketed node.
+     }                                           ⍝ :: left_bkt ∇ node → node
+
+     ebk←{bcats[lbs⍳⍵]⍵}                         ⍝ empty brackets. [] {} ...
+
+     tfmt←{                                      ⍝ tree-formatted.
+         0=≡⍵:1 1⍴⍵                              ⍝ atom: char matrix single.
+         subs←⍉↑↑{⍺,' ',⍵}/↓[0]∘∇¨⍵              ⍝ formatted sub-expressions.
+         mask←~(⊃↓subs)∊'┌─┐ '                   ⍝ sub-exprs connection points.
+         mid←(⍳⍴mask)=⌊(+/mask/⍳⍴mask)÷2         ⍝ mid-point for '┴' char.
+         inx←mask+2×+\mask                       ⍝ indices for box-draw chars.
+         top←' ?─┌ ┐┴'[inx+4×mid]                ⍝ '  ┌─┴─┐  '
+         top⍪subs                                ⍝ formatted expression.
+     }
+
+     atop←cats{                                  ⍝ category atop tree.
+         ⍺=¯1:⍵                                  ⍝ ignore bad cat.
+         dent←+/∧\(⊃↓⍵)∊'┌─┐ '                   ⍝ indent for category.
+         top←(dent/' '),⍺⊃⍺⍺                     ⍝ indented category.
+         ↑(⊂top),↓⍵                              ⍝ categorised tree.
+     }
+
+     vect←{⍺←⍬                                   ⍝ vector from cons list
+         ∆_ Aa Bb Cc _∆←⍵                        ⍝ 3-item window.
+         ~Aa≡eos:(⍺,⊂Aa)∇ rgt ⍵                  ⍝ accumlate next item.
+         ~⍺≡⍬:⍺                                  ⍝ trailing eos: done.
+         ⍺ ∇ rgt ⍵                               ⍝ skip leading eos.
+     }
+
+     class←{                                     ⍝ classification of expr tokens.
+         pairs←↑,/⍺,¨¨⍳⍴⍺                        ⍝ token-category pairs.
+         toks cats←↓⍉↑pairs                      ⍝ category of each token.
+         (toks⍳⍵)⊃¨⊂cats,¯1                      ⍝ token categories.
+     }
+
+     pfmt←atop∘tfmt⌿                             ⍝ format of (token cat) pair.
+     sfmt←grid∘pfmt∘⍉∘↑∘vect                     ⍝ format of parse stream.
+
+     lft←{(∆_ L)A B C _∆←⍵ ⋄ ∆_ L A B(C _∆)}     ⍝ skip left.
+     rgt←{∆_ A B C(R _∆)←⍵ ⋄ (∆_ A)B C R _∆}     ⍝ skip right.
+
+     lbs rbs←↓⍉↑bkts                             ⍝ left and right brackets.
+     bcats←cats⍳blabs                            ⍝ bracket categories.
+     xmat←0,0⍪bmat                               ⍝ extended bmat.
+     pairs←{↓⍉↑(reps class ⍵)⍵}⍵~' '             ⍝ cat-token pairs.
+     eos←¯1                                      ⍝ end of stream marker.
+
+     ∆_←↑{⍺ ⍵}⍨/⌽eos,¯2↓pairs                    ⍝ left list.
+     Aa Bb Cc←¯3↑eos eos,pairs,eos               ⍝ 3-token window
+
+     tree←reduce show ∆_ Aa Bb Cc eos            ⍝ reduced expression.
+     eos≡⊃tree:sfmt tree                         ⍝ bad parse: show stream.
+     ⊃pfmt tree                                  ⍝ good parse: show tree.
+ }

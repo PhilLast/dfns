@@ -1,0 +1,6 @@
+⍝ Workspace differences:
+
+    wsdiff ⎕wsid ⎕wsid              ⍝ compare saved versions of this WS.
+
+    wsdiff↓0 1⌽' ',↑2/⊂⎕wsid        ⍝ VMJ: allow outer blanks in file names.
+

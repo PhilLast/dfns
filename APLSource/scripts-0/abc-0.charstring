@@ -1,0 +1,56 @@
+⍝ ABC - Arithmetic Boundary Checking:
+
+    ⎕io ⎕ml←0 3                 ⍝ Environment for tests.
+
+    bp←{⊃(⍺<⍵)(⍺>⍵)}            ⍝ Boolean pair (2-vector).
+
+    2 3 4 bp 3                  ⍝ ⍺<⍵←→1 0 ⋄ ⍺=⍵←→0 0 ⋄ ⍺>⍵←→0 1.
+1 0 0
+0 0 1
+
+    xd←{×⍺-⍵}                   ⍝ Signum difference.
+
+    2 3 4 xd 3                  ⍝ ⍺<⍵←→¯1  ⋄ ⍺=⍵←→0  ⋄ ⍺>⍵←→1.
+¯1 0 1
+    bd←{(⍺>⍵)-(⍺<⍵)}            ⍝ Boolean difference (same as xd).
+
+    2 3 4 bd 3                  ⍝ ⍺<⍵←→¯1  ⋄ ⍺=⍵←→0  ⋄ ⍺>⍵←→1.
+¯1 0 1
+
+    rg←{(⍺[0]⍺⍺ ⍵)∧⍺[1]⍵⍵ ⍵}    ⍝ Range Operator.
+
+    1 3 <rg> ⍳5                 ⍝ Open Interval:        ○-----------○
+0 0 1 0 0
+
+    1 3 ≤rg≥ ⍳5                 ⍝ Closed Interval:      ⍟-----------⍟
+0 1 1 1 0
+
+    1 3 <rg≥ ⍳5                 ⍝ Half-Open Left:       ○-----------⍟
+0 0 1 1 0
+
+    1 3 ≤rg> ⍳5                 ⍝ Half-Open Right:      ⍟-----------○
+0 1 1 0 0
+
+    xp←{×/×⍵∘.-⍺}               ⍝ Signum product.
+
+    1 3 xp ⍳5                   ⍝ produces interval partition.
+1 0 ¯1 0 1
+
+    xs←{+/×⍵∘.-⍺}               ⍝ Signum sum.
+
+    1 3 xs ⍳5                   ⍝ produces range partition.
+¯2 ¯1 0 1 2
+
+    xm←{⌈/⊃×⌿×⍺,.-⍉⍵}           ⍝ Max Signum.
+
+    b←⊃(3 2)(5 6)               ⍝ Upper Left and Lower Right Corners.
+
+    p←(6 8)(5 2)(4 4)(7 6)(3 5)(2 3)            ⍝ Various Points in the plane.
+
+    b xm ⊃p                     ⍝ 1=Outside, 0=Boundary, ¯1=Interior.
+1 0 ¯1 1 0 1
+
+    xr←{d←⍉⊃+/×⍵,.-⍉⍺ ⋄ ((2∨.=|d)/d)←2 ⋄ 3⊥d}   ⍝ Signum region.
+
+    b xr ⊃p                     ⍝ 0=Interior, 8=Outside, Else boundary.
+8 2 0 8 ¯3 8

@@ -1,0 +1,124 @@
+nvec ← from ##.to unto                      ⍝ Sequence ⍺ .. ⍵
+
+Returns a vector of numbers ⍺ to ⍵ inclusive. ⍺ is the _first_ value in the seq-
+uence, and ⍵ the _last_. More generally, ⍺ may be a 2-item vector, which determ-
+ines the first two items of the sequence and hence the _step_ size.
+
+Notice  that  any of _first_, _step_ and _last_ may be positive, negative and/or
+fractional.  If  _last_  is  not  a  whole  number  of _step_s from _first_, the
+sequence will stop short of _last_.
+
+Technical notes:
+
+The following simple function suffices for the ascending sequence ⍺, ⍺+1, ··· ⍵.
+Notice how (·-⎕io) makes it independent of index origin:
+
+    to←{(⍺-⎕io)+⍳1+⍵-⍺}
+
+Useful  refinements  to  the  function allow _descending_ sequences and optional
+_step_ sizes other than 1:
+
+    to←{⎕io←0                                   ⍝ Sequence ⍺ .. ⍵
+        from step←1 ¯1×-\2↑⍺,⍺+×⍵-⍺             ⍝ step default is +/- 1.
+        from+step×⍳0⌈1+⌊(⍵-from)÷step+step=0    ⍝ ⍺ thru ⍵ inclusive.
+    }
+
+Attempts to re-cast the function as a one-liner, include:
+
+    to←{From+0,+\Step⍴⍨0⌈⌊Inc÷Step←--/2⍴⍺,From+×Inc←⍵-From←1⍴⍺}
+
+    to←{↑+/⍵{⍵×{⍵-⎕IO}⍳1+0⌈⌊(⍺⍺-⍺)÷⍵+⍵=0}\1 ¯1×-\2↑⍺,⍺+×⍵-⍺}
+
+    to←{(⍬⍴⍺)+(|-/⌽2↑⍺,⍺+1){⍺×(×⍵)×(-⎕IO)+⍳1+⌊|⍵÷⍺}⍵-⍬⍴⍺}
+
+VMJ  suggests the following extension, which accepts an optional explicit _step_
+size  as  a second item of its _right_ argument. _step_ defers to _next_ if both
+are supplied.
+
+    to←{
+        ⎕IO←0 ⋄ ⍺←1 ⋄ z←0.0000000001
+        (a n)←2↑⍺,⍺ ⋄ (b s)←2↑⍵,1
+        d←|s{⍵≠0:⍵ ⋄ ⍺≠0:⍺ ⋄ 1}n-a
+        {⍵×z<|0-⍵}a+d{(⍺××⍵)×⍳1+⌊|⍵÷⍺}b-a
+    }
+
+    1 3 to 5      ⍝ using: _next_
+1 3 5
+
+    1 to 5 2      ⍝ using: _step_
+1 3 5
+
+Bob Smith suggests this extension for nested sequences:
+
+    to←{                                    ⍝ Sequence ⍺ .. ⍵
+        from step←⊂¨1 ¯1×-\2↑⍺,⍺+×⍵-⍺       ⍝ step default is +/- 1.
+        size←0⌈1+⌊⊃(⍵-from)÷step+step=0     ⍝ shape of result
+        from+step×(⍳size)-⎕io               ⍝ ⍺ thru ⍵ inclusive.
+    }
+
+    1 disp (¯1 6)(0 4) to ⊂3 ¯2
+┌→───┬────┬────┬────┬─────┐
+↓¯1 6│¯1 4│¯1 2│¯1 0│¯1 ¯2│
+├~──→┼~──→┼~──→┼~──→┼~───→┤
+│0 6 │0 4 │0 2 │0 0 │0 ¯2 │
+├~──→┼~──→┼~──→┼~──→┼~───→┤
+│1 6 │1 4 │1 2 │1 0 │1 ¯2 │
+├~──→┼~──→┼~──→┼~──→┼~───→┤
+│2 6 │2 4 │2 2 │2 0 │2 ¯2 │
+├~──→┼~──→┼~──→┼~──→┼~───→┤
+│3 6 │3 4 │3 2 │3 0 │3 ¯2 │
+└~──→┴~──→┴~──→┴~──→┴~───→┘
+
+We could extend Bob's idea to accommodate character and complex arguments:
+
+    to←{                                    ⍝ Sequence ⍺ .. ⍵
+        type←10|⎕DR ⍺,⍵                     ⍝ item type.
+        type∊0 2:⎕UCS(⎕UCS ⍺)∇ ⎕UCS ⍵       ⍝ char sequences.
+        type=9:⍺ ∇{                         ⍝ complex arg
+            j←1 0J1∘(+.×)                   ⍝ number from (re im) pair
+            p←9 11∘○¨                       ⍝ (re im) pair from number
+            j¨(p ⍺)⍺⍺ p ⍵                   ⍝ complex sequence via nested pairs.
+        }⍵                                  ⍝
+        from step←⊂¨1 ¯1×-\2↑⍺,⍺+×⍵-⍺       ⍝ step default is +/- 1.
+        size←0⌈1+⌊⊃(⍵-from)÷step+step=0     ⍝ shape of result
+        from+step×(⍳size)-⎕IO               ⍝ ⍺ thru ⍵ inclusive.
+    }
+
+    'a' to 'z'
+abcdefghijklmnopqrstuvwxyz
+
+    'AC' to 'Z'
+ACEGIKMOQSUWY
+
+    0 to 3j4
+0 0J1 0J2 0J3 0J4
+1 1J1 1J2 1J3 1J4
+2 2J1 2J2 2J3 2J4
+3 3J1 3J2 3J3 3J4
+
+Examples:
+
+      3 to 10               ⍝ Inclusive ascending sequence.
+3 4 5 6 7 8 9 10
+
+      10 to 3               ⍝ Descending sequence.
+10 9 8 7 6 5 4 3
+
+      7 to 7                ⍝ Single-item sequence.
+7
+      5 7 to 13             ⍝ 2-item start determines step.
+5 7 9 11 13
+
+      ¯10 ¯15 to ¯25        ⍝ Negative start and step.
+¯10 ¯15 ¯20 ¯25
+
+      1.5 1.7 to 2.5        ⍝ Fractional start and step.
+1.5 1.7 1.9 2.1 2.3 2.5
+
+      0 3 to 10             ⍝ Sequence may stop short of _last_.
+0 3 6 9
+
+See also: sieve
+
+Index:sequence|stepping
+Index;Jantunen V-M.|Smith R.A.

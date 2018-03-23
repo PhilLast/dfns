@@ -1,0 +1,4 @@
+ m91←{           ⍝ McCarthy's M91 function.
+     ⍵>100:⍵-10  ⍝ high number: M(n) → n-10
+     ∇ ∇ ⍵+11    ⍝ low number:  M(n) → M(M(n+11))
+ }

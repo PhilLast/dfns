@@ -1,0 +1,4 @@
+ ncpath←{⎕ML←1                       ⍝ ⎕path-aware ⎕nc.
+     ⍺←¯1↓⎕THIS,⍎⎕PATH,' #'          ⍝ default left arg is ⎕path.
+     {⊃(⍵∩3 4),0}¨↓⍉↑(,⍺).⎕NC⊂⍵      ⍝ fns and ops along path ⍺.
+ }

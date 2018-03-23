@@ -1,0 +1,15 @@
+⍝ Arithmetic mean:
+
+    mean 1 2 3 4
+2.5
+
+    square←*∘2
+    sqrt←*∘0.5
+    stdev←{sqrt(mean square ⍵)-square mean ⍵}   ⍝ standard deviation.
+
+    ⎕pp←5
+
+    stdev 2 2 2
+0
+    stdev 1 2 3
+0.8165

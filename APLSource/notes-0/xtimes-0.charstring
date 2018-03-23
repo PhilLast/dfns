@@ -1,0 +1,165 @@
+z←x ##.xtimes y                         ⍝ Fast multi-digit product using FFT.
+
+0. Introduction
+
+FFT is used to provide an O(n×⍟n) algorithm for the convolution of  two  vectors
+(polynomial multiplication), which is then used to implement a  fast  multiplic-
+ation for integers with an arbitrary number of digits.  The ideas and code  were
+presented by Henry Rich in the Jwiki essay FFT on  2010-12-27,  here  translated
+from J to Dyalog APL. See: http://www.jsoftware.com/jwiki/Essays/FFT
+
+In these notes, ⎕pp←6 and ⎕io←0 .
+
+1. Convolution
+
+Convolution (polynomial multiplication) can be coded succinctly:
+
+   convolve←{+⌿(-⍳⍴⍺)⌽⍺∘.×⍵,0×1↓⍺}
+
+   x←9 3 5 8 1 0 5
+   y←6 2 3 7 4
+
+   x convolve y
+54 36 63 130 94 73 109 49 19 35 20
+
+convolve works by summing the antidiagonals of x∘.×y , that is, summing the ele-
+ments of x∘.×y having like indices in (⍳⍴x)∘.+⍳⍴y , resulting in a  vector  with
+¯1+(⍴x)+⍴y elements.
+
+   (x∘.×y) '     ' ((⍳⍴x)∘.+⍳⍴y)
+ 54 18 27 63 36         0 1 2 3  4
+ 18  6  9 21 12         1 2 3 4  5
+ 30 10 15 35 20         2 3 4 5  6
+ 48 16 24 56 32         3 4 5 6  7
+  6  2  3  7  4         4 5 6 7  8
+  0  0  0  0  0         5 6 7 8  9
+ 30 10 15 35 20         6 7 8 9 10
+
+convolve takes time of order (⍴x)×(⍴y) , making it impractical  on  large  argu-
+ments (longer than 1e5 , say).
+
+2. FFT
+
+A faster convolution obtains by use of FFT (fast Fourier  transform).  FFT  con-
+verts a polynomial represented by its coefficients into its value at  n  points,
+here the n roots of unity, and the inverse FFT converts from the n  points  back
+into coefficients. The important properties are that
+
+   ⍺ convolve ⍵  ←→  iFFT (FFT ⍺) × (FFT ⍵)
+
+and that FFT and iFFT are computed  in  O(n×⍟n)  time  (justifying  the  moniker
+"fast").
+
+The key computation in FFT (and iFFT) is:
+
+   floop←{(⊣/⍺)∇⍣(×m)⊢(+⌿⍵),[m-0.5]⍺×[⍳m←≢⍴⍺]-⌿⍵}
+
+The right argument is a hypercube initially constructed from the argument  ⍵  to
+FFT as (r⍴2)⍴⍵ where r←2⍟⍬⍴⍴⍵ . floop applies to the hypercube r times, to  each
+of the axes in order. Let p←¯1*2÷2*r be a primitive root of unity of  order 2*r.
+The left argument is the hypercube p*(2*k)×s⍴⍳×/s←2⍴⍨(r-1)-k on the k-th applic-
+ation of floop . Equivalently, the initial left argument is p*s⍴⍳×/s←(r-1)⍴2 and
+the next left argument obtains from the current one by ⊣/⍺ .
+
+    x
+9 3 5 8 1 0 5
+    y
+6 2 3 7 4
+
+    iFFT (FFT 16↑x) × (FFT 16↑y)
+54J¯9.32587E¯15 36J¯3.51108E¯15 63J¯6.38378E¯15 ...
+
+    x rconvolve y
+54J¯9.32587E¯15 36J¯3.51108E¯15 63J¯6.38378E¯15 ...
+
+    ⌊0.5+9○ x rconvolve y
+54 36 63 130 94 73 109 49 19 35 20
+
+    x convolve y
+54 36 63 130 94 73 109 49 19 35 20
+
+Because rconvolve is mathematically (if not numerically) equivalent to convolve,
+the application of 9○ to its result is justified when the arguments are real and
+of ⌊0.5+ when the they are integral.
+
+
+3. Integer Multiplication
+
+The convolution of x and y are the digits of their product when x and y are  in-
+terpreted as vectors of digits. The convention here is that the digits are list-
+ed from most significant to least significant. For example, the number  3142  is
+represented by 3 1 4 2 . Base 10 is used here but other bases are possible.
+
+It remains to convert the result into standard form, with each element less than
+the base.  If carry performs one step of propagating the carries, then the limit
+of its application is the desired computation.
+
+    x
+9 3 5 8 1 0 5
+    y
+6 2 3 7 4
+
+    ⎕←t←⌊0.5+9○ x rconvolve y
+54 36 63 130 94 73 109 49 19 35 20
+
+    carry 0,t
+5 7 12 16 9 11 13 13 10 12 7 0
+
+    carry carry 0,t
+5 8 3 6 10 2 4 4 1 2 7 0
+
+    carry carry carry 0,t
+5 8 3 7 0 2 4 4 1 2 7 0
+
+    carry carry carry carry 0,t
+5 8 3 7 0 2 4 4 1 2 7 0
+
+    carry⍣≡ 0,t
+5 8 3 7 0 2 4 4 1 2 7 0
+
+    x xtimes y
+5 8 3 7 0 2 4 4 1 2 7 0
+
+    ' '~⍨⍕x xtimes y
+583702441270
+
+    {⎕pp←18 ⋄ ⍕⍵} 9358105 × 62374
+583702441270
+
+    s t ← ↓ ? 2 1.5e4⍴10
+
+    s xtimes time t
+00.296
+
+xtimes has the potential to multiply numbers with over a million digits in under
+a minute.  The function as written is constrained by the fact that in Dyalog APL
+the maximum rank of an array is 15, so that the maximum product  can  have  only
+2*15 or 32768 digits.
+
+
+4. Collected Definitions
+
+The presentation here favors terseness and clarity over efficiency.  Some  poss-
+ible improvements are described in the Jwiki essay.  (For example, computing the
+roots of unity just once rather than four times.)
+
+    convolve←{+⌿(-⍳⍴⍺)⌽⍺∘.×⍵,0×1↓⍺}
+
+    xtimes←{
+        roots     ← {×\1,1↓(⍵÷2)⍴¯1*2÷⍵}
+        cube      ← {⍵⍴⍨2⍴⍨2⍟⍴⍵}
+        extend    ← {(2*⌈2⍟¯1+(⍴⍺)+⍴⍵)↑¨⍺ ⍵}
+        floop     ← {(⊣/⍺)∇⍣(×m)⊢(+⌿⍵),[m-0.5]⍺×[⍳m←≢⍴⍺]-⌿⍵}
+        FFT       ← {      ,(cube  roots ⍴⍵)floop cube ⍵}
+        iFFT      ← {(⍴⍵)÷⍨,(cube +roots ⍴⍵)floop cube ⍵}
+        rconvolve ← {(¯1+(⍴⍺)+⍴⍵)↑iFFT ⊃×/FFT¨⍺ extend ⍵}
+        carry     ← {1↓+⌿1 0⌽0,0 10⊤⍵}
+        (+/∧\0=t)↓t←carry⍣≡0,⌊0.5+9○ ⍺ rconvolve ⍵
+    }
+
+Ref: http://www.jsoftware.com/jwiki/Essays/FFT
+
+See also: nats big xpower
+
+Index:Fast Fourier Transform|convolution|polynomial
+Index;Hui R.K.W.|Rich H.

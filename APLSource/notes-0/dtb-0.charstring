@@ -1,0 +1,17 @@
+rslt ← {blank} ##.dtb argt                  ⍝ Drop Trailing Blanks.
+
+Trailing  blanks are dropped from the character vector argument. If the argument
+is of higher rank, blank "columns" are dropped.
+
+For  interest,  here  are a couple of alternative codings. Both functions remove
+trailing blanks from a character vector.
+
+    {(1-(⍵=' ')⊥1)↓⍵}           ⍝ (Maria Wells)
+    {(-{⍵⊥⍵}⍵=' ')↓⍵}           ⍝ (Dan Baronet)
+
+Examples, See: Blank_removal
+
+See also: dab deb dlb dmb dxb mtrim vtrim
+
+Index:blanks|compression
+Index;Baronet D.|Wells M.

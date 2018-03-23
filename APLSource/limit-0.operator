@@ -1,0 +1,6 @@
+ limit←{             ⍝ Function power limit (fixpoint).
+     ⍵ ⍺⍺{           ⍝ 'old' value:
+         ⍺≡⍵:⍵       ⍝       old matches new: finished.
+         ⍵ ∇ ⍺⍺ ⍵    ⍝       otherwise: try new value.
+     }⍺⍺ ⍵           ⍝ 'new' value.
+ }

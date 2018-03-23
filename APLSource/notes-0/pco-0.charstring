@@ -1,0 +1,84 @@
+p ←    ##.pco ⍵     ⍝ ⍵-th prime                        ⍝ Prime numbers.
+b ←  0 ##.pco ⍵     ⍝ 1 iff ⍵ is not prime
+b ←  1 ##.pco ⍵     ⍝ 1 iff ⍵ is prime
+n ← ¯1 ##.pco ⍵     ⍝ number of primes less than ⍵
+v ←  2 ##.pco ⍵     ⍝ prime factors and exponents
+v ←  3 ##.pco ⍵     ⍝ prime factorization of ⍵
+p ←  4 ##.pco ⍵     ⍝ next prime larger than ⍵
+p ← ¯4 ##.pco ⍵     ⍝ next prime smaller than ⍵
+b ← 10 ##.pco ⍵     ⍝ m+b/⍳⍴b are all the primes between m and n, where ⍵≡m,n
+
+From Roger Hui, [pco] "p-colon" models most of the p: function in J.
+
+Technical note:
+
+[pco] uses two large literal values:
+
+        pitab←2 1299721 2750161 4256249 5800139 7368791 8960467 10570849 ...
+        p4792←2 3 5 7 11 13 17 19 23 29 31 37 41 43 47 53 59 61 67 71 73 ...
+
+which means that the canonical representation of the function is quite wide:
+
+          ⍴⎕cr'pco'
+    102 27335
+
+which may prove challenging for some workspace administration tools.
+
+Examples:
+
+      pco ⎕io               ⍝ the first prime
+2
+      pco 2 5⍴⍳10           ⍝ the first 10 primes in a 2 by 5 table
+ 2  3  5  7 11
+13 17 19 23 29
+
+      pco 1234567           ⍝ the 1234567-th prime
+19394489
+
+      ¯1 pco 19394509       ⍝ the number of primes < 19394509
+1234567
+
+      ¯1 pco 97             ⍝ # primes < 97
+24
+      ¯1 pco 97.5           ⍝ # primes < 97.5
+25
+      pco 24                ⍝ the 24-th prime
+89
+      ¯1 pco ¯1+2*31        ⍝ # primes < ¯1+2*31
+105097564
+
+      pco 105097564         ⍝ the 105097564-th prime
+2147483647
+
+      1 pco 314159          ⍝ is 314159 a prime?
+1
+      {⍵/⍳⍴⍵} 1 pco ⍳25     ⍝ all the primes less than 25
+2 3 5 7 11 13 17 19 23
+
+      0 pco 144 17 49       ⍝ which numbers are not prime?
+1 0 1
+
+      3 pco 144             ⍝ prime factorization
+2 2 2 2 3 3
+
+      2 pco 144             ⍝ primes and exponents
+2 3
+4 2
+      ⍬ ≡ 3 pco 1           ⍝ the prime factorization of 1 is empty
+1
+      4 pco 10*1 2 3 4      ⍝ the next prime > 10 100 ...
+11 101 1009 10007
+
+      ¯4 pco 10*1 2 3 4     ⍝ the next prime < 10 100 ...
+7 97 997 9973
+
+      ⎕←b←10 pco 10 20      ⍝ primes between 10 and 20.
+0 1 0 1 0 0 0 1 0 1
+
+      b/10 to 19            ⍝ prime between 10 and 20.
+11 13 17 19
+
+See also: factors sieve rats rational
+
+Index:prime number|J
+Index;Hui R.K.W.

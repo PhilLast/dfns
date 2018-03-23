@@ -1,0 +1,6 @@
+ bsearch←{                   ⍝ Binary search: least n in range ⍵ with ⍺⍺ n.
+     ¯1≤-/⍵:1↑⍵+2-+/⍺⍺¨⍵     ⍝ convergence: finished.
+     mid←⌈0.5×+/⍵            ⍝ Mid point:
+     ⍺⍺ mid:∇(1↑⍵),mid       ⍝ 1: search lower half.
+     ∇ mid,1↓⍵        ⍝ 0: search upper half.
+ }

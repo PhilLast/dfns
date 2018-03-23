@@ -1,0 +1,10 @@
+rslt ← {blank} ##.dab argt                  ⍝ Drop All Blanks.
+
+All blanks are dropped from the character vector argument. If the argument is of
+higher rank, "short rows" are padded with blanks on the right.
+
+Examples, See: Blank_removal
+
+See also: deb dlb dmb dtb dxb
+
+Index:blanks|compression

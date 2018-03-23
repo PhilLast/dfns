@@ -1,0 +1,31 @@
+⍝ Trees:
+
+      nested←'drink'('hot' 'tea' 'coffee')('cold' 'milk' 'beer')
+
+      disp nested                           ⍝ Nested format.
+┌─────┬────────────────┬────────────────┐
+│drink│┌───┬───┬──────┐│┌────┬────┬────┐│
+│     ││hot│tea│coffee│││cold│milk│beer││
+│     │└───┴───┴──────┘│└────┴────┴────┘│
+└─────┴────────────────┴────────────────┘
+
+      disp tview nested                     ⍝ TreeView format.
+┌─────────────┬─────────────────────────────────────┐
+│0 1 2 2 1 2 2│┌─────┬───┬───┬──────┬────┬────┬────┐│
+│             ││drink│hot│tea│coffee│cold│milk│beer││
+│             │└─────┴───┴───┴──────┴────┴────┴────┘│
+└─────────────┴─────────────────────────────────────┘
+
+      display tfmt nested                   ⍝ Indented format.
+┌→─────────────┐
+↓drink         │
+│·   hot       │
+│·   ·   tea   │
+│·   ·   coffee│
+│·   cold      │
+│·   ·   milk  │
+│·   ·   beer  │
+└──────────────┘
+
+      nested ≡ tnest tview nested           ⍝ Full circle
+1

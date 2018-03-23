@@ -1,0 +1,21 @@
+{size ←} cvec ##.utf8put fid                ⍝ Char vector ⍺ to UTF-8 file ⍵.
+
+Character  vector  [cvec]  is written to file [fid] in UTF-8 format and the file
+size in bytes returned as a shy result.
+
+Examples:
+
+    ⎕←'Hello ⍳⍴ World' utf8put 'tmp.txt'    ⍝ put 18-byte UTF-8 file.
+18
+
+    utf8get 'tmp.txt'                       ⍝ get file.
+Hello ⍳⍴ World
+
+    notes.utf8put   utf8put 'tmp.txt'       ⍝ put these notes.
+
+    notes.utf8put ≡ utf8get 'tmp.txt'       ⍝ get these notes.
+1
+
+See also: utf8get int putfile
+
+Index:UTF-8|encoding|Unicode

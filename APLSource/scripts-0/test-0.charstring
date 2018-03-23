@@ -1,0 +1,22 @@
+⍝ Run test script: no news => good news.
+
+    nl←⎕ucs 13
+
+    scripts.test←'    ''good'',2↓''no news''',nl,'good news'
+
+    scripts.test
+    'good',2↓'no news'
+good news             
+
+    'hello                        
+       planet                     
+       earth'~' '    ⍝ multi-line char vec '
+hello 
+planet
+earth 
+
+    +Alpha test'test'
+1
+
+    {a←1 ⋄ ⍵}1
+1

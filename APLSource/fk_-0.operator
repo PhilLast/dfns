@@ -1,0 +1,5 @@
+ fk_←{           ⍝ Fork right.
+     ⍺←⊢         ⍝ ambivalent
+     rr←⍺ ⍵⍵ ⍵   ⍝ result of f02
+     ⍺ ⍺⍺ ⍵ rr   ⍝ pass ra and rr to left fork.
+ }

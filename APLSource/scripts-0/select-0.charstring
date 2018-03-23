@@ -1,0 +1,80 @@
+⍝ ⍺-selection of items from vector ⍵:
+
+    ⎕io ⎕ml←1 0
+
+    2 1 2 2 1 select (1 2 3 4 5)(10 20 30 40 50)
+10 2 30 40 5
+
+    chars←↑'now is' 'the time'          ⍝ character matrix.
+
+    (⎕io+chars=' ')select chars '.'     ⍝ subs blanks with dots.
+now.is..
+the.time
+
+    chars←disp ⍳2 2                     ⍝ char matrix with box-drawing chars.
+
+    smooth←'┌┬┐├┼┤└┴┘│─'                ⍝ box-drawing set.
+    clunky←'+++++++++|-'                ⍝ equivalent clunky chars.
+
+    (smooth⍳chars)select clunky,⊂chars  ⍝ printer-friendly substitution.
++---+---+
+|1 1|1 2|
++---+---+
+|2 1|2 2|
++---+---+
+
+    cubes←1 10 100×⊂2 3 4⍴⍳24           ⍝ vector of higher-rank arrays.
+    indx←2 3 4⍴⍳3                       ⍝ higher-rank index array.
+    indx select cubes                   ⍝ selection of higher rank arrays.
+   1   20  300    4
+  50  600    7   80
+ 900   10  110 1200
+                   
+  13  140 1500   16
+ 170 1800   19  200
+2100   22  230 2400
+
+    disp 1 2 select ('aaa' 'bbb')('AAA' 'BBB')  ⍝ nested right arg.
+┌───┬───┐
+│aaa│BBB│
+└───┴───┘
+
+    select ← ⊃¨∘↑∘(,¨/)∘(⊂¨¨)                   ⍝ check derived fn.
+
+    disp 1 2 select ('aaa' 'bbb')('AAA' 'BBB')  ⍝ nested right arg.
+┌───┬───┐
+│aaa│BBB│
+└───┴───┘
+
+    mats←5 5∘⍴¨⎕a(lcase ⎕a)⎕d                   ⍝ vector of matrices.
+
+    disp mats
+┌─────┬─────┬─────┐
+│ABCDE│abcde│01234│
+│FGHIJ│fghij│56789│
+│KLMNO│klmno│01234│
+│PQRST│pqrst│56789│
+│UVWXY│uvwxy│01234│
+└─────┴─────┴─────┘
+
+    indx←5 5⍴⍳3                                 ⍝ selection matrix.
+    indx
+1 2 3 1 2
+3 1 2 3 1
+2 3 1 2 3
+1 2 3 1 2
+3 1 2 3 1
+
+    indx select mats                            ⍝ enmesh of matrices.
+Ab2De
+5Gh8J
+k1Mn4
+Pq7St
+0Vw3Y
+
+    (⎕io+≠/¨⍳5 5) select (indx select mats)'.'  ⍝ dots everywhere but diagonal.
+A....
+.G...
+..M..
+...S.
+....Y

@@ -1,0 +1,27 @@
+cmat ← ##.mtrim cmat                        ⍝ Trim off trailing blank cols.
+
+Trims trailing blank columns from a character matrix.
+
+Example:
+
+      txt←4 10⍴'It        little    profits   that      '
+
+      display txt
+┌→─────────┐
+↓It        │
+│little    │
+│profits   │
+│that      │
+└──────────┘
+
+      display mtrim txt
+┌→──────┐
+↓It     │
+│little │
+│profits│
+│that   │
+└───────┘
+
+See also: vtrim dtb
+
+Index:blanks|trailing blanks

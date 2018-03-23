@@ -1,0 +1,28 @@
+distribution ← average + standard_deviation × ##.NormRand (shape)
+
+From Nicolas Delcros, who says:
+
+Produces random numbers with a normal distribution, that is centered around zero
+with a unitary standard deviation, so that, as the number of samples rises,  the
+distribution will tend towards a normal gaussian curve. Normal distributions are
+helpful to model natural random variables.
+
+See: http://en.wikipedia.org/wiki/Box_muller
+
+Examples:
+
+    {+/⍵÷⍴⍵}¨NormRand¨10*⍳5             ⍝ average tends towards 0
+¯0.46239003 0.2586531459 0.02013158866 0.003016077943 0.0009350952811
+
+    {(+/⍵*2)÷⍴⍵}¨NormRand¨10*⍳5         ⍝ standard deviation tends towards 1
+0.431348813 0.8883835515 0.9924045046 0.9891854881 1.004654056
+
+    ⎕USING←',sharpplot.dll'
+    sp←⎕NEW Causeway.SharpPlot
+    sp.HistogramStyle←Causeway.HistogramStyles.(NormalCurve+SDev1)
+    sp.ClassInterval←0.1
+    sp.DrawHistogram ⊂NormRand 1000
+    (⎕NEW Causeway.SharpPlotViewer sp).Show ⍬
+
+index: distribution, normal|random
+index; Box G.E.P|Muller M.E.|Delcros N.

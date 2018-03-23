@@ -1,0 +1,34 @@
+chars ← ##.lcase chars                      ⍝ Lower-casification.
+chars ← ##.ucase chars                      ⍝ Upper-casification.
+
+Returns the lower- (resp. upper-) case equivalent of its simple character  array
+argument.  Note that these function take arguments of any rank.  Note also, that
+they may easily be extended to work with "Dyalog ALT" or a font of our own.
+
+Examples:
+
+    lcase 2 7⍴'PLEASE WHISPER'          ⍝ upper- to lower-case.
+please
+whisper
+
+    ucase 2 8⍴'please, speak up'        ⍝ lower- to upper-case.
+PLEASE,
+SPEAK UP
+
+    charmat ← 5 7⍴'Baker  Fox    able   Dog    charlie'
+
+    {⍵[⍋⍵;]} charmat             ⍝ case-sensitive sort.
+able
+charlie
+Baker
+Dog
+Fox
+    {⍵[⍋lcase ⍵;]} charmat       ⍝ case-INsensitive sort.
+able
+Baker
+charlie
+Dog
+Fox
+
+Index:case, lower|lower case|insensitive, case
+Index:case, upper|upper case

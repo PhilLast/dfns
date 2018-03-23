@@ -1,0 +1,10 @@
+cvec← ##.dice ?6 6                          ⍝ Interpret a throw of dice.
+
+An illustration of the versatility of the guard construct.
+
+Example:
+
+      dice?6 6
+Seven
+
+Index:guard|diversions

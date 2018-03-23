@@ -1,0 +1,61 @@
+code ← ##.morse text            ⍝ Conversion to/from Morse code.
+text ← ##.morse code            ⍝ Samuel Morse 1791-1872.
+
+Given  a text vector of characters from:  "A-Z", "0-9", ".,:?'-/()"@= ", [morse]
+returns a nested vector of the equivalent Morse codes.
+
+Conversely, given a nested vector of Morse codes, the function returns the equi-
+valent plain text.
+
+Unrecognised  characters  and codes are ignored.  In particular, [morse] ignores
+lower-case letters "a-z".
+
+Morse alphabet tree
+-------------------
+Morse  chooses shorter codes for more frequently occurring letters (in English).
+The  designers  of  old-style linotype type-setting machines judged the order of
+this frequency to be: ETAOIN SHRDLU CMFWYP VBGKQJ XZ.
+
+                  .               │               _
+                  ┌───────────────┴───────────────┐
+           .      E       _               .       T       _
+          ┌───────┴───────┐               ┌───────┴───────┐
+      .   I   _       .   A   _       .   N   _       .   M   _
+      ┌───┴───┐       ┌───┴───┐       ┌───┴───┐       ┌───┴───┐
+    . S _   . U     . R     . W _   . D _   . K _   . G _     O
+    ┌─┴─┐   ┌─┘     ┌─┘     ┌─┴─┐   ┌─┴─┐   ┌─┴─┐   ┌─┴─┐
+    H   V   F       L       P   J   B   X   C   Y   Z   Q
+
+Ref: http://en.wikipedia.org/wiki/Morse_code
+
+(muse:
+
+    It  is  said  that  experienced  telegraph operators, who used morse code to
+    transmit messages, could recognise each others tapping style; the equivalent
+    of being able to distinguish someone's handwriting (or coding style).
+)
+
+Examples:
+
+    morse 'HELLO WORLD'                         ⍝ Morse code from plain text.
+┌────┬─┬────┬────┬───┬─┬───┬───┬───┬────┬───┐
+│....│.│.-..│.-..│---│/│.--│---│.-.│.-..│-..│
+└────┴─┴────┴────┴───┴─┴───┴───┴───┴────┴───┘
+
+    morse morse'ROUND TRIP'                     ⍝ ... and back again.
+ROUND TRIP
+
+    morse 'Samuel Finley Breese'                ⍝ lower-case letters ignored,
+┌───┬─┬────┬─┬────┐
+│...│/│..-.│/│-...│
+└───┴─┴────┴─┴────┘
+
+    morse ucase 'Samuel Finley Breese'          ⍝  ... so convert to upper-case.
+┌───┬──┬──┬───┬─┬────┬─┬────┬──┬──┬────┬─┬────┬─┬────┬───┬─┬─┬───┬─┐
+│...│.-│--│..-│.│.-..│/│..-.│..│-.│.-..│.│-.--│/│-...│.-.│.│.│...│.│
+└───┴──┴──┴───┴─┴────┴─┴────┴──┴──┴────┴─┴────┴─┴────┴───┴─┴─┴───┴─┘
+
+See also: ucase packH
+
+Index:Morse code
+Index;Morse S.F.B.

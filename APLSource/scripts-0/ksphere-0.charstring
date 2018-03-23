@@ -1,0 +1,32 @@
+⍝ Hypersphere surface area:
+
+    ⎕pp←5
+
+⍝ 1-sphere is a circle:
+
+    1 ksphere 10                    ⍝ circumference of circle, radius 10.
+62.832
+
+    vs ← {(⍺⍺ ⍵)≡⍵⍵ ⍵}              ⍝ compare methods.
+
+    1∘ksphere vs (2∘×∘○) ⍳10        ⍝ 1-sphere: compare with 2 × Pi × r.
+1
+
+⍝ 2-sphere is a reqular sphere in 3-space:
+
+    2 ksphere 10                    ⍝ surface area of sphere, radius 10.
+1256.6
+
+    2∘ksphere vs (4∘×∘○∘(*∘2)) ⍳10  ⍝ 2-sphere: compare with 4 × Pi × r-squared.
+1
+
+    (0 to 10) ksphere 1             ⍝ surface of unit ⍺-spheres.
+2 6.2832 12.566 19.739 26.319 31.006 33.073 32.47 29.687 25.502 20.725
+
+    6.2569 ksphere 1                ⍝ max area of unit ⍺-sphere.
+33.161
+
+    kvol ← {⍵×((⍺-1) ksphere ⍵)÷⍺}  ⍝ volume of ⍺-ball of radius ⍵.
+
+    (0 to 10) kvol 1                ⍝ volumes of unit ⍺-balls.
+1 2 3.1416 4.1888 4.9348 5.2638 5.1677 4.7248 4.0587 3.2985 2.5502

@@ -1,0 +1,27 @@
+TimeStamp ← TieNo ##.compidn CompNo         ⍝ Component timestamp in IDN format.
+
+[TieNo] is a component tie number and [CompNo], the number of a component within
+the file. The result is a (fractional) day number since 1899-12-31 00:00:00 when
+the component was written.
+
+See →Dates← for more.
+
+NB: compidn calls →days←
+
+Examples:
+
+    ⎕ts                 ⍝ Today's date/time.
+2012 3 30 14 48 12 300
+
+    days ⎕ts            ⍝ ... in IDN format.
+40997.61681
+
+    ⎕fnums              ⍝ a tied component file
+99
+    99 compidn¨ 1 2     ⍝ times of recently-written components.
+40997.54759 40997.5736
+
+    date 88 compidn 2   ⍝ ... converted to ⎕TS format.
+2012 3 30 13 45 59 40
+
+See also: Dates days date

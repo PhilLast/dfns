@@ -1,0 +1,39 @@
+ sudoku←{                                ⍝ Solution vector for Sudoku problem ⍵.
+
+     (⎕ML ⎕IO)←3 1                                        ⍝ basic settings
+
+     wid←↑⍴⍵ ⋄ ⍺←wid*0.5 ⋄ grp←2⍴⍺ ⋄ set←⍳wid             ⍝ side, sudoku area and group
+     inx←↓1+(,wid⊥¨(⊂grp)×¯1+⍳⌽grp)∘.+,wid⊥¨¯1+⍳grp       ⍝ group indices
+     inx,←{(↓⍵),↓⍉⍵}(⍴⍵)⍴⍳wid*2                           ⍝ row and column indices
+
+     bas←(⍴,⍵)⍴⊂set                                       ⍝ initial state
+     ↑(,⍵)∘{q←⍺[⍵] ⋄ ((q=0)/q)←⊂set~↑,/q ⋄ {0}bas[⍵]∩←,¨q}¨inx:
+                                                         ⍝ ↑ cell alternatives from groups
+     ∆sqz←{0∊⍴⍵:⍺ ⋄ i←↑⍵ ⋄ q←⍺                            ⍝ find the unique numbers from groups
+         b←1<↑,/⍴¨⍺[i] ⋄ ~∨/b:⍺ ∇ 1↓⍵                     ⍝ any?
+         q[b/i]←{c←⍵⊃q ⋄ z←c~↑,/q[i~⍵] ⋄ 1≠⍴z:c ⋄ z}¨b/i  ⍝ only choices in the group?
+
+         r←{s←↑,/⍴¨⍵ ⋄ 2>+/s=2:s ⋄ ∧/s∊1 2:s              ⍝ two cells with equal pairs?
+             k←(s=2){↑(⍺/⍳⍴⍺)~⍵⍳∪⍺/⍵}⍵ ⋄ k=0:s            ⍝ search
+             c←~⍵∊⍵[k] ⋄ q[c/i]←(c/⍵)~¨⍵[k] ⋄ ↑,/⍴¨q[i]   ⍝  and clear
+         }q[i]
+
+         0∊r:⍬ ⋄ (∧/r=1)≥1∊r:q ∇ 1↓⍵                      ⍝ no solution?
+         j←(r>1)/i ⋄ q[j]←q[j]~¨,/q[i~j]                  ⍝ remove resolved cells from others
+         q ∇ 1↓⍵}                                         ⍝ next group
+
+     ∆chk←{m←⍵ ∆sqz inx ⋄ 0∊⍴m:⍬ ⋄ m≢⍵:∇ m ⋄ ⍵}           ⍝ squeeze checking
+
+     ∆nxt←{0∊⍴⍵:⍵                                         ⍝ add next candidates to the list
+         r←↑,/⍴¨⍵ ⋄ ∧/r=1:⊂⍵                              ⍝ no of choices per section
+         j←↑,/{⍵[⍒{+/r[⍵]=1}¨⍵]}wid↑inx                   ⍝ balance by group tightness
+         i←(r[j]⍳⌊/r~1)⊃j                                 ⍝ first unresolved cell
+         ⍵∘{m←⍺ ⋄ (i⊃m)←,⍵ ⋄ m}¨i⊃⍵}                      ⍝ expand to tables
+
+     ⍬{0∊⍴⍵:⍺                                             ⍝ main function - result?
+         m←∆chk↑⍵ ⋄ 0∊⍴m:⍺ ∇ 1↓⍵                          ⍝ squeeze, if no result -> take the next
+         ∨/1<↑,/⍴¨m:⍺ ∇ 1↓⍵,∆nxt m                        ⍝ not yet -> expand
+         ∨/(+/set)≠{+/↑,/m[⍵]}¨inx:⍺ ∇ 1↓⍵                ⍝ not valid result -> take the next
+         (⍺,⊂(2⍴wid)⍴↑,/m)∇ 1↓⍵                           ⍝ solution -> add to the result(s)
+     }{0∊⍴⍵:⍵ ⋄ ⊂⍵}bas ∆sqz inx                           ⍝ initial cleaning
+ }

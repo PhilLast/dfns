@@ -1,0 +1,16 @@
+ date←{⎕ML←1                             ⍝ ⎕TS format from day number (Meeus).
+     ⍺←¯53799                            ⍝ start of Gregorian calendar (GB).
+     qr←{⊂⍤¯1⊢(0,⍺)⊤⍵}                   ⍝ quotient and remainder.
+     Z F←1 qr ⍵+2415020                  ⍝
+     a←⌊(Z-1867216.25)÷36524.25          ⍝
+     A←Z+(Z≥⍺+2415021)×1+a-⌊a÷4          ⍝
+     B←A+1524                            ⍝
+     C←⌊(B-122.1)÷365.25                 ⍝
+     D←⌊C×365.25                         ⍝
+     E←⌊(B-D)÷30.6001                    ⍝
+     dd df←1 qr(B-D)+F-⌊30.6001×E        ⍝
+     mm←E-1+12×E≥14                      ⍝
+     yyyy←C-4715+mm>2                    ⍝
+     part←60 60 1000 qr⌊0.5+df×86400000  ⍝
+     ↑[⎕IO-0.5]yyyy mm dd,part           ⍝
+ }

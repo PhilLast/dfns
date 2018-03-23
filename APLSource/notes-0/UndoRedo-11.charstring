@@ -1,0 +1,209 @@
+commit ← (⎕ns'') ##.UndoRedo                ⍝ Derive undo/redo function.
+
+                 commit var ...     ⍝ commit application state.
+             '≠' commit var ...     ⍝ commit if different (avoid duplicates)
+             '!' commit _           ⍝ initialize undo/redo stacks.
+   var ... ← '<' commit var ...     ⍝ undo (rewind) application state.
+   var ... ← '>' commit var ...     ⍝ redo (wind) application state.
+ undo/redo ← '⊃' commit null        ⍝ most recent undo/redo items or null (Kai)
+             '↑' commit size        ⍝ truncate undo stack.
+   sizes   ← '?' commit _           ⍝ query undo/redo stack lengths.
+
+UndoRedo  is an operator, used to derive a function for saving and restoring the
+state of an application. We can use it to implement "Undo" and "Redo" commands.
+
+One way to provide undo/redo  is for each command  that changes the state of the
+application, to stack an equal and opposite inverse command. Each _Insert_ would
+store a _Delete_ and each _Delete_ would store the corresponding _Insert_.  This
+is the technique used by the Dyalog editor.
+
+A simpler way is to stack the complete state of the application at each "commit"
+point. Because of the way Dyalog shares arrays, this method does not use as much
+workspace as one might expect. All unchanged parts of the state, are _shared_ at
+_every_ level in the undo stack. A commit called after only a small modification
+of the state uses little workspace - see the example below.
+
+The state of a typical application might be represented by the values of a (pot-
+entially  large)  number of variables: V1, V2, ..., which need to be restored in
+order to roll back to a prior state. In this case, the derived "commit" function
+would be called as follows:
+
+                  '!' commit 0              ⍝ initialize undo/redo stacks.
+                      commit V1 V2 ...      ⍝ commit application state.
+                      ...                   ⍝ application changes its state.
+                      commit V1 V2 ...      ⍝ commit application state.
+    (V1 V2 ...) ← '<' commit V1 V2 ...      ⍝ undo      ..      ..
+    (V1 V2 ...) ← '>' commit V1 V2 ...      ⍝ redo      ..      ..
+
+(
+    When the number of values defining the application state is large, it may be
+    tidier to define a pair of "getstate" and "setstate" functions.
+
+        getstate←{                  setstate←{
+            props←... ⎕wg...            props V1 V2 ...←⍵
+            V1←a b c                    _←... ⎕ws do ...   ⍝ see →do←
+            V2←i j k                    a b c∘←V1
+            ...                         i j k∘←V2
+            Vn←x y z                    ...
+            props V1 V2 ...             x y z∘←Vn
+        }                           }
+
+    Then:
+
+        commit getstate 0                   ⍝ regular commit
+
+        setstate '<'commit getstate 0       ⍝ undo
+
+    Note that  the gathering and dispersal of values using local names  does not
+    increase the amount of workspace used by the undo/redo stacks.
+
+    As getstate and setstate (by definition) deal with state,  implementing them
+    in  a  functional  paradigm, such as D, is necessarily awkward.  They may be
+    better coded as tradfns. In this case, getstate would be niladic.
+)
+
+Note  that committing a value _discards_ the redo stack. In other words, redo is
+available  only  immediately after one or more undos.  This is a feature of most
+Undo/Redo implementations.
+
+The "query guard" '?' could be used in a GUI application to set the Active prop-
+erty of the Undo and Redo buttons or menu items:
+
+    mbar.(redo undo).Active ← ×'?'commit 0      ⍝ [In]Activate redo / undo.
+
+Note that both the query and initialise commands: '?' and '!' ignore their right
+arguments.
+
+Thanks to Kai Jaeger for improvements to this operator.
+
+Technical notes:
+
+UndoRedo binds a namespace to contain the undo/redo stacks  that persist between
+calls  on  the  derived function (commit). See the notes for the →memo← operator
+for a description. See also, Ray Cannon's article "Ghost Variables" Vector 18.3:
+http://www.vector.org.uk/archive/v183/hack183.htm
+
+There  may  be a way to avoid the code duplication in the undo and redo cases by
+parameterizing the sense of the reversal.
+
+An  alternative,  perhaps  slightly less elegant implementation, might use fixed
+length _vectors_ to represent the undo and redo stacks.  The advantage  of  this
+approach  would   be  the  ease  of controlling a "maximum history depth", which
+could be specified as a right argument at initialization time:
+
+    UndoRedoV←{⎕ML←0                    ⍝ Derive undo/redo fn (vector history).
+        ⍺←⊢                             ⍝ default: commit values.
+
+        psh←{(⊂⍺),⍵}                    ⍝ push ⍺ to vector ⍵.
+        pop←{(⊃⍵)(1↓⍵)}                 ⍝ pop top vector item.
+
+        1≡⍺ 1:⍺⍺{                       ⍝ monadic commit: push new hist record.
+            size←⍺.(max⌊1+⍴undo)        ⍝ max size of undo vector.
+            ⍺.undo←size↑⍵ psh ⍺.undo    ⍝ push new undo record.
+            ⍺.redo←⍬                    ⍝ discard redo history.
+        }⍵
+
+        '!'≡⍺:⍺⍺.(redo undo max←⍬ ⍬ ⍵)  ⍝ initialize history vectors.
+
+        '?'≡⍺:,↑⍴¨⍺⍺.(redo undo)        ⍝ query history vectors.
+
+        '<'≡⍺:⍺⍺{                       ⍝ undo:
+            0=⍴⍺.undo:⍵                 ⍝ no more undo: state unchanged.
+            ⍺.redo←⍵ psh ⍺.redo         ⍝ push current state on redo vector.
+            ⊃last ⍺.undo←pop ⍺.undo     ⍝ pop last state.
+        }⍵
+
+        '>'≡⍺:⍺⍺{                       ⍝ redo:
+            0=⍴⍺.redo:⍵                 ⍝ no more redo: state unchanged.
+            ⍺.undo←⍵ psh ⍺.undo         ⍝ push current state on undo vector.
+            ⊃next ⍺.redo←pop ⍺.redo     ⍝ pop last state.
+        }⍵
+
+        '↑'≡⍺:⍺⍺{                       ⍝ resize undo vector.
+            ⍺.max←⍵                     ⍝ set new undo vector size limit.
+            ⍺.(undo←(⍵⌊⍴undo)↑undo)     ⍝ truncate undo vector.
+            ⍺.redo←⍬                    ⍝ remove redo records.
+        }⍵
+    }
+
+Then:
+
+       commitV ← (⎕ns'') UndoRedoV      ⍝ derive commitV function.
+
+    '!'commitV 10                       ⍝ initialise, setting history size.
+
+       commitV ...                      ⍝ commit transactions ...
+
+    '↑'commitV 4                        ⍝ change history vector size.
+
+Example:
+
+      commit←(⎕ns'')UndoRedo            ⍝ derive a commit function.
+
+      '!'commit 0                       ⍝ initialise history stack.
+
+      '?'commit 0                       ⍝ both stacks empty.
+0 0
+      A B C D←'now' 'is' 'the' 'time'   ⍝ initial application state.
+
+      commit A B C D                    ⍝ commit application state.
+
+      A B ← 'then' 'was'                ⍝ change state,
+      commit A B C D                    ⍝ commit changes.
+
+      A C ← 'that' 'a'                  ⍝ change state,
+      commit A B C D                    ⍝ commit changes.
+
+      B D ← 'took' 'while'              ⍝ change state,
+
+      ⎕←A B C D                         ⍝ show current state.
+ that  took a while
+
+      '?'commit 0                       ⍝ undo stack has 3 items.
+0 3
+      ⎕←A B C D←'<'commit A B C D       ⍝ undo last change,
+ that  was a time
+
+      '?'commit 0                       ⍝ redo stack has 1 item.
+1 2
+      ⎕←A B C D←'<'commit A B C D       ⍝ undo previous change,
+ then  was  the  time
+      ⎕←A B C D←'<'commit A B C D       ⍝ and change before that.
+ now  is  the  time
+
+      ⎕←A B C D←'>'commit A B C D       ⍝ Redo last undo.
+ then  was  the  time
+      ⎕←A B C D'>'←commit A B C D       ⍝ Redo previous undo.
+ that  was a time
+      ⎕←A B C D←'>'commit A B C D       ⍝ Redo undo before that.
+ that  took a while
+
+      '?'commit 0                       ⍝ redo stack emtpy.
+0 3
+      ⎕←A B C D←'<'commit A B C D       ⍝ Undo last Redo.
+ that  was a time
+      ⎕←A B C D←'<'commit A B C D       ⍝ Undo previous redo.
+ then  was  the  time
+      ⎕←A B C D←'<'commit A B C D       ⍝ Undo redo before that.
+ now  is  the  time
+
+⍝ The following example shows that the space overhead of history is small.
+
+      a b c d e f g h i j←{1e6?1e6}¨⍳10             ⍝ ten large variables.
+
+      '!'commit '(right arg ignored)'               ⍝ reinitialise history.
+
+      commit a b c d e f g h i j                    ⍝ commit large variables.
+
+      wa←⎕wa ⋄ commit a b c d e f g h i j ⋄ wa-⎕wa  ⍝ committing unchanged vars,
+96
+      wa←⎕wa ⋄ commit a b c d e f g h i j ⋄ wa-⎕wa  ⍝ consumes little workspace.
+80
+      wa←⎕wa ⋄ commit a b c d e f g h i j ⋄ wa-⎕wa  ⍝ consumes little workspace.
+80
+      ⍝ ...
+
+See also: memo list
+
+Index:undo|redo
+Index;Cannon R.|Jaeger K.

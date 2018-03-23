@@ -1,0 +1,13 @@
+ stpaths←{                           ⍝ Spanning tree paths.
+     tree←⍵                          ⍝ spanning tree.
+     root←⍵⍳¯1                       ⍝ index of root vertex.
+     paths←(root=⍳⍴⍵)↑¨root          ⍝ initial path vector.
+     {                               ⍝ path to current vertices.
+         next←(⍵=⊂tree)/¨⊂⍳⍴tree     ⍝ vertices at next tree level.
+         (⊂⍬)∧.≡next:paths           ⍝ all null: finished.
+         exts←(⊂¨⍵⊃¨⊂paths),¨¨next   ⍝ paths to next tree level.
+         indx←↑,/next                ⍝ accumulated indices.
+         paths[indx]←↑,/exts         ⍝ set next level paths in paths vector.
+         ∇ indx                      ⍝ advance to next tree level.
+     }root                           ⍝ index of starting vertex.
+ }

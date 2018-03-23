@@ -1,0 +1,90 @@
+rslt ← (fn ##.vwise) ref    ⍝ Variable-wise: apply ⍺⍺ to each var in space ⍵.
+
+Suggested by Paul Mansour, [vwise] applies its operand function to each variable
+in the namespace referenced by right argument ⍵.
+
+Note  that  any  non-primitive  functions in vwise's operand will execute in the
+_calling_, rather than the _target_ space.
+
+Paul  suggests some related operators: "Furthermore, we need a way to operate on
+each sub namespace in a namespace, which suggests swise, or "space wise":
+
+    swise←{         ⍝ Space wise
+        ⍺⍺¨refs ⍵   ⍝ Apply to each space
+    }
+
+It is convenient to have variations of these operators that do replacement:
+
+    vwiser←{                    ⍝ Var wise, with Replacement
+        n←↓⍵.⎕NL 2              ⍝ Var Names
+        v←⍺⍺¨⍵∘⍎¨n              ⍝ Apply to each
+        ⍵⊣n ⍵.{⍎⍺,'←⍵'}¨v       ⍝ Reset vars
+    }
+
+and
+
+    swiser←{            ⍝ Space wise with replacement
+        ↑⍺⍺¨refs ⍵      ⍝ Apply to each space
+    }
+
+Note  that we could have one version of each operator and control their behavior
+with a left argument, but this increases the complexity of the syntax when call-
+ing them.
+
+With  operator  "saw" (simple-array-wise) and these new operators, we can get to
+work  on an arbitrary namespace structure. Here is an example that finds and re-
+places "words" in each simple text vector of a namespace ns:
+
+    f←ft rt∘ssword      ⍝ Find and replace
+    g←f saw             ⍝ ... in each simple array
+    h←g vwiser          ⍝ ... in every variable
+    h swiser ns         ⍝ ... in every space
+
+where  ft is the find text, rt is the replace text, and ssword is a slightly re-
+worked version of its DFNS namesake.
+
+Or simply rotate every variable in and under namespace A:
+
+    ⌽ vwiser swiser A
+
+or display the contents all variables in and under A:
+
+    ⊢ vwise swise A
+
+It  appears vwise and swise are used in together a lot, so it might be useful to
+combine them in a single operator:
+
+    vswise←{                ⍝ Var and Space Wise
+        ⍺⍺ vwise swise ⍵    ⍝ ...
+    }
+
+and
+
+    vswiser←{               ⍝ Var and Space Wise
+        ⍺⍺ vwiser swiser ⍵  ⍝ ...
+    }
+
+Count the number of simple matrices in every item of every variable in and under
+A:
+
+    +/∊{2=⍴⍴⍵}saw vswise A
+
+Rotate every matrix, simple or nested, in and under A:
+
+    {2=⍴⍴⍵:⌽⍵ ⋄ ⍵} vswiser A
+
+Examples:
+
+      +/{82=⎕dr ⍵}vwise notes       ⍝ number of simple char vars in #.
+150
+      ∧/{⍵≡vtrim ⍵}vwise notes      ⍝ check that all notes have been trimmed.
+1
+      ~1∊(' ',⎕tc)∊{⊃⌽⍵}vwise notes ⍝ check no trailing white space in notes.
+1
+      ∪{⊢⎕cs''}vwise notes          ⍝ operand function runs in calling space.
+#
+
+See also: refs xrefs saw
+
+Index:variable-wise
+Index;Mansour P.

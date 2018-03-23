@@ -1,0 +1,47 @@
+⍝ Sample Dfn execution clock ticks.
+
+⍝ [ticks] uses ⎕← to display monitoring information in the session.
+⍝ For testing, we modify the temporary copy of the operator in this
+⍝ namespace to output to variable ∆out. To save time, we also reduce
+⍝ the number of ticks by a factor of 100.
+
+    sout←'⎕←' '_←{∆out∘←⍵}'∘subs        ⍝ subs ∆out← for ⎕←
+    stix←'1000' '10'∘subs               ⍝ only 10 ticks.
+
+    _←⎕fx stix sout ⎕cr'ticks'          ⍝ modify ticks operator.
+
+    tix←{                               ⍝ test modified operator.
+        ⍺←⊢                             ⍝ optional left arg.
+        _←⍺ ⍺⍺ ticks ⍵                  ⍝ run op, ignore result.
+        a b←2↑{⍵/⍳⍴⍵}{^⌿⍵=' '}∆out      ⍝ first two blank cols.
+        visits←↑a↑¨↓∆out                ⍝ visits and
+        source←↑b↓¨↓∆out                ⍝ source columns.
+        visits,'-','-',source           ⍝ ignore percentage col.
+    }
+
+    dups←{
+        dup←{⍵ ⍵}
+        dup¨{⍵ ⍵}¨⍵ ⍵
+    }
+
+    dups tix 0
+1 -- dups←{               
+2 --         dup←{⍵ ⍵}    
+1 --         dup¨{⍵ ⍵}¨⍵ ⍵
+0 --     }                
+
+    osc tix 27
+112 -- osc←{               ⍝ Oscillate - probably returns 1.
+112 --     1=⍵:1                                            
+111 --     2|⍵:∇ 1+3×⍵                                      
+ 70 --         ∇ ⍵÷2                                        
+  0 -- }                                                    
+
+    105 gcd tix 330
+4 -- gcd←{       ⍝ Greatest common divisor.
+4 --     ⍵=0:|⍺                            
+3 --     ⍵ ∇ ⍵|⍺                           
+0 -- }                                     
+
+    105 gcd¨ ticks 300 330              ⍝ not a simple dfn.
+11::bad operand

@@ -1,0 +1,11 @@
+⍝ Test for D function:
+
+    var←99
+    prim←+
+    derv←+/
+    trad←⍎⎕fx'trad fn' ''
+    dfn←{dfn}
+    dop←{dop ⍺⍺}
+
+    isdfn¨'var' 'prim' 'derv' 'trad' 'dfn' 'dop'
+0 0 0 0 1 0

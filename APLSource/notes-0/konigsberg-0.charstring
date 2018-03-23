@@ -1,0 +1,61 @@
+A "planar" graph is one that may be drawn on the 2-D plane with its edges inter-
+secting only at its vertices.
+·
+Examples include:
+·
+- A map of a country's adjacent states or territories.
+- The layout of a maze or a city street plan.
+·
+An  example of the latter is the arrangement of seven bridges over a fork in the
+river  at  Königsberg  (now  Kaliningrad in Western Russia). One of the earliest
+achievements in graph theory was a proof in 1735 by Swiss mathematician Leonhard
+Euler, that is it impossible to walk over each bridge exactly once.
+·
+Here  is  a  map  of  the  area,  together  with  a picture of the corresponding
+graph (*) and its coding; the four areas of land adjacent to the river are cons-
+idered vertices, and the bridges, edges:
+·
+    Map                ┐ ┌     ┐ ┌   [1]     ┐ ┌
+    ---         ┌──────│ │─────│ │───────────│ │──────
+                │~~~~~~│ │~~~~~│ │~~~~~~~~~~~│ │~~~~~~~
+                │~~~┌──│ │─────│ │───┐~~~┌───│ │────────
+                │~~~│  ┘ └     ┘ └   │~~~│   ┘ └
+                │~~~│      [2]      └─────┘
+                │~~~│  ┐ ┌     ┐ ┌  ┌─────┐
+           ─────┘~~~└──│ │─────│ │───┘~~~│   [3]
+            ~~~~~~~~~~~│ │~~~~~│ │~~~~~~~│
+            ───────────│ │─────│ │───┐~~~│
+                       ┘ └     ┘ └   │~~~│   ┐ ┌
+                           [4]       │~~~└───│ │───────
+                                     │~~~~~~~│ │~~~~~~~~
+                                     └───────│ │─────────
+    Graph                                    ┘ └
+    -----   ┌───1───┐
+            │   │   │       Coding:  (2 2 3)(1 1 3 4 4)(1 2 4)(2 2 3)
+            │   │   │
+            ├───2───3
+            │   │   │
+            │   │   │
+            └───4───┘
+·
+Euler's  masterstroke  was  in  considering _vertices_, rather than _edges_ when
+thinking about the problem. His proof went something along the lines of:
+·
+The number of edges issuing from a vertex is called its "degree". To succeed all
+but  the starting and finishing vertices must have an even degree (corresponding
+with  an entry to, and exit from the vertex). This cannot be the case in Königs-
+berg, as more than two vertices have an odd degree.
+·
+(*) Note  that the graph above is strictly a "pseudo-" or "multi-" graph as some
+vertices  are  connected  by more than one edge. This is apparent from duplicate
+items in the graph coding:  {~⍵≡∪¨⍵}.
+·
+An example of a non-planar graph is any complete graph of size>4:
+·
+    {⍵∘{⍺~⍵}¨⍵}∘⍳ 5         ⍝ order ⍵ complete graph.
+┌───────┬───────┬───────┬───────┬───────┐
+│2 3 4 5│1 3 4 5│1 2 4 5│1 2 3 5│1 2 3 4│
+└───────┴───────┴───────┴───────┴───────┘
+
+Index:Königsberg|Kaliningrad|graph, planar|pseudo-graph|multi-graph
+Index;Euler L.

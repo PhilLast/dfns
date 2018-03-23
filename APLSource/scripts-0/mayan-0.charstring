@@ -1,0 +1,109 @@
+⍝ Mayan counting and dates:
+
+      deco←{20⊥+/'$↑⍞⍟'∘.=⍵~' '}    ⍝ Early Meso-American counting.
+
+      deco'$ $ ↑ ⍞ ⍞ ⍞ ⍟ ⍟ ⍟ ⍟'
+16464
+      long_count←{      ⍝ Mayan Long Count from Gregorian (⎕TS) date.
+          ⍺←584283      ⍝ default GMT correlation: 0.0.0.0.0 ≡ JD:584283.
+          G←⌊days ⍵     ⍝ Gregorian day.
+          J←2415020+G   ⍝ Julian day.
+          mayan J-⍺     ⍝ Mayan from Julian.
+      }
+
+      long_count 2003 12 25                     ⍝ 2003-12-25 ≡ 12.19.10.15.16
+       
+  ⍟ ⍟  
+ ⌹⌹⌹⌹⌹ 
+ ⌹⌹⌹⌹⌹ 
+       
+ ⍟⍟⍟⍟  
+ ⌹⌹⌹⌹⌹ 
+ ⌹⌹⌹⌹⌹ 
+ ⌹⌹⌹⌹⌹ 
+       
+ ⌹⌹⌹⌹⌹ 
+ ⌹⌹⌹⌹⌹ 
+       
+ ⌹⌹⌹⌹⌹ 
+ ⌹⌹⌹⌹⌹ 
+ ⌹⌹⌹⌹⌹ 
+       
+   ⍟   
+ ⌹⌹⌹⌹⌹ 
+ ⌹⌹⌹⌹⌹ 
+ ⌹⌹⌹⌹⌹ 
+
+      Months←'Pop' 'Wo' 'Sip' 'Sotz''' 'Tzek' 'Xul' 'Yaxk''in' 'Mol' 'Ch''en' 'Yax' 'Sak' 'Keh' 'Mak' 'K''ank''in' 'Muwan' 'Pax' 'K''ayab' 'Kumk''u' 'Wayeb'
+
+      haab←{⎕io←0                       ⍝ Mayan day within month.
+          ⍺←245                         ⍝ align Gregorian and Maya cycles.
+          mon day←0 20⊤365|⍺+⌊days ⍵    ⍝ month index and day number.
+          name←mon⊃Months               ⍝ name of month.
+          day name                      ⍝ day within month.
+      }
+
+      haab 2003 12 25   ⍝ Christmas day 2003 fell on the third day of K'ank'in.
+4  K'ank'in 
+
+      Days←'Imix' 'Ik''' 'Ak''bal' 'K''an' 'Chikchan' 'Kimi' 'Manik''' 'Lamat' 'Muluk' 'Ok' 'Chuwen' 'Eb' 'Ben' 'Ix' 'Men' 'Kib' 'Kaban' 'Etz''nab' 'Kawak' 'Ahaw'
+
+      tzolkin←{⎕io←0                ⍝ Mayan Tzolkin number and day.
+          ⍺←2 16                    ⍝ align Gregorian and Maya cycles.
+          num day←13 20|⍺+⌊days ⍵   ⍝ day number and name index.
+          name←day⊃Days             ⍝ day name.
+          (1+num)name               ⍝ 1-origin day within cycle.
+      }
+
+      tzolkin 2003 12 25    ⍝ Christmas day 2003 fell on day 7, an Ix-day.
+9  Kib 
+
+      time_units←'Kin' 'Uinal' 'Tun' 'Katun' 'Baktun' 'Piktun' 'Kalabtun' 'Kinchiltun' 'Alautun' 'Hablatun'
+
+      stela←{⎕ml←0                          ⍝ Stela for date ⍵ (yyyy mm dd).
+          long←long_count ⍵                 ⍝ Long Count days.
+          hnum hname←haab ⍵                 ⍝ month and day.
+          tnum tname←tzolkin ⍵              ⍝ week and day.
+          digits←long⍪↑,∘mayan¨tnum hnum    ⍝ maya-style digits.
+          lft←1 0∘↓¨digits                  ⍝ left-side column: numbers.
+          rgt←⌽7↑hname tname,time_units     ⍝ right-side column: names.
+          disp lft,rgt                      ⍝ collected stela.
+      }
+         david←1974 04 17
+      victoria←1975 05 02
+      brooklyn←1999 03 04
+         romeo←2002 09 01
+          cruz←2005 02 20
+       harper7←2011 07 10
+
+      stela¨¨(david victoria)(brooklyn romeo cruz harper7)
+  ┌─────┬──────┐  ┌─────┬──────┐    ┌─────┬──────┐  ┌─────┬──────┐  ┌─────┬──────┐  ┌─────┬──────┐  
+  │ ⍟ ⍟ │Baktun│  │ ⍟ ⍟ │Baktun│    │ ⍟ ⍟ │Baktun│  │ ⍟ ⍟ │Baktun│  │ ⍟ ⍟ │Baktun│  │ ⍟ ⍟ │Baktun│  
+  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │    │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  
+  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │    │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  
+  ├─────┼──────┤  ├─────┼──────┤    ├─────┼──────┤  ├─────┼──────┤  ├─────┼──────┤  ├─────┼──────┤  
+  │ ⍟⍟⍟ │Katun │  │ ⍟⍟⍟ │Katun │    │⍟⍟⍟⍟ │Katun │  │⍟⍟⍟⍟ │Katun │  │⍟⍟⍟⍟ │Katun │  │⍟⍟⍟⍟ │Katun │  
+  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │    │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  
+  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │    │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  
+  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │    │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  
+  ├─────┼──────┤  ├─────┼──────┤    ├─────┼──────┤  ├─────┼──────┤  ├─────┼──────┤  ├─────┼──────┤  
+  │ _@/ │Tun   │  │  ⍟  │Tun   │    │⌹⌹⌹⌹⌹│Tun   │  │⍟⍟⍟⍟ │Tun   │  │ ⍟ ⍟ │Tun   │  │ ⍟⍟⍟ │Tun   │  
+  ├─────┼──────┤  ├─────┼──────┤    ├─────┼──────┤  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  
+  │ ⍟⍟⍟ │Uinal │  │⍟⍟⍟⍟ │Uinal │    │ ⍟ ⍟ │Uinal │  ├─────┼──────┤  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  
+  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │    │⌹⌹⌹⌹⌹│      │  │⍟⍟⍟⍟ │Uinal │  ├─────┼──────┤  │⌹⌹⌹⌹⌹│      │  
+  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │    │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │ _@/ │Uinal │  ├─────┼──────┤  
+  ├─────┼──────┤  ├─────┼──────┤    │⌹⌹⌹⌹⌹│      │  ├─────┼──────┤  ├─────┼──────┤  │⍟⍟⍟⍟ │Uinal │  
+  │ ⍟ ⍟ │Kin   │  │ ⍟ ⍟ │Kin   │    ├─────┼──────┤  │  ⍟  │Kin   │  │⍟⍟⍟⍟ │Kin   │  │⌹⌹⌹⌹⌹│      │  
+  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │    │⍟⍟⍟⍟ │Kin   │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  ├─────┼──────┤  
+  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │    │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│Kin   │  
+  ├─────┼──────┤  ├─────┼──────┤    │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │  
+  │ ⍟ ⍟ │Eb    │  │⌹⌹⌹⌹⌹│Eb    │    │⌹⌹⌹⌹⌹│      │  ├─────┼──────┤  ├─────┼──────┤  ├─────┼──────┤  
+  │⌹⌹⌹⌹⌹│      │  │⌹⌹⌹⌹⌹│      │    ├─────┼──────┤  │⌹⌹⌹⌹⌹│Kib   │  │ ⍟⍟⍟ │Kawak │  │ ⍟ ⍟ │Ok    │  
+  ├─────┼──────┤  ├─────┼──────┤    │ ⍟ ⍟ │Kawak │  │⌹⌹⌹⌹⌹│      │  ├─────┼──────┤  │⌹⌹⌹⌹⌹│      │  
+  │⌹⌹⌹⌹⌹│Pop   │  │ _@/ │Wo    │    │⌹⌹⌹⌹⌹│      │  ├─────┼──────┤  │ ⍟ ⍟ │K'ayab│  ├─────┼──────┤  
+  └─────┴──────┘  └─────┴──────┘    ├─────┼──────┤  │⍟⍟⍟⍟ │Mol   │  └─────┴──────┘  │ ⍟⍟⍟ │Tzek  │  
+                                    │ ⍟ ⍟ │K'ayab│  │⌹⌹⌹⌹⌹│      │                  │⌹⌹⌹⌹⌹│      │  
+                                    │⌹⌹⌹⌹⌹│      │  └─────┴──────┘                  │⌹⌹⌹⌹⌹│      │  
+                                    │⌹⌹⌹⌹⌹│      │                                  │⌹⌹⌹⌹⌹│      │  
+                                    └─────┴──────┘                                  └─────┴──────┘  
+

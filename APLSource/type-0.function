@@ -1,0 +1,4 @@
+ type←{                      ⍝ Widen ⍵ to type ⍺.
+     val ok←(⎕DR ⍵)⍺ ⎕DR ⍵   ⍝ New elements and mask.
+     ∧/,ok:val               ⍝ New array if all ok.
+ }

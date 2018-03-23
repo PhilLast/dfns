@@ -1,0 +1,38 @@
+entropy ← ##.shannon string                 ⍝ Shannon entropy of message ⍵.
+
+From Gianfranco Alongi:  Shannon entropy is one of the most important metrics in
+information theory.  Entropy measures the uncertainty associated with  a  random
+variable, i.e. the expected value of the information in the message.
+
+The concept was introduced by Claude E. Shannon  in  the  paper  "A Mathematical
+Theory of Communication" (1948). Shannon entropy allows us to estimate the aver-
+age minimum number of bits needed to encode a string of  symbols  based  on  the
+alphabet size and the frequency of the symbols.
+
+The entropy of the message is its amount of uncertainty;  it  increases when the
+message is closer to random, and decreases when it is less random.
+
+    Entropy of X ≡ H(X) := - sigma_i P(X_i) log_2(P(X_i))
+    where
+        P(X_i) = frequency of X_i in X
+
+Ref: https://en.wikipedia.org/wiki/Information_theory#Entropy
+
+Examples:
+
+   (shannon⍤1 , ⊣) 1+~(⍳10) ∘.> ⍳10
+0            2 2 2 2 2 2 2 2 2 2
+0.4689955936 1 2 2 2 2 2 2 2 2 2
+0.7219280949 1 1 2 2 2 2 2 2 2 2
+0.8812908992 1 1 1 2 2 2 2 2 2 2
+0.9709505945 1 1 1 1 2 2 2 2 2 2
+1            1 1 1 1 1 2 2 2 2 2
+0.9709505945 1 1 1 1 1 1 2 2 2 2
+0.8812908992 1 1 1 1 1 1 1 2 2 2
+0.7219280949 1 1 1 1 1 1 1 1 2 2
+0.4689955936 1 1 1 1 1 1 1 1 1 2
+
+See also: Data_compression
+
+Index: Entropy|information theory
+Index; Alongi G.|Shannon C.E.

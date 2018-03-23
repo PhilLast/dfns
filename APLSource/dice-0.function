@@ -1,0 +1,7 @@
+ dice←{                  ⍝ Interpret a throw of dice.
+     ⍵≡6 6:'Box Cars'
+     ⍵≡1 1:'Snake Eyes'
+     =/⍵:'Pair'
+     7=+/⍵:'Seven'
+     'Unlucky'
+ }

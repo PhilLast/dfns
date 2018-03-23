@@ -1,0 +1,37 @@
+⍝ Cholesky decomposition of Hermitian positive-definite matrix:
+
+      x←t+.×⍉t←¯10+?5 5⍴20
+      x
+111  106   22  ¯85  ¯14
+106  198  ¯91 ¯150   69
+ 22  ¯91  196   22 ¯118
+¯85 ¯150   22  166  ¯77
+¯14   69 ¯118  ¯77  151
+
+      y←Cholesky x
+      y
+10.53565375    0            0            0           0          
+10.06107475    9.837417078  0            0           0          
+ 2.088147591 ¯11.38601811   7.873895557  0           0          
+¯8.067842964  ¯6.996636239 ¯5.183835597  5.008476789 0          
+¯1.328821194   8.373068735 ¯2.525981305 ¯8.432039953 1.282994497
+
+      x ≡ y +.× ⍉y
+1
+
+⍝ The t+.×⍉t construct is a handy way to generate a Hermitian, positive definite
+⍝ matrix. For real numbers, "Hermitian" is the same as symmetric (x≡⍉x); for
+⍝ complex matrices; Hermitian means z≡+⍉z (conjugate transpose).
+
+      z←t+.×+⍉t←(¯10+?5 5⍴20)+0j1×¯10+?5 5⍴20
+      z
+ 268     ¯171      ¯78J085 ¯104J¯031  43J0054
+¯171      457     ¯190J¯30  120J¯106  40J¯162
+ ¯78J¯85 ¯190J030  285       33J0004 ¯34J0045
+¯104J031  120J106   33J¯04  467      107J0116
+  43J¯54   40J162  ¯34J¯45  107J¯116 228     
+
+      y←Cholesky z
+
+      z ≡ y +.× +⍉y
+1

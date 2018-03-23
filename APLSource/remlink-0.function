@@ -1,0 +1,4 @@
+ remlink←{                   ⍝ Remove edge ⍵ from graph ⍺.
+     graph←⍺ ⋄ fm to←⍵       ⍝ graph and edge.
+     graph⊣(fm⊃graph)~←to    ⍝ remove link from vertex.                      <V>@
+ }

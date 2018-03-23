@@ -1,0 +1,7 @@
+ sieve←{             ⍝ Sieve of Eratosthenes.
+     ⍺←⍬             ⍝ Default no primes yet.
+     nxt←1↑⍵         ⍝ Next prime, and
+     msk←0≠nxt|⍵     ⍝ ... mask of non-multiples.
+     ∧/1↓msk:⍺,⍵     ⍝ All non multiples - finished.
+     (⍺,nxt)∇ msk/⍵  ⍝ Sieve remainder.
+ }

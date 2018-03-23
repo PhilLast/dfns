@@ -1,0 +1,38 @@
+⍝ Find 'string' ⍵ in component file ⍺:
+
+      fid←'Dfns Test Temp File'
+
+      {22:: ⋄ {}⍵ ⎕ferase ⍵ ⎕ftie 0} fid        ⍝ ensure file doesn't exist.
+
+      tie←fid ⎕fcreate 0                        ⍝ Create temp file.
+      app←+∘(⎕fappend∘tie)                      ⍝ Append to file.
+
+      app'hello'                                ⍝ component 1.
+1
+      app'world'                                ⍝ component 2.
+2
+      app'hello' 'world'                        ⍝ component 3.
+3
+      app'bonjour' 'monde'                      ⍝ component 4.
+4
+      app('hello' 'world')('bonjour' 'monde')   ⍝ component 5.
+5
+      tie filefind'hello'                       ⍝ components with 'hello'
+1 3 5
+      tie filefind'bonjour'                     ⍝ etc.
+4 5
+      tie filefind'hello' 'world'
+3 5
+      tie filefind'o'
+1 2 3 4 5
+      tie filefind'e'
+1 3 4 5
+
+      tie=⎕funtie tie                           ⍝ release file tie.
+1
+      fid filefind'monde'                       ⍝ after using file <name>,
+4 5
+      1∊fid⍷⎕fnames                             ⍝ no residual file tie.
+0
+      tie≡fid ⎕ferase fid ⎕ftie 0               ⍝ remove temp file.
+1

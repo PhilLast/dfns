@@ -1,0 +1,184 @@
+Ackermann's Function in Brainfuck
+---------------------------------
+Ackermann's function is usually written in →declarative← style as three cases:
+
+    ack 0 n → n+1
+    ack m 0 → ack (m-1) 1
+    ack m n → ack (m-1) (ack m (n-1))
+
+where '→' is pronounced "reduces to".
+
+We  can  transform  this  definition into tail-recursive form with an additional
+argument [a], which is a list of values-to-be-processed:
+
+    ack ⍬,0 n → n+1
+    ack a,0 n → ack a,n+1
+    ack a,m 0 → ack a,(m-1) 1
+    ack a,m n → ack a,(m-1) m (n-1)
+
+The  pattern-matching for a null argument list (⍬,0 n) may be made a little more
+regular if we mark the list with a special terminating value of, say, ¯1:
+
+    ack a,¯1 n → n
+    ack a, 0 n → ack a,n+1
+    ack a, m 0 → ack a,(m-1) 1
+    ack a, m n → ack a,(m-1) m (n-1)
+
+This simplification entails one additional final reduction, so instead of:
+
+    ack ⍬ 0 n → n+1
+
+we have:
+
+    ack ¯1 0 n → ack ¯1 (n+1) → n+1
+
+Coded in D and using ⍺ as the accumulator:
+
+    ack←{⍺←¯1
+          a←¯2↓⍺,⍵
+        m n←¯2↑⍺,⍵
+        m=¯1:n
+        m=0:a ∇ n+1
+        n=0:a ∇(m-1)1
+            a ∇(m-1)m(n-1)
+    }
+
+    ack 3 3     ⍝ ack 3 3 → 61
+61
+
+We  can now code this tail-recursive version of Ackermann's function in BF using
+→mac← our simple macro processor.
+
+The following small function collects character vectors into a newline-separated
+line-vector in buffer ⍙:
+
+    ∆←{{}⍙,←⍵,¯1↑4↑⎕av}     ⍝ accumulate into ⍙ buffer.
+    ⍙←''                    ⍝ null accumulation buffer.
+
+So:
+
+    ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+    ⍝                                                               ⍝
+    ⍝ Macros:                           ⍝ Ackermann's function.     ⍝
+    ⍝                                   ⍝                           ⍝
+    ∆'  ;=(, ∆=/- >6∆[+<8∆>]<  )· · '   ⍝ input digit               ⍝
+    ∆'  :=(  ∆=/+ >6∆[-<8∆>]< .)· · '   ⍝ output digit              ⍝
+    ∆'                              '   ⍝                           ⍝
+    ∆'  {=/>+/<[/>-/< · · · · · · · '   ⍝ if                        ⍝
+    ∆'  ⋄=/>]/>[-/< · · · · · · · · '   ⍝ else                      ⍝
+    ∆'  }=/>/>]/</< · · · · · · · · '   ⍝ fi                        ⍝
+    ∆'                              '   ⍝                           ⍝
+    ∆'  ≥=(                         '   ⍝ dup ⍺ right               ⍝
+    ∆'      [-/>+>+</<]/>>          '   ⍝   m .. 0  → 0 .. m m      ⍝
+    ∆'      [-</<+/>>]</<           '   ⍝   m .. m  ←               ⍝
+    ∆'  ) ·                         '   ⍝                           ⍝
+    ∆'                              '   ⍝                           ⍝
+    ∆'  ←=[-/<+/>]  · · · · · · · · '   ⍝ move ⍺ left               ⍝
+    ∆'  →=[-/>+/<]  · · · · · · · · '   ⍝ move ⍺ right              ⍝
+    ∆'                              '   ⍝                           ⍝
+    ⍝ Code:                             ⍝                           ⍝
+    ∆'                              '   ⍝                           ⍝
+    ∆' -                            '   ⍝  (¯1)                     ⍝
+    ∆' >;                           '   ⍝   ¯1(m)                   ⍝
+    ∆' >;<                          '   ⍝   ¯1(m)n                  ⍝
+    ∆' +[-                          '   ⍝   a(m)n                   ⍝
+    ∆'      2{                      '   ⍝   if m≠0:                 ⍝
+    ∆'          >1{                 '   ⍝       if n≠0:             ⍝
+    ∆'              <3≥             '   ⍝           a(m)n 0 m       ⍝
+    ∆'              >1→             '   ⍝           a m(0)n m       ⍝
+    ∆'              >>2←            '   ⍝           a m m n(0)      ⍝
+    ∆'              <-<<->>         '   ⍝           a(m-1)(m)(n-1)  ⍝
+    ∆'          1⋄                  '   ⍝       else if n=0:        ⍝
+    ∆'              <->+            '   ⍝           a(m+1)1         ⍝
+    ∆'          1}<                 '   ⍝       fi                  ⍝
+    ∆'      2⋄                      '   ⍝   else if m=0:            ⍝
+    ∆'          >1←<+<              '   ⍝       a(a)(n+1)0          ⍝
+    ∆'      2}                      '   ⍝   fi                      ⍝
+    ∆'  +]                          '   ⍝ until a(¯1)n              ⍝
+    ∆'  >:                          '   ⍝ output n                  ⍝
+        ack ⍙←⍙ ''                                                  ⍝
+    ⍝                                                               ⍝
+    ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+The  program  inputs two single digits and outputs a single digit result. Unless
+we use the memory dump, this restricts the possible arguments to:
+
+        m n→0   1   2   3   4   5   6   7   8
+        ↓ ┌───┬───┬───┬───┬───┬───┬───┬───┬───┐
+        0 │ 1 │ 2 │ 3 │ 4 │ 5 │ 6 │ 7 │ 8 │ 9 │
+          ├───┼───┼───┼───┼───┼───┼───┼───┼───┘
+        1 │ 2 │ 3 │ 4 │ 5 │ 6 │ 7 │ 8 │ 9 │
+          ├───┼───┼───┼───┼───┴───┴───┴───┘
+        2 │ 3 │ 5 │ 7 │ 9 │
+          ├───┼───┴───┴───┘
+        3 │ 5 │
+          └───┘
+
+    bf mac ack      ⍝ ack 2 3 → 9
+2
+3
+9
+
+The  following function removes all non-BF "white space", which was preserved by
+the macro processor:
+
+    dark ← ∩∘'[]<>+-,.'         ⍝ without white space.
+
+and this optimiser removes cancelling <> and >< sequences.
+
+    opt ← {↑{({⍵⍱¯1⌽⍵}⍺⍷⍵)/⍵}⍣≡/'><' '<>'⍵}     ⍝ cancelling >< pairs removed.
+
+    ⍴opt dark mac ack           ⍝ size of optimzed BF code.
+181
+
+This function wraps and indents BF loops for easier reading:
+
+    pretty←{⎕ML←1
+        nl←⊃⌽⎕TC
+        dents←{∊¨(0⌈⍵+1 ¯1)⍴¨⊂⊂4↑'·'}
+        0{
+            nice(next nasty)←⍵
+            '∘'=next:∊nice
+            more less←dents ⍺
+            '['=next:(⍺+1)∇(nice,next,nl,more)nasty
+            ']'=next:(⍺-1)∇(nice,nl,less,next)nasty
+            ⍺ ∇(nice next)nasty
+        }↑{⍺ ⍵}/⍵,'∘'
+    }
+
+You should be able to copy and paste the following output into any BF system:
+
+    pretty opt dark mac ack     ⍝ Ackermann's function in Brainfuck.
+->,>------[
+·   +<-------->
+],>------[
+·   +<-------->
+]<<+[
+·   ->>+<<[
+·   ·   >>-+<[
+·   ·   ·   >-<<[
+·   ·   ·   ·   ->>>+>+<<<<
+·   ·   ·   ]>>>>[
+·   ·   ·   ·   -<<<<+>>>>
+·   ·   ·   ]<<<[
+·   ·   ·   ·   ->+<
+·   ·   ·   ]>>[
+·   ·   ·   ·   -<<+>>
+·   ·   ·   ]<-<<->>>
+·   ·   ]>[
+·   ·   ·   -<<->+>>
+·   ·   ]<
+·   ]>>[
+·   ·   -<[
+·   ·   ·   -<+>
+·   ·   ]<+>>>
+·   ]<<<<+
+]>>++++++[
+·   -<++++++++>
+]<.
+
+See also: bf mac balm
+
+Index:Ackermann's function|Brainfuck|declarative programming
+Index:tail recursion|pattern-matching
+Index;Ackermann W.

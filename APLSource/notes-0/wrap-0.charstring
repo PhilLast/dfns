@@ -1,0 +1,41 @@
+lvec← {cols←⎕pw} ##.wrap cvec               ⍝ Wrap word vector at ⍺ columns.
+
+The  argument  vector is split between words at [cols] (default ⎕PW) columns and
+the blank replaced with a [LF] character. The resulting line-vector will display
+in  the  session in [cols] or fewer columns. Words longer than [cols] are broken
+unceremoniously at [cols] columns.
+
+Technical notes:
+
+Compare Bob Smith's amazing non-looping solution:
+
+    wrap←{                  ⍝ ⍺-wrap (Bob Smith).
+        ⍺←⎕pw               ⍝ default ⎕pw-wrap
+        v←' ',⍵,' '         ⍝ blanks required at start and end
+        j←(v=' ')/⍳⍴v       ⍝ indices of blanks
+        p←(j+⍺+1)∘.<j       ⍝ 1s mark blanks past the cutoff
+        m←p<1⌽p             ⍝ mark last blank that fits on the line
+        i←(⍴m)⍴1,(1↓⍴m)⍴0   ⍝ identity matrix
+        c←⌹i-m              ⍝ compute transitive closure of m
+        v[c[1;]/j]←⊃⌽⎕tc    ⍝ insert the line breaks
+        1↓¯1↓v              ⍝ drop the extra blanks
+    }
+
+John Daintree suggests this version, which wraps on any of the chars '-?., ' and
+returns a nested vector result:
+
+    wrap←{⎕ML←0 ⋄ ⍺←⎕PW       ⍝ initialize
+        ⍺≥⍴,⍵:,⊂⍵             ⍝ out if short enough
+        sze←(⍵∊'-?., ')/⍳⍴⍵   ⍝ length of each choice
+        len←⊃⌽(⍺≥sze)/sze     ⍝ longest length
+        len←⊃(len∊sze)⌽⍺ len  ⍝ middle of word?
+        (⊂len↑⍵),⍺ ∇ len↓⍵    ⍝ at valid wrap point
+    }
+
+Examples, See: Line_vectors
+
+See also: unwrap justify squeeze
+See also: cols
+
+Index:words|text|line vector|transitive closure
+Index;Smith R.A.|Daintree J.

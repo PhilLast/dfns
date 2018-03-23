@@ -1,0 +1,46 @@
+"A computer programmer
+   is someone who staples
+     a single sheet of paper."
+
+The state of refinement of the human intellect can be judged by the use it makes
+of the humble paper stapler:
+
+Regular People often staple together multi-sheet printed documents.
+¯¯¯¯¯¯¯¯¯¯¯¯¯¯                       ¯¯¯¯¯¯¯¯¯¯¯
+For consistency, Computer Programmers also staple single-sheet documents.
+                 ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯             ¯¯¯¯¯¯¯¯¯¯¯¯
+In addition, Systems Programmers staple zero-sheet documents.
+             ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯        ¯¯¯¯¯¯¯¯¯¯
+Finally, Mathematicians staple documents containing a negative number of sheets.
+         ¯¯¯¯¯¯¯¯¯¯¯¯¯¯                               ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+
+The above musings were prompted by the following C code extract:
+
+    if (so_and_so_is_true)
+    {
+        do_stuff();
+        then_do_this_stuff();
+    }
+    else
+    {
+        do_this_other_stuff();
+    }
+
+as the <else> clause is a single statement  the braces are not necessary but one
+can see why a consistency junkie might put them there.
+
+And a few more ...
+
+The Salesman claims that this particular paper is self-stapling.
+The Accountant restricts use of the stapler to reduce stapling costs.
+The Politician denies the existence of the document.
+The Luddite denies the existence of the stapler.
+The Razor manufacturer gives you a free stapler and hits you for the staples.
+The Anagram enthusiast Meets up the Scotlands.
+The Haiku poet / staples document pages / as necessary.
+The Fading APL Implementor can't remember where he left the stapler or document.
+
+... and so on.
+
+Index:staples|intellect, human|stuff
+Index:mathematicians|computer programmers|Haiku

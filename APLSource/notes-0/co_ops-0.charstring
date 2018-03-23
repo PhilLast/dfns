@@ -1,0 +1,39 @@
+Co-operators
+¯¯¯¯¯¯¯¯¯¯¯¯
+A number of the operators in this workspace are designed to co-operate in  mult-
+iple instances within a derived function:
+
+    f co_op g co_op h co_op k ... argument     ⍝ typical co-operator expression.
+
+with expression tree:
+
+             ┌──┴──┐
+            ...  argument
+             │
+          ┌co_op┐
+          │     │
+       ┌co_op┐  k
+       │     │
+    ┌co_op┐  h
+    │     │
+    f     g
+
+Notice  that  co-operators  are always dyadic but may produce a monadic or ambi-
+valent derived function.
+
+A typical use of a co-operator is for the left argument to select which  monadic
+operand function should be applied to the right argument.
+
+... to be continued
+
+Examples are:
+
+    →case←  Select statement.
+    →cond←  Conditional function application.
+    →for←   Multiple selection of function list.
+    →fork←  Function fork.
+    →lof←   List of functions.
+    →of←    Pick'th fn applied to arg.
+    →vof←   Vector of functions.
+
+Index:co-operator

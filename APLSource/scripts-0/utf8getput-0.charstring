@@ -1,0 +1,18 @@
+⍝ Put/get char vector ⍺ to/from UTF-8 file ⍵:
+
+    fid←'Dfns Test Temp File'                   ⍝ temp file for testing.
+
+    'Hello ⍳⍴ World' utf8put fid                ⍝ put 18-byte UTF-8 file.
+18
+    utf8get fid                                 ⍝ get file.
+Hello ⍳⍴ World
+
+    scripts.utf8getput   utf8put fid            ⍝ put this script.
+673
+    scripts.utf8getput ≡ utf8get fid            ⍝ get this script.
+1
+    ⎕av   utf8put fid                           ⍝ put all ⎕av chars.
+469
+    ⎕av ≡ utf8get fid                           ⍝ get all ⎕av chars.
+1
+    {}fid ⎕nerase fid ⎕ntie 0                   ⍝ remove temp file.

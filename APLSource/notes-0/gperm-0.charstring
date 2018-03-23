@@ -1,0 +1,25 @@
+graph ← graph ##.gperm perm             ⍝ ⍵-permutation of vertices of graph ⍺.
+
+Returns  a new graph with vertices rearranged according to permutation vector ⍵.
+The new graph is functionally identical (isomorphic) to the original.
+
+Examples:
+
+    g                                   ⍝ graph "g"
+┌───┬─┬───┬───┬─┐
+│2 3│3│2 4│1 5│3│
+└───┴─┴───┴───┴─┘
+
+    g gperm 2 1 3 4 5                   ⍝ first two vertices reversed
+┌─┬───┬───┬───┬─┐
+│3│1 3│1 4│2 5│3│
+└─┴───┴───┴───┴─┘
+
+    g gperm ⌽⍳⍴g                        ⍝ all vertices reversed
+┌─┬───┬───┬─┬───┐
+│3│5 1│4 2│3│4 3│
+└─┴───┴───┴─┴───┘
+
+See also: Graphs insnode remnode
+
+Index:graph, unweighted

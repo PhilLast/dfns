@@ -1,0 +1,30 @@
+ polar←{                                 ⍝ Polar from/to cartesian coordinates.
+
+     pol_car←{                           ⍝ polar from cartesian (default).
+
+         radius←{(+⌿⍵*2)*0.5}            ⍝ radius (pythagorus).
+
+         angle←{                         ⍝ phase angle.
+             x y←⊂⍤¯1⊢⍵                  ⍝ x and y coordinates.
+             x0 xn←1 0=⊂0=x              ⍝ points on/off y axis.
+             atan←¯3○y÷x+x0              ⍝ arctan y÷x (avoiding y÷0).
+             qne←(xn×atan)+x0×○0.5×2-×y  ⍝ NE quadrant.
+             nsw←○x<0                    ⍝ NW and SW quadrants.
+             qse←○2×(x>0)∧y<0            ⍝ SE quadrant.
+             nsw+qse+qne                 ⍝ all quadrants.
+         }
+
+         (radius ⍵)lam angle ⍵           ⍝ (2,···) array of polar coordinates.
+     }
+
+     car_pol←{                           ⍝ cartesian from polar.
+         r ø←⊂⍤¯1⊢⍵                      ⍝ radius and phase angle.
+         (r×2○ø)lam r×1○ø                ⍝ r×cos(ø), r×sin(ø).
+     }
+
+     lam←,[⎕IO-÷2]                       ⍝ laminate along new first axis.
+
+     ⍺←1                                 ⍝ default polar from cartesian.
+     ⍺=+1:pol_car ⍵                      ⍝ polar from cartesian.
+     ⍺=-1:car_pol ⍵                      ⍝ cartesian from polar.
+ }

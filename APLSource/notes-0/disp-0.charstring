@@ -1,0 +1,140 @@
+cmat ← {dec←0 {cen←0}} ##.disp array        ⍝ Boxed sketch of nested array.
+
+A compact alternative to the →display← function for nested  arrays.  By default,
+subarrays are shown in plain boxes.  With optional left argument [dec] set to 1,
+the shape of the containing array is shown in its top-left corner  and  for each
+subarray, item type is shown lower-left and shape is shown lower-right.
+
+NB: The default display of nested arrays can be boxed by default, using user-
+    command: ]boxing.
+
+      ⍳2 2      ⍝ unboxed display
+ 1 1  1 2
+ 2 1  2 2
+
+    ]boxing ON
+Was OFF
+
+      ⍳2 2      ⍝ boxed output
+┌───┬───┐
+│1 1│1 2│
+├───┼───┤
+│2 1│2 2│
+└───┴───┘
+
+The optional left argument of 1 or 2 boolean flags (default 0 0) controls:
+
+    ┌───── dec: type and shape decoration:  decorated (otherwise, plain)
+    │ ┌─── cen: items within boxes aligned: centred   (otherwise, top-left)
+    │ │
+    0 0 disp ..
+
+With decoration turned off, the function can be used to format simple tables for
+display in the session; see example below.
+
+With decoration on, _all_ of the information provided by →display←  is  present,
+except for  the case of a single digit number, whose type (~) may be obscured by
+its shape (─/→) decoration.
+
+    1 disp 8 (,8) 88 (,88)      ⍝ type (~) obscured in first two cells.
+┌→┬─┬──┬──┐
+│8│8│88│88│
+└─┴→┴~─┴~→┘
+
+Examples:
+
+    ditty ← 2 2⍴'Tea'(2 1⍴4 2)'&'(2 40)         ⍝ nested array
+
+    vs←{(⍺⍺ ⍵)(⍵⍵ ⍵)}                           ⍝ comparison operator
+
+    disp vs display ditty                       ⍝ comparison disp vs display
+ ┌───┬────┐  ┌→─────────────┐
+ │Tea│4   │  ↓ ┌→──┐ ┌→┐    │
+ │   │2   │  │ │Tea│ ↓4│    │
+ ├───┼────┤  │ └───┘ │2│    │
+ │&  │2 40│  │       └~┘    │
+ └───┴────┘  │       ┌→───┐ │
+             │ &     │2 40│ │
+             │ -     └~───┘ │
+             └∊─────────────┘
+
+      1∘disp vs display ditty                   ⍝ ... with decoration
+ ┌→──┬────┐  ┌→─────────────┐
+ ↓Tea│4   │  ↓ ┌→──┐ ┌→┐    │
+ │   │2   ↓  │ │Tea│ ↓4│    │
+ ├──→┼~──→┤  │ └───┘ │2│    │
+ │&  │2 40│  │       └~┘    │
+ └───┴~──→┘  │       ┌→───┐ │
+             │ &     │2 40│ │
+             │ -     └~───┘ │
+             └∊─────────────┘
+
+
+    +/∘∊¨ ∊∘'→↓~'¨ 1∘disp vs display ditty      ⍝ same no of →↓~ present in both
+8 8
+
+      1 disp array                              ⍝ [disp] sketch of array.
+┌→──┬─────────┬─────────┬────────┐
+↓3.1│ Vector  │ Matrix  ↓ Array  ⍒
+├~──┼────────→┼────────→┼───────→┤
+│┌─┐│┌→──┬───┐│┌→──┬───┐│┌→─────┐│
+││0│││Q 8│K 9││⌽0 0│0 0││⍒ #  # ││
+│└⊖┘│└+─→┴+─→┘│└~─→┴~─→┘⌽└#────→┘⍒
+└───┴────────→┴────────→┴───────→┘
+
+      display array                             ⍝ Compare with full [display].
+┌→──────────────────────────────────────────────────────┐
+↓         ┌→─────┐        ┌→─────┐        ┌┌→────┐      │
+│ 3.1     │Vector│        ↓Matrix│        ↓↓Array│      │
+│         └──────┘        └──────┘        └└─────┘      │
+│ ┌─────┐ ┌→────────────┐ ┌→────────────┐ ┌┌→─────────┐ │
+│ │ ┌⊖┐ │ │ ┌→──┐ ┌→──┐ │ ⌽ ┌→──┐ ┌→──┐ │ ↓↓ ┌→─────┐ │ │
+│ │ │0│ │ │ │Q 8│ │K 9│ │ │ │0 0│ │0 0│ │ ││ │ #  # │ │ │
+│ │ └~┘ │ │ └+──┘ └+──┘ │ │ └~──┘ └~──┘ │ ││ └#─────┘ │ │
+│ └∊────┘ └∊────────────┘ └∊────────────┘ └└∊─────────┘ │
+└∊──────────────────────────────────────────────────────┘
+
+⍝ Simple table in session:
+
+      disp'%' 'Eye Poke' 'Kumquat'⍪↑('Guys' 60 40)('Gals' 20 80)
+┌────┬────────┬───────┐
+│ %  │Eye Poke│Kumquat│
+├────┼────────┼───────┤
+│Guys│   60   │  40   │
+├────┼────────┼───────┤
+│Gals│   20   │  80   │
+└────┴────────┴───────┘
+
+⍝ The following example shows the effect of permutations of left-argument
+⍝ options:
+⍝
+⍝   dec: type and shape border decorations off/on,
+⍝       cen: centre-alignment within box off/on.
+
+    opts ← ⎕io<⍳2 2                 ⍝ all option permutations
+
+    labs ← 'decorated, ' 'centred'  ⍝ option labels with:
+
+    un←{∊((~⍺)/¨⊂'un'),¨⍵}          ⍝ un- prefix where appropriate
+
+    stuff ← '' 'like this'(3 0⍴'')  ⍝ content of all but top left cell
+
+    opts {⍺ disp 2 2⍴(⊂⍺ un ⍵),stuff}¨ ⊂labs
+ ┌──────────────────────┬┐  ┌────────────────────┬┐
+ │undecorated, uncentred││  │undecorated, centred││
+ ├──────────────────────┼┤  ├────────────────────┼┤
+ │like this             ││  │                    ││
+ │                      ││  │     like this      ││
+ │                      ││  │                    ││
+ └──────────────────────┴┘  └────────────────────┴┘
+ ┌→───────────────────┬─┐   ┌→─────────────────┬─┐
+ ↓decorated, uncentred│ │   ↓decorated, centred│ │
+ ├───────────────────→┼⊖┤   ├─────────────────→┼⊖┤
+ │like this           │ │   │                  │ │
+ │                    │ │   │    like this     │ │
+ │                    │ ↓   │                  │ ↓
+ └───────────────────→┴⊖┘   └─────────────────→┴⊖┘
+
+See also: display dsp box
+
+Index:display (of arrays)|box|boxing|Kumquat|box-drawing characters|array, nested

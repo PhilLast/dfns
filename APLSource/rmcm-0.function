@@ -1,0 +1,4 @@
+ rmcm←{                          ⍝ APL source with comments removed.
+     cm←∨\(⍵='⍝')>≠\⍵=''''       ⍝ mask of comments.
+     ⎕UCS(cm×32)+(~cm)×⎕UCS ⍵    ⍝ blanks for comments in source matrix.
+ }

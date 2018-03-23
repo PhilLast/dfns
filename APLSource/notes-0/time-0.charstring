@@ -1,0 +1,26 @@
+{rslt} ← {larg} (fun ##.time) rarg          ⍝ Time function application.
+
+[time] displays the elapsed time taken, to the nearest centi-second, when funct-
+ion  [fun] is applied to or between its argument(s). The result of the applicat-
+ion is returned as a shy result.
+
+Examples:
+
+      queens time 8     ⍝ 8-queens problem takes just over a tenth of a second.
+00.12
+
+      queens time 13    ⍝ 13-queens problem takes three and a half minutes.
+03:32.27
+
+      'myfile'findfile time'string'     ⍝ timing of dyadic function.
+00.07
+
+      {+/,⍵×assign      ⍵} costs        ⍝ complex expression.
+223
+      {+/,⍵×assign time ⍵} costs        ⍝ time displayed as side-effect.
+05.57
+223
+
+See also: cmpx mdf ticks
+
+Index:performance|monitor|timing

@@ -1,0 +1,10 @@
+ k6174←{⎕ML←1                    ⍝ Kaprekar's operation.
+     enco←(4/10)∘⊤               ⍝ 4-digit encode.
+     deco←enco⍣¯1                ⍝   and decode.
+     1=⍴∪enco ⍵:⎕SIGNAL 11       ⍝ all digits the same: no go.
+     ⍬{                          ⍝ starting with null sequence.
+         ⍵=⊃⌽⍺:⍺                 ⍝ repeated items: done.
+         v←{⍵[⍒⍵]}enco ⍵         ⍝ digits in descending order.
+         (⍺,⍵)∇(deco v)-deco⌽v   ⍝ smaller to larger difference.
+     }⍵                          ⍝ :: [#] ∇ # → [#]
+ }

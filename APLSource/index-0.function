@@ -1,0 +1,22 @@
+ index←{⎕ML←1                            ⍝ ⍵-index of notes in space ⍺.
+
+     tags←⍵,'|'                          ⍝ search for lines starting 'Index',⍵.
+
+     sort←{⍵[⍋lcase↑⍵]}                  ⍝ case-insensitive vector sort.
+                                        ⍝ vector of name,entry pairs:
+     pairs←↑,/(~∘' '¨sort↓⍺.⎕NL 2){      ⍝ names of all notes in ⍺.
+         0=⍴⍵:⍵                          ⍝ no index entry: null.
+         ↑,/⍺∘{                          ⍝ collection of all,
+             ⍺∘{⍵ ⍺}∘dxb¨1↓¨(⍵∊tags)⊂⍵   ⍝ name, index-entry pairs,
+         }¨⍵                             ⍝ for each Index line.
+     }∘{                                 ⍝ from:
+         ((6↑¨⍵)∊(⊂'Index'),¨tags)/⍵     ⍝ lines starting Index,⍵.
+     }∘ltov∘⍺.⍎¨sort↓⍺.⎕NL 2             ⍝ vectors of all notes in ⍺.
+
+     0=⍴pairs:0⍴⊂''(0⍴⊂'')               ⍝ no hits: null result.
+                                        ⍝ returns a vector of pairs from
+     (↓⍉↑pairs)∘{                        ⍝   a 2-vector of
+         notes entries←⍺                 ⍝   names and entries.
+         ⍵{⍺ ⍵}(notes∊⊂⍵)/entries        ⍝ name, entries pertaining to name.
+     }¨sort∪⊃¨pairs                      ⍝ case-insensitive sorted names.
+ }

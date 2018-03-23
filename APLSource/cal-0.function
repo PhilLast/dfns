@@ -1,0 +1,25 @@
+ cal←{⎕ML ⎕IO←1                                  ⍝ Calendar.
+     ⍺←1                                         ⍝ include year with month title.
+     cntr←{(⌈0.5×+/∧\' '=⍵)⌽⍵}                   ⍝ centred text.
+     1=≢⍵:⍺ ∇{                                   ⍝ relative month or single year.
+         12≥|⍵:⍺ ⍺⍺ 0 1+0 12⊤⍵+0 12⊥0 ¯1+2↑⎕TS   ⍝ relative month.
+         year←4 3⍴0 ⍺⍺¨⍵,¨⍳12                    ⍝ each month for given year.
+         join←{⍉↑(↓⍉⍺),'   ',↓⍉⍵}                ⍝ month joiner.
+         head←cntr ¯66↑⍕⍵                        ⍝ centred year header.
+         head⍪,[⍳2]↑join/year                    ⍝ calendar for year ⍵.
+     }⍵                                          ⍝ month or year.
+     dys←'Su' 'Mo' 'Tu' 'We' 'Th' 'Fr' 'Sa'      ⍝ day-of-week column headers.
+     Q1←'January' 'February' 'March    '~¨' '    ⍝ 1st quarter month names.
+     Q2←'April  ' 'May     ' 'June     '~¨' '    ⍝ 2nd   ..      ..    ..
+     Q3←'July   ' 'August  ' 'September'~¨' '    ⍝ 3rd   ..      ..    ..
+     Q4←'October' 'November' 'December '~¨' '    ⍝ 4th   ..      ..    ..
+     months←Q1,Q2,Q3,Q4                          ⍝ month names for year.
+     yyyy mm←⍵                                   ⍝ year and month.
+     day←days yyyy mm 1                          ⍝ epoch day for 1st of month.
+     mms dds←2↑1↓↓⍉date day+¯1+⍳31               ⍝ 31 month and day numbers.
+     fmts←2 0∘⍕¨(mm=mms)/dds                     ⍝ char-formatted day numbers.
+     pad←(7|day)↑0↑fmts                          ⍝ start of month padding.
+     dmat←↑{⍺,' ',⍵}/dys⍪6 7⍴42↑pad,fmts         ⍝ day matrix.
+     head←(mm⊃months),⍺/' ',⍕yyyy                ⍝ month [year] header.
+     ↑(⊂cntr ¯20↑head),↓{(∨/⍵≠' ')⌿⍵}dmat        ⍝ calendar for month ⍵.
+ }

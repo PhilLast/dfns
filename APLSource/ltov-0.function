@@ -1,0 +1,6 @@
+ ltov←{⎕ML←1                 ⍝ Lines to nested vector.
+     ⍺←⎕UCS 13 133           ⍝ version-proof newlines.
+     1↓¨⍺{                   ⍝ remove leading separators.
+         (⍵∊⍺)⊂⍵             ⍝ split at separator.
+     }¯1⌽⍵,(~(¯1↑⍵)∊⍺)/1↑⍺   ⍝ ensure trailing separator.
+ }

@@ -1,0 +1,199 @@
+rslt ← indx ##.from array                   ⍝ Select (1↓⍴⍵)-cells from array ⍵.
+
+Gianluigi  Quario  suggests [from], an alternative to "square-bracket" indexing:
+array[···;···;···].
+
+[indx]  is  a vector of simple indices, each item of which selects along an axis
+of [array]. In other words:
+
+    (inx1 inx2 ···) from array  ≡≡  array[inx1;inx2;···]
+
+The number of items in [indx] must equal the rank of [array]:
+
+    (⍴indx) ≡ ⍴⍴array
+
+The shape of [rslt] is the concatenation of the shapes of the items of [indx]:
+
+    (⍴rslt) ≡ ↑,/⍴¨indx
+
+A  special short-hand "null": (,⊂⍬) may be used for any item of the index vector
+to  mean "all items along this axis". It is equivalent to an elided subscript ;;
+in conventional square-bracket indexing.
+
+Technical notes:
+
+Apart from the expansion of null indices, this function could be coded succinct-
+ly  by  converting to "choose" indexing, using an outer product reduction of the
+index arrays:
+
+    from←{
+        ⍵[↑∘.,/⍺]
+    }
+
+As  selecting  from a scalar array requires a zero-length index, we must pad the
+reduction's argument with a dummy item to avoid a domain error:
+
+    from←{
+        ⍵[1↓¨↑∘.,/0,⍺]
+    }     │ │     ││
+          ├─┘     ├┘
+          │       └──── prefix dummy item.
+          └──────────── remove dummy items.
+
+    ⍬ from 42           ⍝ null select from scalar.
+42
+
+Purists  who find square bracket indexing offensive (gnomoparenthiphobes? tetra-
+claustrophobes?), might prefer to use the "pick each enclose" (chipmunk) idiom:
+
+    from←{
+        (⊂¨1↓¨↑∘.,/0,⍺)⊃¨⊂⍵
+    }
+
+We could extend our function  to accommodate null indices  by borrowing from the
+→select← function, although this would complicate and slow down the coding, con-
+siderably.
+
+    from←{
+        (⊂¨1↓¨↑∘.,/0,(⎕IO+⍺∊⊂,⊂⍬)⊃¨↑,¨/⊂¨¨⍺(⍳¨⍴⍵))⊃¨⊂⍵
+    }                 ├────────┘ ├───────┘│ ├──┘
+                      │          │        │ └──── full index vector per axis.
+                      │          │        └────── supplied index vector.
+                      │          └─────────────── select expanded nulls.
+                      └────────────────────────── nulls in index vector.
+
+Examples:
+
+    _←,⊂⍬                       ⍝ special value: select all items along axis.
+
+    ⎕←a3←⍉10⊥⍉↑⍳3 4 5           ⍝ a3 is a rank-3 array.
+111 112 113 114 115
+121 122 123 124 125
+131 132 133 134 135
+141 142 143 144 145
+
+211 212 213 214 215
+221 222 223 224 225
+231 232 233 234 235
+241 242 243 244 245
+
+311 312 313 314 315
+321 322 323 324 325
+331 332 333 334 335
+341 342 343 344 345
+
+      1 2 3 from a3             ⍝ a3[1;2;3]
+123
+
+      1 2 _ from a3             ⍝ a3[1;2;]
+121 122 123 124 125
+
+      1 _ _ from a3             ⍝ a3[1;;]
+111 112 113 114 115
+121 122 123 124 125
+131 132 133 134 135
+141 142 143 144 145
+
+      _ 2 _ from a3             ⍝ a3[;2;]
+121 122 123 124 125
+221 222 223 224 225
+321 322 323 324 325
+
+      (2 1)_ _ from a3          ⍝ a3[2 1;;]
+211 212 213 214 215
+221 222 223 224 225
+231 232 233 234 235
+241 242 243 244 245
+
+111 112 113 114 115
+121 122 123 124 125
+131 132 133 134 135
+141 142 143 144 145
+
+      (2 2⍴2 1)_ _from a3       ⍝ a3[2 2⍴2 1;;]
+211 212 213 214 215
+221 222 223 224 225
+231 232 233 234 235
+241 242 243 244 245
+
+111 112 113 114 115
+121 122 123 124 125
+131 132 133 134 135
+141 142 143 144 145
+
+
+211 212 213 214 215
+221 222 223 224 225
+231 232 233 234 235
+241 242 243 244 245
+
+111 112 113 114 115
+121 122 123 124 125
+131 132 133 134 135
+141 142 143 144 145
+
+      _ 2 _ from a3             ⍝ a3[;2;]
+121 122 123 124 125
+221 222 223 224 225
+321 322 323 324 325
+
+      _ _ 2 from a3             ⍝ a3[;;2]
+112 122 132 142
+212 222 232 242
+312 322 332 342
+
+      _ _ (2 2⍴2 1)from a3      ⍝ a3[;;2 2⍴2 1]
+112 111
+112 111
+
+122 121
+122 121
+
+132 131
+132 131
+
+142 141
+142 141
+
+
+212 211
+212 211
+
+222 221
+222 221
+
+232 231
+232 231
+
+242 241
+242 241
+
+
+312 311
+312 311
+
+322 321
+322 321
+
+332 331
+332 331
+
+342 341
+342 341
+
+      ⍴(,1)(,2)(,3) from a3             ⍝ rank-3 result.
+1 1 1
+      ⍴(,1)( 2)(,3) from a3             ⍝ rank-2 result.
+1 1
+      ⍴( 1)( 2)(,3) from a3             ⍝ rank-1 result.
+1
+      ⍴( 1)( 2)( 3) from a3             ⍝ rank-0 result.
+
+      (⊂2 2⍴2 1 1)from'hello' 'world'   ⍝ works for nested arg.
+ world  hello
+ hello  world
+
+See also: select
+
+Index:indexing, array
+Index;Quario G.

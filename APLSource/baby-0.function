@@ -1,0 +1,45 @@
+ baby←{⎕IO ⎕ML←0 1           ⍝ The Manchester Small Scale Experimental Machine.
+
+     fetch←{,(yshift ⍵)⌿⍺}                   ⍝ line ⍵ from store ⍺.
+
+     store←{⍺(⍵ set)msk ⍺⍺}                  ⍝ store-matrix ⍺ with ⍵ in line ⍺⍺.
+     msk←(1∨⍵)∘{⍺∧[0]yshift ⍵}               ⍝ mask for line ⍵ of store.
+     set←{(⍺>⍵)∨⍵∧[1]⍺⍺}                     ⍝ merge of ⍺ with val ⍺⍺ in line ⍵.
+
+     decode←∊∘(+\0 5 8 3)∘⍳∘⍴{(⍺⍺ ⍵)⊂⍵}      ⍝ instruction decode S:0-4 PI:13-15
+
+     yshift←(0=⍳⊃⍴⍵)∘{                       ⍝ Y-shift: mask from ssem-binary.
+         ~1∊⍵:⍺                              ⍝ 0: done.
+         (¯1⌽⍺)∇ dec ⍵                       ⍝ mask shift.
+     }
+
+     addsub←{                                ⍝ parallel binary adder/subtractor.
+         c←⍺ ⍺⍺ ⍵                            ⍝ carry bits.
+         ~1∊c:⍺ ⍵⍵ ⍵                         ⍝ no carry bits: done.
+         (⍺≠⍵)∇ 0,¯1↓c                       ⍝ shift & add/sub carry bits.
+     }
+
+     add←∧addsub∨                            ⍝ parallel binary adder.
+     sub←<addsub>                            ⍝ parallel binary subtractor.
+     inc←{(⍵>∧\⍵)∨<\~⍵}                      ⍝ binary successor.
+     dec←{(⍵><\⍵)∨∧\~⍵}                      ⍝ binary predecessor.
+     neg←{(⍵<∨\⍵)∨<\⍵}                       ⍝ 2s complement negation.
+
+     ⍺←0∧2↑↓⍵                                ⍝ A and CI initially 0 by default.
+
+     0{                                      ⍝ CI increment.
+         A CI_ M←⍵                           ⍝ Acc Ctrl-Instr Store-Matrix.
+         CI←⍺ add inc CI_                    ⍝ address of next instruction.
+         S _ PI _←decode M fetch CI          ⍝ decode of next instruction.
+
+         0 0 0≡PI:0 ∇ A(M fetch S)M          ⍝ jmp: CI ←STORE[S]
+         1 0 0≡PI:(M fetch S)∇ A CI M        ⍝ jrp: CI+←STORE[S]
+         0 1 0≡PI:0 ∇(neg M fetch S)CI M     ⍝ ldn: A ←-STORE[S]
+         1 1 0≡PI:0 ∇ A CI(M(S store)A)      ⍝ sto: STORE[S]←A
+         0 0 1≡PI:0 ∇(A sub M fetch S)CI M   ⍝ sub: A-←STORE[S]
+         1 0 1≡PI:0 ∇(A sub M fetch S)CI M   ⍝ sub:   ..  ..
+         0 1 1≡PI:({0}\⌽A)∇ A CI M           ⍝ cmp: CI+←A<0
+         1 1 1≡PI:M                          ⍝ hlt: final memory state.
+
+     }⍺,⊂⍵                                   ⍝ initial machine state.
+ }

@@ -1,0 +1,6 @@
+ just←{                                      ⍝ Justify text array.
+     ⍺←¯1                                    ⍝ left justify by default.
+     ⍺=¯1:(+/∧\' '=⍵)⌽⍵                      ⍝ │left        │
+     ⍺=1:(-+/∧\' '=⌽⍵)⌽⍵                     ⍝ │       right│
+     (⌈0.5×(+/∧\' '=⍵)-+/∧\' '=⌽⍵)⌽⍵         ⍝ │   centre   │
+ }

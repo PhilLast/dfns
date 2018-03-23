@@ -1,0 +1,20 @@
+graph ← graph ##.insnode vertex             ⍝ Insert vertex ⍵ in graph ⍺.
+
+Returns  a  new  graph  with  extra unconnected vertices up to and including the
+requested one.
+
+Examples:
+
+    a                           ⍝ graph "a".
+┌───┬─┬───┬───┬─┐
+│2 3│3│2 4│1 5│3│
+└───┴─┴───┴───┴─┘
+
+      disp a insnode 10         ⍝ ... with new node 10.
+┌───┬─┬───┬───┬─┬┬┬┬┬┐
+│2 3│3│2 4│1 5│3││││││
+└───┴─┴───┴───┴─┴┴┴┴┴┘
+
+See also: Graphs remnode gperm inslink
+
+Index:graph

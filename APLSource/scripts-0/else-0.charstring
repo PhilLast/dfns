@@ -1,0 +1,10 @@
+⍝ Condition f else g:
+
+    0 ⌈ else ⌊ 2.5
+2
+    1 ⌈ else ⌊ 2.5
+3
+    updn←⌈else⌊
+    
+    0 1 0 1 0 updn¨2.5
+2 3 2 3 2

@@ -1,0 +1,7 @@
+ kcell←{⎕ML←3                ⍝ Relationship between point and k-cell.
+     ⍺←(↑⍴1/⍵)/2 1⍴0 1       ⍝ Default is unit k-cell.
+     b←,[(2=⍴⍴⍺)/⎕IO]⍺       ⍝ Bounds of k-cell.
+     p←((2⌊⍴⍴⍺)↓1 1,⍴⍵)⍴⍵    ⍝ Points to evaluate.
+     d←⊃,¨⍺⍺⌿×-b,.-p         ⍝ Apply operand to signum difference.
+     ⍺⍺/⍬:⌈/d ⋄ 5⊥⍉d         ⍝ Result is {¯1,0,1} or integer.
+ }

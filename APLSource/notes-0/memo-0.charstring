@@ -1,0 +1,333 @@
+rslt ← {larg} (⍺⍺ ##.memo cache) rarg       ⍝ Function memoization.
+sref ← ##.cache ivec                        ⍝ Ref to space with initial cache.
+
+[memo]  binds an ambi-valent function left operand with a cache right operand to
+produce  a  derived  function. On application to arguments, the derived function
+retrieves  previously-calculated  values  from  the cache, which it extends when
+necessary with newly-calculated ones.
+
+    fast_fn ← slow_fn memo cache   ⍝ bind slow_fn with cache to produce fast_fn.
+
+[cache]  is a reference to a namespace containing two vectors [keys] and [vals],
+whose items are previously encountered arguments together with their correspond-
+ing  results.  The  cache  is  initialised  using the auxiliary function [cache]
+which pre-populates it with any number of expected result-argument pairs.
+
+The  technique,  proposed by Donald Michie in 1968 ["Memo" functions and machine
+learning,  Nature,  218,  19-22],  was  published as an APL2 operator by Andréas
+Geyer-Schultz.  This more self-contained version was suggested by Stefano Lanza-
+vecchia and Phil Last.
+
+As  with  any caching system, care must be taken to remove from the cache, items
+that  become "stale" when the cached result no longer reflects external reality.
+An  example  might  be a cached file read when the "real" file component is sub-
+sequently updated.
+
+Access  to  the cache for maintenance purposes (a kind of inspection hatch), can
+be achieved by retaining an explicit reference to its namespace.
+
+        ∆foo ← cache''              ⍝ initialise cache for slow function foo.
+
+        qfoo ← foo memo ∆foo        ⍝ derive "quick" version of foo.
+
+        rslt ← qfoo args ···        ⍝ using qfoo extends its cache.
+
+        ∆foo.(···)                  ⍝ maintain cache using space-reference.
+
+Expunging  the  explicit  reference  leaves  the cache intact within the derived
+function  but  effectively  seals  off  external access to it. Access can be re-
+covered  by  stopping  inside  memo,  tabbing to the session and assigning a new
+external reference.
+
+      ⎕ex'∆foo'                     ⍝ expunge handle to foo's cache.
+
+      rslt ← qfoo args ···          ⍝ qfoo continues to function normally.
+
+      qfoo arg [Ctrl-Enter]         ⍝ trace into derived function,
+      [Ctrl-Tab]                    ⍝ ... tab to session and
+      ∆foo←⍵⍵                       ⍝ ... take new external ref.
+
+Related  ancillary  functions  [show] and [zap], included in the examples below,
+may  be  of  some use but are considered "hors d'oeuvre" and so not fixed in the
+workspace.
+
+Technical notes:
+
+When  called,  the derived function: (slow_fn memo cache) examines its cache for
+the  supplied argument(s) and if found, returns the corresponding result. Other-
+wise, it returns a freshly-calculated result, updating the cache en passant.
+
+    memo←{                                        ⍝ Function memoization.
+        ⍺←⊢                                       ⍝ ambi-valent.
+        (⊂⍺ ⍵ ⍵)∊⍵⍵.keys:⍵⍵.((keys⍳⊂⍺ ⍵ ⍵)⊃vals)  ⍝ arg(s) known: fetch result.
+        ⎕IO⊃⍵⍵.(vals keys),∘⊂←(⍺ ⍺⍺ ⍵)(⍺ ⍵ ⍵)     ⍝ else: calc & extend cache.
+    }
+
+Notice  that  the  "look-up key" is (⍺ ⍵ ⍵). This is so that a monadic call with
+say, a 2-item right argument is distinct from a dyadic call with 1-item left and
+right argument:
+
+                call        key
+                ----        ---
+    monadic:    ∇ 3 4       (3 4)(3 4)
+                ∇ 2         2 2
+    dyadic:     3 ∇ 4       3 4 4
+                2 ∇ 2       2 2 2
+
+Auxiliary  function  [cache]  returns a reference to an unnamed space containing
+two  vectors  "vals"  and "keys". The cache is populated by calling the function
+with  a  vector  of 2 or 3 item "tuples" denoting monadic: (rslt rarg) pairs, or
+dyadic: (rslt larg rarg) triples.
+
+    cache←{⎕ML←0                ⍝ Ref to space containing initialised cache.
+        vals keys←↓⍉↑{          ⍝ result values and keys.
+            (⊃⍵)(1↓⍵,¯1↑⍵)      ⍝ rslt - {larg} rarg rarg.
+        }¨1↓(⊂0 0),⍵            ⍝ initial values of cache.
+        ⎕NS'vals' 'keys'        ⍝ unnamed ref containing cache variables.
+    }
+
+In  the penultimate line above, the phrase 1↓(⊂0 0),⍵ ensures that cache's argu-
+ment  vector  has a viable prototypical item. This means that to create an empty
+cache we may merely: (cache''), rather than (cache 0⍴⊂0 0).
+
+To initialise the cache with values for:
+
+      ÷ 1 2     ⍝ monadic ÷
+1 0.5
+      1 ÷ 2     ⍝ dyadic ÷
+0.5
+
+We would call cache thus:
+
+      cache ((1 0.5)(1 2)) (0.5 1 2)
+             │              │
+             │              └────── triple => rslt larg rarg (dyadic case)
+             └───────────────────── pair => rslt rarg (monadic case)
+
+Persistent Local Variables
+--------------------------
+The  technique of binding a space reference to a function may be used in general
+to  implement persistent local variables. That is, variables that are local to a
+function  but  whose  values  are retained between calls. The following function
+can be used to generate a stream of integers on successive calls:
+
+      next←(⎕ns'')∘{                    ⍝ space bound as left arg.
+          0=⍵:⍺.n←0                     ⍝ next 0: reset number stream.
+          (⍳⍺.n+←⍵)+⍺.n                 ⍝ next ⍵: return next ⍵ numbers.
+      }
+
+      next 0                            ⍝ reset count.
+
+      next 1                            ⍝ next number.
+1
+      next 1                            ⍝ next number.
+2
+      next 2                            ⍝ next two numbers.
+3 4
+      next 1                            ⍝ next number.
+5
+      next 0                            ⍝ reset count.
+
+      next 3                            ⍝ next three numbers,
+1 2 3
+
+As  Ray  Cannon  observes,  the technique may even be used to _share_ persistent
+data among several functions with no additional workspace footprint; participat-
+ing  functions enjoy a strictly private communication. In the following example,
+[brak],  [join], [bkts] and [sepr] share the same space to access communal local
+variables: [lft], [rgt] and [sep].
+
+                    ┌∇brak─┐                 ┌∇bkts─┐
+                    │      │   ┌─────────┐   │      │
+                    │      ├─←─┼─┐     ┌─┼─←─┤      │
+                    └──────┘   │ ├─lft─┤ │   └──────┘
+                               │ └─rgt─┘ │
+                    ┌∇join─┐   │ ┌─sep─┐ │   ┌∇sepr─┐
+                    │      ├─←─┼─┘     └─┼─←─┤      │
+                    │      │   └─────────┘   │      │
+                    └──────┘                 └──────┘
+
+      'tmp'⎕ns''                    ⍝ temporary external reference to space.
+
+      brak←tmp{⍺⍺.(lft,⍵,rgt)}      ⍝ function to "bracket" its argument.
+      join←tmp{↑,∘(⍺⍺.sep∘,)/⍵}     ⍝ function to join items with separators.
+
+      bkts←tmp{⍺⍺.(lft rgt)←⍵}      ⍝ function to set bracket characters.
+      sepr←tmp{⍺⍺.sep←⍵}            ⍝ function to set separator string.
+
+      ⎕ex'tmp'                      ⍝ remove external reference to space.
+
+      bkts'[]' ⋄ sepr'-'            ⍝ set bracket and separator strings.
+
+      join brak¨'tic' 'tac' 'toe'   ⍝ join bracketed char vectors.
+[tic]-[tac]-[toe]
+
+      sepr''                        ⍝ change separator string.
+
+      join brak¨'tic' 'tac' 'toe'   ⍝ join bracketed char vectors.
+[tic][tac][toe]
+
+      bkts'''' ⋄ sepr', '           ⍝ change bracket and separator strings.
+
+      join brak¨'tic' 'tac' 'toe'   ⍝ join bracketed char vectors.
+'tic', 'tac', 'toe'
+
+      brak join'tic' 'tac' 'toe'    ⍝ bracket joined char vectors.
+'tic, tac, toe'
+
+Caveat:  Techniques  such as these, should be used with caution, if at all. They
+are included here in the spirit of exploration, rather than as a suggestion that
+they form the basis for any operational software. While interesting in their own
+right,  they may prove difficult to maintain as the structures will almost cert-
+ainly  be unfamiliar to the maintenance programmer and impenetrable to workspace
+administration tools such as those for name cross-referencing and documentation.
+
+This  operator  could be coded in a more elegant way if APL provided "closures".
+Closures  are  explored further in an experimental "Function Results Edition" of
+Dyalog. See: http://dfns.dyalog.com/downloads/fre.pdf
+
+Examples:
+
+      fread←⎕fread memo(cache ⍬)    ⍝ Cached file read.
+
+      fread 1 19                    ⍝ Read 'n cache file component.
+      ···
+      fread 1 19                    ⍝ Subsequent reads satisfied from cache.
+
+      afib←{⎕IO←0                   ⍝ Naïve coding of ⍺-fibonacci number.
+          ⍵∊⍳⍺:⍵                    ⍝ small number: done,
+          +/⍺ afib¨⍵-1+⍳⍺           ⍝ otherwise: sum of preceding ⍺ fib numbers.
+      }
+
+      2 afib¨⍳20                    ⍝ Fibonacci sequence.
+1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584 4181 6765
+
+      time←{                        ⍝ Coarse function timer.
+          ⍺←⊢                       ⍝ accept monadic operand.
+          ai←⎕AI                    ⍝ start the clock.
+          rslt←⍺ ⍺⍺ ⍵               ⍝ apply function.
+          secs←⍕0.001×1↑2↓⎕AI-ai    ⍝ seconds elapsed.
+          ↑,/⍕¨rslt': 'secs' Secs'  ⍝ timed result.
+      }
+
+      2 afib¨time⍳20                ⍝ *slow* ⍺-fibonacci sequence.
+1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584 4181 6765: 1.262 Secs
+
+      afib←afib memo(cache ⍬)       ⍝ Memoize afib.
+
+      2 afib¨time⍳20                ⍝ *fast* ⍺-fibonacci sequence.
+1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584 4181 6765: 0.1 Secs
+
+⍝ Notice that afib is coded to use its own name explicitly, rather than '∇'
+⍝ for the recursion. This is so that the recursive call references the newly-
+⍝ assigned derived function, whereas '∇' would have referenced the original
+⍝ function and circumvented the memoization.
+
+⍝ Perhaps surprisingly, the cache can be relied upon to supply the "base values"
+⍝ of the recursion, thus simplifying the initial function coding.
+
+      fib←{                         ⍝ Naïve coding of regular fibonacci number.
+          +/fib¨⍵-1 2               ⍝ sum of preceding 2 fib numbers.
+      }
+
+      fib←fib memo(cache 2/¨0 1)    ⍝ Cache pre-populated with base values.
+
+      fib¨time⍳20                   ⍝ Fast fibonacci sequence.
+1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584 4181 6765: 0.1 Secs
+
+      div←÷ memo (cache ⍬)          ⍝ Ambivalent operand function
+
+      2 div 7                       ⍝ Dyadic use distinct from ...
+0.2857142857
+
+      div 2 7                       ⍝ ... monadic use.
+0.5 0.1428571429
+
+      osc←{                         ⍝ Oscillate - probably returns 1.
+          2|⍵:osc 1+3×⍵             ⍝ odd:  triple 'n add-one,
+              osc ⍵÷2               ⍝ even: halve.
+      }
+
+      ∆osc←cache⊂1 1                ⍝ Initialise cache for osc.
+
+      osc←osc memo ∆osc             ⍝ derive "fast" osc function.
+
+      ∆osc.⎕nl 2                    ⍝ cache-space contents.
+keys
+vals
+
+      show←{⎕ML←0                       ⍝ Show cache [rslts ← args]
+          ↑⍵.(vals{⍺'←',⊂¯1↓⍵}¨keys)    ⍝ (dropping extra rarg).
+      }
+
+      show ∆osc                     ⍝ Show initial cache.
+1 ← 1
+
+      osc 2                         ⍝ Apply derived function, extending cache.
+1
+      show ∆osc                     ⍝ Show extended cache.
+1 ← 1
+1 ← 2
+
+      osc 3                         ⍝ Apply function again.
+1
+
+      show ∆osc                     ⍝ Show extended cache.
+1 ← 1
+1 ← 2
+1 ← 4
+1 ← 8
+1 ← 16
+1 ← 5
+1 ← 10
+1 ← 3
+
+      zap←{⎕ML←0                        ⍝ Remove value ⍵ from cache ⍺.
+          ⍺.{                           ⍝ within cache:
+              mask←⍵∘≡¨↓⍉↑vals keys     ⍝ mask of matches.
+              vals keys/⍨←⊂~mask        ⍝ retain non-matches.
+          }(⊃⍵)(1↓⍵,¯1↑⍵)               ⍝ target value and key.
+      }
+
+      ∆osc∘zap¨(1 16)(1 10)(1 3)    ⍝ Zap selected cache entries.
+
+      show ∆osc                     ⍝ Show compacted cache.
+1 ← 1
+1 ← 2
+1 ← 4
+1 ← 8
+1 ← 5
+
+      osc 3                         ⍝ Re-run function.
+1
+
+      show ∆osc                     ⍝ Partially restored cache.
+1 ← 1
+1 ← 2
+1 ← 4
+1 ← 8
+1 ← 5
+1 ← 10
+1 ← 3
+
+      ⎕ex'∆osc'                     ⍝ Seal access to osc's cache.
+
+      osc¨⍳10                       ⍝ Derived function still operates normally.
+1 1 1 1 1 1 1 1 1 1
+
+
+⍝ And finally ...
+
+      delay←⎕dl memo (cache ⍬)      ⍝ Cached delay.
+
+      delay time 10                 ⍝ Delay 10 seconds.
+10.024: 10.034 Secs
+
+      delay time 10                 ⍝ Side-effect-free delay :-)
+10.024: 0 Secs
+
+See also: UndoRedo fibonacci osc
+
+Index:memoization|cache|persistent local variable|fibonacci number
+Index:Function Results Edition|closure
+Index;Michie D.|Last P.|Geyer-Schultz A.|Cannon R.|Lanzavecchia S.

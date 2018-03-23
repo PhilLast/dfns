@@ -1,0 +1,75 @@
+kinds ← ##.kind namelist                    ⍝ Parse-category of name(s) ⍵.
+
+A necessary and sufficient prerequisite for parsing an APL expression is to cat-
+egorise any _names_ into one of four "kinds" depending on their referent values:
+
+    1: Nilad (array, namespace or niladic function),
+    2: Function (non-niladic),
+    3: Monadic-operator,
+    4: Dyadic-operator.
+
+A value of 0 is returned for an undefined name.
+
+The expression (X Y Z) could be parsed in several ways depending on the kinds of
+X, Y and Z. Here are just two possibilities:
+
+    X Y Z  →  ┌┴─┐      ⍝ X:function Y:dyadic-operator Z:nilad      cf: +∘1
+    2 4 1     X ┌┴┐                    ¯¯¯¯¯¯
+                Y Z
+
+    X Y Z  →   ┌┴─┐     ⍝ X:function Y:monadic-operator Z:nilad     cf: ⍴¨2
+    2 3 1     ┌┴┐ Z                    ¯¯¯¯¯¯¯
+              X Y
+
+Function →parse← illustrates the syntax trees:
+
+        scripts._dyalog parse'+∘1'      ⍝ +∘1 → +(∘1)  right-operand currying
+     F
+    ┌┴─┐
+    + ┌┴┐
+      ∘ 1
+        scripts._dyalog parse'⍴¨1'      ⍝ ⍴¨1 → (⍴¨)1  app of derived fn to arg
+      A
+     ┌┴─┐
+    ┌┴┐ 1
+    ⍴ ¨
+
+Dyalog's four hybrid tokens: / ⌿ \ ⍀  may be assigned a name.  [kind] classifies
+such  names as 2.5 though their effective kind will be determined dynamically at
+run-time.
+
+      slash ← /         ⍝ naming of hybrid token
+
+      1 2 slash¨ 3 4    ⍝ slash interpreted as function:2
+┌─┬───┐
+│3│4 4│
+└─┴───┘
+      +slash 1 2 3 4    ⍝ slash interpreted as operator:3
+10
+      kind'slash'       ⍝ [kind] categorises slash as hybrid:2.5
+2.5
+
+Examples:
+
+    (kind,⊢) 'qqq' 'notes' 'gcd' 'saw' 'at'     ⍝ names from this ws
+0 qqq
+1 notes
+2 gcd
+3 saw
+4 at
+
+    (↑ ⍋ ⊃¨∘⊂ ↓) ,∘≢⌸ kind ⎕nl ⍳10  ⍝ number of nilads, fns, mops and dops in ws
+1   2
+2 200
+3  40
+4  21
+
+    kind ⎕fx'nilfn' ''              ⍝ niladic function parsed as nilad
+1
+    slash←/ ⋄ kind'slash'           ⍝ kind of hybrid
+2.5
+
+See also: kk
+See also: http://www.dyalog.com/blog/2015/06/response-to-name-colouring-for-dfns
+
+Index:kind|nameclass|category|name colouring|hybrid

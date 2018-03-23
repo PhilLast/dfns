@@ -1,0 +1,18 @@
+⍝ Nested vector to line list:
+
+    nvec←'fooling around' 'with barrels' 'in alleys'
+
+    vtol nvec
+fooling around
+with barrels  
+in alleys     
+              
+    nl←⎕ucs 13          ⍝ newline.
+
+    nl=vtol nvec        ⍝ note extra nl:
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1
+
+    1 disp 0 ltov 1 2 3 0 4 5 6 0 7 8 9
+┌→────┬─────┬─────┐
+│1 2 3│4 5 6│7 8 9│
+└~───→┴~───→┴~───→┘

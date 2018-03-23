@@ -1,0 +1,129 @@
+⍝ Date Conversion and Formatting:
+
+    ⍝ Jean Meeus' test cases for Julian Day, using Continental
+    ⍝ European date (1582-10-04) for Gregorian calendar reform:
+
+    JD←2415019.5∘+∘(15821004∘days)      ⍝ Julian day (JD).
+
+    dates←0 6⍴0                         ⍝ initial date matrix.
+    ∆←{{1:}dates⍪←6↑⍵}                  ⍝ accumulate date row.
+
+    ∆  2000 01 01, 12 00 00
+    ∆  1999 01 01
+    ∆  1987 01 27
+    ∆  1987 06 19, 12 00 00
+    ∆  1988 01 27
+    ∆  1988 06 19, 12 00 00
+    ∆  1900 01 01
+    ∆  1600 01 01
+    ∆  1600 12 31
+    ∆   837 04 10, 07 12 00
+    ∆  ¯123 12 31
+    ∆  ¯122 01 01
+    ∆ ¯1000 07 12, 12 00 00
+    ∆ ¯1000 02 29
+    ∆ ¯1001 08 17, 21 36 00
+    ∆ ¯4712 01 01, 12 00 00
+    ∆  1957 10 04, 19 26
+    ∆   333 01 27, 12 00
+
+    (dates,'→'),JD dates
+ 2000  1  1 12  0 0 → 2451545   
+ 1999  1  1  0  0 0 → 2451179.5 
+ 1987  1 27  0  0 0 → 2446822.5 
+ 1987  6 19 12  0 0 → 2446966   
+ 1988  1 27  0  0 0 → 2447187.5 
+ 1988  6 19 12  0 0 → 2447332   
+ 1900  1  1  0  0 0 → 2415020.5 
+ 1600  1  1  0  0 0 → 2305447.5 
+ 1600 12 31  0  0 0 → 2305812.5 
+  837  4 10  7 12 0 → 2026871.8 
+ ¯123 12 31  0  0 0 → 1676496.5 
+ ¯122  1  1  0  0 0 → 1676497.5 
+¯1000  7 12 12  0 0 → 1356001   
+¯1000  2 29  0  0 0 → 1355866.5 
+¯1001  8 17 21 36 0 → 1355671.4 
+¯4712  1  1 12  0 0 →       0   
+ 1957 10  4 19 26 0 → 2436116.31
+  333  1 27 12  0 0 → 1842713   
+
+    --/JD ↑(1582 10 04)(1582 10 15)     ⍝ Oct 4 and 15, 1582 adjacent.
+1
+    ⍝ Using British date (1752-09-02) for Gregorian calendar reform:
+
+    JD←2415019.5∘+∘(17520902∘days)
+
+    JD ↑(1752 09 02)(1752 09 14)        ⍝ Sep 2 and 14, 1752 adjacent. 
+2361220.5 2361221.5
+
+⍝ Try different epochs:
+
+    days_julian←2415019.5∘+∘(15821004∘days)     ⍝ "Julian Days".
+    date_julian←¯115860∘date∘(-∘2415019.5)
+
+    days_mjd←15019∘+∘(15821004∘days)            ⍝ "Modified Julian Days".
+    date_mjd←¯115860∘date∘(-∘15019)
+
+    unix_time←86400∘×∘(-∘25568)∘days    ⍝ Seconds since 1970-01-01 00:00:00.
+    unix_date←date∘(+∘25568)∘(÷∘86400)
+
+    long_count←mayan∘(1830735∘+∘days)   ⍝ Mayan Long Count (584,285 corr.).
+
+    days_julian 2005 04 07
+2453467.5
+
+    date_julian 2453467.5
+2005 4 7 0 0 0 0
+
+    days_mjd 2005 04 07
+53467
+
+    date_mjd 53467
+2005 4 7 0 0 0 0
+
+    unix_time 2005 04 07
+1112832000
+
+    unix_date 1112832000
+2005 4 7 0 0 0 0
+
+    long_count 2005 4 7
+       
+  ⍟ ⍟  
+ ⌹⌹⌹⌹⌹ 
+ ⌹⌹⌹⌹⌹ 
+       
+ ⍟⍟⍟⍟  
+ ⌹⌹⌹⌹⌹ 
+ ⌹⌹⌹⌹⌹ 
+ ⌹⌹⌹⌹⌹ 
+       
+  ⍟ ⍟  
+ ⌹⌹⌹⌹⌹ 
+ ⌹⌹⌹⌹⌹ 
+       
+  ⍟⍟⍟  
+       
+  ⍟⍟⍟  
+
+    tx_days←15821004∘days       ⍝ Texas conversions.
+    tx_date←¯115860∘date
+
+    va_days←17520902∘days       ⍝ Virginia conversions.
+    va_date←¯53799∘date
+
+    3↑tx_date va_days 1614 4 5  ⍝ Apr 1614: 5 (VA) -> 15 (TX)
+1614 4 15
+
+⍝ Stephen Taylor's date functions.
+
+    nbts ← {(3↑>/10000⊤100⊥⍉⍵)+⊃↓0 1 1⊖⍵}∘↑ ⍝ first anniversary of ⍵[2] following ⍵[1] (y m d)
+
+    nbts(2007 10 16)(1952 9 15)                                                                        
+2008 9 15
+
+    laud←{⍺ ⍺⍺ ⍵⍵ ⍺(⍺⍺⍣¯1)⍵}                ⍝ backwards dual
+    nbymd←{10000⊥laud{(1 1⍉⍵)+⌽0 1×≥/⍵}⍵}   ⍝ first anniversary of ⍵[2] following ⍵[1] (ymd)
+    nbymd 20071016 19520915 
+20080915
+

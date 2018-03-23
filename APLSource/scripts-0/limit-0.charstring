@@ -1,0 +1,92 @@
+⍝ Function power limit (fixpoint):
+
+      ⎕pp←5 ⋄ ⎕io←1
+
+      enlist← {1↓↑,/'·',,,¨⍵}limit  ⍝ Expensive alternative to primitive: ∊.
+      enlist ,∘⊂/⍳5
+1 2 3 4 5
+
+      0.5∘× limit 2                 ⍝ Fixpoint of halving function.
+0
+
+⍝   Fix this test so that it works for both complex and vanilla interpreters:
+⍝
+⍝      ⍝ Note that a function can have more than one fixpoint:
+⍝
+⍝      *∘(÷3) limit¨¯2 2             ⍝ Two fixpoints of cube root function.
+⍝¯1 1
+      ⍝ Operator: <nr> returns the next term in a Newton-Raphson approximation:
+
+      nr←{⍺←⎕CT           ⍝ Newton-Raphson.
+          y ∆y←⍺⍺¨0 ⍺+⊂⍵  ⍝ f(x), f(x+∆)
+          ⍵+(⍺×y)÷y-∆y    ⍝ next estimate.
+      }
+
+      1∘○ nr limit 3 6 9            ⍝ Roots of Sin(x) near x=3, x=6, x=9.
+3.1416 6.2832 9.4248
+
+⍝ Gianluigi Quario suggests the following example for finding the Arithmetic-
+⍝ Geometric Mean (AGM).
+⍝
+⍝ The arithmetic-geometric mean of two numbers M and N is defined by starting
+⍝ with a(0)←M  and  g(0)←N, then iterating:
+⍝
+⍝   a(n+1) ← arithmetic mean of a(n) and g(n)
+⍝   g(n+1) ← geometric  mean of a(n) and g(n)
+⍝       until
+⍝   a(n)=g(n)
+
+      AM←{(+/⍵)×÷⍴,⍵}               ⍝ Arithmetic mean.
+      GM←{(×/⍵)*÷⍴,⍵}               ⍝ Geometric  mean.
+      AGM←{⍬⍴{(AM ⍵),GM ⍵}limit ⍵}  ⍝ Arithmetic-geometric mean.
+
+      AM 1 2 3 4 5
+3
+      GM 1 2 3 4 5
+2.6052
+      AGM 1 2 3 4 5
+2.7991
+      ÷AGM 1 2*÷2                   ⍝ Gauss's constant.
+0.83463
+
+⍝ Gianluigi's second example calculates ArcTan by similar means. (Acton, F.S.
+⍝ "The Arctangent." In Numerical Methods that Work, upd. and rev. Washington,DC:
+⍝ Math. Assoc. Amer., pp. 6-10, 1990.)
+
+      ArcTan←{
+          ⍝ Inverse trigonometric tangent - gqr 19-11-2002.
+          ⍝ For scalar ⍵: (ArcTan ⍵)≡¯3○⍵
+          ⍝
+          ⍝ Limit's operand function returns a 2-vector. Repeated application
+          ⍝ of the function produces two sequences, both of which converge and
+          ⍝ have the same limit:
+          ⍝
+          ⍝    A≡ {a(0),a(1), ... , a(n), ...   }
+          ⍝    G≡ {g(0),g(1), ... , g(n), ...   }
+          ⍝
+          ⍝  Starting with arguments:
+          ⍝       a(0)←(1+⍵*2)*-÷2  and  g(0)←1
+          ⍝  the iteration produces:
+          ⍝       a(n+1)← arithmetic mean of a(n)   and g(n)
+          ⍝       g(n+1)← geometric  mean of a(n+1) and g(n)
+          ⍝  until:
+          ⍝   a(n+1)=a(n) and g(n+1)=g(n) and a(n+1)=g(n+1)
+
+          next←{                          ⍝ next term in sequence.
+              AM←{(+/⍵)×÷⍴⍵}              ⍝ arithmetic mean.
+              GM←{(×/⍵)*÷⍴⍵}              ⍝ geometric  mean.
+              (AM ⍵),GM(AM ⍵),1↓⍵
+          }
+          start←⍬⍴(1+⍵*2)*-÷2
+          finish←⍬⍴next limit start,1     ⍝ calculated limit
+          ⍬⍴⍵×start÷finish
+      }
+
+      ArcTan 0.5    ⍝ method using limit ...
+0.46365
+
+      ¯3○0.5        ⍝ ... agrees with primitive function.
+0.46365
+
+      ⍬⍴{⍵×2-¯1↑⍵} limit 20 0.3     ⍝ Univac division algorithm.
+66.667

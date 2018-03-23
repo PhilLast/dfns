@@ -1,0 +1,51 @@
+hex ← ##.hexf num                   ⍝ IEEE 754/854 binary floating point.
+num ← ##.hexf hex
+
+Converts between numbers  and character vectors of their IEEE 754-2008 and  854-
+2008 double-precision binary floating-point representation.
+
+The hexadecimal character vector is in big-endian format  with the sign and exp-
+onent in the left-most 12 bits.
+
+    hexf 3          ⍝ sign 0, exponent 400, (elided 1) mantissa binary 10000 ...
+4008000000000000
+
+    hexf hexf 3     ⍝ (round-trip).
+3
+
+Hexf accomodates arrays of any rank and depth.
+
+NB: This coding of hexf subsumes function "decf", which has been withdrawn.
+
+NB: With  code  from Jay Foad, this version includes support for 128-bit Decimal
+    Floating point.
+
+See: http://en.wikipedia.org/wiki/IEEE_754-2008 for details.
+
+Examples:
+
+    nmat←÷2 3⍴⍳6            ⍝ simple numeric array.
+
+    nmat                    ⍝ display of array.
+1    0.5 0.3333333333
+0.25 0.2 0.1666666667
+
+    hexf nmat               ⍝ hex display of floating array.
+3FF0000000000000 3FE0000000000000 3FD5555555555555
+3FD0000000000000 3FC999999999999A 3FC5555555555555
+
+    nmat ≡ hexf hexf nmat   ⍝ check round-trip.
+1
+
+⍝ From Dyalog V13:
+
+    ⎕FR←1287                ⍝ Decimal Floating Point IEEE 854
+
+    hexf ○1                 ⍝ Pi as 128-bit decimal floating-point.
+2DFFCC1AEB53B3FBB4E262D0DAB5E683
+
+See also: hex
+
+Index:hexadecimal|endian|Decimal Floating Point|128-bit Floating Point
+Index:IEEE 754|IEEE 854
+Index;Foad J.

@@ -1,0 +1,25 @@
+lvec ← {cols} ##.justify lvec               ⍝ Justify line-vector to ⍺ columns.
+
+Line  vector  [lvec] is justified (left and right aligned) across [cols] columns
+by  adding  extra  blanks between words starting from the left side of the line.
+The optional left argument [cols] defaults to the widest line in [lvec].
+
+In a vector with embedded linefeed characters, the final line is not justified.
+
+      txt
+We're all going on a
+summer holiday;
+no more working for a
+week or two.
+
+      justify txt
+We're  all going on a
+summer       holiday;
+no more working for a
+week or two.
+
+Examples, See: Line_vectors
+
+See also: squeeze wrap unwrap
+
+Index:justify text|align text|line vector

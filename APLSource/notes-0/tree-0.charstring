@@ -1,0 +1,73 @@
+cvec ← {maxcols←⎕pw} ##.tree space          ⍝ Display of namespace tree.
+
+The resulting character vector  represents the structure  of all objects  in the
+argument space. The optional left argument (default ⎕PW), determines the maximum
+number of columns for the result.  Within sub-spaces, objects of each name-class
+are collected and prefixed with type code:
+
+    ~ variables
+    ∇ functions
+    ∘ operators
+
+Namespaces of special type (Forms, Menus, etc.), are explicitly annotated.
+
+[tree] is a good candidate for invocation using a programmable function key, see
+→PF_keys←.
+
+Technical notes:
+
+In  order to avoid name clashes with definitions local to tree itself, auxiliary
+operand  function exec←{⍺⍎⍵} is installed _outside_ the main body of code.  When
+⎕NL  and ⍎ are called via [exec], local names inside tree are invisible. This is
+one of the benefits of lexical as opposed to dynamic scope rules.
+
+Given that any space may contain a ref to any other space, the structure is more
+properly  termed a _graph_ than a _tree_. Tree pursues only the immediate child-
+ren  of  each  space. Otherwise, _remote_ references appear as: ref → full_name.
+
+Notice  that refs "hidden" within array variables  are invisible to this version
+of [tree].
+
+Examples:
+
+      80 tree #
+#
+·   ∇ ambiv ascfile attrib cmat cmpx day det dice disp display dot factorial
+·   ∇ factors fibonacci find fndiff fnrefs gcd justify kt lcase life mean mtrim
+·   ∇ osc pack pmat queens refs root roots setwx sieve squeeze ss ssmat ssword
+·   ∇ stamps subs tfmt timestamp tnest to tokens tokens2 tree tview type ucase
+·   ∇ unwrap up vtrim words wrap wsdiff xtabs
+·   ∘ bsearch else file limit perv pow saw traj until
+·   notes
+·   ·   ~ ambiv ascfile attrib bsearch cmat cmpx contents day det dice disp
+·   ·   ~ display else factorial factors fibonacci file find fndiff fnrefs gcd
+·   ·   ~ justify kt lcase life limit mean mtrim osc pack perv pmat pow queens
+·   ·   ~ refs root roots saw setwx sieve squeeze ss ssmat ssword stamps subs
+·   ·   ~ tfmt timestamp tnest to tokens tokens2 traj tree tview type ucase
+·   ·   ~ until unwrap up vtrim words wrap wsdiff xtabs Line_vectors Namespaces
+·   ·   ~ Trees Workspaces
+
+      tree ⎕SE.cbbot.bandsb1        ⍝ Sub-tree of session space.
+⎕SE.cbbot.bandsb1 [CoolBand]
+·   sb [StatusBar]
+·   ·   caps [StatusField]
+·   ·   hint [StatusField]
+·   ·   ins [StatusField]
+·   ·   ·   ∇ KEY_TOGGLE
+·   ·   mm [StatusField]
+·   ·   mode [StatusField]
+·   ·   ·   ∇ KEY_TOGGLE
+·   ·   num [StatusField]
+·   ·   pause [StatusField]
+
+      tree x                        ⍝ Spaces containing 'remote' refs.
+#.x
+·   ref → #.x
+·   y
+·   ·   ref → #.x.z
+·   z
+·   ·   ref → #.x.y
+
+See also: refs Namespaces PF_keys cols
+
+Index:workspace|name-clash problem

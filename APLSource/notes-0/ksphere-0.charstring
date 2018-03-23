@@ -1,0 +1,181 @@
+area ← dim ##.ksphere radius                ⍝ Hypersphere surface area.
+
+Inspired by Eugene McDonnell's paper [1],  [ksphere] returns the surface area of
+an ⍺-sphere of radius ⍵.
+
+NB:  Wolfram [4] points out: "Unfortunately, geometers and topologists adopt in-
+compatible  conventions  for the meaning of "n-sphere," with geometers referring
+to  the  number  of coordinates in the underlying space ("thus a two-dimensional
+sphere  is  a  circle,"  Coxeter 1973, p. 125)  and topologists referring to the
+dimension of the surface itself". [ksphere] sides with the topologists so, here,
+we call a circle a 1-sphere or S1.
+
+Here are the surface areas  of some unit hyperspheres.  In particular, the "sur-
+face area" of a 1-sphere (circle) is its circumference.
+
+    (1 to 10) ksphere 1             ⍝ surface of unit ⍺-spheres.
+6.2832 12.566 19.739 26.319 31.006 33.073 32.47 29.687 25.502 20.725
+
+Notice that the area of a unit k-sphere achieves a maximum at  around  6 dimens-
+ions. In his paper, Eugene poses the question: What dimension of space gives the
+maximum hypervolume to the unit radius hypersphere?
+
+As coded,  [ksphere] is a continuous function over real ⍺, so we can investigate
+non-integral dimensions.  Here is a crude Newton-Raphson technique for finding a
+local maximum.
+
+    max←{⍺←⎕CT*÷2               ⍝ Local maximum using Newton-Raphson.
+        ∆x←1+¯1 0 1×⍺           ⍝ x deltas.
+        ⍺⍺{                     ⍝
+            ∆∆x←⍵×∆x            ⍝ x-∊ x x+∊
+            ∆∆y←⍺⍺ ∆∆x          ⍝ f(x-∊) f(x) f(x+∊)
+            d1←÷⌿¯2-/↑∆∆y ∆∆x   ⍝ first difference.
+            d2←÷/-/↑d1(2↑∆∆x)   ⍝ second difference.
+            ∆←⌈/d1÷d2           ⍝ increment f'(⍵)÷f"(⍵)
+            ∆=0:⍵               ⍝ approx convergence: done.
+            ∇ ⍵-∆               ⍝ ⍵ → ⍵ - f'(⍵)÷f"(⍵)
+        }⍵
+    }
+
+Then:
+        ksphere∘1 max 6         ⍝ approx maximum surface area of unit k-sphere.
+    6.256946087
+
+Seaching the Internet shows the maximum to be at dimension 6.2569464048605768 to
+17 sig figs. Wolfram Alpha [5] is particularly good for this sort of exercise.
+
+Notice that the volume of the (k+1)-ball inside the k-sphere is  easily  derived
+from its surface area:
+
+    kvol ← {⍵×((⍺-1) ksphere ⍵)÷⍺}        ⍝ volume of ⍺-ball of radius ⍵.
+
+So to answer Eugene's question:
+
+    kvol∘1 max 5                ⍝ approx maximum volume of unit k-sphere.
+5.256946138
+
+(muse:
+
+    Visualising Hyperspheres
+    ------------------------
+    In general,  we can construct n-sphere Sn by  gluing  together  the  surface
+    (n-1)-spheres of two n-balls. Let's start with a familiar 2-sphere S2:
+
+    Take a pair of 2-balls (flat circular discs) of thin rubber sheet  and care-
+    fully glue their outside (S1) edges  together.  Then  inflate  the  enclosed
+    space to produce a regular 2-sphere. A Flatlander [7], living on the surface
+    of S2, would  perceive  it  as  an  unbounded,  though  finite,  2-universe.
+    Ferdinand Magellan  was in a similar position as he explored  his finite but
+    unbounded 2-sphere.
+
+    Similarly,  S1  may  be  constructed by gluing the endpoints of a pair of 1-
+    balls  (line segments)  together  and  bowing  the  lines outwards to form a
+    circle.  A "Linelander",  travelling around the circle, would not notice the
+    two joining S0 points.
+
+    We  "3-landers"  can build a 3-sphere by gluing the 2-sphere boundaries of a
+    pair  of  "adjacent"  3-balls  (though we need to borrow a little 4-space in
+    which to do the job).  To  make it easier, let's don scuba gear and swim in-
+    side one of a pair of massive 3-balls (reqular 3D balls) of sea-water, which
+    are suspended close to each other in 4-space.  After our 4-lander friend has
+    glued  together the outer 2-sphere-boundaries of our 3-balls  (using special
+    transparent sea-water adhesive) we can swim from our home hemiball, straight
+    ahead  in  any  direction,  into  the  other hemiball. If the sea-water glue
+    really is transparent,  we should not notice as we swim through the 2-sphere
+    join.  Again,  we're  in an unbounded manifold:  even though we are within a
+    finite volume of water, no matter how far we swim in any direction,  we will
+    never encounter a boundary.
+
+    NB: Before using a harpoon gun, please heed the warning,  which  is  towards
+    the end of the notes on →life←, about using artillery in a finite manifold.
+
+    The Poincaré Conjecture
+    -----------------------
+    Imagine a 2-dimensional (Flatland) spider wandering around in the surface of
+    a large soap bubble.  To  amuse  herself in this bleak landscape she plays a
+    little game:  as she moves, she extrudes a single filament of web, which is,
+    of course, also embedded in the surface of  the  S2  bubble.  Her game is to
+    roam around her 2-sphere looking for the starting end of the  filament  and,
+    when she finds it, to reel it in.  As  she  is holding both ends of the fil-
+    ament, topologically speaking, it forms a circle S1.  Our  spider finds that
+    she can _always_ reel in her web-loop  and so she convinces herself that she
+    must be in the surface of a sphere, rather than, for example, in the surface
+    of a more exotic 2-manifold, such as a torus (S1×S1).
+
+    We can play the same game in our sea-water 3-sphere:  we swim forwards while
+    uncoiling our wreck-diving rope,  leaving one end at a fixed position in the
+    3-water.  We find that, after swimming straight ahead in any direction for a
+    distance of ○2×⍵, the end of the rope hoves into view again. Now, if we grab
+    both ends of the rope and start to pull,  we should be able to  reel  in the
+    whole of the loop without its becoming tight.
+
+    By analogy with the flat-spider in the surface of torus S1×S1, we might  not
+    always be able to reel in our rope had we found ourselves swimming,  for ex-
+    ample inside S1×S1×S1,  which is made by gluing together opposite faces of a
+    _cube_ of sea-water.
+
+    It has long been assumed that a 3-sphere is the only 3-manifold in which one
+    can always reel in the rope-loop in this way.  This  assumption  is known as
+    the "Poincaré Conjecture" and a proof of it,  which carried a million-dollar
+    reward, eluded mathematicians for the whole of the  twentieth  century.  The
+    conjecture was proved in 2002 by Grigori Perelman, building on work by Rich-
+    ard Hamilton. See ref[8] below.
+
+    Explore 3-manifolds by downloading this magnificent hyper-flight-simulator:
+
+    http://www.geometrygames.org/CurvedSpaces/index.html
+
+    (muse: At a picnic, never let a topologist slice the loaf.)
+)
+
+Technical note:
+
+As [ksphere] utilises only scalar pervasive functions,  it is itself scalar per-
+vasive. This means that it may be applied directly between conformable arguments
+of higher rank and depth.
+
+Refs:
+
+[1] http://www.jsoftware.com/papers/eem/storyofo.htm
+[2] http://en.wikipedia.org/wiki/Deriving_the_volume_of_an_n-ball
+[3] http://en.wikipedia.org/wiki/Hypersphere#cite_note-0
+[4] http://mathworld.wolfram.com/Hypersphere.html
+[5] http://www.wolframalpha.com
+[6] http://www.geometrygames.org/CurvedSpaces/index.html
+[7] http://en.wikipedia.org/wiki/Flatland
+[8] http://en.wikipedia.org/wiki/Poincare_conjecture
+
+Examples:
+
+    ⎕pp←5
+
+⍝ 1-sphere is a circle:
+
+    1 ksphere 10                    ⍝ circumference of circle, radius 10.
+62.832
+
+    2×○ 10                          ⍝ compare with: 2×Pi×r.
+62.832
+
+⍝ 2-sphere is a reqular sphere in 3-space:
+
+    2 ksphere 10                    ⍝ surface area of sphere, radius 10.
+1256.6
+
+    4×○ 10*2                        ⍝ compare with: 4×Pi×r-squared.
+1256.6
+
+    (0 to 10) ksphere 1             ⍝ surface of unit ⍺-spheres.
+2 6.2832 12.566 19.739 26.319 31.006 33.073 32.47 29.687 25.502 20.725
+
+    kvol ← {⍵×((⍺-1) ksphere ⍵)÷⍺}  ⍝ volume of ⍺-ball of radius ⍵.
+
+    (0 to 10) kvol 1                ⍝ volumes of unit ⍺-balls.
+2 3.1416 4.1888 4.9348 5.2638 5.1677 4.7248 4.0587 3.2985 2.5502 1.8841
+
+See also: kball to life
+
+Index:sphere|hypersphere|Newton-Raphson|maximum, local|K-sphere|manifolds
+Index:Poincaré Conjecture|seawater|boundary|topology|torus|unit sphere
+Index:harpoon gun
+Index;McDonnell E.E.|Magellan F.|Poincaré H.|Perelman G.|Hamilton R.

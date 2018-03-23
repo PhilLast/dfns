@@ -1,0 +1,116 @@
+ test←{                                  ⍝ Run test script: no news => good news.
+     ⍺←'q' ⋄ Alpha←⍺                     ⍝ default: don't show progress.
+     visible←{('_'≠⍬∘⍴¨↓⍵)⌿⍵}            ⍝ exclude _scripts from null expansion.
+     ⍵≡'':⍺ ∇ visible scripts.⎕NL 2      ⍝ null: test all scripts.
+     1∊⍺∊'Ee',¯1:'→'scripts.⎕ED ⍵        ⍝ 'e'test ... => edit script.
+     1∊⍺∊'Ll',¯2:⍵                       ⍝ 'l'test ... => LIB.
+     2=⍴⍴⍵:⍺ ∇~∘' '¨↓⍵                   ⍝ matrix: each row is a script.
+     2=|≡⍵:⍺ ∇¨⍵                         ⍝ nested: test each script.
+     tmp←⎕NS ⎕NL 2 3 4 9                 ⍝ tmp space for evaluation.
+     tmp.Alpha←⍺                         ⍝ handy when script calls test.
+
+     tag scr←scripts.{                   ⍝ name and content of script.
+         2=⎕NC ⍵:⍵(⍎⍵)                   ⍝ var: name and content.
+         ⊂0/⎕←'Can''t find scripts.',⍵   ⍝ undefined: complain.
+     }⍵
+
+     tag≡'':ok←0                         ⍝ bad script name.
+     tmp.⎕RL←7*5                         ⍝ std random link.
+     ⎕IO ⎕ML←0 1                         ⍝ local envt for test fn.
+
+     exec←{                              ⍝ execute script lines in tmp space.
+         0=⍴⍵:⍺                          ⍝ no more, finished.
+         oqt⊃⍵:⍺ ∇(nljn/2↑⍵),2↓⍵         ⍝ accumulation of multi-line char vects.
+         ⎕←show⊃⍵                        ⍝ show expression.
+         exp←unc⊃⍵                       ⍝ uncommented first line.
+         ':'=⊃exp~' ':⍺ ∇ 1↓exp ctrl ⍵   ⍝ :keyword processing.
+         ''≡exp~' ':⍺ ∇ 1↓⍵              ⍝ ignore blank line.
+         1∊'←{'⍷unq exp:⍺ ∇ dfn ⍵        ⍝ make local dfn.
+         '←'∊und unq exp:⍺ ∇ asgn ⍵      ⍝ make local var.
+         act←{                           ⍝ actual result.
+             0::(⍕⎕EN),'::',(⊃⎕DM)~'⍎'   ⍝ show error number and message.
+             6::valerr ⍵                 ⍝ value error: investigate.
+             tmp⍎exp                     ⍝ execute expr in tmp space.
+         }⍵
+         ok rem←act check 1↓⍵            ⍝ check against expected result.
+         (⍺∧ok)∇ rem                     ⍝ check remaining script.
+     }
+
+     check←{                             ⍝ check expected vs. actual result.
+         act←↓tmp.⎕FMT ⍺                 ⍝ actual result,
+         exp←(⍴act)↑⍵                    ⍝ expected result,
+         clipped←{⍵[;⍳⎕PW⌊⊃⌽⍴⍵]}         ⍝ clipped at screen width.
+         lfts←{(∨⌿∨\⍵≠' ')/⍵}            ⍝ left shift of char matrix
+         match←{≡/lfts∘↑¨⍺ ⍵}            ⍝ match aligned results.
+         act match exp:{                 ⍝ match: continue.
+             ⎕←clipped show↑exp          ⍝ show (indented) result.
+             1,⊂(⍴act)↓⍵                 ⍝ ok; skip result lines
+         }⍵                              ⍝ from remainder of script.
+         '∘'∊Alpha:∘                     ⍝ stop to examine exp vs act.
+         ⎕←clipped show↑act              ⍝ show (exdented) wrong result.
+         dexp dact←↑¨dots¨¨exp act       ⍝ dots for spaces in,
+         ⎕←⎕FMT tag,⊂dexp'→'dact         ⍝ display of differences.
+         _←ed act                        ⍝ optional script editing.
+         0,⊂(⍴act)↓⍵                     ⍝ and continue.
+     }
+
+     ctrl←{                              ⍝ :If :Else :End[If]
+         ko←⍺⍳':' ⋄ ks←(ko↓⍺)⍳' '        ⍝ keyword offset and size.
+         kw←ks↑ko↓⍺                      ⍝ keyword
+         ix←{⌊/(~∘' '∘unc¨top ⍺)⍳⍵}      ⍝ index of.
+         top←{                           ⍝ top-level lines.
+             sigs←3↑¨~∘' '¨⍵             ⍝ line signatures.
+             hits←':If' ':En'∘.≡sigs     ⍝ :If and :End[If] lines.
+             tops←{⍵∧¯1⌽⍵}2>-⌿+\hits     ⍝ mask of top-level lines.
+             tops\tops/⍵                 ⍝ without inner ctrl structs.
+         }
+         End←':End' ':EndIf'             ⍝ either spelling.
+         skip←{(¯1+⍵ ix End)↓⍵}          ⍝ skip to :End.
+         ':Else'≡kw:skip ⍵               ⍝ Else: skip to end.
+         ':If'≢kw:⍵                      ⍝ End or unrecogonised: ignore.
+         tmp⍎ks↓ko↓⍺:⍵                   ⍝ true: continue.
+         end←⍵ ix End,⊂':Else'           ⍝ Else or End offset.
+         tail←end↓⍵                      ⍝ remainder of script.
+         tail⊣⎕←show⊃tail                ⍝ continue.
+     }
+
+     dfn←{                               ⍝ fix temp dfn.
+         raw←unq∘unc¨⍵                   ⍝ raw code
+         depth←+\{⊃⌽-⌿+\'{}'∘.=⍵}¨raw    ⍝ {}-nesting depth per line.
+         lines←1++/∧\×depth              ⍝ no of lines in defn.
+         _←tmp.⎕FX↑lines↑⍵               ⍝ fix dfn in temp space.
+         ⎕←show↑1↓lines↑⍵                ⍝ show dfn body.
+         lines↓⍵                         ⍝ continue with remaining lines.
+     }
+
+     valerr←{                            ⍝ accommodate void-returning fns.
+         'test['≡5↑1⊃⎕DM:↑0↑1↓⍵          ⍝ top-level value error: ok.
+         (⍕⎕EN),'::',(⊃⎕DM)~'⍎'          ⍝ value error in called fn: report.
+     }
+
+     ed←{                                ⍝ script correction with 's' option.
+         ~1∊Alpha∊'Ss',¯3:0              ⍝ nope: continue.
+         actual←'UnexpectedValue'        ⍝ caption for editor.
+         script←'##.scripts.',tag        ⍝ name of script variable.
+         qt←{'''',⍵,''''}                ⍝ aa → 'aa'
+         tfn←,⊂actual,'←edit ',actual    ⍝ tradfn waits for edit.
+         tfn,←⊂'⎕ed',⍕qt¨actual script   ⍝ edit scripts.
+         edit←+ ⋄ ⍎(⎕FX tfn),' ⍵'        ⍝ localise, fix and execute edit fn.
+     }
+     dots←{((' ',⍵)⍳⍵)⊃¨⊂'·',⍵}          ⍝ replace ' ' with '·' in diff display.
+     asgn←{_←tmp⍎⊃⍵ ⋄ 1↓⍵}               ⍝ assign local name.
+     unq←{(~≠\''''=⍵){⍺\⍺/⍵}⍵}           ⍝ unquoted chars.
+     oqt←{⊃⌽≠\''''=unc ⍵}                ⍝ line has open quote.
+     unc←{(∧\'⍝'≠unq ⍵)/⍵}               ⍝ uncommented line.
+     und←{(0=-⌿+\'{}'∘.=⍵){⍺\⍺/⍵}⍵}      ⍝ un-dfn-ed line.
+     nls←⎕UCS 13 133                     ⍝ version-proof newlines.
+     nest←{1↓¨(1,⍵∊nls)⊂' ',⍵}           ⍝ split line vector at nl char.
+     nljn←{⍺,⎕AV[3],⍵}                   ⍝ nl-join of char vectors.
+     then←{(⍵⍵⍣(⍺⍺ ⍵))⍵}                 ⍝ conditional function application.
+     bkt←{↑⍵{⍺,⍺⍺,⍵}/⍺}                  ⍝ ⍺-bracket.
+     show←(1∊⍺∊'Vv',1)∘{↑⍺/↓⎕FMT ⍵}      ⍝ verbose: show progress.
+     sname←'scripts.',⍵                  ⍝ script name.
+     ⎕←show(-⎕PW)↑(⎕PW⍴'⍝'),' ',sname    ⍝ show script name if verbose.
+     ok←1 exec{1=≡,⍵}then nest scr       ⍝ execute script.
+     1:shy←ok                            ⍝ shy success value.
+ }

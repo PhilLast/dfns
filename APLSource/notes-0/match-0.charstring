@@ -1,0 +1,171 @@
+hits ← patn {w←'*'} ##.match array          ⍝ find with wildcards.
+
+A generalisation of ⍷, which takes account of "wildcard" items in its left argu-
+ment pattern vector.  The result is a boolean array, the same shape as the right
+argument, showing where each occurrence of [patn] is found.
+
+By default,  the wildcard is character '*' but an alternative scalar may be sup-
+plied as a second item of a left argument pair. See example below.
+
+In common with primitive function find (⍷), overlapping strings are matched.
+
+NB: From Dyalog v13.0, this functionality is provided by system operator ⎕S.
+
+Technical notes:
+
+Notice in the following that the subject array ⍵ may be of higher rank.
+
+The first two lines:
+
+        p x←{⍵'*'}⍣(1=≡,⍺),⍺        ⍝ pattern and wildcard.
+        v←1↓¨{(x≡¨⍵)⊂⍵}x,p          ⍝ wildcard-separated segments.
+
+establish the pattern and wildcard items before splitting the pattern into wild-
+card-separated vectors. For example:
+
+        'red*green*blue' match 'credit green bored blues'       ⍝ tracing ...
+        ...
+        v
+    ┌───┬─────┬────┐
+    │red│green│blue│
+    └───┴─────┴────┘
+
+The third line:
+
+        h←↑v⍷¨⊂⍵                ⍝ hits, one row (leading subarray) per segment.
+
+produces a simple boolean "hits array" of rank one more than the subject array ⍵
+where subarrays along the leading axis are hits per pattern segment.
+
+        ⍵⍪h
+    c r e d i t   g r e e n   b o r e d   b l u e s
+    0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0  ← hits for 'red'
+    0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0  ←  ..  ..  'green'
+    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0  ←  ..  ..  'blue'
+
+Using reduction along the vector of trailing axes, the hits arrays  are  refined
+right-to-left so that at each step of the reduction,  the right argument repres-
+ents hits of trailing pattern segments. For example,
+
+    c r e d i t   g r e e n   b o r e d   b l u e s
+    0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0
+    0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+    1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0  ← mask for 'blue'
+
+    c r e d i t   g r e e n   b o r e d   b l u e s
+    0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0
+    0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0  ← hits for green*blue
+    1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0
+
+    c r e d i t   g r e e n   b o r e d   b l u e s
+    0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0
+    0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0  ← hits for green*blue
+    · · · · · · · · · · · · · · · · · · · · · · · ·
+
+    c r e d i t   g r e e n   b o r e d   b l u e s
+    0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0  ← second occurrence ignored
+    1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0  ← mask for green*blue
+    · · · · · · · · · · · · · · · · · · · · · · · ·
+
+    c r e d i t   g r e e n   b o r e d   b l u e s
+    0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0  ← hits for red*green*blue
+    1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+    · · · · · · · · · · · · · · · · · · · · · · · ·
+
+A slight complication arises with overlapping patterns:
+
+        'ban*and' match 'abandon'       ⍝ tracing ...
+        ...
+        v                               ⍝ pattern segments.
+    ┌───┬───┐
+    │ban│and│
+    └───┴───┘
+        ...
+        ⍵⍪h                             ⍝ pattern segment hits.
+    a b a n d o n
+    0 1 0 0 0 0 0
+    0 0 1 0 0 0 0
+
+In this case, the string 'ban*and' does not occur within  'abandon'.  The  upper
+row of the hits matrix should really be shifted, so that the start of the second
+hit coincides with the end of the first:
+
+    a b a n d o n
+    0 0 0 0 1 0 0   ← shifted hit after 'ban'
+    0 0 1 0 0 0 0   ← 'and' does not follow 'ban'
+
+We could do this inside the reduction  by shifting the left argument right;  ap-
+plying the mask; and then shifting the result back again for the next step. How-
+ever, a more efficient way is to shift the right argument  left,  which  doesn't
+require a second shift back again.
+
+    a b a n d o n
+    0 1 0 0 0 0 0   ← hit for 'ban'
+    0 0 0 0 0 0 0   ← hit for 'and' shifted off left-hand side.
+
+We can't just use Dyalog's primitive rotatation function ⌽ for  the  shifting as
+1s rotated off the left hand side would reappear on the right. To avoid this, we
+append a sufficient number of columns of zeros to the right of the array; rotate
+and then drop the same number of colums from the  right.  This means that any 1s
+shifted beyond the left edge of the array are lost, as required:
+
+    sl←{                    ⍝ array shifted left.
+        a←¯1↓⍴⍵             ⍝ leading axes.
+        x←⌈/⍺               ⍝ maximum shift.
+        p←⍵,(a,x)⍴0         ⍝ 0-padded on right.
+        s←⍉a⍴⍺              ⍝ subarray of vector rotations.
+        (-(0×a),x)↓s⌽p      ⍝ shifted array.
+    }                       ⍝ :: a ← r ∇ a
+
+Note that this shifting and the following propogation of 1s to the left, to form
+the mask, may be done outside the reduction.
+
+    m←⌽∨\⌽r sl h            ⍝ shifted mask 1 .. 1 0 .. 0
+
+Then hit/mask pairs form the items of the vector to be reduced:
+
+    }/↓⍉↑vec¨h m            ⍝ hits and masks.
+
+Examples:
+
+    botter ← 3 13⍴'betty botter bought a bit better butter'
+betty botter
+bought a bit
+better butter
+
+    'b*t' match botter
+1 0 0 0 0 0 1 0 0 0 0 0 0
+1 0 0 0 0 0 0 0 0 1 0 0 0
+1 0 0 0 0 0 0 1 0 0 0 0 0
+
+    (2 ¯1 1 8)¯1 match 2 7 1 8 2 8 1 8 2 8      ⍝ ¯1 is wildcard
+1 0 0 0 1 0 0 0 0 0
+
+    '12*56*9'match ⎕D                           ⍝ multiple wildcards
+0 1 0 0 0 0 0 0 0 0
+
+    (2⍴¨¨ '12*56*9' '*') match 2⍴¨⎕D            ⍝ nested arguments.
+0 1 0 0 0 0 0 0 0 0
+
+    display A ← 2 2 20⍴'<<aa>> <<bbb>>'         ⍝ Higher rank argument ...
+┌┌→───────────────────┐
+↓↓<<aa>> <<bbb>><<aa>>│
+││ <<bbb>><<aa>> <<bbb│
+││                    │
+││>><<aa>> <<bbb>><<aa│
+││>> <<bbb>><<aa>> <<b│
+└└────────────────────┘
+
+    display '<<*>>'match A                      ⍝ ... higher rank result.
+┌┌→──────────────────────────────────────┐
+↓↓1 0 0 0 0 0 0 1 0 0 0 0 0 0 1 0 0 0 0 0│
+││0 1 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0│
+││                                       │
+││0 0 1 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0│
+││0 0 0 1 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0│
+└└~──────────────────────────────────────┘
+
+    'a*b*d'match'aaaabbbccd'                    ⍝ overlapping patterns
+1 1 1 1 0 0 0 0 0 0
+
+See also: find

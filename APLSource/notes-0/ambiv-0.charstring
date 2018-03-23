@@ -1,0 +1,29 @@
+{name} ← {ref} ##.ambiv namelist            ⍝ Ambivalize traditional function.
+
+Changes  the header in [namelist] traditional defined functions by enclosing the
+left  argument  in each header line in braces. Useful when importing dyadic APL2
+functions  that  may be called with no left argument. The shy result is a vector
+of the names of those functions that have been changed with nulls for those that
+haven't. The optional left argument specifies the namespace in which the operat-
+ion is to take place, default: current space. Notice that [ambiv] may be used in
+conjunction with →refs← to ambivalize all functions and operators in a namespace
+tree.
+
+Examples:
+
+      ambiv ⎕nl 3 4                 ⍝ ambivalize all fns and ops in this space.
+
+      ambiv'foo' 'goo' 'hoo'        ⍝ worked for foo and hoo, but not goo.
+┌→────────────────┐
+│ ┌→──┐ ┌⊖┐ ┌→──┐ │
+│ │foo│ │ │ │hoo│ │
+│ └───┘ └─┘ └───┘ │
+└∊────────────────┘
+
+      ⎕se.NumEd ambiv'numed'        ⍝ ambivalize ⎕se.NumEd.numed.
+
+      {⍵ ambiv ⍵.⎕nl 3 4}¨refs #    ⍝ ambivalize all fns and ops in workspace.
+
+See also: refs
+
+Index:ambivalent|tradfn

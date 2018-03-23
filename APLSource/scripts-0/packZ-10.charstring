@@ -1,0 +1,138 @@
+⍝ Lempel-Ziv-Welch compression:
+
+      packZ'mississippi'                    ⍝ compress char vector.
+ 11  0 0 0 0 1 1 0 0 0  misp 
+     0 0 1 1 0 1 1 1 0       
+     0 1 0 0 1 1 1 1 1       
+
+      {⍵≡0 packZ packZ ⍵}'mississippi'      ⍝ expand recovers original.
+1
+
+      2⊥2⊃packZ'mississippi'                ⍝ ... bool matrix decoded.
+0 1 2 2 5 7 3 3 1
+
+      disp ¯8 packZ'mississippi'            ⍝ final compression dictionary.
+┌─┬─┬─┬─┬──┬──┬──┬──┬───┬───┬──┬──┐
+│m│i│s│p│mi│is│ss│si│iss│sip│pp│pi│
+└─┴─┴─┴─┴──┴──┴──┴──┴───┴───┴──┴──┘
+
+      segs←{(¯12 packZ ⍵)[⎕io+2⊥2⊃packZ ⍵]} ⍝ dictionary entry per code word.
+
+      disp segs'mississippi'                ⍝ segments for string.
+┌─┬─┬─┬─┬──┬──┬─┬─┬─┐
+│m│i│s│s│is│si│p│p│i│
+└─┴─┴─┴─┴──┴──┴─┴─┴─┘
+
+      {⍵≡↑,/segs ⍵}'mississippi'            ⍝ enlist of segs recovers original.
+1
+      disp segs 40⍴'a'                      ⍝ segs for highly repetitive string.
+┌─┬──┬───┬────┬─────┬──────┬───────┬────────┬────┐
+│a│aa│aaa│aaaa│aaaaa│aaaaaa│aaaaaaa│aaaaaaaa│aaaa│
+└─┴──┴───┴────┴─────┴──────┴───────┴────────┴────┘
+
+      disp segs 40⍴'abcd'                   ⍝ segs for less repetitive string.
+┌─┬─┬─┬─┬──┬──┬───┬──┬──┬───┬───┬───┬────┬─────┬────┬───┐
+│a│b│c│d│ab│cd│abc│da│bc│dab│cda│bcd│abcd│abcda│bcda│bcd│
+└─┴─┴─┴─┴──┴──┴───┴──┴──┴───┴───┴───┴────┴─────┴────┴───┘
+
+      disp packZ'hello world'               ⍝ compressed char vector.
+┌──┬─────────────────────┬────────┐
+│11│0 0 0 0 0 1 1 0 1 0 1│helo wrd│
+│  │0 0 1 1 1 0 0 1 1 1 1│        │
+│  │0 1 0 0 1 0 1 1 0 0 1│        │
+└──┴─────────────────────┴────────┘
+
+      disp packZ 11 ⎕dr'hello world'        ⍝ compressed bool vector.
+┌──┬───────────────────────────────────────────────────────────────┬───┐
+│88│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 0 1 0│0 1│
+│  │0 0 0 0 0 0 0 0 0 0 0 1 0 1 1 0 1 0 1 1 0 1 1 0 0 1 0 0 1 1 1 0│   │
+│  │0 0 0 0 0 1 0 1 1 1 0 0 1 1 1 1 1 0 0 0 1 0 0 0 1 0 1 0 0 1 1 0│   │
+│  │0 0 0 1 0 1 1 0 0 0 1 0 1 0 0 1 1 1 0 0 1 0 1 1 1 0 0 0 0 1 0 0│   │
+│  │0 1 1 0 0 0 0 0 1 0 1 0 1 0 0 0 1 1 1 1 1 0 1 0 1 0 0 1 0 0 0 0│   │
+└──┴───────────────────────────────────────────────────────────────┴───┘
+
+      disp packZ 83 ⎕DR'hello world'        ⍝ compressed integer vector.
+┌──┬─────────────────────┬──────────────────────────────┐
+│11│0 0 0 0 0 1 1 0 1 0 1│104 101 108 111 32 119 114 100│
+│  │0 0 1 1 1 0 0 1 1 1 1│                              │
+│  │0 1 0 0 1 0 1 1 0 0 1│                              │
+└──┴─────────────────────┴──────────────────────────────┘
+
+      size←{⍬⍴⎕size'⍵'}                     ⍝ function for size in bytes.
+
+:If {32=2×⎕size'⍵'}⍬                        ⍝ 32-bit interpreter:
+
+          size 100 100⍴⍳7                   ⍝ size of numeric matrix.
+    10020
+          size packZ 100 100⍴⍳7             ⍝ compressed size.
+    512
+:Else                                       ⍝ 64-bit interpreter:
+          size 100 100⍴⍳7                   ⍝ size of numeric matrix.
+    10040
+          size packZ 100 100⍴⍳7             ⍝ compressed size.
+    600
+
+:EndIf
+
+      chk←{⍺←⊢ ⋄ ⍵≡0 packZ ⍺ packZ ⍵}       ⍝ check unpack pack round trip.
+
+      chk notes.packZ                       ⍝ round-trip notes.
+1
+      8 chk notes.packZ                     ⍝ ... with 8-bit code words.
+1
+
+      mat←'Scissors' 'Stone' 'Paper'[2 3⍴1 2 3 2 3 1]
+
+      disp mat                              ⍝ nested matrix.
+┌────────┬─────┬────────┐
+│Scissors│Stone│Paper   │
+├────────┼─────┼────────┤
+│Stone   │Paper│Scissors│
+└────────┴─────┴────────┘
+
+:If {32=2×⎕size'⍵'}⍬                        ⍝ 32-bit interpreter:
+
+          size mat                          ⍝ matrix size.
+    188
+          size packZ ⍉mat                   ⍝ compressed size.
+    172
+:Else                                       ⍝ 64-bit interpreter:
+          size mat                          ⍝ matrix size.
+    328
+          size packZ ⍉mat                   ⍝ compressed size.
+    320
+
+:EndIf
+
+      disp packZ mat                        ⍝ compressed matrix.
+┌───┬─────────┬──────────────────────┐
+│2 3│0 0 0 1 0│┌────────┬─────┬─────┐│
+│   │0 0 1 0 0││Scissors│Stone│Paper││
+│   │0 1 0 0 0│└────────┴─────┴─────┘│
+└───┴─────────┴──────────────────────┘
+
+      disp tokens ⊃⎕nr'packZ'               ⍝ tokens in first line of packZ.
+┌─────┬─┬─┬───┬─┬───┬─┬─┬─┬─┬──────────────────────────┬───────────────────────────────┐
+│packZ│←│{│⎕IO│ │⎕ML│←│0│ │1│                          │⍝ Lempel-Ziv-Welch compression.│
+└─────┴─┴─┴───┴─┴───┴─┴─┴─┴─┴──────────────────────────┴───────────────────────────────┘
+
+      toks←↑,/tokens¨⎕nr'packZ'             ⍝ nested vector of packZ's tokens.
+
+      chk toks                              ⍝ nested pack: full circle.
+1
+      chk 'hello world'                     ⍝ char pack: full circle.
+1
+      chk 11 ⎕dr'hello world'               ⍝ bool pack: full circle.
+1
+      disp packZ{⍵/⍵}⍳8
+┌──┬───────────────────────────────────────────┬───────────────┐
+│36│0 0 0 0 0 0 0 0 0 1 1 0 1 1 0 1 1 0 0 1 1 1│1 2 3 4 5 6 7 8│
+│  │0 0 0 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1│               │
+│  │0 0 0 0 0 0 1 0 1 0 0 1 0 1 1 1 1 1 1 0 0 0│               │
+│  │0 0 0 1 1 1 0 1 0 0 0 0 1 0 1 1 1 1 1 1 1 1│               │
+│  │0 1 1 0 1 1 1 1 0 0 0 1 1 0 0 0 1 0 1 0 1 0│               │
+└──┴───────────────────────────────────────────┴───────────────┘
+
+      ⎕ml←⍴'VMJ'                                ⍝ Check OK in ⎕ML 3.
+      'OK'≡0 packZ packZ'OK'
+1

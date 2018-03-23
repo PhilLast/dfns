@@ -1,0 +1,4 @@
+ ltrav←{                     ⍝ List traversal.
+     '∘'≡head tail←⍵:⍺       ⍝ head and tail of list, else accumulator
+     (⍺ ⍺⍺ head)∇ tail       ⍝ accumulated result with tail.
+ }

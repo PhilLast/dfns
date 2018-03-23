@@ -1,0 +1,253 @@
+bmat ← ##.assign costs                      ⍝ Hungarian method cost assignment.
+
+[assign] is a classic algorithm  implemented in the D style.  H.W.Kuhn published
+a  pencil  and paper version in 1955, which was followed by J.R.Munkres' execut-
+able  version  in 1957. The algorithm is sometimes referred to as the "Hungarian
+method".
+
+The  method  indicates  an  optimal assignment of a set of resources to a set of
+requirements,  given  a  "cost"  of  each potential match. Examples might be the
+allocation  of workers to tasks; the supply of goods by factories to warehouses;
+or the matching of brides with grooms. The function takes a cost matrix as argu-
+ment and returns a boolean assignment matrix result.
+
+The  following  table  shows an optimal assignment of factories F, G, H to ware-
+houses W, X, Y, given that the cost of transportation from F to W is 72 units, F
+to X is 99 units, ···, G to W is 23 units, ··· and so on.
+
+      W    X    Y
+    ┌────┬────┬────┐
+  F │[72]│ 99 │ 88 │       Minimum-cost assignment marked [.]:
+    ├────┼────┼────┤
+  G │ 23 │ 30 │[35]│       Factory F supplies warehouse W,
+    ├────┼────┼────┤          ··   G   ··  ··  ··  ··   Y,
+  H │ 51 │[59]│ 84 │          ··   H   ··  ··  ··  ··   X.
+    └────┴────┴────┘
+
+Notice that if the problem requires maximizing a benefit, rather than minimizing
+a cost, then a negative cost matrix is used. See below for an example.
+
+Technical notes:
+
+Munkres' algorith may be described in words as follows:
+
+Step 0:
+Ensure the costs matrix has at least as many rows as columns, by appending extra
+0-item rows if necessary. Go to Step 1.
+
+Step 1:
+Subtract the smallest item in each row from the row. Go to Step 2.
+
+Step 2:
+Select a set of "independent" zeros in the matrix and mark them with a star (*).
+To do this, star leading zeros in each row and column, ignoring rows and columns
+already  containing stars; repeat this process until apart from ignored rows and
+columns, no more zeros remain. Go to Step 3.
+
+Step 3:
+Draw  a  line through (cover) each column containing a starred zero. If all col-
+umns  are  covered,  the  starred zeros represent an optimal assignment. In this
+case, return a boolean matrix with the positions of the stars, as result. Other-
+wise, go to Step 4.
+
+Step 4:
+Find  an uncovered zero. If there is none, go to Step 6 passing the smallest un-
+covered value as a parameter. Otherwise, mark the zero with a prime (') and call
+it  P0. If there is a starred zero (S1) in the row containing P0, cover this row
+and  uncover  the column containing S1, then repeat Step 4. Otherwise, (if there
+is no starred zero in P0's row) go to Step 5.
+
+Step 5:
+Find  a  path  through alternating primes and stars. Starting with the uncovered
+prime  (P0) found in Step 4, find a star S1 (if  any) in its column. Then find a
+prime  P2  (there  must be one) in S1's row, followed by  a  star S3 (if any) in
+P2's  column,  ··· and so on until a prime (Pn) is found that has no star in its
+column.  In  the  series P0, S1, P2, S3, ··· Pn, unstar each starred zero Si and
+star  each  primed zero Pj. Finally, unprime all primed zeros in the matrix, un-
+cover all rows and columns. Go to Step 3.
+
+Step 6:
+Add  the  minimum  cost  value passed from Step 4 to each twice-covered (row and
+column  covered)  item, and subtract it from each uncovered item. Preserving all
+stars, primes and covering lines, go to Step 4.
+
+The approach uses a rather convoluted "stepping algorithm", which can be repres-
+ented as a flowchart:
+
+        step0       after step:0, go to step:1.
+          ↓
+          │
+        step1       after step:1, go to step:2.
+          ↓
+          │
+        step2       after step:2, go to step:3.
+          ↓
+          │
+      ┌→step3───→   after step:3, go to step:4 or exit.
+      │   │
+    ┌─│─→─↓─←───┐
+    │ │   │     ↑
+    │ │ step4─→─┤   after step:4, go to step:4 or step:5 or step:6.
+    ↑ ↑   │     ↓
+    │ │   ↓─←─┐ │
+    │ │   │   │ │
+    │ └─step5─┘ │   after step:5, go to step:5 or step:3.
+    ↑     ┌─←───┘
+    │     ↓
+    │   step6       after step:6, go to step:4.
+    │     ↓
+    └──←──┘
+
+The algorithm is implemented by coding each step as a separate sub-function, and
+tail-calling from one step to the next. This is as close as we come to branching
+in D!
+
+Notice  that  nearly  all  of the primitive and defined functions in [##.assign]
+deal in matrices - a tribute to APL's native array-handling.
+
+The state is represented by 3 matrices at each step:
+
+    costs:  the current cost matrix.
+
+    zeros:  marked zeros: 0-not a zero, 1-unmarked zero, 2-starred, 3-primed.
+
+    covers: 0-uncovered  item, 1-item covered by horizontal (row covering) line,
+            2-item covered by vertical (column covering) line, 3-item covered by
+            both horizontal and vertical lines.
+
+In  addition, step 5 takes a boolean matrix left argument, indicating the posit-
+ion of the first primed zero.
+
+Using the example cost matrix from above, the following trace shows the state of
+play between each step ─[n]─.
+
+  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
+  │72  99  88│   │ 0  27  16│   │*0  27  16│   │*0│ 27  16│   │*0│ 27  16│
+  │23  30  35├[1]┤ 0   7  12├[2]┤ 0   7  12├[3]┤ 0│  7  12├[4]┤ 0│  7  12├[6]─··
+  │51  59  84│   │ 0   8  33│   │ 0   8  33│   │ 0│  8  33│   │ 0│  8  33│(7)
+  └──────────┘   └──────────┘   └──────────┘   └──────────┘   └──────────┘
+  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
+  │*0│ 20   9│   │*0│ 20   9│   │*0  20   9│   │*0│ 20│  9│   │*0│ 20│  9│
+··┤ 0│  0   5├[4]┤ 0│['0]  5├[5]┤ 0  *0   5├[3]┤ 0│ *0│  5├[4]┤ 0│ *0│  5├[6]─··
+  │ 0│  1  26│   │ 0│  1  26│   │ 0   1  26│   │ 0│  1│ 26│   │ 0│  1│ 26│(5)
+  └──────────┘   └──────────┘   └──────────┘   └──────────┘   └──────────┘
+  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
+  │*0│ 20│  4│   │*0│ 20   4│   │*0│ 19   3│   │*0│ 19   3│   │*0  19   3│
+··┤ 0│ *0│  0├[4]┤ 0┼─*0──'0├[6]┤─1┼─*0──'0├[4]┤─1┼[*0]['0├[5]┤ 1   0  *0├[3]─··
+  │ 0│  1│ 21│   │ 0│  1  21│(1)│ 0│  0  20│   │ 0│['0] 20│   │ 0  *0  20│
+  └──────────┘   └──────────┘   └──────────┘   └──────────┘   └──────────┘
+  ┌──────────┐
+  │ 1   0   0│
+··┤ 0   0   1│
+  │ 0   1   0│
+  └──────────┘
+
+References:
+
+    H.W.Kuhn, The Hungarian method for the assignment problem, Naval Research
+    Logistics Quarterly, 2 (1955), pp. 83-97.
+
+    J.R.Munkres, Algorithms for the assignment and transportation problems,
+    J. SIAM 5 (1957) 32-38.
+
+Examples:
+
+      costs                         ⍝ example cost matrix.
+72 99 88
+23 30 35
+51 59 84
+
+      assign costs                  ⍝ minimum cost assignment.
+1 0 0
+0 0 1
+0 1 0
+
+      assign -costs                 ⍝ maximum benefit assignment.
+0 1 0
+1 0 0
+0 0 1
+
+      {+/+/⍵×assign ⍵} costs        ⍝ total minimum cost.
+166
+
+      {+/+/-⍵×assign ⍵} -costs      ⍝ total maximum benefit.
+206
+
+      costs←?6 10⍴50                ⍝ new 6×10 cost matrix.
+
+      costs
+ 7 38 23 27 11  3 34 34 47 20
+26 42  2  3 27 34  1 20  4 21
+35 30 47 43 27  5 33 21 36 46
+39 14  3 37 17 32 38 50 19 13
+50 37 38 33  4 32 45 14 22 39
+24 12 14 18  9 25 45 46  4 46
+
+      assign costs                  ⍝ minimum cost assignment.
+1 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 1 0 0 0
+0 0 0 0 0 1 0 0 0 0
+0 0 1 0 0 0 0 0 0 0
+0 0 0 0 1 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0
+
+      {⍵×assign ⍵} costs            ⍝ cost per assignment.
+7 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 1 0 0 0
+0 0 0 0 0 5 0 0 0 0
+0 0 3 0 0 0 0 0 0 0
+0 0 0 0 4 0 0 0 0 0
+0 0 0 0 0 0 0 0 4 0
+
+      {+/+/⍵×assign ⍵} costs        ⍝ total minimum cost.
+24
+
+      assign -costs                 ⍝ maximum benefit assignment.
+0 0 0 0 0 0 0 0 1 0
+0 1 0 0 0 0 0 0 0 0
+0 0 1 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 1 0 0
+1 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 1
+
+      {-⍵×assign ⍵} -costs          ⍝ cost per assignment.
+ 0  0  0 0 0 0 0  0 47  0
+ 0 42  0 0 0 0 0  0  0  0
+ 0  0 47 0 0 0 0  0  0  0
+ 0  0  0 0 0 0 0 50  0  0
+50  0  0 0 0 0 0  0  0  0
+ 0  0  0 0 0 0 0  0  0 46
+
+      {+/+/-⍵×assign ⍵} -costs      ⍝ total maximum benefit.
+282
+
+      costs←?10 6⍴50                ⍝ new 10×6 cost matrix
+
+      costs
+14  1 21  2 36 47
+12 10 16 45 33  8
+35 20 20 25  8 30
+43 30 48 28  8 50
+21  8 29 13 25 24
+49  7 10 16 32  7
+33 32 41 13 24 20
+11  2 46 22  8 48
+21  7 45  5  9  4
+19 13  7 40 23 18
+
+      assign costs                  ⍝ minimum cost assignment.
+0 1 0 0 0 0
+1 0 0 0 0 0
+0 0 0 0 1 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 1
+0 0 0 1 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 1 0 0 0
+
+See also: Graphs X apportion
+
+Index:assignment|Hungarian method|maximise|optimise|graph|independent zeros
+Index;Kuhn H.W.|Munkres J.R.

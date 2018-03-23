@@ -1,0 +1,114 @@
+────────────
+Line-Vectors
+────────────
+A  "line-vector"  or  "line-list"  is a character vector with embedded linefeed,
+(⎕UCS 13) characters. Line-vectors are an alternative to nested vectors-of-vect-
+ors for representing lines of text.  Typically they trade off  slower  and  more
+complex  line  access for reduced workspace usage. These notes are themselves an
+example.
+
+Examples:
+
+      show←{⍴⎕←' ·'subs ⍵}              ⍝ Show shape and '·'s for blanks.
+
+      show text                         ⍝ Simple text vector.
+"When·we·wish·to·start·on·a·subsidiary·operation·we·need·only·make·a·note·of·wh
+      ere·we·left·off·the·major·operation·and·then·apply·the·first·instruction·
+      of·the·subsidiary.·When·the·subsidiary·is·over·we·look·up·the·note·and·co
+      ntinue·with·the·major·operation.·Each·subsidiary·operation·can·end·with·i
+      nstructions·for·the·recovery·of·the·note.·How·is·the·burying·and·disinter
+      ring·of·the·note·to·be·done?·There·are·of·course·many·ways.·One·is·to·kee
+      p·a·list·of·these·notes·in·one·or·more·standard·size·delay·lines...·with·
+      the·most·recent·last.·The·position·of·the·most·recent·of·these·will·be·ke
+      pt·in·a·fixed·TS·[short·delay·line]·and·this·reference·will·be·modified·e
+      very·time·a·subsidiary·is·started·or·finished.·The·burying·and·disinterri
+      ng·processes·are·fairly·elaborate,·but·there·is·fortunately·no·need·to·re
+      peat·the·instructions·involved·each·time,·the·burying·being·done·through·
+      a·standard·instruction·table·BURY,·and·the·disinterring·by·the·table·UNBU
+      RY."·-·A.M.Turing·1945.
+978
+
+      show 60 wrap text                         ⍝ Text wrapped at 60 cols.
+"When·we·wish·to·start·on·a·subsidiary·operation·we·need
+only·make·a·note·of·where·we·left·off·the·major·operation
+and·then·apply·the·first·instruction·of·the·subsidiary.
+When·the·subsidiary·is·over·we·look·up·the·note·and
+continue·with·the·major·operation.·Each·subsidiary
+operation·can·end·with·instructions·for·the·recovery·of·the
+note.·How·is·the·burying·and·disinterring·of·the·note·to·be
+done?·There·are·of·course·many·ways.·One·is·to·keep·a·list
+of·these·notes·in·one·or·more·standard·size·delay·lines...
+with·the·most·recent·last.·The·position·of·the·most·recent
+of·these·will·be·kept·in·a·fixed·TS·[short·delay·line]·and
+this·reference·will·be·modified·every·time·a·subsidiary·is
+started·or·finished.·The·burying·and·disinterring·processes
+are·fairly·elaborate,·but·there·is·fortunately·no·need·to
+repeat·the·instructions·involved·each·time,·the·burying
+being·done·through·a·standard·instruction·table·BURY,·and
+the·disinterring·by·the·table·UNBURY."·-·A.M.Turing·1945.
+978
+
+      show justify 60 wrap text                 ⍝ Justified wrapped text.
+"When··we··wish··to·start·on·a·subsidiary·operation·we·need
+only··make··a·note·of·where·we·left·off·the·major·operation
+and··then··apply··the··first·instruction·of·the·subsidiary.
+When··the··subsidiary··is··over··we··look··up··the·note·and
+continue···with···the···major··operation.··Each··subsidiary
+operation·can·end·with·instructions·for·the·recovery·of·the
+note.·How·is·the·burying·and·disinterring·of·the·note·to·be
+done?··There·are·of·course·many·ways.·One·is·to·keep·a·list
+of··these·notes·in·one·or·more·standard·size·delay·lines...
+with··the·most·recent·last.·The·position·of·the·most·recent
+of··these·will·be·kept·in·a·fixed·TS·[short·delay·line]·and
+this··reference·will·be·modified·every·time·a·subsidiary·is
+started·or·finished.·The·burying·and·disinterring·processes
+are··fairly··elaborate,·but·there·is·fortunately·no·need·to
+repeat··the··instructions··involved··each·time,·the·burying
+being··done··through·a·standard·instruction·table·BURY,·and
+the··disinterring··by·the·table·UNBURY."·-·A.M.Turing·1945.
+1019
+
+      show unwrap justify 60 wrap text              ⍝ Unwrapped again.
+"When··we··wish··to·start·on·a·subsidiary·operation·we·need·only··make··a·note·
+      of·where·we·left·off·the·major·operation·and··then··apply··the··first·ins
+      truction·of·the·subsidiary.·When··the··subsidiary··is··over··we··look··up
+      ··the·note·and·continue···with···the···major··operation.··Each··subsidiar
+      y·operation·can·end·with·instructions·for·the·recovery·of·the·note.·How·i
+      s·the·burying·and·disinterring·of·the·note·to·be·done?··There·are·of·cour
+      se·many·ways.·One·is·to·keep·a·list·of··these·notes·in·one·or·more·standa
+      rd·size·delay·lines...·with··the·most·recent·last.·The·position·of·the·mo
+      st·recent·of··these·will·be·kept·in·a·fixed·TS·[short·delay·line]·and·thi
+      s··reference·will·be·modified·every·time·a·subsidiary·is·started·or·finis
+      hed.·The·burying·and·disinterring·processes·are··fairly··elaborate,·but·t
+      here·is·fortunately·no·need·to·repeat··the··instructions··involved··each·
+      time,·the·burying·being··done··through·a·standard·instruction·table·BURY,
+      ·and·the··disinterring··by·the·table·UNBURY."·-·A.M.Turing·1945.
+1019
+
+      show squeeze unwrap justify 60 wrap text      ⍝ Re-squeezed.
+"When·we·wish·to·start·on·a·subsidiary·operation·we·need·only·make·a·note·of·wh
+      ere·we·left·off·the·major·operation·and·then·apply·the·first·instruction·
+      of·the·subsidiary.·When·the·subsidiary·is·over·we·look·up·the·note·and·co
+      ntinue·with·the·major·operation.·Each·subsidiary·operation·can·end·with·i
+      nstructions·for·the·recovery·of·the·note.·How·is·the·burying·and·disinter
+      ring·of·the·note·to·be·done?·There·are·of·course·many·ways.·One·is·to·kee
+      p·a·list·of·these·notes·in·one·or·more·standard·size·delay·lines...·with·
+      the·most·recent·last.·The·position·of·the·most·recent·of·these·will·be·ke
+      pt·in·a·fixed·TS·[short·delay·line]·and·this·reference·will·be·modified·e
+      very·time·a·subsidiary·is·started·or·finished.·The·burying·and·disinterri
+      ng·processes·are·fairly·elaborate,·but·there·is·fortunately·no·need·to·re
+      peat·the·instructions·involved·each·time,·the·burying·being·done·through·
+      a·standard·instruction·table·BURY,·and·the·disinterring·by·the·table·UNBU
+      RY."·-·A.M.Turing·1945.
+978
+      text ≡ squeeze unwrap justify wrap text       ⍝ Full circle.
+1
+      text ≡ unwrap squeeze justify wrap text       ⍝ Full circle.
+1
+
+See also: wrap unwrap squeeze justify wrapnote
+See also: ltov vtol htx
+See also: cols
+
+Index:line vector|text|justify text|wrapping, words
+Index;Turing A.M.

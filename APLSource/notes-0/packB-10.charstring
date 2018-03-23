@@ -1,0 +1,8 @@
+cmp ← {cmp←1} ##.packB exp                      ⍝ Pack a simple array.
+
+In some cases (esp. 16 bit bitmaps) this provides pretty good compression ratio!
+
+See also: Data_compression
+
+Index:packing|compression
+Index;Jantunen V-M.

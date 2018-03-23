@@ -1,0 +1,20 @@
+ packQ←{                             ⍝ Assorted uniQues packer.
+     (⎕IO ⎕ML)←1 3                   ⍝ environment.
+     key←↑,/{↓(⍳⍵)∘.>⍳⍵}¨⍳23         ⍝ binary keys (up to 276 uniq elts).
+
+     cmp←{                           ⍝ compress:
+         dt←,⍵                       ⍝ vectorize.
+         u←{⍵{⍺[⍒⍵]}{+/⍵=dt}¨⍵}∪dt   ⍝ sort uniques according to frequency.
+         k←1,¨key ⋄ d←∊k[u⍳dt]       ⍝ replace with keys.
+         u((⍴⍴⍵),⍴⍵)d                ⍝ uniques (rank, shape) binary data vector.
+     }
+
+     unc←{                           ⍝ uncompress:
+         (u q d)←⍵                   ⍝ split the argument.
+         s←(↑q)⍴1↓q                  ⍝ shape.
+         p←d≤¯1↓0,d                  ⍝ split with first 1's.
+         s⍴u[key⍳p⊂d]                ⍝ reconstruct the result.
+     }
+
+     ⍺←1 ⋄ ⍺=1:cmp ⍵ ⋄ unc ⍵         ⍝ choose the tool.
+ }

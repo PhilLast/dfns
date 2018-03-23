@@ -1,0 +1,39 @@
+ ary←{⎕IO ⎕ML←0 1                        ⍝ ⍺-ary representation of rational ⍵.
+     ⍵=0:,'0'                            ⍝ 0: special case.
+     base←|⍺                             ⍝ positive base (-ive suppresses fmt).
+     sign abs←(×⍵)(|⍵)                   ⍝ sign and absolute value.
+     exp←⌈base⍟abs                       ⍝ exponent.
+     man←abs×base*-exp                   ⍝ mantissa.
+     p q←⌊{⍵ 1÷1∨⍵}man                   ⍝ ⎕ct-approximate rational.
+
+     digs←{                              ⍝ ⍺-digits.
+         ⍵=0:(⊃↓0 q⊤⍺)⍬ 1                ⍝ no remainder: exact result.
+         lim<⍴⍺:(rnd⊃↓0 q⊤⍺)⍬ 0          ⍝ truncated digit sequence.
+         ⍵∊⍺:(⍺ rep ⍵),1                 ⍝ repeat: non-terminating rat.
+         (⍺,⍵)∇ base×q|⍵                 ⍝ history and remainder.
+     }                                   ⍝ :: [rems] ∇ rem → digs rep exact
+
+     ofmt←{                              ⍝ optional formatting.
+         (sig exp fix rep rat)←⍵         ⍝ rational number structs.
+         fmt←⌷∘(⎕D,⎕A)∘⊂                 ⍝ char vec from num vec of ⍺ digits.
+         lft pad←0⌈1 ¯1×exp              ⍝ digits before and zeros after point.
+         zro←{⍵,(⍴⍵)↓0}                  ⍝ leading zero if required.
+         neg←(sig<0)/'¯'                 ⍝ -·················    sign,
+         nnn←fmt zro lft↑fix,lft⍴rep     ⍝ ·nnn··············    whole part,
+         fff←fmt(pad/0),lft↓fix⌊base-1   ⍝ ·····fff··········    fraction,
+         rrr←fmt(0⌈exp-⍴fix)⌽rep         ⍝ ········rrr·······    repeat sequence,
+         fffrrr←fff opt rrr              ⍝ ·····fffrrrrrr····    optimised rep,
+         dot←(''≡fffrrr)↓'.'             ⍝ ····.·············    base-ary point,
+         etc←(×⍴rep)/'...'               ⍝ ··············...·    ellipsis,
+         cut←rat↓'?'                     ⍝ ·················?    truncation mark,
+         neg,nnn,dot,fffrrr,etc,cut      ⍝ _nnn.fffrrrrrr...?    formatted numb.
+     }⍣(⍺>0)                             ⍝ :: ∇ sig exp fix rep rat → [-]
+
+     lim←⌈base⍟÷⎕CT⌈2*¯53                ⍝ max number of ⍺-digits.           <V>
+     rnd←{(¯2↓⍵),+∘(5∘≤)/¯2↑⍵}           ⍝ round-off of last digit.
+     rep←{(0 1=⊂∨\⍵=⍺)/¨1↑↓0 q⊤⍺}        ⍝ reqular repeating rational sequence.
+     opt←{(-+/∧\=⌿↑⌽¨⍺ ⍵)↓⍺,⍵,⍵}         ⍝ abcxy vwxy ... → abc, xyvw, xyvw ...
+
+     q=1:ofmt sign(exp+1)(,1)⍬ 1         ⍝ base*n: special case.
+     ofmt sign exp,⍬ digs p×base         ⍝ optional formatting of ⍺-ary number.
+ }

@@ -1,0 +1,230 @@
+cmat ← {h v t←⍬ ⍬ 0} ##.box text            ⍝ Box the simple text array ⍵.
+
+Supplied  by Veli-Matti Jantunen, [box] applies borders and horizontal and vert-
+ical dividers to simple character matrix [text].
+
+Optional  left  argument  (default ⍬ ⍬ 0) determines whether to draw borders and
+where to draw dividers.
+
+ ⍺: [1] = horizontal lines
+    [2] = vertical lines
+
+An optional 3rd item specifies line type:
+
+    [3] = type: 0 = box drawing chars, 1 = raw boxing
+
+For example:
+
+      box 6 10⍴⎕a           ⍝ Borders but no dividers, by default.
+┌──────────┐
+│ABCDEFGHIJ│
+│KLMNOPQRST│
+│UVWXYZABCD│
+│EFGHIJKLMN│
+│OPQRSTUVWX│
+│YZABCDEFGH│
+└──────────┘
+
+       ┌──────────────────── Horizontal dividers after 2nd and 4th row.
+       │    ┌─────────────── Vertical dividers after 3rd, 6th and 7th column.
+       │    │
+      (2 4)(3 6 7)box 6 10⍴⎕a
+┌───┬───┬─┬───┐
+│ABC│DEF│G│HIJ│
+│KLM│NOP│Q│RST│
+├───┼───┼─┼───┤
+│UVW│XYZ│A│BCD│
+│EFG│HIJ│K│LMN│
+├───┼───┼─┼───┤
+│OPQ│RST│U│VWX│
+│YZA│BCD│E│FGH│
+└───┴───┴─┴───┘
+
+      ┌───────────────────── No horizontal dividers.
+      │  ┌────────────────── Vertical dividers after each column.
+      │  │
+      ⍬(⍳5) box 5 5⍴⎕a
+┌─┬─┬─┬─┬─┐
+│A│B│C│D│E│
+│F│G│H│I│J│
+│K│L│M│N│O│
+│P│Q│R│S│T│
+│U│V│W│X│Y│
+└─┴─┴─┴─┴─┘
+
+The  horizontal  or  vertical  border may be switched off by prefixing ¯1 to the
+first or second control item, respectively.
+
+       ┌──────────────────── Horizontal dividers after 2nd and 3rd rows.
+       │    ┌─────────────── Vertical dividers after 1st and 4th cols.
+       │    │
+      (2 3)(1 4) box 5 5⍴⎕a
+┌─┬───┬─┐
+│A│BCD│E│
+│F│GHI│J│
+├─┼───┼─┤
+│K│LMN│O│
+├─┼───┼─┤
+│P│QRS│T│
+│U│VWX│Y│
+└─┴───┴─┘
+
+        ┌─────────────────── Same again but with no horizontal border.
+        │
+      (¯1 2 3)(1 4) box 5 5⍴⎕a
+│A│BCD│E│
+│F│GHI│J│
+├─┼───┼─┤
+│K│LMN│O│
+├─┼───┼─┤
+│P│QRS│T│
+│U│VWX│Y│
+
+             ┌────────────── Same again but with no vertical border.
+             │
+      (2 3)(¯1 1 4) box 5 5⍴⎕a
+─┬───┬─
+A│BCD│E
+F│GHI│J
+─┼───┼─
+K│LMN│O
+─┼───┼─
+P│QRS│T
+U│VWX│Y
+─┴───┴─
+
+        ┌───────┬─────────── Same again but with no vertical border.
+        │       │
+      (¯1 2 3)(¯1 1 4) box 5 5⍴⎕a
+A│BCD│E
+F│GHI│J
+─┼───┼─
+K│LMN│O
+─┼───┼─
+P│QRS│T
+U│VWX│Y
+
+A divider index of 0 or the number of rows or columns is interpreted as specify-
+ing the border and so overrides a ¯1 border supressor.
+
+       ┌──────────────────── Dividers after 1st and 2nd row.
+       │
+      (1 2)⍬ box 3 10⍴⎕a
+┌──────────┐
+│ABCDEFGHIJ│
+├──────────┤
+│KLMNOPQRST│
+├──────────┤
+│UVWXYZABCD│
+└──────────┘
+
+        ┌─────────────────── Same again, with horizontal borders supressed.
+        │
+      (¯1 1 2)⍬ box 3 10⍴⎕a
+│ABCDEFGHIJ│
+├──────────┤
+│KLMNOPQRST│
+├──────────┤
+│UVWXYZABCD│
+
+          ┌───────────────── Same again, with explicit upper border (divider
+          │                  after 0th row).
+          │
+      (¯1 0 1 2)⍬ box 3 10⍴⎕a
+┌──────────┐
+│ABCDEFGHIJ│
+├──────────┤
+│KLMNOPQRST│
+├──────────┤
+│UVWXYZABCD│
+
+              ┌───────────── Same again, with explicit lower border (divider
+              │              after 3rd row).
+              │
+      (¯1 1 2 3)⍬ box 3 10⍴⎕a
+│ABCDEFGHIJ│
+├──────────┤
+│KLMNOPQRST│
+├──────────┤
+│UVWXYZABCD│
+└──────────┘
+
+Finally,  a  third item of the left argument may be given to specify the type of
+the border and divider lines:
+
+0 (default) "smooth" box drawing characters
+1   ·   ·   "raw" characters, which are more suitable for printing.
+
+Examples:
+
+      a←3 10⍴⎕a                 ⍝ Simple array.
+
+      box a                     ⍝ simple case
+┌──────────┐
+│ABCDEFGHIJ│
+│KLMNOPQRST│
+│UVWXYZABCD│
+└──────────┘
+
+      1 box a                   ⍝ draw a row..
+┌──────────┐
+│ABCDEFGHIJ│
+├──────────┤
+│KLMNOPQRST│
+│UVWXYZABCD│
+└──────────┘
+
+      ⍬ (⍳5) box a              ⍝ ..and columns
+┌─┬─┬─┬─┬─┬─────┐
+│A│B│C│D│E│FGHIJ│
+│K│L│M│N│O│PQRST│
+│U│V│W│X│Y│ZABCD│
+└─┴─┴─┴─┴─┴─────┘
+
+      (1 2) (2+⍳3) box a        ⍝ both
+┌───┬─┬─┬─────┐
+│ABC│D│E│FGHIJ│
+├───┼─┼─┼─────┤
+│KLM│N│O│PQRST│
+├───┼─┼─┼─────┤
+│UVW│X│Y│ZABCD│
+└───┴─┴─┴─────┘
+
+      2 ⍬ 1  box a              ⍝ raw case
++----------+
+|ABCDEFGHIJ|
+|KLMNOPQRST|
++----------+
+|UVWXYZABCD|
++----------+
+
+      (¯1) (2+⍳5)    box a      ⍝ no horiz lines
+│ABC│D│E│F│G│HIJ│
+│KLM│N│O│P│Q│RST│
+│UVW│X│Y│Z│A│BCD│
+
+      (¯1 1 3) (2+⍳5)    box a  ⍝ draw bottom
+│ABC│D│E│F│G│HIJ│
+├───┼─┼─┼─┼─┼───┤
+│KLM│N│O│P│Q│RST│
+│UVW│X│Y│Z│A│BCD│
+└───┴─┴─┴─┴─┴───┘
+
+      (¯1 0 1) (¯1 9 10) box a  ⍝ variant
+─────────┬─┐
+ABCDEFGHI│J│
+─────────┼─┤
+KLMNOPQRS│T│
+UVWXYZABC│D│
+
+      (¯1 1 2) (¯1 1 2)  box ↑'OOX' 'OXO' 'XX '     ⍝ I won!
+O│O│X
+─┼─┼─
+O│X│O
+─┼─┼─
+X│X│
+
+See also: disp display draw
+
+Index:border|box|box-drawing characters|display (of arrays)|boxing
+Index;Jantunen V-M.

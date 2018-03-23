@@ -1,0 +1,36 @@
+yes ← larg ##.subvec rarg                   ⍝ Is ⍺ a subvector of ⍵?
+
+Supplied  by  Michael  Kassler, with suggestions from Dag Dittmer, this function
+answers the question:
+
+    Is there a boolean vector bv, such that ⍺≡bv/⍵ ?
+
+[rarg] is a vector and [larg] is a scalar or vector.
+
+Examples:
+
+    'abba' subvec 'babba'
+1
+    'abba' subvec 'abbas'
+1
+    'abba' subvec 'ababa'
+1
+    'abba' subvec 'baab'
+0
+    3 3 2 1 subvec 4 3 5 6 3 2 8 1 9
+1
+    1 2 3 4 subvec 1 3 4 2 1 2 3 4
+1
+    1 2 3 subvec 3 2 1
+0
+    3 3 2 1 subvec 3 2 1
+0
+    3 3 2 1 subvec 4 3 5 6 3 2 8 1 9
+1
+    'nested' 'too' subvec 'nested' 'arrays' 'work' 'too'
+1
+
+See also: ss subs
+
+Index:subvector|subset
+Index;Kassler M.|Dittmer D.

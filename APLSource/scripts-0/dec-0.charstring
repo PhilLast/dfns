@@ -1,0 +1,50 @@
+⍝ Decimal from hex:
+
+    dec'abcd'                           ⍝ decimal equivalent of hex number.
+43981
+
+    dec'abc' 'def'                      ⍝ nested.
+2748 3567
+
+    dec' abc def '                      ⍝ blank-separated
+2748 3567
+
+    dec 2 2 2 2⍴'0123456789abcdef'      ⍝ higher rank.
+  1  35
+ 69 103
+       
+137 171
+205 239
+
+    0 1 dec¨⊂'fffe'                     ⍝ unsigned and signed interpretation.
+65534 ¯2
+
+    1 dec hex ¯3 to 3                   ⍝ round trip signed numbers.
+¯3 ¯2 ¯1 0 1 2 3
+
+    0 dec hex ¯3 to 3                   ⍝ non-round trip if unsigned.
+253 254 255 0 1 2 3
+
+    hex dec'Dead' 'Beef'                ⍝ accepts upper case A-Z.
+ dead  beef 
+
+    hex dec'2B∨~2B'                     ⍝ non-hex chars interpreted as 0s.
+ 002b002b 
+
+    dec 8 8 4⍴⎕av                       ⍝ ditto
+   0     0 0 0 2748 57072     0 0
+   0     0 0 0  291 17767 35072 0
+2748 57072 0 0    0     0     0 0
+   0     0 0 0    0     0     0 0
+   0     0 0 0    0     0     0 0
+   0     0 0 0    0     0     0 0
+   0     0 0 0    0     0     0 0
+   0     0 0 0    0     0     0 0
+
+    dec'f'                              ⍝ scalar arg (JD)
+15
+    16⍟ dec '1',254/'0'                 ⍝ large number: 16*254
+254
+    16⍟ dec '1',255/'0'                 ⍝ too-large number: 16*255
+11::Too big
+

@@ -1,0 +1,311 @@
+ joy←{                                             ⍝ Subset of the Joy language.
+                                                  ⍝ (Manfred von Thun)
+     eval←{                                        ⍝ op list evaluation
+         stk I(op ops)←⍵                           ⍝ stack and next operator
+         (⊂op)∊⊃⍺:⍺ prt stk I((⍺ dref op)cat ops)  ⍝ name dereference from dict ⍺
+         f(fr rr)←f r←stk                          ⍝ top two stack items
+         c←{op≡⍵~' '}                              ⍝ case: match ignoring blanks
+
+         c'dip    ':⍺('*⌷'rgs{⍺ prt rr I(f cat fr ops)})⍵ ⍝    [f] b → f b
+         c'cons   ':⍺('*⌷'rgs{⍺ prt((fr f)rr)I ops})⍵     ⍝    a [b] → [a b]
+         c'i      ':⍺('⌷'rgs{⍺ prt r I(f cat ops)})⍵      ⍝      [f] → f
+         c'swap   ':⍺('**'rgs{⍺ prt(fr(f rr))I ops})⍵     ⍝      a b → b a
+         c'branch ':⍺('∧⌷⌷'rgs branch)⍵                   ⍝ c[t] [f] → c:t⋄f
+         c'stack  ':⍺ prt(stk stk)I ops                   ⍝      a b → a b [b a]
+         c'unstack':⍺('⌷'rgs{⍺ prt f I ops})⍵             ⍝  c [a b] → b a
+         c'concat ':⍺('⌷⌷'rgs{⍺ prt((fr cat f)rr)I ops})⍵ ⍝   [a][b] → [a b]
+         c'uncons ':⍺('⍞'rgs uncons)⍵                     ⍝    [a b] → a [b]
+         c'small  ':⍺('*'rgs(1 smallish))⍵                ⍝            ∊ 0[]1[a]
+         c'pop    ':⍺('*'rgs{⍺ prt r I ops})⍵             ⍝      a b → a
+         c'null   ':⍺('*'rgs(0 smallish))⍵                ⍝            ∊ 0[]
+         c'pred   ':⍺('1'rgs{⍺ prt((¯1 adj f)r)I ops})⍵   ⍝        n → --n
+         c'succ   ':⍺('0'rgs{⍺ prt((1 adj f)r)I ops})⍵    ⍝        n → ++n
+         c'dup    ':⍺('*'rgs{⍺ prt(f(f r))I ops})⍵        ⍝      a b → a b b
+         c'swons  ':⍺('⌷*'rgs{⍺ prt((f fr)rr)I ops})⍵     ⍝    [a] b → [b a]
+         c'reverse':⍺('⌷'rgs{⍺ prt(('∘'rev f)r)I ops})⍵   ⍝    [a b] → [b a]
+         c'step   ':⍺('⌷⌷'rgs step)⍵                      ⍝ [a b][f] → a f b f
+         c'times  ':⍺('0⌷'rgs times)⍵                     ⍝    n [f] → f --n [f]
+         c'id     ':⍺ prt stk I ops                       ⍝        a → a
+         c'primrec':⍺('*⌷⌷'rgs primrec)⍵                  ⍝ primitive recursion
+         c'binrec ':⍺('⌷⌷⌷⌷'rgs binrec)⍵                  ⍝ binary recursion
+         ∨/c¨⊃arith:⍺('00'rgs arth)⍵                      ⍝ arithmetic functions
+         ∨/c¨⊃relat:⍺('00'rgs rels)⍵                      ⍝ relational functions
+         c'DEFINE ':⍺ define stk I ops                    ⍝ a == ..; b == ..; .
+         c'quit   ':stk I'∘'                              ⍝ exit returning stack
+         ⍺ prt(op stk)I ops                               ⍝ default: op → stack
+     }                                                    ⍝ :: Repl (see below)
+
+    ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ primitive operators and define:
+
+     uncons←{                                ⍝ uncons: separation of first item
+         (stk(hd tl))I(op ops)←⍵             ⍝     [a b c]
+         ⍺ prt(tl(hd stk))I ops              ⍝ →   a [b c]
+     }                                       ⍝ :: Oper
+
+     step←{                                  ⍝ step: op applied to list items
+         (stk list seq)I(op ops)←⍵           ⍝ [a b] [ops] │ step
+         list≡'∘':⍺ prt stk I ops            ⍝ null list: done
+         hd tl←list                          ⍝ head and tail of list
+         nxt←seq cat tl(seq(op ops))         ⍝ recursive call on step
+         ⍺ prt(hd stk)I nxt                  ⍝ → a │ ops [b] [ops] step
+     }                                       ⍝ :: Oper
+
+     times←{                                 ⍝ times: iteration
+         (stk count seq)I(op ops)←⍵          ⍝ count and operand sequence
+         count≡,'0':⍺ prt stk I ops          ⍝ 0 [seq]│ →  │
+         pred←¯1 adj count                   ⍝ --n
+         nxt←seq cat pred(seq(op ops))       ⍝ next iteration
+         ⍺ prt stk I nxt                     ⍝ n [seq]│ →  │seq --n[seq]times
+     }                                       ⍝ :: Oper
+
+     branch←{                                ⍝  true [t] [f] → t
+         (stk torf t f)I(op ops)←⍵           ⍝ false [t] [f] → f
+         ''≡seq←torf pick f t:⍺ error ⍵      ⍝ neither true nor false: error
+         ⍺ prt stk I(seq cat ops)            ⍝ eval of selected branch
+     }                                       ⍝ :: Oper
+
+     smallish←{                              ⍝ 0-null or 1-small
+         (stk val)I(op ops)←⍵                ⍝ stack and ops
+         null val:⍺ prt('true'stk)I ops      ⍝ 0 or []: true
+         ⍺⍺=0:⍺ prt('false'stk)I ops         ⍝ null: fails
+         small←bool(val≡,'1')∨'∘'≡⊃⌽val      ⍝ 1 or [val]: true
+         ⍺ prt(small stk)I ops               ⍝ true or false
+     }                                       ⍝ ⍺⍺ ∇∇ :: Oper
+
+     arth←{                                  ⍝ primitive arithmetic: + - * / ...
+         (stk m n)I(op ops)←⍵                ⍝ m & n are numeric values
+         neg←{(,'1')≡⍺<nats ⍵}⍣(op≡,'-')     ⍝ negative number test
+         1≡m neg n:⍺ error ⍵                 ⍝ negative: error
+         op n∧.≡,¨'/0':⍺ error ⍵             ⍝ divide-by-0: error
+         fn←⍎arith dref op                   ⍝ equivalent APL function
+         ⍺ prt((m fn nats n)stk)I ops        ⍝ m n│+ → (m+n)│ etc
+     }                                       ⍝ :: Oper
+
+     rels←{                                  ⍝ primitive relational: < <= = ...
+         (stk m n)I(op ops)←⍵                ⍝ m & n are numeric values
+         fn←⍎relat dref op                   ⍝ equivalent APL function
+         ⍺ prt((bool⍎m fn nats n)stk)I ops   ⍝ m n│< → (m<n)│ etc
+     }                                       ⍝ :: Oper
+
+     primrec←{                               ⍝ primitive recursion
+         (stk val acc seq)I(op ops)←⍵        ⍝ stack and operators
+         null val:⍺ prt(acc cat stk)I ops    ⍝ null[acc][seq] → acc
+         '?'≡hd tl←{                         ⍝ deconstruction of value ⍵:
+             num ⍵:⍵(¯1 adj ⍵)               ⍝ number: self and predecessor
+             atom ⍵:'?' ⋄ ⍵                  ⍝ list:   head and tail
+         }val:⍺ error ⍵                      ⍝ no prior: error
+         stk←list seq acc tl stk             ⍝ tail[acc][seq]│
+         nxt←list op hd'swap'(seq cat ops)   ⍝   │primrec head swap seq ...
+         ⍺ prt stk I nxt                     ⍝ recurse
+     }                                       ⍝ :: Oper
+
+     binrec←{                                ⍝ binary recursion
+         (stk T B F J)I(op ops)←⍵            ⍝ test, base, fork, join
+         sub←list T B F J op'∘'              ⍝ sub == [T] [B] [F] [J] binrec
+         lft←list sub'dip' '∘'               ⍝ lft == [sub]dip
+         rec←↑cat/F lft sub J                ⍝ rec == [F] lft sub J
+         nxt←list T B rec'ifte'ops           ⍝ nxt == [T] [B] [rec] ifte ...
+         ⍺ prt stk I nxt                     ⍝ recurse
+     }                                       ⍝ :: Oper
+
+     define←{                                ⍝ extended dictionary
+         _ _(_(eq rrr))←stk I(name rr)←⍵     ⍝ name == defn .
+         name≡,'.':⍺ prt stk I rr            ⍝ null defn: 'DEFINE == .'
+         ~eq≡'==':⍺ err ⍵                    ⍝ missing ==
+         body ops term←'∘'{                  ⍝ defn body and remainder
+             ⍵≡'∘':⍺ ∇(,'.')⍵                ⍝ end of tokens: gratuitous dot
+             f r←⍵                           ⍝ first and remaining tokens
+             ~(⊂f)∊,¨'.;':f ⍺ ∇ r            ⍝ more: accumulated defn
+             ('∘'rev ⍺)r f                   ⍝ end of defn
+         }rrr                                ⍝ body of definition
+         dict←↓name body,↑⍺                  ⍝ extended dictionary
+         term≡,';':dict ∇ stk I ops          ⍝ more defs: a=b; c=d;...
+         dict prt stk I ops                  ⍝ evaluation of remaining ops
+     }                                       ⍝ :: Repl
+
+     error←{                                 ⍝ primitive operator error
+         sargs I ops←⍵                       ⍝ state with uncurried args
+         stk args←(⊃sargs)(1↓sargs)          ⍝ stack and arg-vector
+         arity←¯1+⍴sargs                     ⍝ number of args
+         ⍺ err{⍵ I ops}arity{                ⍝ print error & continue
+             ⍺=0:stk                         ⍝ end of arg vector
+             (⊃⍵)((⍺-1)∇ 1↓⍵)                ⍝ first and remainder
+         }⌽sargs                             ⍝ reversed for stack
+     }                                       ⍝ :: Oper
+
+    ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ support functions:
+
+     adj←{                                   ⍝ ⍺-adjacent number, succ or pred
+         ⍵≡,⊃⍺⌽'??0':'?'                     ⍝ 0 pred: error
+         w f←(0⌈⍺)⌽'09'                      ⍝ wrap and fill digits
+         n←-+/∧\w=⌽⍵                         ⍝ number of trailing wrap digits
+         h←n↓⍵                               ⍝ leading non-wrap digits
+         d←(⎕D⍳⊃⌽h)⊃(⍺⌽⎕D),'1'               ⍝ carried-to digit
+         v←(¯1↓h),d,(-n)/f                   ⍝ adjacent number
+         ((n≠0)∧'0'≡⊃v)↓v                    ⍝   normalised
+     }                                       ⍝ :: num ← dirn ∇ num
+
+     dump←{                                  ⍝ formatted dump of machine state ⍵
+         stk I ops←⍵                         ⍝ final machine state
+         fstk fops←stk fmts ops              ⍝ format of stack and op stream
+         fstk,(×⍴fops)/'│',fops              ⍝ stack[│any remaining operators]
+     }                                       ⍝ :: ⍞ ← ∇ State
+
+     fmt←{                                   ⍝ format of cons list
+         ⍵≡'∘':''                            ⍝ end of list: done
+         f r←⍵                               ⍝ first and rest
+         join←{⍺,(⍵≡'')↓' ',⍵}               ⍝ blank separated
+         atom f:(⍕f)join ∇ r                 ⍝ format of atom
+         '[',(∇ f),']'join ∇ r               ⍝ format of list
+     }                                       ⍝ :: ⍞ ← ∇ List
+
+     rgs←{                                   ⍝ valence and type checking
+         stk I ops←⍵                         ⍝ machine state
+         ~(list⌽'∘',⍺⍺){                     ⍝ ⍺⍺ is pattern vector
+             ⍺≡'∘':1                         ⍝ all patterns matched: ok
+             ⍵≡'∘':0                         ⍝ too few args: fails
+             (p q)(f r)←⍺ ⍵                  ⍝ next patn and value
+             ~q ∇ r:0                        ⍝ following patterns fail
+             '*'=p:1                         ⍝ * matches anything
+             '⌷'=p:~atom f                   ⍝ ⌷ matches list
+             '0'=p:num f                     ⍝ 0 matches number
+             '1'=p:(num f)∧~f≡,'0'           ⍝ 1 matches non-zero number
+             '∧'=p:tval f                    ⍝ ∧ matches true, false
+             '⍞'=p:(~atom f)∧~f≡'∘'          ⍝ ⍞ matches non-empty list
+         }stk:⍺ err ⍵                        ⍝ bad args: error
+         ⍺ ⍵⍵{⍵ I ops}(≢⍺⍺)pop stk           ⍝ stack, arg vector
+     }                                       ⍝ Patn ∇∇ Oper :: Oper
+
+     lex←{                                   ⍝ word list from source vector
+         wsp←⎕UCS 13 32 133                  ⍝ version-proof white space.
+         wht←1,⍵∊wsp                         ⍝ mask for white-space separation
+         tk1←{⍵∨¯1⌽⍵}(⍵∊'[];.⊢⊣'),0          ⍝ mask for single-char tokens
+         wds←~∘(⊂'')~∘wsp¨(wht∨tk1)⊂⍵,' '    ⍝ char-vector words
+         cnd←'(*' '*)'depth wds              ⍝ comment nesting depth
+         0>⊃⌽cnd:'∘'                         ⍝ too many closing *)s: ignore line
+         toks←({⍵⍱¯1⌽⍵}×cnd)/wds             ⍝ uncommented
+         0=⍴toks:'∘'                         ⍝ null token list.
+         deps←'[]'depth toks                 ⍝ bracket-depth for each token
+         0=⊃⌽deps:toklist toks               ⍝ brackets balance: list of tokens
+         ok←+/∨\⌽deps=0                      ⍝ number of leading good tokens
+         bad←list ok↓toks,'∘'                ⍝ trailing bad tokens
+         (toklist ok↑toks)cat'┼'bad          ⍝   separated by error token
+     }                                       ⍝ :: Oseq ← ∇ ⍞
+
+     toklist←{                               ⍝ list from vector of tokens
+         '∘'rev'∘'{                          ⍝ reverse of list from token vector
+             ⍵≡'∘':⍺                         ⍝ list exhausted: done
+             f r←⍵                           ⍝ first and rest
+             f≡,']':⍺ r                      ⍝ ] list and remainder
+             ~f≡,'[':(f ⍺)∇ r                ⍝ atom
+             ls rem←'∘'∇ r                   ⍝ [ sublist
+             ('∘'rev ls)⍺ ∇ rem              ⍝ reverse of sublist
+         }list ⍵,'∘'                         ⍝ embedding of sublists
+     }                                       ⍝ :: List Word ← ∇ [Word]
+
+     offset←⌊⎕PW÷4                           ⍝ initial offet of │-separator
+     ⍺←0                                     ⍝ repl: prompt for input.
+
+     prt←⍺{                                  ⍝ print machine state
+         (f r)_(_ rr)←estk I ops←⍵           ⍝ machine state
+         f≡,'⊢':⍺ ∇ r(-|I)ops                ⍝ ⊢: tracing on:  -ive I
+         f≡,'⊣':⍺ eval r(+|I)ops             ⍝ ⊣: tracing off: +ive I
+         more←f ops⍱.≡'┼∘'                   ⍝ unless error or no operators
+         more∧I≥0:⍺ eval ⍵                   ⍝   and not tracing: continue
+         stk←(f≡'┼')tail estk                ⍝ stack without error token
+         fstk fops←stk fmts ops              ⍝ formatted stack and ops
+         fill←(|I)⍴(I≥0)↓'·'                 ⍝ traced line filled with ···
+         trim←{((⎕PW-1)⌊⍴⍵)↑⍵}               ⍝ trim at print-width
+         pmt←trim((-|I)↑fill,fstk),'│',fops  ⍝ prompt with machine state
+         more∧I<0:⍺ eval stk I ops⊣⎕←pmt     ⍝ tracing: continue
+         ~⍺⍺:stk I ops                       ⍝ not repl: quit on read
+         ⍞←pmt                               ⍝ display machine state
+         ⍺ read stk I rr                     ⍝ else: read more opers
+     }                                       ⍝ ⍺⍺ ∇∇ :: Repl
+
+     read←{                                  ⍝ read of operator stream
+         stk I _←⍵                           ⍝ ops stream is empty
+         buff←⍞                              ⍝ char vector buffer
+         J←+/∧\buff≠'│'                      ⍝ possibly changed │-offset
+         ops←lex(J+1)↓buff                   ⍝ next expression to evaluate
+         ⍺ eval stk(J××I)ops                 ⍝ stack and operators
+     }                                       ⍝ :: Repl
+
+     depth←{+\1 ¯1 0[(,¨⍺)⍳⍵]}               ⍝ ⍺-nesting depth
+     atom←{(~'∘'∊⍵)∧1=≡,⍵}                   ⍝ is an atom?
+     num←{∧/⍵∊⎕D}                            ⍝ is a number?
+     tval←{(⊂⍵)∊'true' 'false'}              ⍝ is a truth-value?
+     null←{(⊂⍵)∊(,'0')'∘'}                   ⍝ is null?
+     tail←{⍺=0:⍵ ⋄ (⍺-1)∇ t⊣h t←⍵}           ⍝ ⍺-tail of list
+     bool←{⊃⍵⌽'false' 'true'}                ⍝ 0 1 → 'false' 'true'
+     pick←{('false' 'true'⍳⊂⍺)⊃⍵,⊂''}        ⍝ 'false' 'true'⊃ ⍵
+     rev←{⍵≡'∘':⍺ ⋄ f r←⍵ ⋄ f ⍺ ∇ r}         ⍝ reversed list: (⌽⍵),⍺
+     cat←{⍺≡'∘':⍵ ⋄ f r←⍺ ⋄ f(r ∇ ⍵)}        ⍝ list catenation: ⍺,⍵
+     pop←{⍺=0:⊂⍵ ⋄ f r←⍵ ⋄ ((⍺-1)∇ r),⊂f}    ⍝ ⍺ items and tail from stack ⍵
+     dref←{names vals←⍺ ⋄ (names⍳⊂⍵)⊃vals}   ⍝ value for name ⍵ in dictionary ⍺
+     relat←(,¨'<=>','<!>',¨'=')'<=>≤≠≥'      ⍝ relational functions
+     arith←(,¨'+-*/|')'+-×÷|'                ⍝ arithmetic functions
+     err←{stk I ops←⍵ ⋄ ⍺ prt('┼'stk)I ops}  ⍝ error token in op stream
+     fmts←{(fmt'∘'rev ⍺)(fmt ⍵)}             ⍝ format of stack and operators
+     list←{↑{⍺ ⍵}/⍵}                         ⍝ list from vector ⍵
+
+    ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ coded-in-joy operators
+
+     dump ⍬ ⍬ eval{'∘'offset ⍵}lex{          ⍝ defined operators:
+         'DEFINE                                                         ',⍵}{
+         'popd     == [pop]dip ;                                         ',⍵}{
+         'pop2     == pop pop ;                                          ',⍵}{
+         'dupd     == [dup]dip ;                                         ',⍵}{
+         'unit     == []cons ;                                           ',⍵}{
+         'swapd    == [swap]dip ;                                        ',⍵}{
+         'dip2     == [dip]cons dip ;                                    ',⍵}{
+         'dip3     == [dip2]cons dip ;                                   ',⍵}{
+         'rollup   == swap swapd ;                                       ',⍵}{
+         'rolldown == swapd swap ;                                       ',⍵}{
+         'rotate   == rollup swap ;                                      ',⍵}{
+         'swoncat  == swap concat ;                                      ',⍵}{
+         'shunt    == [swons]step ;                                      ',⍵}{
+         'infra    == [reverse]dip concat [stack]dip swap                ',⍵}{
+         '            [[[]unstack]dip i stack]dip                        ',⍵}{
+         '            swap [unstack]dip reverse ;                        ',⍵}{
+         'linrec   == [] 4[cons]times dup [4[uncons]times]dip            ',⍵}{
+         '            [rolldown]dip concat [pop]dip [linrec]concat       ',⍵}{
+         '            swoncat ifte ;                                     ',⍵}{
+         'cleave   == [nullary]dip dip swap ;                            ',⍵}{
+         'rem      == swap | ;                                           ',⍵}{
+         'div      == dupd dup rollup rem [/]dip ;                       ',⍵}{
+         'not      == [false][true]branch ;                              ',⍵}{
+         'size     == 0 swap [pop succ]step ;                            ',⍵}{
+         'ifte     == [nullary]dip2 branch ;                             ',⍵}{
+         'fold     == swapd step ;                                       ',⍵}{
+         'map      == [[]]dip2                                           ',⍵}{
+         '            unit [unary]concat                                 ',⍵}{
+         '            unit [dip cons]concat                              ',⍵}{
+         '            [swap]swoncat step reverse ;                       ',⍵}{
+         'append   == reverse cons reverse ;                             ',⍵}{
+         'split    == [[][]]dip2                                         ',⍵}{
+         '            [dip2]cons [rollup]swoncat [rolldown]concat        ',⍵}{
+         '            [[swons][[swap]dip swons swap]ifte] cons           ',⍵}{
+         '            step reverse swap reverse ;                        ',⍵}{
+         'filter   == split pop ;                                        ',⍵}{
+         'nullary  == stack [i]dip cons unstack swap pop ;               ',⍵}{
+         'unary    == stack [i]dip cons unstack [pop2]dip ;              ',⍵}{
+         'cond     == [small]nullary [i i] [uncons [uncons]dip           ',⍵}{
+         '            [[nullary]dip]dip [cond]cons branch]branch ;       ',⍵}{
+         'enconcat == swapd cons concat .                                ',⍵}⍵
+
+    ⍝ Type definitions:
+    ⍝     joy   ::  ⍞ ← ∇ ⍞                 ⍝ type of this function
+    ⍝    Repl   :=  State ← Dict ∇ State    ⍝ state reduction
+    ⍝    Oper   :=  State ← Dict ∇ Sargs    ⍝ primitive operator
+    ⍝   Sargs   :=  Stack, [Value]          ⍝ vector: (⊂stack),args
+    ⍝    Dict   :=  [Name] [Oseq]           ⍝ name-value association tuple
+    ⍝   State   :=  Stack Disp Oseq         ⍝ machine state
+    ⍝    Disp   :=  offset                  ⍝ (-ive during tracing)
+    ⍝    List ⍵ :=  '∘' | ⍵ (List ⍵)        ⍝ f(fr(frr ...))
+    ⍝    Oseq   :=  List Word               ⍝ operator sequence
+    ⍝   Stack   :=  List Value              ⍝ value stack
+    ⍝   Value   :=  Word | List Value       ⍝ value
+    ⍝    Patn   :=  ⍞                       ⍝ operator argument pattern
+    ⍝    Word   :=  ⍞                       ⍝ character vector
+ }

@@ -1,0 +1,77 @@
+vec ← (fun ##.traj) arg                     ⍝ Function limit 'trajectory'.
+
+Similar to →limit←, the operator applies its function operand cumulatively until
+an  argument that has been used before is detected. The vector of distinct argu-
+ments  together with the final result is the trajectory of the function. As with
+→limit←,  a  dyadic  function  can be bound with one argument to provide the re-
+quired monadic operand function.
+
+Technical note:
+
+With the introduction of ⍣, the primitive power operator, this operator could be
+coded:
+
+    traj←{
+        ¯1↓⍺⍺{⍵,⊂⍺⍺⊃⌽⍵}⍣{(⊂⊃⌽⍺)∊⍵}⊂⍵
+    }
+
+Examples:
+
+      {2|⍵:1+3×⍵ ⋄ ⍵÷2}traj 7               ⍝ Trajectory of osc function.
+7 22 11 34 17 52 26 13 40 20 10 5 16 8 4 2 1
+
+This operator gives the next approximation in a Newton-Raphson iteration:
+
+
+      nr←{⍺←⎕CT                     ⍝ Newton-Raphson.
+          y ∆y←⍺⍺¨(⊂⍵)×1+0 ⍺        ⍝ f(x), f(x+∆)
+          ⍵+(⍺×y)÷y-∆y              ⍝ next estimate.
+      }
+
+      2∘○ nr traj 1.5       ⍝ Root of Cos(x) near 1.5.
+1.5 1.570990983 1.570796171 1.570796327 1.570796327 1.570796327
+
+      1e¯3∘(2∘○ nr)traj 1.5 ⍝ Same again but with an explicit increment.
+1.5 1.570912342 1.570796327 1.570796327
+
+⍝ Nicolas Delcros reminds us of Gérard Langlet's algorithm for generating
+⍝ a Sierpinski triangle by repeated applications of ≠\:
+
+    ' *'[⎕io+↑≠\traj 32⍴1]          ⍝ Sierpinski triangle.
+********************************
+* * * * * * * * * * * * * * * *
+**  **  **  **  **  **  **  **
+*   *   *   *   *   *   *   *
+****    ****    ****    ****
+* *     * *     * *     * *
+**      **      **      **
+*       *       *       *
+********        ********
+* * * *         * * * *
+**  **          **  **
+*   *           *   *
+****            ****
+* *             * *
+**              **
+*               *
+****************
+* * * * * * * *
+**  **  **  **
+*   *   *   *
+****    ****
+* *     * *
+**      **
+*       *
+********
+* * * *
+**  **
+*   *
+****
+* *
+**
+*
+
+See also: acc limit pow while until osc life
+
+Index:trajectory|debugging|Newton-Raphson|sequence
+Index;Langlet G.|Sierpinski W.|Delcros N.

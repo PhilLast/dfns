@@ -1,0 +1,52 @@
+⍝ Reformat dfn/op:
+
+      2 refmt ⎕cr'refmt'
+refmt←{⎕IO ⎕ML←0 1             ⍝ Reformat dfn/op.                 
+  ⍺←4 ⋄ dent csep←⍺            ⍝ default indents and ⍝-separation.
+  unqt←{~≠\⍵=''''}             ⍝ mask of unquoted tokens.         
+  code coms←↓⍉↑{               ⍝ code and comment vectors.        
+    umsk←unqt ⍵                ⍝ unquoted chars.                  
+    cmsk←∨\umsk∧⍵='⍝'          ⍝ comment mask.                    
+    code coms←(0 1=⊂cmsk)/¨⊂⍵  ⍝ code / comments.                 
+    rlb←{(∨\' '≠⍵)/⍵}          ⍝ remove leading blanks.           
+    clean←⌽rlb⌽rlb code        ⍝ cleaned code.                    
+    clean coms                 ⍝ clean code / comment.            
+  }¨↓↑⍵                        ⍝ for each line.                   
+  dents←{                      ⍝ indentation for each line        
+    toks←(unqt ⍵){⍺\⍺/⍵}⍵      ⍝ unquoted code characters.        
+    dvec←-⌿0 1⌽+\'{}'∘.=toks   ⍝ brace-depth of each token.       
+    lmask←toks='·'             ⍝ start of each line.              
+    (dent×lmask/dvec)/¨' '     ⍝ indentation for each line.       
+  }↑,/'·',¨code                ⍝ collected code vector.           
+  scoms←(⊂csep⍴' '),¨coms      ⍝ separated comments.              
+  icode←↓↑dents,¨code          ⍝ indented code lines.             
+  rtb←⌽∘{(∨\⍵≠' ')/⍵}∘⌽        ⍝ remove trailing blanks.          
+  qnr←icode,∘rtb¨scoms         ⍝ reunited code and comments.      
+  1=≡⍵:↑qnr ⋄ qnr              ⍝ ⎕cr or ⎕nr.                      
+}                                                                 
+
+      1 2 refmt ⎕cr'refmt'
+refmt←{⎕IO ⎕ML←0 1           ⍝ Reformat dfn/op.                 
+ ⍺←4 ⋄ dent csep←⍺           ⍝ default indents and ⍝-separation.
+ unqt←{~≠\⍵=''''}            ⍝ mask of unquoted tokens.         
+ code coms←↓⍉↑{              ⍝ code and comment vectors.        
+  umsk←unqt ⍵                ⍝ unquoted chars.                  
+  cmsk←∨\umsk∧⍵='⍝'          ⍝ comment mask.                    
+  code coms←(0 1=⊂cmsk)/¨⊂⍵  ⍝ code / comments.                 
+  rlb←{(∨\' '≠⍵)/⍵}          ⍝ remove leading blanks.           
+  clean←⌽rlb⌽rlb code        ⍝ cleaned code.                    
+  clean coms                 ⍝ clean code / comment.            
+ }¨↓↑⍵                       ⍝ for each line.                   
+ dents←{                     ⍝ indentation for each line        
+  toks←(unqt ⍵){⍺\⍺/⍵}⍵      ⍝ unquoted code characters.        
+  dvec←-⌿0 1⌽+\'{}'∘.=toks   ⍝ brace-depth of each token.       
+  lmask←toks='·'             ⍝ start of each line.              
+  (dent×lmask/dvec)/¨' '     ⍝ indentation for each line.       
+ }↑,/'·',¨code               ⍝ collected code vector.           
+ scoms←(⊂csep⍴' '),¨coms     ⍝ separated comments.              
+ icode←↓↑dents,¨code         ⍝ indented code lines.             
+ rtb←⌽∘{(∨\⍵≠' ')/⍵}∘⌽       ⍝ remove trailing blanks.          
+ qnr←icode,∘rtb¨scoms        ⍝ reunited code and comments.      
+ 1=≡⍵:↑qnr ⋄ qnr             ⍝ ⎕cr or ⎕nr.                      
+}                                                               
+

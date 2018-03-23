@@ -1,0 +1,76 @@
+⍝ Bijective numeration:
+
+    disp 1adic¨0 to 5                   ⍝ unary numbers
+┌┬─┬───┬─────┬───────┬─────────┐
+││1│1 1│1 1 1│1 1 1 1│1 1 1 1 1│
+└┴─┴───┴─────┴───────┴─────────┘
+
+    1 2∘adic¨ 32 4⍴ 0 to 128
+              1            2            1 1           
+ 1 2          2 1          2 2          1 1 1         
+ 1 1 2        1 2 1        1 2 2        2 1 1         
+ 2 1 2        2 2 1        2 2 2        1 1 1 1       
+ 1 1 1 2      1 1 2 1      1 1 2 2      1 2 1 1       
+ 1 2 1 2      1 2 2 1      1 2 2 2      2 1 1 1       
+ 2 1 1 2      2 1 2 1      2 1 2 2      2 2 1 1       
+ 2 2 1 2      2 2 2 1      2 2 2 2      1 1 1 1 1     
+ 1 1 1 1 2    1 1 1 2 1    1 1 1 2 2    1 1 2 1 1     
+ 1 1 2 1 2    1 1 2 2 1    1 1 2 2 2    1 2 1 1 1     
+ 1 2 1 1 2    1 2 1 2 1    1 2 1 2 2    1 2 2 1 1     
+ 1 2 2 1 2    1 2 2 2 1    1 2 2 2 2    2 1 1 1 1     
+ 2 1 1 1 2    2 1 1 2 1    2 1 1 2 2    2 1 2 1 1     
+ 2 1 2 1 2    2 1 2 2 1    2 1 2 2 2    2 2 1 1 1     
+ 2 2 1 1 2    2 2 1 2 1    2 2 1 2 2    2 2 2 1 1     
+ 2 2 2 1 2    2 2 2 2 1    2 2 2 2 2    1 1 1 1 1 1   
+ 1 1 1 1 1 2  1 1 1 1 2 1  1 1 1 1 2 2  1 1 1 2 1 1   
+ 1 1 1 2 1 2  1 1 1 2 2 1  1 1 1 2 2 2  1 1 2 1 1 1   
+ 1 1 2 1 1 2  1 1 2 1 2 1  1 1 2 1 2 2  1 1 2 2 1 1   
+ 1 1 2 2 1 2  1 1 2 2 2 1  1 1 2 2 2 2  1 2 1 1 1 1   
+ 1 2 1 1 1 2  1 2 1 1 2 1  1 2 1 1 2 2  1 2 1 2 1 1   
+ 1 2 1 2 1 2  1 2 1 2 2 1  1 2 1 2 2 2  1 2 2 1 1 1   
+ 1 2 2 1 1 2  1 2 2 1 2 1  1 2 2 1 2 2  1 2 2 2 1 1   
+ 1 2 2 2 1 2  1 2 2 2 2 1  1 2 2 2 2 2  2 1 1 1 1 1   
+ 2 1 1 1 1 2  2 1 1 1 2 1  2 1 1 1 2 2  2 1 1 2 1 1   
+ 2 1 1 2 1 2  2 1 1 2 2 1  2 1 1 2 2 2  2 1 2 1 1 1   
+ 2 1 2 1 1 2  2 1 2 1 2 1  2 1 2 1 2 2  2 1 2 2 1 1   
+ 2 1 2 2 1 2  2 1 2 2 2 1  2 1 2 2 2 2  2 2 1 1 1 1   
+ 2 2 1 1 1 2  2 2 1 1 2 1  2 2 1 1 2 2  2 2 1 2 1 1   
+ 2 2 1 2 1 2  2 2 1 2 2 1  2 2 1 2 2 2  2 2 2 1 1 1   
+ 2 2 2 1 1 2  2 2 2 1 2 1  2 2 2 1 2 2  2 2 2 2 1 1   
+ 2 2 2 2 1 2  2 2 2 2 2 1  2 2 2 2 2 2  1 1 1 1 1 1 1 
+
+      'abc'∘adic¨ 20 10⍴0 to 199
+        a      b      c      aa     ab     ac     ba     bb     bc    
+ ca     cb     cc     aaa    aab    aac    aba    abb    abc    aca   
+ acb    acc    baa    bab    bac    bba    bbb    bbc    bca    bcb   
+ bcc    caa    cab    cac    cba    cbb    cbc    cca    ccb    ccc   
+ aaaa   aaab   aaac   aaba   aabb   aabc   aaca   aacb   aacc   abaa  
+ abab   abac   abba   abbb   abbc   abca   abcb   abcc   acaa   acab  
+ acac   acba   acbb   acbc   acca   accb   accc   baaa   baab   baac  
+ baba   babb   babc   baca   bacb   bacc   bbaa   bbab   bbac   bbba  
+ bbbb   bbbc   bbca   bbcb   bbcc   bcaa   bcab   bcac   bcba   bcbb  
+ bcbc   bcca   bccb   bccc   caaa   caab   caac   caba   cabb   cabc  
+ caca   cacb   cacc   cbaa   cbab   cbac   cbba   cbbb   cbbc   cbca  
+ cbcb   cbcc   ccaa   ccab   ccac   ccba   ccbb   ccbc   ccca   cccb  
+ cccc   aaaaa  aaaab  aaaac  aaaba  aaabb  aaabc  aaaca  aaacb  aaacc 
+ aabaa  aabab  aabac  aabba  aabbb  aabbc  aabca  aabcb  aabcc  aacaa 
+ aacab  aacac  aacba  aacbb  aacbc  aacca  aaccb  aaccc  abaaa  abaab 
+ abaac  ababa  ababb  ababc  abaca  abacb  abacc  abbaa  abbab  abbac 
+ abbba  abbbb  abbbc  abbca  abbcb  abbcc  abcaa  abcab  abcac  abcba 
+ abcbb  abcbc  abcca  abccb  abccc  acaaa  acaab  acaac  acaba  acabb 
+ acabc  acaca  acacb  acacc  acbaa  acbab  acbac  acbba  acbbb  acbbc 
+ acbca  acbcb  acbcc  accaa  accab  accac  accba  accbb  accbc  accca 
+
+    1∧.=, 1 'abc' ⎕a (⍳5) ∘.{⍵ ≡ ⍺ (adic⍣2) ⍵} 0 to 10      ⍝ check round-trip
+1
+
+    ↑'fee' 'fi' 'foe' 'fum'∘ adic¨10*0 to 8                 ⍝ deep alphabet
+ fee                                                                  
+ fi   fi                                                              
+ fee  fee  fum  fum                                                   
+ foe  foe  fi   fee  fum                                              
+ fi   fee  fi   foe  fum  foe  fum                                    
+ fee  fee  fum  fee  fi   fi   fee  foe  fum                          
+ foe  fi   fum  foe  fum  fee  fum  foe  foe  fum                     
+ fi   fee  fee  fum  fi   fee  fee  fi   fee  foe  foe  fum           
+ fee  fee  foe  foe  fee  fee  foe  fee  foe  fum  foe  foe  foe  fum 

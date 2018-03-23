@@ -1,0 +1,29 @@
+vvec ← graph ##.search from                 ⍝ Breadth-first search of graph ⍺.
+
+Returns  a  vector  of  vertices  visited  in a breadth-first search of graph ⍺,
+starting from vertex ⍵.
+
+Technical notes:
+
+Breadth-first search  (BFS) radiates outwards from the starting vertex, visiting
+each vertex  that  is accessible from it.  This coding differs slightly from the
+classic breadth-first search, see →bfs←.
+
+Examples:
+
+    a                       ⍝ graph "a".
+┌───┬─┬───┬───┬─┐
+│2 3│3│2 4│1 5│3│
+└───┴─┴───┴───┴─┘
+
+    a search 3              ⍝ vertices in a breadth-first search from vertex 3.
+3 2 4 1 5
+
+      k search 1            ⍝ breadth-first search of knight's move graph. →kt←
+1 11 18 5 17 21 26 28 3 12 33 35 15 20 22 2 27 34 4 6 31 36 38 9 41 43 13 45 29
+      50 25 52 30 32 10 14 37 7 16 39 19 42 44 49 51 23 46 48 53 55 58 60 62 24
+      40 47 8 54 56 57 59 61 63 64
+
+See also: Graphs bfs path span dfspan kt trav
+
+Index:graph, unweighted|breadth-first search

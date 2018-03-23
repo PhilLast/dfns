@@ -1,0 +1,46 @@
+rslt ← {lft} (fun ##.perv) rgt              ⍝ Scalar pervasion.
+
+The function operand is applied between (or to in the monadic case)  correspond-
+ing simple scalars in its argument(s).
+
+Technical note:
+
+[perv]  is  closely  related to the dyadic form of operator →saw← (simple-array-
+wise).  The only difference is that [perv] applies its function operand  between
+(or to) depth-0 arrays and →saw←, between depth-(0 or 1) arrays.
+
+We  could  parameterize  the  maximum  depth at which the function is applied by
+passing it as a right operand:
+
+    wwaw←{                  ⍝ Function operand applied ⍵⍵-Array-Wise.
+        ⍵⍵≥¯1+|≡⍺ ⍵:⍺ ⍺⍺ ⍵  ⍝ Both shallow enough: apply operand.
+        ⍵⍵≥|≡⍵:∇∘⍵¨⍺        ⍝ ⍵ shallow: traverse ⍺.
+        ⍵⍵≥|≡⍺:⍺∘∇¨⍵        ⍝ ⍺ shallow: traverse ⍵.
+        ⍺ ∇¨⍵               ⍝ Both deep: traverse both.
+    }
+
+Remember  that  in Dyalog, vector strands bind tighter than operands. This means
+that it may be necessary to separate the right operand from the argument:
+
+    aaa (, wwaw 0) bbb      ⍝ operand 0 separated from argument bbb.
+    aaa , wwaw 0 ⌽ bbb      ⍝ parentheses unnecessary in this case.
+
+Example:
+
+    1(2 3) ,perv (4 5)6     ⍝ pervasive join
+┌─────────┬─────────┐
+│┌───┬───┐│┌───┬───┐│
+││1 4│1 5│││2 6│3 6││
+│└───┴───┘│└───┴───┘│
+└─────────┴─────────┘
+
+    {⍵ ⍵}perv 1(2 3)        ⍝ pervasive "dup"
+┌───┬─────────┐
+│1 1│┌───┬───┐│
+│   ││2 2│3 3││
+│   │└───┴───┘│
+└───┴─────────┘
+
+See also: saw rows truth_tables
+
+Index:scalar-wise|pervasive function

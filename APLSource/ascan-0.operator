@@ -1,0 +1,6 @@
+ ascan←{⎕ML←1        ⍝ Associative scan.
+     2>0⊥⍴⍵:⍵        ⍝ few items: done.
+     ⌽↑⍺⍺{
+         (⊂(⊃⍵)⍺⍺ ⍺),⍵
+     }/⌽(⊂∘⊃¨↓⍵),↑1↓¨↓⍵
+ }

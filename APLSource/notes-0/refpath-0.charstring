@@ -1,0 +1,23 @@
+refs ← ##.refpath ref                       ⍝ Refs path from root to ⍵.
+
+Returns a vector of namespace references, one item for each  node  in  the  path
+from the root to argument namespace [ref].  Depending  on the location of [ref],
+the first item of the result will be # or ⎕SE.
+
+Examples:
+
+    )ns a.b.c
+#.a.b.c.d
+
+    refpath a.b.c           ⍝ ref-path from root.
+ #  #.a  #.a.b  #.a.b.c
+
+    )cs a.b.c
+#.a.b.c
+
+    #.refpath ⎕this         ⍝ ref-path from root.
+ #  #.a  #.a.b  #.a.b.c
+
+See also: up refs Namespaces
+
+Index:parent space|ancestor space|namespace references

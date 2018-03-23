@@ -1,0 +1,20 @@
+cvec ← ##.utf8get fid                       ⍝ Char vector from UTF-8 file ⍵.
+
+The entire content of UTF-8 file [fid] is returned as a character vector.
+
+Examples:
+
+    ⎕←'Hello ⍳⍴ World' utf8put 'tmp.txt'    ⍝ put 18-byte UTF-8 file.
+18
+
+    utf8get 'tmp.txt'                       ⍝ get file.
+Hello ⍳⍴ World
+
+    notes.utf8get   utf8put 'tmp.txt'       ⍝ put these notes.
+
+    notes.utf8get ≡ utf8get 'tmp.txt'       ⍝ get these notes.
+1
+
+See also: utf8put int getfile
+
+Index:UTF-8|encoding|Unicode

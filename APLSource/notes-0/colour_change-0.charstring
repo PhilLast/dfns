@@ -1,0 +1,18 @@
+------------------------------------
+Changing the colour of notes windows
+------------------------------------
+
+You can make these notes easier on the eye by changing their colour:
+
+    Right-click in the body of this window and select [Colours...]
+
+    Click on the [Variables] tab.
+
+    From the [Color Element] drop-down, select [Character Vector] or click
+    in the [CharVector - ...] window.
+
+    Choose Foreground and Background colours to taste.
+
+    Click on [OK].
+
+Index:colour, changing

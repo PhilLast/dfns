@@ -1,0 +1,14 @@
+ roman←{⎕IO←0                    ⍝ Roman numeral arithmetic.
+
+     num←{{⍵+.××0.5+×⍵-1↓⍵,0}(,⍉1 5∘.×10*⍳4)[7|'IVXLCDMivxlcdm'⍳⍵]}
+
+     fmt←{~∘' ',1 0 0⍉(' '⍪3 4⍴'MCXI DLV ')[(0 4 2 2⊤0 16 20 22 24 32 36 38 39 28)[;⍵⊤⍨4⍴10];]}
+
+     depth←{⍵⍵≥|≡⍵:⍺⍺ ⍵ ⋄ ∇¨⍵}   ⍝ apply function ⍺⍺ at depth ⍵⍵.
+
+     nums←num depth 1            ⍝ arabic from roman.
+     fmts←fmt depth 0            ⍝ roman from arabic.
+
+     0=⎕NC'⍺':fmts ⍺⍺ nums ⍵     ⍝ monadic operand function.
+     fmts(nums ⍺)⍺⍺ nums ⍵       ⍝ dyadic operand function.
+ }

@@ -1,0 +1,4 @@
+⍝ Simple text vector packager:
+
+    ⎕ucs packT'Mississippi'             ⍝ Simple text vector packager.
+0 77 105 115 115 105 115 115 105 112 112 105

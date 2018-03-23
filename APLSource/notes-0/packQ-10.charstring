@@ -1,0 +1,43 @@
+cmp ← {cmp←1} ##.packQ data                 ⍝ Assorted uniQues packer.
+
+The data must have no more than 256 unique elements.
+
+Veli-Matti  Jantunen suggests the following technique for reducing the size of a
+shipped executable:
+
+⍝ Using:
+
+    (⎕io ⎕ml)←1 3
+
+⍝ Remove comments and empty lines (enhanced hhh, see →rmcm←).
+
+    {0∊⍴⍵:z←''
+        ∇ 1↓⍵,(⍎↑⍵).{
+            ((⍵,'.')∘,¨~∘' '¨↓⎕nl 9){⍺
+            }{c←⎕cr ⍵ ⋄ ~'⍝'∊c:0
+                ((,∨\(c='⍝')∧=\c≠'''')/,c)←' '
+                ⎕fx(∨/c≠' ')⌿c
+            }¨~∘' '¨↓⎕nl 3 4
+        }↑⍵
+    },'#'
+
+⍝ Make the list for packing
+
+    list←(~∘' '¨↓⎕nl 3 4)~'LX' 'packQ' 'Do'
+
+⍝ Pack
+
+    ∆fns←packQ 1↓∊{⎕tc[3],1↓∊⎕tc[2],¨⎕nr ⍵}¨list
+
+⍝ Make executable
+
+    ...
+
+⍝ The LX function starts with the following:
+
+    {⎕fx(⍵≠2⊃⎕tc)⊂⍵)¨{(⍵≠3⊃⎕tc)⊃⍵}0 packQ ∆fns ⋄ ⎕ex'∆fns'
+
+See also: Data_compression rmcm
+
+Index:packing|compression
+Index;Jantunen V-M.

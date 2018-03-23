@@ -1,0 +1,35 @@
+⍝ Wildcard matching:
+
+    showmatch←{,[⍳⍴⍴⍵]⍵,[¯0.5+⍴⍴⍵](' ¯'[⎕io+⍺ match ⍵])}
+
+    '<<*>>' showmatch '<<>> <<aa>>'
+<<>> <<aa>>
+¯    ¯     
+
+    '<<*>>' showmatch 2 2 24⍴'<<aa>>  <<>>  <<bbb>> '
+<<aa>>  <<>>  <<bbb>> <<
+¯       ¯     ¯         
+aa>>  <<>>  <<bbb>> <<aa
+      ¯     ¯           
+>>  <<>>  <<bbb>> <<aa>>
+    ¯     ¯       ¯     
+  <<>>  <<bbb>> <<aa>>  
+  ¯     ¯       ¯       
+    'a*b*d' showmatch 'aaaabbbccd'              ⍝ overlapping patterns
+aaaabbbccd
+¯¯¯¯      
+
+    'a*a' showmatch 'abracadabra'               ⍝ repeated patterns
+abracadabra
+¯  ¯ ¯ ¯   
+
+    '12*56*9' showmatch ⎕D                      ⍝ multiple wildcards
+0123456789
+ ¯        
+
+    (2⍴¨¨ '12*56*9' '*') showmatch 2⍴¨⎕D        ⍝ nested arguments.
+ 00  11  22  33  44  55  66  77  88  99 
+     ¯                                  
+
+    'ban*and' match 'band'                      ⍝ overlapping subject
+0 0 0 0

@@ -1,0 +1,475 @@
+⍝ Solution vector for Sudoku problem ⍵:
+
+    s33←0 9⍴0                       ⍝ sample problem
+    s33⍪←0 0 1 6 9 0 5 0 0
+    s33⍪←4 0 0 2 7 0 0 0 1
+    s33⍪←0 7 0 0 0 0 0 9 0
+    s33⍪←0 0 0 0 0 0 0 3 0
+    s33⍪←0 0 0 4 3 0 0 0 7
+    s33⍪←0 0 0 7 8 0 6 0 0
+    s33⍪←0 0 6 0 0 0 8 0 0
+    s33⍪←0 2 0 1 4 0 0 6 0
+    s33⍪←0 1 0 3 5 0 0 4 0
+
+    sbox←{⎕IO ⎕ML←0 1                       ⍝ Box sudoku grids.
+        ⍺←(⍴⍵)*÷2                           ⍝ default square cells.
+        vp hp←0=⍺|⍳¨⍴⍵                      ⍝ vert and horiz partition vectors.
+        numbs←⍉↑vp∘(⊂[0])¨hp⊂⍵              ⍝ numeric sub-areas.
+        width←2+⌊10⍟⌈/1,,⍵                  ⍝ digits per number.
+        fmt←width∘{⍵=0:⌽⍺↑'·' ⋄ ⍺ 0⍕⍵}      ⍝ dots for zeros.
+        cells←0 1∘↓¨↑∘(,/)¨fmt¨¨numbs       ⍝ char matrix sub-areas.
+        hv←⍺⍴¨⊂¨⌽(⍴⊃cells)/¨'│─'            ⍝ vert and horiz boundaries.
+        in←{↑⍺{⍺,⍺⍺,⍵}/⍵}                   ⍝ ⍺ separates ⍵.
+        (t m b)lr←'┬┼┴' '├┤'in¨∘⊂¨hv        ⍝ bordering lines.
+        body←m in⍉¨⊂[1 2]'│'in cells        ⍝ collected cells.
+        (⍉body in t b)in lr in¨'┌└' '┐┘'    ⍝ boxed grid.
+    }
+
+    sbox s33                        ⍝ show sample problem.
+┌─────┬─────┬─────┐
+│· · 1│6 9 ·│5 · ·│
+│4 · ·│2 7 ·│· · 1│
+│· 7 ·│· · ·│· 9 ·│
+├─────┼─────┼─────┤
+│· · ·│· · ·│· 3 ·│
+│· · ·│4 3 ·│· · 7│
+│· · ·│7 8 ·│6 · ·│
+├─────┼─────┼─────┤
+│· · 6│· · ·│8 · ·│
+│· 2 ·│1 4 ·│· 6 ·│
+│· 1 ·│3 5 ·│· 4 ·│
+└─────┴─────┴─────┘
+
+    sbox¨sudoku s33                 ⍝ display all solutions.
+ ┌─────┬─────┬─────┐  ┌─────┬─────┬─────┐  ┌─────┬─────┬─────┐ 
+ │3 8 1│6 9 4│5 7 2│  │2 8 1│6 9 3│5 7 4│  │2 8 1│6 9 3│5 7 4│ 
+ │4 6 9│2 7 5│3 8 1│  │4 6 9│2 7 5│3 8 1│  │4 6 9│2 7 5│3 8 1│ 
+ │2 7 5│8 1 3│4 9 6│  │3 7 5│8 1 4│2 9 6│  │5 7 3│8 1 4│2 9 6│ 
+ ├─────┼─────┼─────┤  ├─────┼─────┼─────┤  ├─────┼─────┼─────┤ 
+ │7 9 4│5 6 2│1 3 8│  │7 9 2│5 6 1│4 3 8│  │7 9 2│5 6 1│4 3 8│ 
+ │6 5 8│4 3 1│9 2 7│  │6 5 8│4 3 9│1 2 7│  │6 5 8│4 3 9│1 2 7│ 
+ │1 3 2│7 8 9│6 5 4│  │1 3 4│7 8 2│6 5 9│  │1 3 4│7 8 2│6 5 9│ 
+ ├─────┼─────┼─────┤  ├─────┼─────┼─────┤  ├─────┼─────┼─────┤ 
+ │5 4 6│9 2 7│8 1 3│  │5 4 6│9 2 7│8 1 3│  │3 4 6│9 2 7│8 1 5│ 
+ │9 2 3│1 4 8│7 6 5│  │9 2 3│1 4 8│7 6 5│  │9 2 5│1 4 8│7 6 3│ 
+ │8 1 7│3 5 6│2 4 9│  │8 1 7│3 5 6│9 4 2│  │8 1 7│3 5 6│9 4 2│ 
+ └─────┴─────┴─────┘  └─────┴─────┴─────┘  └─────┴─────┴─────┘ 
+
+    s22←0 4⍴0                       ⍝ sample 2×2 problem
+    s22⍪←0 2 3 4
+    s22⍪←3 0 0 0
+    s22⍪←2 0 0 0
+    s22⍪←4 0 0 0
+
+    sbox¨sudoku s22                 ⍝ display all solutions.
+ ┌───┬───┐  ┌───┬───┐  ┌───┬───┐ 
+ │1 2│3 4│  │1 2│3 4│  │1 2│3 4│ 
+ │3 4│2 1│  │3 4│1 2│  │3 4│1 2│ 
+ ├───┼───┤  ├───┼───┤  ├───┼───┤ 
+ │2 1│4 3│  │2 1│4 3│  │2 3│4 1│ 
+ │4 3│1 2│  │4 3│2 1│  │4 1│2 3│ 
+ └───┴───┘  └───┴───┘  └───┴───┘ 
+
+    s44←0 16⍴0                      ⍝ sample 4×4 problem
+    s44⍪← 3  6  0  0  0  0  4 15 12 11 13  2  8  0  5 0
+    s44⍪← 0  0 15  0  1  0 14  0  0  0  8  0 13  0  0 0
+    s44⍪← 0 14 13  0  0  8 10  0  0 16  5  0  0  0  0 0
+    s44⍪← 0  5  4  0  0  0  0  0  0  0  0  7  3 11  0 2
+    s44⍪← 0  0  9  0  0  7  0  0  0  0  3 10  6  4  0 0
+    s44⍪← 0 11  0  0  4 13  0  0  0  0  0  0  7 15 10 8
+    s44⍪← 0  0  0  0 15  0  0  0  0  0  6  4 11  0 14 0
+    s44⍪← 0 15  0  0  0  0  6  0 13  2  0  0  9 12  0 0
+    s44⍪←12  1  0  0  0  3  0  6  9  4 14  8  5  0  0 0
+    s44⍪← 0  0  0  0 13  2  0 12  0  5 10  3  1 14  9 0
+    s44⍪← 2  0  0  9  0  5  0  0 11 12  7  0  0  8 15 0
+    s44⍪← 0  0  8 14  0  4  7 11  1 13  0  0  0  0  0 0
+    s44⍪← 4  0  0  0  3  0 16  0  0  6  0  0  0  0  0 0
+    s44⍪←16  7 12 13 14  9  0  2  8  0  0  0  0 10  0 0
+    s44⍪←11  0  1  0  0 15  0  0  0  0  0  0  0  5  0 0
+    s44⍪←15  8  0  0  6  0  5 10  3  0  0  0  0  7 11 0
+
+      sbox¨ sudoku s44              ⍝ display all solutions.
+ ┌───────────┬───────────┬───────────┬───────────┐ 
+ │ 3  6 10  1│ 7 16  4 15│12 11 13  2│ 8  9  5 14│ 
+ │ 7  2 15 12│ 1 11 14  5│ 6  3  8  9│13 16  4 10│ 
+ │ 9 14 13 11│ 2  8 10  3│ 4 16  5  1│15  6  7 12│ 
+ │ 8  5  4 16│12  6  9 13│14 10 15  7│ 3 11  1  2│ 
+ ├───────────┼───────────┼───────────┼───────────┤ 
+ │13 16  9  8│11  7 12  1│15 14  3 10│ 6  4  2  5│ 
+ │14 11  6  3│ 4 13  2 16│ 5  1  9 12│ 7 15 10  8│ 
+ │ 1 12  2  5│15 10  3  9│ 7  8  6  4│11 13 14 16│ 
+ │10 15  7  4│ 5 14  6  8│13  2 16 11│ 9 12  3  1│ 
+ ├───────────┼───────────┼───────────┼───────────┤ 
+ │12  1 16  7│10  3 15  6│ 9  4 14  8│ 5  2 13 11│ 
+ │ 6  4 11 15│13  2  8 12│16  5 10  3│ 1 14  9  7│ 
+ │ 2 13  3  9│16  5  1 14│11 12  7  6│10  8 15  4│ 
+ │ 5 10  8 14│ 9  4  7 11│ 1 13  2 15│16  3 12  6│ 
+ ├───────────┼───────────┼───────────┼───────────┤ 
+ │ 4  9  5 10│ 3 12 16  7│ 2  6 11 13│14  1  8 15│ 
+ │16  7 12 13│14  9 11  2│ 8 15  1  5│ 4 10  6  3│ 
+ │11  3  1  6│ 8 15 13  4│10  7 12 14│ 2  5 16  9│ 
+ │15  8 14  2│ 6  1  5 10│ 3  9  4 16│12  7 11 13│ 
+ └───────────┴───────────┴───────────┴───────────┘ 
+
+    s34←0 12⍴0                      ⍝ sample 3×4 problem
+    s34⍪←9  6  0  0 10  0  0  8  2  0 0  4
+    s34⍪←0  1  0 11  0 12  0  0  0  0 3  5
+    s34⍪←0  0  0  0  6  0  7 11 12  0 0  0
+    s34⍪←0  0 10  7  0  0  0  0  4  0 9  0
+    s34⍪←1  0  6  0 12 11  0  4  0  3 0  0
+    s34⍪←0  0  9  0  0 10  8  1  0  0 6  0
+    s34⍪←0  7  0  0 11  2  1  0  0 12 0  0
+    s34⍪←2  0 12  0  4  0  6  5  0  1 0 11
+    s34⍪←0 10  0  5  0  0  0  0  3  4 0  0
+    s34⍪←0  0  0 10  5  8  0  7  0  0 0  0
+    s34⍪←5  3  0  0  0  0 11  0  9  0 0  0
+    s34⍪←7  0  0  0  3  0  0  6  0  0 4  2
+
+      3 4∘sbox¨3 4 sudoku s34       ⍝ display all solutions.
+ ┌───────────┬───────────┬───────────┐  ┌───────────┬───────────┬───────────┐ 
+ │ 9  6  5 12│10  1  3  8│ 2  7 11  4│  │ 9  6  5 12│10  1  3  8│ 2  7 11  4│ 
+ │ 8  1  7 11│ 9 12  4  2│ 6 10  3  5│  │ 8  1  7 11│ 9 12  4  2│ 6 10  3  5│ 
+ │10  4  2  3│ 6  5  7 11│12  9  1  8│  │10  4  2  3│ 6  5  7 11│12  9  1  8│ 
+ ├───────────┼───────────┼───────────┤  ├───────────┼───────────┼───────────┤ 
+ │12 11 10  7│ 2  6  5  3│ 4  8  9  1│  │12 11 10  7│ 2  6  5  3│ 4  8  9  1│ 
+ │ 1  2  6  8│12 11  9  4│ 7  3  5 10│  │ 1  2  6  8│12 11  9  4│10  3  5  7│ 
+ │ 3  5  9  4│ 7 10  8  1│11  2  6 12│  │ 3  5  9  4│ 7 10  8  1│11  2  6 12│ 
+ ├───────────┼───────────┼───────────┤  ├───────────┼───────────┼───────────┤ 
+ │ 4  7  3  6│11  2  1 10│ 5 12  8  9│  │ 4  7  3  6│11  2  1 10│ 5 12  8  9│ 
+ │ 2  8 12  9│ 4  3  6  5│10  1  7 11│  │ 2  8 12  9│ 4  3  6  5│ 7  1 10 11│ 
+ │11 10  1  5│ 8  7 12  9│ 3  4  2  6│  │11 10  1  5│ 8  7 12  9│ 3  4  2  6│ 
+ ├───────────┼───────────┼───────────┤  ├───────────┼───────────┼───────────┤ 
+ │ 6  9  4 10│ 5  8  2  7│ 1 11 12  3│  │ 6  9  4 10│ 5  8  2  7│ 1 11 12  3│ 
+ │ 5  3  8  2│ 1  4 11 12│ 9  6 10  7│  │ 5  3  8  2│ 1  4 11 12│ 9  6  7 10│ 
+ │ 7 12 11  1│ 3  9 10  6│ 8  5  4  2│  │ 7 12 11  1│ 3  9 10  6│ 8  5  4  2│ 
+ └───────────┴───────────┴───────────┘  └───────────┴───────────┴───────────┘ 
+
+⍝ Another coding (ADC):
+
+    sudoku←{⎕IO ⎕ML←0 1
+        ⍝ Sudoku - ⍵: N×N setup where box size N*÷2 is integral
+        ⍝ The setup is a valid arrangement in some cells of numbers from 1-N; the rest are 0´s.
+        ⍝ Each row, column and the N boxes of each result must contain all numbers 1 to N.
+
+        valid←{                                 ⍝ Validate.  ⍵ be...
+            (2≠⍴⍴⍵)∨(≠/2↑⍴⍵)∨0≠1|(⊃⍴⍵)*÷2:1     ⍝ a square matrix with an integral box size
+            ((⍴⍵)⍴0)≢⊃1↑0⍴⊂⍵:1                  ⍝ numeric N×N matrix
+            1∊~⍵∊⍳1+⊃⍴⍵:1                       ⍝ numbers 0-N only
+            0=+/,⍵                              ⍝ at least one number
+        }
+        box←{⍵⌿(⍵×⍳⍵)∘.+⍵/⍳⍵}                   ⍝ Box template ⍵:sq root of size
+        chk←{1∊1<+⌿(1+⍳⊃⍴⍵)∘.=⍵}                ⍝ Check for duplicates of 1-9 in ⍵
+        sets←{⍉⍺{(⍺=+⌿⍵)/⍵}(⍵⍴2)⊤⍳2*⍵}          ⍝ LM sets of ⍺ unique nrs from 1 to ⍵
+        iv←{⍵/⍳⍴⍵}                              ⍝ idiom
+        un←{(⍳⍴⍵)=⍵⍳⍵}                          ⍝ LV of first unique items in vector
+        indx←{⍺[⍵]}                             ⍝ index ⍺ by ⍵
+        search←{                                ⍝ Search possibilities for a cell
+            r p←⍵
+            p←⍺ adjust p                        ⍝ adjust possibles for current cell
+            ~0∊⊃(r p)←rules r p:r               ⍝ resolve using logical tests
+            (next p)∇¨⊂r p                      ⍝ search cell with minimum possibilities
+        }
+        adjust←{                                ⍝ Adjust cell to single value
+            0>⊃⍺:⍵                              ⍝ no cell
+            p←⍵ ⋄ p[;⊃⍺]←⍺[1]=⍳⊃⍴⍵ ⋄ p          ⍝ item ⍺ in to 1, rest of cell to 0
+        }
+        next←{                                  ⍝ Cell-value pairs for possible values
+            ⍵{⍵,¨iv ⍺[;⍵]                       ⍝ in the cell with the minimum nr of
+            }{1⍳⍨⍺\{⍵=⌊/⍵}⍺/⍵}/{(⍵>1)⍵}+⌿⍵      ⍝ possibilities (2 or more)
+        }
+        rules←{                                 ⍝ Apply logic tests to resolve cells
+            ~0∊⊃z←sole ⍵:z                      ⍝ detect single-value possibilities
+            ~0∊⊃z←↑singles/(⍳⊃⍴RCB),⊂z:z        ⍝ single-valued cells in row/col/box
+            ~0∊⊃z←↑uniques/(⍳(⍴⊃z)*÷2),⊂z:z     ⍝ values unique to one row/col of a box
+            ~0∊⊃z←↑NinN/4 3 2,⊂z:z              ⍝ detect N vals in N cells
+            ~0∊⊃z←↑matches/4 3 2,⊂z:z           ⍝ matches of N vals in N cells of r/c/b
+            z≡⍵:⍵                               ⍝ finish if no state change
+            ∇ z                                 ⍝ otherwise repeat rules
+        }
+        sole←{                                  ⍝ Resolve sole value cells. ⍺:soln, ⍵:possibles
+            ~0∊⊃r p←⍵:⍵                         ⍝ pass through
+            0∊n←+⌿p:⍬ ⍬                         ⍝ no go
+            (⍴r)=i←1⍳⍨n×r=0:⍵                   ⍝ no remaining single value cells
+            r[i]←1+p[;i]⍳1                      ⍝ set result value
+            p[¯1+i⊃r;i~⍨iv i⊃Masks]←0           ⍝ remove as possible value in related cells
+            ∇ r p                               ⍝ check for further single-value cells
+        }
+        singles←{                               ⍝ Fix box cells that resolve to single value
+            ~0∊⊃r p←⍵:⍵                         ⍝ pass through
+            i←RCB[⍺;]                           ⍝ cells in row, col or box
+            b←i/p                               ⍝ possibles for cells
+            ~1∊l←(1=+/b)∧~(1+⍳⊃⍴p)∊i/r:⍵        ⍝ values that occur just once ex result values
+            c←(iv i)[(↓l⌿b)⍳¨1]                 ⍝ cells where they occur
+            p[;c]←(⍳⊃⍴p)∘.=iv l                 ⍝ modify to just the single value
+            sole r p                            ⍝ resolve the sole values
+        }
+        uniques←{                               ⍝ Unique to one row/col of the ⍺´th box
+            ~0∊⊃r p←⍵:⍵                         ⍝ pass through
+            b←p[;⍺⊃Box]                         ⍝ box cell values
+            i←(⍴i)⊤iv,(i>1)∧i=⍉(⌽⍴i)⍴+/i←+/b    ⍝ 2 or more unique to a row
+            j←(⍴j)⊤iv,(j>1)∧j=⍉(⌽⍴j)⍴+/j←+/[1]b ⍝ 2 or more unique to a column
+            (0∊⍴i)∧0∊⍴j:⍵                       ⍝ none found
+            s←⊃⌽⍴b                              ⍝ box size
+            p[(s(⍺ rinds)↓i),s(⍺ cinds)↓j]←0    ⍝ remove vals from cols of other boxes
+            sole r p                            ⍝ resolve sole values
+        }
+        rinds←{                                 ⍝ uniques: row pick inds to update
+            0=⍴⊃⍵:0⍴⊂0 0
+            ↑,/(0⊃⍵),¨¨((⍺*2)×(1⊃⍵)+¨⍺×⌊⍺⍺÷⍺)+⊂(⍳⍺*2)~(⍺×⍺|⍺⍺)+⍳⍺
+        }
+        cinds←{                                 ⍝ uniques: column pick inds to update
+            0=⍴⊃⍵:0⍴⊂0 0
+            ↑,/(0⊃⍵),¨¨((1⊃⍵)+¨⍺×⍺|⍺⍺)+⊂(⍺*2)×(⍳⍺*2)~(⍺×⌊⍺⍺÷⍺)+⍳⍺
+        }
+        matches←{                               ⍝ Resolve exact matches on ⍺ possible values
+            ~0∊⊃r p←⍵:⍵                         ⍝ pass through
+            0∊n←+⌿p:⍬ ⍬                         ⍝ no go if no possibilities for a cell
+            i←(n=⍺){iv ⍺\un 2⊥⍺/⍵}p             ⍝ cells with ⍺ possible values
+            sole↑(⍺ match)/i,⊂⍵                 ⍝ resolve each ⍺-set then sole values
+        }
+        match←{                                 ⍝ Resolve exact matches in row/col/box
+            ~0∊⊃r p←⍵:⍵                         ⍝ pass through
+            ⍺⍺≠+/p[;⍺]:⍵                        ⍝ cell no longer has ⍺⍺ values
+            ⍺⍺>+/l←p[;⍺]∧.=p:⍵                  ⍝ occurrences of matches with the ⍺´th cell
+            1∊⍺⍺<n←+/l/RCB:⍬ ⍬                  ⍝ no go if >⍺⍺ matches in any row/col/box
+            ~1∊n=⍺⍺:⍵                           ⍝ no r/c/b´s with exactly ⍺⍺ matches
+            p←↑(l do_matches)/(iv n=⍺⍺),⊂p      ⍝ remove matched vals from related cells
+            sole r p                            ⍝ resolve singles then sole values
+        }
+        do_matches←{                            ⍝ Remove vals from other row/col/box cells
+            p←⍵                                 ⍝ ⍺⍺ marks all occurrences of match
+            p[iv p[;⍺⍺⍳1];iv RCB[⍺;]∧~⍺⍺]←0     ⍝ filter occurrences in the ⍺´th row/col/box
+            p
+        }
+        NinN←{                                  ⍝ Reduce ⍺-sets in exactly ⍺ cells of a row/col/box
+            ~0∊⊃r p←⍵:⍵                         ⍝ pass through
+            s←⍺ sets(⍴r)*÷2                     ⍝ all combns of sets of ⍺ values
+            l←r=0                               ⍝ non-singular cells
+            n←(⍺=(s∨.∧p)+.∧⍉RCB)∧⍺=(s∨.∧l\l/p)+.∧⍉RCB ⍝ set-RCB combinations with ⍺ occurrences
+            i←↓[0](⍴n)⊤iv,n                     ⍝ indices of set-RCB combns
+            sole↑(s do_NinN)/i,⊂⍵               ⍝ reduce non-set values from cells then sole values
+        }
+        do_NinN←{                               ⍝ Remove values not in set ⊃⍺ from identified cells
+            i←⍺⍺[0⊃⍺;] ⋄ j←RCB[1⊃⍺;]            ⍝ set values / row-col-box mask
+            r p←⍵ ⋄ p[iv~i;iv j∧i∨.∧p]←0 ⋄ r p  ⍝ [vals not in set;cells in set and in row/col/box]
+        }
+        setup←{                                 ⍝ Setup LM possibilities per cell
+            p←(⊂1+⍳⊃⍴⍵)~¨Masks/¨⊂,⍵             ⍝ possibles per cell, except...
+            ((0≠,⍵)/p)←0~⍨,⍵                    ⍝ adjust given cells to single value
+            (1+⍳⊃⍴⍵)∘.∊p                        ⍝ convert to LM vals×cells
+        }
+        res←(⍴⍵)∘{⍺∘⍴¨((⍴⍵)⍴(×/⍺)↑1)⊂⍵}         ⍝ Shape result(s)
+
+        valid ⍵:'Invalid setup'                 ⍝ Validate
+        RCB←{,¨(⍵/⍳⍵)(⍵ ⍵⍴⍳⍵)(box ⍵*÷2)}⊃⍴⍵     ⍝ Rows-Columns-Boxes
+        Masks←↓↑∨/{⍵∘.=⍵}¨RCB                   ⍝ Sets per cell of related row/col/box cells
+        RCB←↑⍪/(⊂⍳⊃⍴⍵)∘.=¨RCB                   ⍝ Selection vectors for rows,columns,boxes
+        Box←((⍴⍵)*÷2)∘⍴¨(↓RCB[(2×⊃⍴⍵)+⍳⊃⍴⍵;])/¨⊂⍳×/⍴⍵ ⍝ Box indices
+        1∊chk¨Masks/¨⊂,⍵:'Invalid setup'        ⍝ Duplicates in row/column/box
+
+        res∊¯1 0 search(,⍵)(setup ⍵)
+    ⍝:  ADC 5Jun2005
+    }
+
+    sbox¨sudoku s33                 ⍝ display all solutions.
+ ┌─────┬─────┬─────┐  ┌─────┬─────┬─────┐  ┌─────┬─────┬─────┐ 
+ │2 8 1│6 9 3│5 7 4│  │2 8 1│6 9 3│5 7 4│  │3 8 1│6 9 4│5 7 2│ 
+ │4 6 9│2 7 5│3 8 1│  │4 6 9│2 7 5│3 8 1│  │4 6 9│2 7 5│3 8 1│ 
+ │3 7 5│8 1 4│2 9 6│  │5 7 3│8 1 4│2 9 6│  │2 7 5│8 1 3│4 9 6│ 
+ ├─────┼─────┼─────┤  ├─────┼─────┼─────┤  ├─────┼─────┼─────┤ 
+ │7 9 2│5 6 1│4 3 8│  │7 9 2│5 6 1│4 3 8│  │7 9 4│5 6 2│1 3 8│ 
+ │6 5 8│4 3 9│1 2 7│  │6 5 8│4 3 9│1 2 7│  │6 5 8│4 3 1│9 2 7│ 
+ │1 3 4│7 8 2│6 5 9│  │1 3 4│7 8 2│6 5 9│  │1 3 2│7 8 9│6 5 4│ 
+ ├─────┼─────┼─────┤  ├─────┼─────┼─────┤  ├─────┼─────┼─────┤ 
+ │5 4 6│9 2 7│8 1 3│  │3 4 6│9 2 7│8 1 5│  │5 4 6│9 2 7│8 1 3│ 
+ │9 2 3│1 4 8│7 6 5│  │9 2 5│1 4 8│7 6 3│  │9 2 3│1 4 8│7 6 5│ 
+ │8 1 7│3 5 6│9 4 2│  │8 1 7│3 5 6│9 4 2│  │8 1 7│3 5 6│2 4 9│ 
+ └─────┴─────┴─────┘  └─────┴─────┴─────┘  └─────┴─────┴─────┘ 
+
+⍝ Another coding (JMS):
+
+    sudoku←{⎕IO ⎕ML←0                       ⍝ Solution vector for Sudoku ⍵.
+
+        ⍺←(⍴⍵)*÷2                           ⍝ default square cells.
+
+        search←{                            ⍝ vector of solution vectors.
+            opts←+⌿⍵                        ⍝ number of options for each unit.
+            ~0∊1=opts:⍺,⊂⍵                  ⍝ one per unit: accumulate solution.
+            poss←opts=⌊/(,opts)~1           ⍝ mask of remaining fewest choices.
+            next←(⍴poss)⍴<\,poss            ⍝ first choice.
+            vals←{(⍵=⊂⍵)∘.∧¨⊂next}⍳⊃⍴⍵      ⍝ all values at next position.
+            more←(vals∧⊂⍵)~⊂0∧⍵             ⍝ next placements vector.
+            pvec←⊃,/⍵∘set¨more              ⍝ plays vector.
+            ↑∇⍨/pvec,⊂⍺                     ⍝ accumulated solutions.
+        }                                   ⍝ svec ← svec :: posn
+
+        set←{                               ⍝ set ⍵ in state ⍺.
+            this←⍵∨[1 2]~∨⌿⍵                ⍝ mask removes choices from ⍵ units.
+            that←⍉∧/[2]∧/[3]ex⍲[2 3 4]⍉⍵    ⍝ mask removes conflicting choices.
+            0∊∨⌿⍺∧that:⍬                    ⍝ stitched: quit.
+            next←⍺∧⍵∨this∧that              ⍝ next state.
+            more←<⌿1=+⌿⍺,[0.5]next>⍵        ⍝ units reduced to single option.
+            ~1∊more:⊂next                   ⍝ none: done.
+            next ∇ more∧[1 2]next           ⍝ place forced moves in grid.
+        }                                   ⍝ state ← state :: moves
+
+        ex←{⍵∘.∨1∧0×⍳⊃⍴⍵}⍺{                 ⍝ rank-5 boolean exclusion array.
+            a←⍉⍺∘⊥¨⌊(⍳⍵)÷⊂⍺                 ⍝ cell colours.
+            v h←+/¨1⊂↑⍳⍵                    ⍝ vert and horiz colours.
+            i←~↑{⍵=⊂⍵}⍵∘⊥¨⍳⍵                ⍝ id array.
+            i∧3 2 0 1⍉{(⍉⍵)∨.=⍵}↑a v h      ⍝ exclusion array.
+        }⍴⍵
+
+        nums←{+⌿¨⍵×+⍀¨1+⍵×0}                ⍝ numeric from bool solutions.
+        show←{(⍉↓⍉⍵)/¨⊂(⊃⍴⍵)↑1↓⎕D}          ⍝ debug: show state of play.
+        init←⊃(1∨⍵∘.=⊃↓⍵)set(1+⍳⍴↓⍵)∘.=⍵    ⍝ initial position.
+        nums(0⍴⊂⍵)search init               ⍝ boxed solutions.
+    }
+
+    sbox¨sudoku s33                 ⍝ display all solutions.
+ ┌─────┬─────┬─────┐  ┌─────┬─────┬─────┐  ┌─────┬─────┬─────┐ 
+ │3 8 1│6 9 4│5 7 2│  │2 8 1│6 9 3│5 7 4│  │2 8 1│6 9 3│5 7 4│ 
+ │4 6 9│2 7 5│3 8 1│  │4 6 9│2 7 5│3 8 1│  │4 6 9│2 7 5│3 8 1│ 
+ │2 7 5│8 1 3│4 9 6│  │5 7 3│8 1 4│2 9 6│  │3 7 5│8 1 4│2 9 6│ 
+ ├─────┼─────┼─────┤  ├─────┼─────┼─────┤  ├─────┼─────┼─────┤ 
+ │7 9 4│5 6 2│1 3 8│  │7 9 2│5 6 1│4 3 8│  │7 9 2│5 6 1│4 3 8│ 
+ │6 5 8│4 3 1│9 2 7│  │6 5 8│4 3 9│1 2 7│  │6 5 8│4 3 9│1 2 7│ 
+ │1 3 2│7 8 9│6 5 4│  │1 3 4│7 8 2│6 5 9│  │1 3 4│7 8 2│6 5 9│ 
+ ├─────┼─────┼─────┤  ├─────┼─────┼─────┤  ├─────┼─────┼─────┤ 
+ │5 4 6│9 2 7│8 1 3│  │3 4 6│9 2 7│8 1 5│  │5 4 6│9 2 7│8 1 3│ 
+ │9 2 3│1 4 8│7 6 5│  │9 2 5│1 4 8│7 6 3│  │9 2 3│1 4 8│7 6 5│ 
+ │8 1 7│3 5 6│2 4 9│  │8 1 7│3 5 6│9 4 2│  │8 1 7│3 5 6│9 4 2│ 
+ └─────┴─────┴─────┘  └─────┴─────┴─────┘  └─────┴─────┴─────┘ 
+
+⍝ Another nother coding (JMS):
+
+    sudoku←{⎕IO ⎕ML←0                       ⍝ Solution vector for Sudoku ⍵.
+
+        ⍺←(⍴⍵)*÷2                           ⍝ default square areas.
+
+        search←{                            ⍝ vector of solution vectors.
+            1∊⍴↑⍵:⍺,⊂⍵                      ⍝ solution: accumulate.
+            cell←,(1<,↑⍴¨⍵)⍳1               ⍝ next cell to visit.
+            next←cell∘(⍵ set)∘,¨cell⊃⍵      ⍝ vector of next positions.
+            ↑∇⍨/(next~⊂⍬),⊂⍺                ⍝ recursively explore subtrees.
+        }                                   ⍝ svec ← svec :: posn
+
+        set←{                               ⍝ set ⍵ @ ⍺ in state ⍺⍺.
+            that←,⌿↑cvx[⍺]/¨¨⍵              ⍝ remove option ⍵ from these cells.
+            this←(((1↑all)~¨⍵),⊂⍬)[⍺⍳sx]    ⍝ remove these options from cells ⍺.
+            next←⍺⍺~¨,⌿↑that this           ⍝ new state.
+            opts←↑,∘↑∘(⍴¨)¨⍺⍺ next          ⍝ number options remaining per cell.
+            0∊opts:⍬                        ⍝ stitched: quit.
+            mask←(0 1∧.=1=opts)>sx∊⍺        ⍝ mask of forced moves.
+            ~1∊mask:next                    ⍝ no forced moves: done.
+            (mask/sx)(next ∇∇),↑mask/next   ⍝ apply forced moves.
+        }                                   ⍝ state ← posns (state ::) values
+
+        indx←{                              ⍝ bool connection vectors.
+            a←⍺∘⊥¨⌊(⍳⍵)÷⊂⍺                  ⍝ area colours.
+            v h←+/¨1⊂↑⍳⍵                    ⍝ vert and horiz colours.
+            cm←,[1↓⍳3]↑a v h                ⍝ characteristic matrix.
+            x←⍳×/⍵                          ⍝ linear index vector.
+            ↓(x∘.≠x)∧(⍉cm)∨.=cm             ⍝ connection vectors.
+        }                                   ⍝ cvx ← area_size :: grid_size
+
+        cvx←⍺ indx⍴⍵                        ⍝ bool connection vectors.
+        all←,(⍵×0)+⊂1+⍳⊃⍴⍵                  ⍝ complete set of values.
+        sx←⍳⍴,⍵                             ⍝ index vector for state.
+        init←((×,⍵)/sx)(all set)(,⍵)~0      ⍝ initial state.
+
+        (⍴⍵)∘⍴∘↑¨⍬ search init              ⍝ all solutions.
+    }
+
+    sbox¨sudoku s33                 ⍝ display all solutions.
+ ┌─────┬─────┬─────┐  ┌─────┬─────┬─────┐  ┌─────┬─────┬─────┐ 
+ │3 8 1│6 9 4│5 7 2│  │2 8 1│6 9 3│5 7 4│  │2 8 1│6 9 3│5 7 4│ 
+ │4 6 9│2 7 5│3 8 1│  │4 6 9│2 7 5│3 8 1│  │4 6 9│2 7 5│3 8 1│ 
+ │2 7 5│8 1 3│4 9 6│  │5 7 3│8 1 4│2 9 6│  │3 7 5│8 1 4│2 9 6│ 
+ ├─────┼─────┼─────┤  ├─────┼─────┼─────┤  ├─────┼─────┼─────┤ 
+ │7 9 4│5 6 2│1 3 8│  │7 9 2│5 6 1│4 3 8│  │7 9 2│5 6 1│4 3 8│ 
+ │6 5 8│4 3 1│9 2 7│  │6 5 8│4 3 9│1 2 7│  │6 5 8│4 3 9│1 2 7│ 
+ │1 3 2│7 8 9│6 5 4│  │1 3 4│7 8 2│6 5 9│  │1 3 4│7 8 2│6 5 9│ 
+ ├─────┼─────┼─────┤  ├─────┼─────┼─────┤  ├─────┼─────┼─────┤ 
+ │5 4 6│9 2 7│8 1 3│  │3 4 6│9 2 7│8 1 5│  │5 4 6│9 2 7│8 1 3│ 
+ │9 2 3│1 4 8│7 6 5│  │9 2 5│1 4 8│7 6 3│  │9 2 3│1 4 8│7 6 5│ 
+ │8 1 7│3 5 6│2 4 9│  │8 1 7│3 5 6│9 4 2│  │8 1 7│3 5 6│9 4 2│ 
+ └─────┴─────┴─────┘  └─────┴─────┴─────┘  └─────┴─────┴─────┘ 
+
+⍝ Phil's translation of Arthur's K code:
+
+    sudoku←{⎕io←0      ⍝ Whitney/Last
+        p←{(↑⍵)∘{(⍺∨.=⍵)/⍳n×n}¨,⍵},(n*÷2){⍵,⍺⊥⌊⍵÷⍺}¨⍳n n←⍴⍵
+        m←{(⊂⍵)⌈(⊂⍺=⍳⍴⍵)×(1+⍳n)~⍵[⍺⊃p]}
+        (⍴⍵)∘⍴¨⊃{⊃,/⍺ m¨⍵}/{((⍵=0)/⍳⍴⍵),⊂⊂⍵},⍵
+    }
+
+    sbox¨sudoku s33                 ⍝ display all solutions.
+ ┌─────┬─────┬─────┐  ┌─────┬─────┬─────┐  ┌─────┬─────┬─────┐ 
+ │2 8 1│6 9 3│5 7 4│  │2 8 1│6 9 3│5 7 4│  │3 8 1│6 9 4│5 7 2│ 
+ │4 6 9│2 7 5│3 8 1│  │4 6 9│2 7 5│3 8 1│  │4 6 9│2 7 5│3 8 1│ 
+ │5 7 3│8 1 4│2 9 6│  │3 7 5│8 1 4│2 9 6│  │2 7 5│8 1 3│4 9 6│ 
+ ├─────┼─────┼─────┤  ├─────┼─────┼─────┤  ├─────┼─────┼─────┤ 
+ │7 9 2│5 6 1│4 3 8│  │7 9 2│5 6 1│4 3 8│  │7 9 4│5 6 2│1 3 8│ 
+ │6 5 8│4 3 9│1 2 7│  │6 5 8│4 3 9│1 2 7│  │6 5 8│4 3 1│9 2 7│ 
+ │1 3 4│7 8 2│6 5 9│  │1 3 4│7 8 2│6 5 9│  │1 3 2│7 8 9│6 5 4│ 
+ ├─────┼─────┼─────┤  ├─────┼─────┼─────┤  ├─────┼─────┼─────┤ 
+ │3 4 6│9 2 7│8 1 5│  │5 4 6│9 2 7│8 1 3│  │5 4 6│9 2 7│8 1 3│ 
+ │9 2 5│1 4 8│7 6 3│  │9 2 3│1 4 8│7 6 5│  │9 2 3│1 4 8│7 6 5│ 
+ │8 1 7│3 5 6│9 4 2│  │8 1 7│3 5 6│9 4 2│  │8 1 7│3 5 6│2 4 9│ 
+ └─────┴─────┴─────┘  └─────┴─────┴─────┘  └─────┴─────┴─────┘ 
+
+⍝ Morten's coding:
+
+    sudoku←{⎕io←0
+    ⍝ Define one k fn and one op missing from APL
+         wh←{(⍵≠0)/⍳⍴⍵}             ⍝ k '&' function
+         at←{a←⍺ ⋄ a[⍺⍺]←⍵ ⋄ a}     ⍝ k '@': r←old (indexes at) new
+ 
+         rcq←(↑,⍳9 9),3/,3⌿3 3⍴⍳9   ⍝ Row, Column, Quadrant
+         p←{wh rcq∨.=⍵}¨↓rcq        ⍝ Cells in same row, col or quadrant
+         nzd←1+⍳9                   ⍝ Non-zero digits to gain a little more speed
+         ⊃{⊃,/⍺{⍵∘(⍺ at)¨nzd~⍵[⍺⊃p]}¨⍵}/(wh ⍵=0),⊂⊂⍵ ⍝ kapow!
+    }
+
+    sbox∘(9 9∘⍴)¨ sudoku ,s33
+ ┌─────┬─────┬─────┐  ┌─────┬─────┬─────┐  ┌─────┬─────┬─────┐ 
+ │2 8 1│6 9 3│5 7 4│  │2 8 1│6 9 3│5 7 4│  │3 8 1│6 9 4│5 7 2│ 
+ │4 6 9│2 7 5│3 8 1│  │4 6 9│2 7 5│3 8 1│  │4 6 9│2 7 5│3 8 1│ 
+ │5 7 3│8 1 4│2 9 6│  │3 7 5│8 1 4│2 9 6│  │2 7 5│8 1 3│4 9 6│ 
+ ├─────┼─────┼─────┤  ├─────┼─────┼─────┤  ├─────┼─────┼─────┤ 
+ │7 9 2│5 6 1│4 3 8│  │7 9 2│5 6 1│4 3 8│  │7 9 4│5 6 2│1 3 8│ 
+ │6 5 8│4 3 9│1 2 7│  │6 5 8│4 3 9│1 2 7│  │6 5 8│4 3 1│9 2 7│ 
+ │1 3 4│7 8 2│6 5 9│  │1 3 4│7 8 2│6 5 9│  │1 3 2│7 8 9│6 5 4│ 
+ ├─────┼─────┼─────┤  ├─────┼─────┼─────┤  ├─────┼─────┼─────┤ 
+ │3 4 6│9 2 7│8 1 5│  │5 4 6│9 2 7│8 1 3│  │5 4 6│9 2 7│8 1 3│ 
+ │9 2 5│1 4 8│7 6 3│  │9 2 3│1 4 8│7 6 5│  │9 2 3│1 4 8│7 6 5│ 
+ │8 1 7│3 5 6│9 4 2│  │8 1 7│3 5 6│9 4 2│  │8 1 7│3 5 6│2 4 9│ 
+ └─────┴─────┴─────┘  └─────┴─────┴─────┘  └─────┴─────┴─────┘ 
+
+⍝ Roger's revamp:
+
+    sudoku←{⍺←(⍴⍵)*÷2                   ⍝ Solutions of shape-⍺ Sudoku puzzle ⍵.
+        svec ← {⊃pvex/(emt ⍵),⊂⊂⍵}      ⍝ solution vector
+        pvex ← {⊃,/⍺∘pvec¨⍵}            ⍝ vector of placements
+        pvec ← {(⍺ avl ⍵)(⍺ at)¨⊂⍵}     ⍝ placements
+        avl  ← {(⍳⊃⍴⍵)~⍵×⊃⍺⌷CMAP}       ⍝ list of available numbers
+        at   ← {⍵+⍺×(⍳⍴⍵)∊⊂⍺⍺}          ⍝ ⍺ at cell ⍺⍺ in ⍵
+        emt  ← {(,⍵=0)/,⍳⍴⍵}            ⍝ row & column indices of empty cells
+
+        rcb  ← {(⍳⍴⍵),¨⍺ box(⍴⍵)÷⍺}     ⍝ row/column/box numbers
+        box  ← {(⊃⍺)⌿(⊃⌽⍺)/⍵⍴⍳×/⍵}      ⍝ box numbers for a puzzle of size ⍵*2
+        cmap ← {⊂[⍳2]1∊¨⍵∘.=⍵}          ⍝ contention map for puzzle ⍵
+        CMAP ← cmap ⍺ rcb ⍵             ⍝ contention map for puzzle
+
+        svec ⍵                          ⍝ vector of solutions.
+    }
+
+    sbox¨sudoku s22
+ ┌───┬───┐  ┌───┬───┐  ┌───┬───┐ 
+ │1 2│3 4│  │1 2│3 4│  │1 2│3 4│ 
+ │3 4│1 2│  │3 4│2 1│  │3 4│1 2│ 
+ ├───┼───┤  ├───┼───┤  ├───┼───┤ 
+ │2 1│4 3│  │2 1│4 3│  │2 3│4 1│ 
+ │4 3│2 1│  │4 3│1 2│  │4 1│2 3│ 
+ └───┴───┘  └───┴───┘  └───┴───┘ 

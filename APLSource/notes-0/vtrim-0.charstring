@@ -1,0 +1,27 @@
+cvec ← ##.vtrim cvec                        ⍝ Remove trailing blanks.
+
+Trailing  blanks at the end of the character vector argument and any immediately
+before  a  [LF]  character, are removed. This function is useful after editing a
+line-vector  such  as  these  notes, where workspace-wasting trailing blanks may
+have been introduced unintentionally.
+
+Example:
+
+      show←' ·'∘subs                    ⍝ Show text with '·'s for blanks.
+
+      ⍴⎕←show text                      ⍝ Text vector with trailing blanks.
+Where·Alph,·the·sacred·river,·ran··
+Through·caverns·measureless·to·man····
+··Down·to·a·sunless·sea.···········
+110
+
+      ⍴⎕←show vtrim text                ⍝ Superfluous trailing blanks removed.
+Where·Alph,·the·sacred·river,·ran
+Through·caverns·measureless·to·man
+··Down·to·a·sunless·sea.
+93
+
+See also: Line_vectors subs mtrim dtb
+
+Index:blanks|compression
+Index;Coleridge S.T.

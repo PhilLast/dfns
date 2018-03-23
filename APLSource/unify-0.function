@@ -1,0 +1,42 @@
+ unify←{⎕IO ⎕ML←0 1              ⍝ Unification of expressions.
+
+     uni←{                       ⍝ unify exprs.
+         dis←⌽⍺⍺ disagree⌽⍺ ⍵    ⍝ vector of disagreement pairs.
+         0=⍴dis:⍺                ⍝ none: finished.
+         var val←pair↑ochk/¨dis  ⍝ select first pair.
+         new←var subs val        ⍝ derive subs function.
+         (new ⍺)∇ new ⍵          ⍝ retry after substitution.
+     }
+
+     disagree←{                  ⍝ disagreement pairs.
+         vars←isvar¨⍵            ⍝ terms are vars?
+         vars≡1 1:(~≡/⍵)/⊂⍵∩⍺⍺   ⍝ both: dis-pair if distinct.
+         1∊vars:,⊂(vars⍳1)⌽⍵     ⍝ one var: var-value pair.
+         0∊≡¨⍵:⍬ chk≡/⍵          ⍝ matching atomic terms: ignore.
+         ≡/⍴¨⍵:↑,/,∇¨↓⍉↑⍵        ⍝ conformable: compare sub-terms.
+         err 5                   ⍝ otherwise: length error.
+     }
+
+     pair←⍺∘∇{                   ⍝ first disagreement pair.
+         dups←{⍵∊⊂⊃⍵}⊃¨⍵         ⍝ duplicate variables.
+         1=+/dups:⊃⍵             ⍝ first pair not duplicated: done.
+         ⍺⍺ dups/⍵               ⍝ unify duplicate values.
+     }
+
+     subs←{                      ⍝ substitute [⍵⍵/⍺⍺] ⍵.
+         isvar ⍵:(⍵≡⍺⍺)⊃⍵ ⍵⍵     ⍝ variable: subs if match.
+         ↑∇¨/(⍳×|≡⍵),⊂⍵          ⍝ substitute atom-wise.
+     }
+
+     occurs←{                    ⍝ var ⍺⍺ occurs in value ⍵.
+         isvar ⍵:⍺⍺≡⍵            ⍝ variable: check match.
+         1∊↑∇¨/(⍳×|≡⍵),⊂⍵        ⍝ check value atom-wise.
+     }
+
+     ochk←{⍺ ⍵ chk~⍺ occurs ⍵}   ⍝ occurs check.
+     chk←{⍵:⍺ ⋄ err 11}          ⍝ error unless ⍵.
+     err←'Can''t unify'∘⎕SIGNAL  ⍝ error function.
+     isvar←∊∘⍺∘⊂                 ⍝ check for var.
+
+     ↑⍺ uni/⍵                    ⍝ unified expression.
+ }

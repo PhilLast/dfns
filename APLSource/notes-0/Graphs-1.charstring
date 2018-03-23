@@ -1,0 +1,451 @@
+──────
+Graphs
+──────
+A  graph is a set of nodes called _vertices_, connected by links called _edges_.
+The graph is said to be "weighted" if each edge has an associated weight. Other-
+wise, it is said to be "unweighted". Similarly, a graph is said to be "directed"
+if  each edge has an associated direction, otherwise it is said to be "undirect-
+ed". For a discussion of weighted graphs, see: →wGraphs←.
+
+The following diagram represents a simple unweighted, directed graph.
+
+      Graph "a".
+    ┌─────A←────┐
+    │     │     │   5 vertices: A B C D E
+    ↓     ↓     │
+    B←───→C────→D   8 edges:    A→B  A→C  B→C  C→B
+          ↑     │               C→D  D→A  D→E  E→C
+          │     ↓
+          └─────E
+
+Notice that there is an edge from C to B, as well as from B to C.
+
+A  directed  graph  is a generalisation of a tree. A tree is a graph where every
+vertex  has  at  most  one edge leading to it. All trees are graphs, but not all
+graphs  are trees. This means that the data structures and functions over graphs
+in the following, also apply to trees.
+
+Graphs can be used to model many structures found in everyday life.
+
+dw  Example of Graph                            Vertex         Edge         Note
+--  ----------------                            ------         ----         ----
+dw  A transportation system such as a subway.   station        track         [a]
+uu  A fishing net.                              knot           twine
+du  The World Wide Web (a large graph!).        page           link
+du  A game of chess.                            position       move          [b]
+du  This workspace's internal memory structure. memory block   pointer
+uu  The "Six Degrees of Kevin Bacon" game.      actor          starred with  [c]
+uu  A "Word Ladder" puzzle.                     word           letter swap   [d]
+du  Finding which stamps to stick on a letter.  total value    stick stamp   [e]
+uu  Who dated whom at college.                  student        dated
+uu  The Maze at Hampton Court.                  intersection   path          [f]
+du  The "See also" links used in these notes.   note           see also      [g]
+uu  Adjacency of regions in a planar map.       region         adjancent to  [h]
+dw  A job scheduling network.                   task           dependency
+du  British TV TeleText coloured "hot buttons". teletext page  hot link
+││
+│└─ w:weighted, u:unweighted.
+└── d:directed, u:undirected.
+
+[a]  Most  stylised  maps of subway systems treat the network as an _unweighted_
+graph:  there  is no attempt to indicate the relative journey times or costs be-
+tween  stations. Subways can generally be represented by _undirected_ graphs un-
+less  they  contain any one-way sections, as is the case with London's Picadilly
+line.
+
+[b]  A Pawn can't move backwards, so its moves must be represented by a directed
+graph.  Notice  that  despite the Queen's versatility, her _undirected_ graph is
+relatively _sparse_; at best she can move to only 27 out of 64 board positions.
+
+[c]  In  the The Six Degrees of Kevin Bacon game, start with any movie actor and
+try to establish a connection with Kevin Bacon in six or fewer moves. An example
+might be: "Sigourney Weaver":
+
+    Sigourney Weaver  was in Copycat with
+    Holly Hunter, who was in The Firm with
+    Gene Hackman, who was in The Birdcage with
+    Dianne Weist, who was in Footloose with
+    Kevin Bacon.
+
+    ... 4 degrees (edges), 5 vertices.
+
+[d]  A Word Ladder puzzle has two n-letter words, drawn at the top and bottom of
+a picture of a ladder. The task is to write n-letter words on each of the inter-
+vening rungs, so that adjacent words differ by exactly one letter. Some examples
+might be:
+
+     Puzzle  Solution      Puzzle   Solution       Puzzle   Solution
+
+    ├beard┤   ├beard┤      ├tooth┤   ├tooth┤      ├water┤   ├water┤
+    ├─────┤   ├bears┤      ├─────┤   ├sooth┤      ├─────┤   ├wader┤
+    ├─────┤   ├beams┤      ├─────┤   ├sloth┤      ├─────┤   ├wades┤
+    ├─────┤   ├seams┤      ├─────┤   ├slosh┤      ├─────┤   ├wares┤
+    ├─────┤   ├shams┤      ├─────┤   ├slush┤      ├─────┤   ├warns┤
+    ├─────┤   ├shame┤      ├─────┤   ├blush┤      ├─────┤   ├wains┤
+    ├shave┤   ├shave┤      ├brush┤   ├brush┤      ├─────┤   ├whins┤
+                                                  ├whine┤   ├whine┤
+
+[e] See →stamps←.
+
+[f] See →hampton←
+
+[g] See example at the end of these notes.
+
+[h] See →konigsberg← and →uksfr←
+
+Two  common  ways to represent graphs, are as a boolean "adjacency matrix" or as
+an "adjacency vector" of vectors:
+
+Adjacency matrix M has a 1 at M[i;j] if there is an edge from i to j.
+
+      A B C D E
+     ┌─────────     ⍝ Adjacency matrix for graph "a" above.
+   A │0 1 1 0 0
+   B │0 0 1 0 0
+   C │0 1 0 1 0     ⍝ Third row shows two edges: C→B  C→D.
+   D │1 0 0 0 1
+   E │0 0 1 0 0
+
+Adjacency vector V is an index vector of all edges from i to i⊃V.
+
+      (2 3) (3) (2 4) (1 5) (3) ⍝ Adjacency structure for graph "a".
+       A     B   C     D     E
+                 └───────────── ⍝ Third item shows two edges: 3→(2 4): C→B C→D.
+
+The matrix representation is better for dense graphs (who didn't date whom), and
+the  vector  representation,  better  for sparse graphs such as links across the
+World  Wide  Web. Workspace tube.dws models the subway systems of various cities
+using  vector  representation.  In the case of the London Underground, which has
+over  1,200  vertices, the graph is smaller (uses less workspace) than the equi-
+valent matrix representation, by a factor of 6.
+
+At either end of the sparse-to-dense continuum are the "order-N null graph", and
+the "order-N complete graph". An order-N  _null_ graph contains N vertices and 0
+edges  (who  dated whom in the cricket team). The order-N _complete_ graph cont-
+ains N vertices and n*2 edges (who attended college with whom at college).
+
+A _complete_, weighted, directed graph may conveniently be represented just by a
+_matrix_  of  each  vertex-to-vertex cost. Function →assign← expects such a rep-
+resentation.
+
+Functions to convert between matrix and vector forms of unweighted graphs:
+
+    {{⍵/⍳⍴⍵}¨↓⍵}    ⍝ vector from matrix form.
+
+    {⍉(⍳⍴⍵)∘.∊⍵}    ⍝ matrix from vector form.
+
+The following boolean functions indicate whether their graph argument is direct-
+ed:
+
+    {⍵≢⍉⍵}                              ⍝ _matrix_ form is directed.
+    {~∧/{∨/⍺∊¨⍵[⍺⊃⍵]}∘⍵¨⍳⍴⍵}            ⍝ _vector_ form is directed.
+
+and  the following graph-valued functions remove the asymmetry of direction from
+their argument graphs:
+
+    {⍵∨⍉⍵}                              ⍝ remove direction from _matrix_ form.
+    {{⍵/⍳⍴⍵}¨↓⍵}∘{⍵∨⍉⍵}∘{⍉(⍳⍴⍵)∘.∊⍵}    ⍝ remove direction from _vector_ form.
+
+The  latter  function  removes direction by converting vector to matrix and back
+again. The following alternative is slower but uses less workspace and preserves
+the order of edges within each vertex:
+
+    {{(⍺⊃⍵)∪(⍺{∨/⍺∊⍵}¨⍵)/⍳⍴⍵}∘⍵¨⍳⍴⍵}        ⍝ remove direction from vector form.
+
+A vector of the edge-pairs for a (vector form) undirected graph is given by:
+
+    {↓[⎕IO]{(<⌿⍵)/⍵}↑,/⍵,[⎕IO-0.5]¨⍳⍴⍵}     ⍝ edge vector for undirected graph.
+
+Related graphs:
+
+The  "transitive closure" of a graph has an edge (u v) if there is a _path_ from
+u to v in the original. In other words, the transitive closure shows where it is
+possible  to get from u to v, no matter how long the path. The following derived
+functions return the transitive  closures for matrix and vector representations,
+respectively.
+
+    tcm←{⍵∨⍵∨.∧⍵}⍣≡                         ⍝ transitive closure (matrix).
+    tcm←(⊢ ∨ ∨.∧)⍨⍣≡                        ⍝   ..      .. (using a train).
+
+    tcv←{⍵{(⍳⍴⍵)∩⍺,1↓↑,/0,⍺⊃¨⊂⍵}¨⊂⍵}⍣≡      ⍝ transitive closure (vector).
+                   ¯¯¯¯¯¯¯
+The underlined code in the above is a rather contorted ⎕ML-independent enlist of
+a (possibly null) vector-of-vectors. With ⎕ML>0, we can shorten this to:
+
+    tcv←{⍵{(⍳⍴⍵)∩⍺,∊⍺⊃¨⊂⍵}¨⊂⍵}⍣≡            ⍝ vector transitive closure (SL).
+
+The "complement" of a graph has the same number of vertices but edges only where
+there  were  none  before.  For  graphs that represent relationships between the
+vertices (who dated whom), the complement graph represents the inverse relation-
+ship (who didn't date whom). The complement of an adjacency _matrix_ is given by
+{~⍵}, and of an adjacency _vector_ by {(⊂⍳⍴⍵)~¨⍵}.
+
+We investigate only the _vector_ representation from here onwards.
+
+The functions in this workspace deal only with graph structure. There is no pro-
+vision  for vertices or edges to carry data other than that required to maintain
+the  graph.  In  real  applications,  such  "labelling" of vertices and edges is
+required.  This  can  easily  be  achieved  by keeping a separate vector of such
+values (URLs, names, distances-between-stations, ···), parallel with the graph.
+
+An  index  origin of 1 is assumed in the examples that follow. An origin 1 graph
+may be converted to origin 0, just by subtracting 1.
+
+There  are  many useful and interesting questions that we can ask of, and trans-
+formations that we can apply to, a graph. The functions in this workspace are:
+
+Transformation/Question                                     Function
+-----------------------                                     --------
+Insert/remove a vertex.                                     →insnode← →remnode←
+
+Insert/remove an edge.                                      →inslink← →remlink←
+
+Rearrangement of vertices in graph vector:                  →gperm←
+
+What is the shortest path from vertex A to vertex B?        →path←
+
+Produce  a  "spanning tree" of the shortest path from the   →span←
+    starting  vertex  to every other vertex in the graph.
+    The  simple  function →stpath← can be used to recover   →stpath←
+    shortest  vertex-to-vertex  paths  directly  from the
+    spanning  tree.  Note that there may be any number of
+    shortest paths between any two vertices.
+
+The  path  and spanning functions are based on a breadth-   →search←
+    first  search  of  the graph. A stripped-down version
+    of  this  procedure  returns a vector of the vertices
+    encountered  by  radiating  outwards  from a starting
+    vertex. See →bfs←.
+
+Examples:
+
+    ⊢a←(2 3)(3)(2 4)(1 5)(3)            ⍝ simple origin-1 graph "a" (above).
+┌───┬─┬───┬───┬─┐
+│2 3│3│2 4│1 5│3│
+└───┴─┴───┴───┴─┘
+
+    a inslink 5 1                       ⍝ ··· with new link 5→1
+┌───┬─┬───┬───┬───┐
+│2 3│3│2 4│1 5│3 1│
+└───┴─┴───┴───┴───┘
+
+⍝ As many of the functions take a graph as _left_ argument and a "modifier" on
+⍝ the _right_, the "fold left" operator →foldl← is useful:
+
+    a inslink foldl (5 1) (3 5)         ⍝ graph "a" with new links: 5→1, 3→5.
+┌───┬─┬─────┬───┬───┐
+│2 3│3│2 4 5│1 5│3 1│
+└───┴─┴─────┴───┴───┘
+
+    a remlink foldl (1 3) (2 3)         ⍝ graph "a" without links: 1→3, 2→3.
+┌─┬┬───┬───┬─┐
+│2││2 4│1 5│3│
+└─┴┴───┴───┴─┘
+
+    a gperm 2 1 3 4 5                   ⍝ "a" with first two nodes reversed
+┌─┬───┬───┬───┬─┐
+│3│1 3│1 4│2 5│3│
+└─┴───┴───┴───┴─┘
+
+    a gperm ⌽⍳⍴a                        ⍝ "a" with nodes reversed
+┌─┬───┬───┬─┬───┐
+│3│5 1│4 2│3│4 3│
+└─┴───┴───┴─┴───┘
+
+⍝ We  can borrow some lines from the →kt← Knight's Tour function, to generate
+⍝ a graph (k) of the knight's moves on an ⍵-sized chessboard.
+
+    kt_graph←{                      ⍝ Graph of knight's moves on ⍵-board.
+        kdef←,0 1∘.⌽1 ¯1∘.,2 ¯2     ⍝ vector of relative knight's moves.
+        net←(⊂,⍳⍵)∩¨↓(⍳⍵)∘.+kdef    ⍝ absolute moves from each square.
+        ⎕IO+,⍵∘⊥¨¨net-⎕IO           ⍝ adjacency vector.
+    }
+
+    k←kt_graph 8 8                  ⍝ graph of knight's moves on an 8×8 board.
+┌─────┬────────┬──────────┬───────────┬───────────┬───────────┬────────┬─────┬───────┬──────────┬───────────────┬───────────────┬───────────────┬───────────────┬──────────┬───────┬──────────┬───────────────┬────────────────────┬─────────────────────┬─────────────────────┬─────────────────────┬───────────────┬──────────┬───────────┬────────────────┬───────────────────────┬───────────────────────┬───────────────────────┬───────────────────────┬─────────────────┬───────────┬───────────┬─────────────────┬───────────────────────┬───────────────────────┬───────────────────────┬───────────────────────┬─────────────────┬───────────┬───────────┬─────────────────┬───────────────────────┬───────────────────────┬───────────────────────┬───────────────────────┬─────────────────┬───────────┬────────┬───────────┬─────────────────┬─────────────────┬─────────────────┬─────────────────┬───────────┬────────┬─────┬────────┬───────────┬───────────┬───────────┬───────────┬────────┬─────┐
+│11 18│12 17 19│9 13 18 20│10 14 19 21│11 15 20 22│12 16 21 23│13 22 24│14 23│3 19 26│4 20 25 27│1 5 17 21 26 28│2 6 18 22 27 29│3 7 19 23 28 30│4 8 20 24 29 31│5 21 30 32│6 22 31│2 11 27 34│1 3 12 28 33 35│2 4 9 13 25 29 34 36│3 5 10 14 26 30 35 37│4 6 11 15 27 31 36 38│5 7 12 16 28 32 37 39│6 8 13 29 38 40│7 14 30 39│10 19 35 42│9 11 20 36 41 43│10 12 17 21 33 37 42 44│11 13 18 22 34 38 43 45│12 14 19 23 35 39 44 46│13 15 20 24 36 40 45 47│14 16 21 37 46 48│15 22 38 47│18 27 43 50│17 19 28 44 49 51│18 20 25 29 41 45 50 52│19 21 26 30 42 46 51 53│20 22 27 31 43 47 52 54│21 23 28 32 44 48 53 55│22 24 29 45 54 56│23 30 46 55│26 35 51 58│25 27 36 52 57 59│26 28 33 37 49 53 58 60│27 29 34 38 50 54 59 61│28 30 35 39 51 55 60 62│29 31 36 40 52 56 61 63│30 32 37 53 62 64│31 38 54 63│34 43 59│33 35 44 60│34 36 41 45 57 61│35 37 42 46 58 62│36 38 43 47 59 63│37 39 44 48 60 64│38 40 45 61│39 46 62│42 51│41 43 52│42 44 49 53│43 45 50 54│44 46 51 55│45 47 52 56│46 48 53│47 54│
+└─────┴────────┴──────────┴───────────┴───────────┴───────────┴────────┴─────┴───────┴──────────┴───────────────┴───────────────┴───────────────┴───────────────┴──────────┴───────┴──────────┴───────────────┴────────────────────┴─────────────────────┴─────────────────────┴─────────────────────┴───────────────┴──────────┴───────────┴────────────────┴───────────────────────┴───────────────────────┴───────────────────────┴───────────────────────┴─────────────────┴───────────┴───────────┴─────────────────┴───────────────────────┴───────────────────────┴───────────────────────┴───────────────────────┴─────────────────┴───────────┴───────────┴─────────────────┴───────────────────────┴───────────────────────┴───────────────────────┴───────────────────────┴─────────────────┴───────────┴────────┴───────────┴─────────────────┴─────────────────┴─────────────────┴─────────────────┴───────────┴────────┴─────┴────────┴───────────┴───────────┴───────────┴───────────┴────────┴─────┘
+
+    ⍴¨k(↑,/k)                       ⍝ number of vertices and edges.
+ 64  336
+
+    k path 1 2                      ⍝ Knight's path from square 1 to 2.
+1 11 17 2
+
+⍝ We  can  keep a vector of data associated with each vertex separate from, but
+⍝ parallel with, the graph. In this case we might like a vector of board posit-
+⍝ ion notations: A1 A2 ··· B1 B2 ··· H8. This vector may exist independently as
+⍝ a workspace variable, or could be bound with a "translation" function.
+
+    show←(,⍉8 8↑⎕A∘.,1↓⎕D)∘{⍺[⍵]}   ⍝ show board positions.
+
+    show k path 1 9                 ⍝ a shortest path from A1 to A2.
+ A1  C2  B4  A2
+
+    show k path 1 64                ⍝   ··  ··  ··  ··  to opposite corner.
+ A1  C2  E1  G2  F4  G6  H8
+
+    show k path 1 10                ⍝   ··  ··  ··  ··  to adjacent diagonal
+ A1  C2  E1  D3  B2
+
+    a span 1                        ⍝ spanning tree for graph "a" from vertex 1.
+¯1 1 1 3 4
+
+    (a span 1)stpath 2              ⍝ shortest path from 1 to 2 using span tree.
+1 2
+
+    (a span 1)∘stpath¨⍳⍴a           ⍝ shortest path from 1 to each vertex.
+┌─┬───┬───┬─────┬───────┐
+│1│1 2│1 3│1 3 4│1 3 4 5│
+└─┴───┴───┴─────┴───────┘
+                                    ⍝ shortest path between
+    ↑{(a span ⍵)∘stpath¨⍳⍴a}¨⍳⍴a    ⍝ each pair of vertices.
+┌───────┬─────┬─────┬─────┬───────┐
+│1      │1 2  │1 3  │1 3 4│1 3 4 5│
+├───────┼─────┼─────┼─────┼───────┤
+│2 3 4 1│2    │2 3  │2 3 4│2 3 4 5│
+├───────┼─────┼─────┼─────┼───────┤
+│3 4 1  │3 2  │3    │3 4  │3 4 5  │
+├───────┼─────┼─────┼─────┼───────┤
+│4 1    │4 1 2│4 5 3│4    │4 5    │
+├───────┼─────┼─────┼─────┼───────┤
+│5 3 4 1│5 3 2│5 3  │5 3 4│5      │
+└───────┴─────┴─────┴─────┴───────┘
+
+    k span 1                        ⍝ knight's spanning tree from vertex 1.
+¯1 17 18 21 11 21 22 14 26 20 1 18 28 20 5 22 11 1 2 5 11 5 6 30 35 11 17 11 12 15 21 15 18 17 18 21 20 21 22 30 26 27 26 27 28 31 30 31 34 33 34 35 36 37 38 39 42 41 42 43 44 45 46 47
+
+    k span 10                       ⍝ spanning tree from vertex 10.
+11 19 20 10 20 21 24 14 19 ¯1 21 27 19 4 21 31 27 3 4 10 4 5 8 14 10 20 10 13 14 20 14 15 27 19 20 19 20 21 24 30 26 25 26 27 30 29 30 31 34 35 34 35 36 37 38 39 42 41 42 43 44 45 46 47
+
+⍝ We can write a format operator to display the spanning tree:
+
+    mtree←{⎕ML←0                    ⍝ Matrix format of spanning tree.
+        vfmt←⍺⍺                     ⍝ vertex format function.
+        tree←⍵                      ⍝ spanning tree.
+        ↑''{                        ⍝ mix to char matrix.
+            this←⊂⍺,⊃vfmt ⍵         ⍝ indented, formatted vertex.
+            next←(tree=⍵)/⍳⍴tree    ⍝ child vertices of current vertex ⍵.
+            next≡⍬:this             ⍝ childless: finished.
+            dent←⍺,'·   '           ⍝ increased indent.
+            this,↑,/dent∘∇¨next     ⍝ formatted sub-trees.
+        }tree⍳¯1                    ⍝ ... from starting vertex.
+    }
+
+⍝ Using the small graph "a" and {⍵⊃⎕a} as a vertex formatting function:
+
+    a                       ⍝ graph "a".
+┌───┬─┬───┬───┬─┐
+│2 3│3│2 4│1 5│3│
+└───┴─┴───┴───┴─┘
+
+    {⍵⊃⎕a}mtree a span 3    ⍝ spanning tree from vertex 3.
+C
+·   B
+·   D
+·   ·   A
+·   ·   E
+
+⍝ The Word Ladder puzzle:
+
+    wds←4⊃words                                 ⍝ vector of 4-letter words.
+
+    wds[10?⍴wds]                                ⍝ random selection from 4-words.
+ mack  minx  nest  gits  racy  clue  crib  lean  them  brow
+
+    gph←{{⍵/⍳⍴⍵}¨↓⍵∘.{1=+/⍺≠⍵}⍵}wds             ⍝ graph of 1-letter changes.
+
+    wds[gph path wds⍳'beer' 'wine']             ⍝ beer → wine
+ beer  bear  bead  bend  bind  wind  wine
+
+    wds[gph path wds⍳'wine' 'beer']             ⍝ wine → beer
+ wine  dine  dint  dent  bent  beet  beer
+
+    wds[gph path wds⍳'lead' 'gold']             ⍝ lead → gold
+ lead  load  goad  gold
+
+⍝ The following expression returns a graph of the "See also:" links
+⍝ in this workspace:
+
+    notes.({⍵∘{⍺{(1∊¨⍺⍷¨⊂⍵)/⍳⍴⍺}{(∨/'See also:'⍷⍵)⌿⍵}⎕FMT⍎⍵}¨⍵}⎕NL ¯2)
+
+⍝ Cubes in ⍵-space
+⍝ ----------------
+⍝
+⍝ An ⍵-cube is an undirected graph with 2*⍵ vertices and ⍵×2*⍵-1 edges.
+⍝
+⍝ We can make an ⍵-cube by joining the corresponding
+⍝ vertices of a pair of (⍵-1)-cubes.
+⍝                                                  .----------.
+⍝                                                 /|\        /|\
+⍝                                                / | \      / | \
+⍝                              .----------.     .--ɫ--.----.--ɫ--.
+⍝                             /|         /|     |\ | /|    |\ | /|
+⍝                            / |        / |     | \'⌿-ɫ----ɫ-⍀'/ |
+⍝       .   .----------.    .----------.  |     | /.⍀-ɫ----ɫ-⌿.\ |
+⍝       |   |          |    |  |       |  |     |/ | \|    |/ | \|
+⍝       |   |          |    |  '-------|--'     '--ɫ--'----'--ɫ--'
+⍝       |   |          |    | /        | /       \ | /      \ | /
+⍝       |   |          |    |/         |/         \|/        \|/
+⍝   '   '   '----------'    '----------'           '----------'
+⍝   ↑   ↑       ↑                   ↑                  ↑
+⍝   │   │       │                   │                  │
+⍝   │   │       │                   │                  └── 4-cube
+⍝   │   │       │                   │                  (projected onto 2-space).
+⍝   │   │       │                   │
+⍝   │   │       │                   └── 3-cube (projected onto 2-space).
+⍝   │   │       │
+⍝   │   │       └── 2-cube (square)
+⍝   │   │
+⍝   │   └─ 1-cube (line)
+⍝   │
+⍝   └─ 0-cube (point)
+
+⍝ This function returns an ⍵-cube graph:
+
+    cube←{                      ⍝ ⍵-cube.
+        ↓{                      ⍝ split simple matrix:
+            0=⍵:1 0⍴0           ⍝ 0-cube: point.
+            (2*⍵-1){            ⍝ number of vertices.
+                (⍵⍪⍵+⍺),⍺⌽⍳2×⍺  ⍝ ⍵-cube from
+            }∇ ⍵-1              ⍝   ⍵-1-cube.
+        }⍵
+    }
+
+    cube 0              ⍝ point.
+┌┐
+││
+└┘
+    cube 1              ⍝ line.
+┌─┬─┐
+│2│1│
+└─┴─┘
+
+    cube 2              ⍝ square.
+┌───┬───┬───┬───┐
+│2 3│1 4│4 1│3 2│
+└───┴───┴───┴───┘
+
+    cube 3              ⍝ regular 3-cube.
+┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐
+│2 3 5│1 4 6│4 1 7│3 2 8│6 7 1│5 8 2│8 5 3│7 6 4│
+└─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘
+
+    cube 4              ⍝ hypercube.
+┌───────┬────────┬────────┬────────┬────────┬────────┬────────┬────────┬──────────┬─────────┬─────────┬──────────┬─────────┬──────────┬──────────┬──────────┐
+│2 3 5 9│1 4 6 10│4 1 7 11│3 2 8 12│6 7 1 13│5 8 2 14│8 5 3 15│7 6 4 16│10 11 13 1│9 12 14 2│12 9 15 3│11 10 16 4│14 15 9 5│13 16 10 6│16 13 11 7│15 14 12 8│
+└───────┴────────┴────────┴────────┴────────┴────────┴────────┴────────┴──────────┴─────────┴─────────┴──────────┴─────────┴──────────┴──────────┴──────────┘
+
+    {(cube ⍵)path 1,2*⍵}10      ⍝ a path between opposite corners of a 10-cube.
+1 513 769 897 961 993 1009 1017 1021 1023 1024
+
+See also: wGraphs bfs scc
+See also: inslink insnode remlink remnode gperm
+See also: search path span stpath
+See also: alists foldl
+See also: stamps hampton konigsberg uksfr
+See also: assign kt X
+
+Index:graph|graph, weighted|graph, unweighted|hypercube|adjacency matrix
+Index:word ladder|knight's tour|enlist|transitive closure
+Index;Bacon K.

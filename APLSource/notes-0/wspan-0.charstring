@@ -1,0 +1,28 @@
+tree ← wgraph ##.wspan from        ⍝ Spanning tree for weighted graph ⍺ from ⍵.
+
+[wspan]  constructs  a  tree of the lowest-cost paths from the given root to all
+accessible vertices of the weighted  graph.
+
+Each item of the vector result, with the exception of the root item (¯1), is the
+index of the corresponding tree node's parent node.
+
+Technical notes:
+
+This coding differs slightly from classic breadth-first search, see →bfs←.
+
+Examples:
+
+    aa                  ⍝ simple weighted graph.
+┌───┬─┬───┬───┬─┐
+│2 3│3│2 4│1 5│3│
+├───┼─┼───┼───┼─┤
+│1 3│1│4 1│1 1│1│
+└───┴─┴───┴───┴─┘
+
+    aa wspan 1          ⍝ spanning tree for aa from vertex 1.
+¯1 1 2 3 4
+
+See also: wGraphs Graphs
+See also: bfs wpath wcost stpath span
+
+Index:graph, weighted|spanning tree

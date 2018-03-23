@@ -1,0 +1,5 @@
+ for←{                       ⍝ Multiple selection of function list.
+     (¯1↓⍺)⍺⍺{1≠⍴⍺:⍺ ⍺⍺ ⍵    ⍝ next left ...
+         (⍺⍺⍣(⊃⍺))⍵          ⍝ if last call and first ⍺:⍺⍺ ⍵
+     }(⍵⍵⍣(⊃⌽⍺))⍵            ⍝ if last ⍺:⍵⍵ ⍵
+ }

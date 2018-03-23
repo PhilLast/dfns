@@ -1,0 +1,34 @@
+rslt ← code ##.type array                  ⍝ Widen ⍵ to type ⍺.
+
+The width of each item in the (simple) array argument is set to code, where code
+is a ⎕DR specification such as 83, 163, ···.  The result is pegged at this width
+so it won't be demoted (squeezed) in the event of a workspace compaction. If any
+item in the array cannot assume the requested width, no value is returned.
+
+Technical note:
+
+In Dyalog, simple arrays of whole numbers may be represented internally using 1,
+8,  16  or  32  bits.  When a compaction occurs, such arrays are squeezed to the
+narrowest possible type. For example, the result of the expression 3 2-2 will be
+initially  of  type 323 but may be demoted to type 11 during a compaction as all
+of its values are in the range 0 l.
+
+In additon to compaction, system function ⎕SIZE squeezes its argument before re-
+porting its size.
+
+If  we  are  sure that all values fall within the required type, we can simplify
+the function still further by removing the check:
+
+    type←{                      ⍝ Widen ⍵ to type ⍺.
+        ⎕IO⊃(⎕DR ⍵)⍺ ⎕DR ⍵
+    }
+
+Example:
+
+      {⌽(⎕dr ⍵)(⊃'→' ⎕wa)(⎕dr ⍵)}         1↓1e6,⍳10     ⍝ ⎕wa squeezes type.
+323 → 83
+
+      {⌽(⎕dr ⍵)(⊃'→' ⎕wa)(⎕dr ⍵)}163 type 1↓1e6,⍳10     ⍝ Type survives ⎕wa.
+163 → 163
+
+Index:data conversion|type|⎕DR

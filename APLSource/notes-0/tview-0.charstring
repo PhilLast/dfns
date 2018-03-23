@@ -1,0 +1,9 @@
+(depth leaves) ← ##.tview tree             ⍝ TreeView style from nested array.
+
+Nested [tree] is returned as the TreeView style pair: depth-vector, leaf-vector.
+
+Examples, See: Trees
+
+See also: tfmt tnest
+
+Index:tree

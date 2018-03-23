@@ -1,0 +1,13 @@
+ putfile←{                               ⍝ Put rows to text-file.
+     ⍺←2 ⋄ term←(-⍺)↑⌽2↓4↑⎕AV            ⍝ default: cr-lf terminated rows.
+     fid rows←⍵                          ⍝ file-id and row values.
+     1=≡,rows:⍺ ∇ fid(⊂rows)             ⍝ single row: enclose.
+     ntie←{                              ⍝ handle on null file.
+         0::⎕SIGNAL ⎕EN                  ⍝ signal error to caller.
+         22::⍵ ⎕NCREATE 0                ⍝ ~exists: create.
+         0 ⎕NRESIZE ⍵ ⎕NTIE 0            ⍝  exists: truncate.
+     }fid
+     cvec←↑,/rows,¨⊂term                 ⍝ collected, terminated lines.
+     size←cvec ⎕NAPPEND ntie,⎕DR ⎕AV     ⍝ write lines to file.
+     1:rslt←size⊣⎕NUNTIE ntie            ⍝ shy result: file size.
+ }

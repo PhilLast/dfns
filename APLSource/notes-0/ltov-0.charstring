@@ -1,0 +1,66 @@
+nvec ← {sepr} ##.ltov lvec                  ⍝ Lines to nested vector.
+lvec ← {sepr} ##.vtol nvec                  ⍝ Nested vector to lines.
+
+Each function is an approximate equivalent of the xutils AP function of the same
+name. [ltov] and [vtol] convert between nested vectors and →Line_vectors←.
+
+Note that [vtol] appends a [sepr] character after each item of the argument, in-
+cluding the last. This means that, in general: lvec ≢ vtol ltov lvec.
+
+More  generally, [sepr] may be a vector of separators of any shape or depth, see
+examples below.
+
+Examples:
+
+    nl←⍬⍴3↓⎕av                              ⍝ newline.
+
+    lvec←'fooling around', nl, 'with barrels', nl, 'in alleys'
+
+    lvec                                    ⍝ line vector.
+fooling around
+with barrels
+in alleys
+
+    ltov lvec                               ⍝ nested vector.
+┌──────────────┬────────────┬─────────┐
+│fooling around│with barrels│in alleys│
+└──────────────┴────────────┴─────────┘
+
+    nl=lvec                                 ⍝ note, no trailing nl:
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0
+
+    nl=vtol ltov lvec                       ⍝ note extra nl:
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1
+
+    (nl,' ')ltov lvec                       ⍝ split at newline or blank.
+┌───────┬──────┬────┬───────┬──┬──────┐
+│fooling│around│with│barrels│in│alleys│
+└───────┴──────┴────┴───────┴──┴──────┘
+
+    0 ltov 1 2 3 0 4 5 6 0 7 8 9            ⍝ split numeric vector.
+┌─────┬─────┬─────┐
+│1 2 3│4 5 6│7 8 9│
+└─────┴─────┴─────┘
+
+    ⊢ rainbow ← 'red' 'and' 'yellow' ',' 'pink' 'and' 'green'
+┌───┬───┬──────┬─┬────┬───┬─────┐
+│red│and│yellow│,│pink│and│green│
+└───┴───┴──────┴─┴────┴───┴─────┘
+
+    (⊂'and')ltov rainbow                    ⍝ split nested vector
+┌─────┬───────────────┬───────┐
+│┌───┐│┌──────┬─┬────┐│┌─────┐│
+││red│││yellow│,│pink│││green││
+│└───┘│└──────┴─┴────┘│└─────┘│
+└─────┴───────────────┴───────┘
+
+    'and' ',' ltov rainbox
+┌─────┬────────┬──────┬───────┐
+│┌───┐│┌──────┐│┌────┐│┌─────┐│
+││red│││yellow│││pink│││green││
+│└───┘│└──────┘│└────┘│└─────┘│
+└─────┴────────┴──────┴───────┘
+
+See also: Line_vectors
+
+Index:line vector

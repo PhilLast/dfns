@@ -1,0 +1,283 @@
+expr ← vars ##.unify expr expr ···          ⍝ Unification of expressions.
+
+Returns  the  unification  of a vector of expressions, with respect to variables
+listed in its left argument.
+
+For example, if (1×2)+y and x+(3×4) represent the same expression, then it foll-
+ows that x = 1×2 and y = 3×4, and both expressions must be equal to (1×2)+(3×4).
+
+The new expression is said to be the "unification" of the previous ones with re-
+spect to variables x and y.
+
+Technical notes:
+
+Unify takes a _vector_ of expressions to be unified and uses primitive reduction
+to apply Robinson's algorithm cumulatively, two expressions at a time.
+
+The  algorithm  examines  the two expressions in parallel, looking for the first
+pair of terms that "disagree". For example, in expressions:
+
+ (1+2) ×   y   ÷ 3 - (z + 5)
+
+   u   × (6+7) ÷ 3 - (z + w)
+
+the disagreement pairs are:
+
+    (1+2)  u
+    y      (6+7)
+    5      w
+
+If just one of the items in the pair is a variable, it is substituted in both of
+the original expressions with the corresponding value of the pair, and the whole
+process repeated until the expressions match. If neither of the items is a vari-
+able, then unification fails and a: "Can't unify" error is generated.
+
+A small complication arises with repeated variables. The expressions:
+
+    z   ×   z
+
+  (1+y) × (x+2)
+
+yield two disagreement pairs:
+
+    z (1+y)
+    z (x+2)
+
+In  this  case, the _values_ of the two disagreement pairs (1+y) (x+2) are them-
+selves  unified  recursively  to (1+2), before being substituted for z, yielding
+(1+2)×(1+2) as the unified expression.
+
+This coding  includes  an "occurs check" to guard against non-termination caused
+by  an  attempt to substitute for a variable with a value containing one or more
+occurrences  of  that variable. Using the notation: [⍺/⍵]∊ to mean "substitute ⍺
+for  occurrences of ⍵ in expression ∊" or more succinctly "⍺ for ⍵ in ∊". An ex-
+ample of such non-termination might be:
+
+    [(x+1)/x] 2+x
+=>  [(x+1)/x] 2+(x+1)
+=>  [(x+1)/x] 2+((x+1)+1)
+=>  [(x+1)/x] 2+(((x+1)+1)+1)
+=>  ...
+
+If  the process that generates the expressions to be unified, can guarantee that
+such cases do not occur, this check may be omitted.
+
+References:
+
+Robinson,  J.A.  "A  machine-oriented  logic based on the resolution principle",
+Journal of the ACM, 12:23-41, 1965.
+
+Brown,  J.A. and Guerreiro, R. "APL2 Implementations of Unification", Conference
+Proceedings APL87. APL Quote Quad, V17.4, 1987.
+
+A  slightly different version of unify is used by max.dws for the unification of
+type  expressions  during  type inference. For a discussion of polymorphic types
+and some more references, see max.dws/Implementation.
+
+Examples:
+
+⍝ Here is a parser for simple parenthesised expressions.
+
+    px←{                        ⍝ Single char token parser.
+        1=⍴⍵:⊃⍵                 ⍝ atom: return scalar.
+        depth←×¯1⌽-⌿+\'()'∘.=⍵  ⍝ within parens.
+        lpars←0 1⍷depth         ⍝ left parens.
+        smask←lpars≥depth       ⍝ segmentation mask.
+        drops←1 ¯1×⊂smask/lpars ⍝ parens drop.
+        ∇¨↑↓¨/drops,⊂smask⊂⍵    ⍝ process each segment.
+    }
+
+⍝ and a corresponding de-parser:
+
+    fx←{                ⍝ Format parse tree.
+        0=≡⍵:⍕⍵         ⍝ atom: done.
+        ↑,/{            ⍝ join branches.
+            0=≡⍵:⍵      ⍝ atom: done.
+            '(',⍵,')'   ⍝ parenthesise.
+        }∘∇¨⍵           ⍝ each branch.
+    }
+
+⍝ Expressions in x and y:
+
+    lex rex←px¨ '(1×2)+y' 'x+(3×4)'
+
+    disp¨ lex rex
+ ┌───┬─┬─┐  ┌─┬─┬───┐
+ │1×2│+│y│  │x│+│3×4│
+ └───┴─┴─┘  └─┴─┴───┘
+
+⍝ Unification of expressions:
+
+    'xy'unify lex rex
+┌───┬─┬───┐
+│1×2│+│3×4│
+└───┴─┴───┘
+
+⍝ ... formatted.
+
+    fx 'xy'unify lex rex
+(1×2)+(3×4)
+
+⍝ More complex expressions:
+
+    xa←' a    + (b÷n) - (b × a) + a    '
+    xb←'(1-c) + (c÷2) -  d      + e    '
+    xc←' f    +  g    -  h      + (i-3)'
+
+    vars←lcase ⎕a       ⍝ vars: a b ··· z
+
+    fx vars unify px¨xa xb xc~¨' '
+(1-3)+(3÷2)-(3×(1-3))+(1-3)
+
+⍝ Unify can be used to resolve "logical syllogisms", such as:
+⍝
+⍝   Socrates is a man; all men are mortal; ergo, Socrates is mortal.
+
+    s1←'Socrates' 'is' 'man'
+
+    s2←'Man' 'is' 'mortal'
+
+    'man' 'Man'unify s1 s2
+ Socrates  is  mortal
+
+⍝ If both items in the disagreement pair are variables, the (lexically)
+⍝ higher is mapped to the lower. In this example, M→C, M→D, C→A, D→B→A:
+
+    ⎕a unify 'A+B' 'C+D' 'M+M'      ⍝ matching variables.
+A+A
+
+⍝ Unify works on any conformable arrays, including those of higher rank.
+⍝ In the following matrices, constant '*' propogates through all variables
+⍝ A-Z:
+
+    a←2 13⍴2/13↑⎕a
+    b←2 13⍴13↓⎕a
+    (⊃⌽,b)←'*'
+
+    a b
+┌─────────────┬─────────────┐
+│AABBCCDDEEFFG│NOPQRSTUVWXYZ│
+│GHHIIJJKKLLMM│NOPQRSTUVWXY*│
+└─────────────┴─────────────┘
+
+⍝ * matches M matches Y matches F matches X ...
+
+    ⎕a unify a b
+*************
+*************
+
+⍝ Expression unification is used to infer type in some functional languages.
+⍝ Here is the BNF for a tiny right-associative type expression:
+⍝
+⍝   texp := func | atom
+⍝   func := atom→texp | (texp)→texp
+⍝   atom := tcon | tvar
+⍝   tcon := #
+⍝   tvar := ⍺ | ∆ | ∊ | ⍳ | ⍵
+⍝
+⍝ Type variables are ⍺ ∆ ∊ ⍳ ⍵,
+⍝ # is the only type constant and
+⍝ → is the only type operator.
+
+⍝ Examples of expressions:
+⍝
+⍝   #, ⍺, ⍺→⍵, (⍺→∆)→∊→#
+
+⍝ Parser for such expressions:
+
+    pt←{⎕ML←0                           ⍝ Parse type expression.
+        ⊃⍬{                             ⍝ Parse tree and remainder.
+            0=⍴⍵:⍺ ⍵                    ⍝ done: parse tree and remainder.
+            hd tl←(⊃⍵)(1↓⍵)             ⍝ head and tail of expr.
+            '('=hd:↑∇/⍬ ∇ tl            ⍝ parenthesised sub-expr:
+            ')'=hd:⍺ tl                 ⍝ complete sub-expression:
+            '→'=hd:⌽⍺{⍺⍺ hd ⍵}\⌽⍬ ∇ tl  ⍝ function:
+            hd ∇ tl                     ⍝ atom:
+        }⍵~' '                          ⍝ ignoring blanks.
+    }
+
+⍝ and a corresponding de-parser:
+
+    ft←{⎕ML←1                   ⍝ Format parse tree.
+        0=≡⍵:⍕⍵                 ⍝ atom: done.
+        0=≡⊃⍵:∊∇¨⍵              ⍝ atomic left branch: no parens.
+        '(',(∇⊃⍵),')',∊∇¨1↓⍵    ⍝ parenthesised left branch.
+    }
+
+⍝ Parse trees for type expressions:
+
+    pt'⍺→∊→⍳→⍵'
+┌─┬─┬─────────┐
+│⍺│→│┌─┬─┬───┐│
+│ │ ││∊│→│⍳→⍵││
+│ │ │└─┴─┴───┘│
+└─┴─┴─────────┘
+
+    pt'(⍺→∊)→⍳→⍵'
+┌───┬─┬───┐
+│⍺→∊│→│⍳→⍵│
+└───┴─┴───┘
+
+⍝ Formatted parse tree. Note how redundant parentheses are ignored:
+
+    ft pt'(⍺→∊)→(⍳→⍵)'
+(⍺→∊)→⍳→⍵
+
+⍝ Vars: ⍺ ∆ ∊ ⍳ ⍵
+
+    vars←'⍺∆∊⍳⍵'
+
+⍝ Some type expressions:
+
+    xa←'(⍺→⍺)→∊    '
+    xb←'    ∆→∆    '
+    xc←'    ⍳→(⍵→#)'
+
+⍝ Unified type expressions:
+
+    ft vars unify pt¨xa xb xc
+(#→#)→#→#
+
+⍝ The following expressions can't be unified:
+
+    clash←pt¨ '(⍺→⍺)→⍵' '⍺→(⍵→⍵)'
+
+    ft vars unify clash
+Can't unify
+    ft vars unify clash
+    ∧
+⍝ However, if the intention is that the variables
+⍝ in the expressions are independent, they can be
+⍝ distinguished by:
+
+    dv←{⎕ML←1                   ⍝ Distinguish Variables ⍺ in exprs ⍵.
+        vlft vrgt←⍺∘∩∘∊¨⍵       ⍝ vars in left and right exprs
+        (vlft∩vrgt){            ⍝ duplicate vars.
+            (⊂⍵)∊⍺⍺:(⍺⍺⍳⊂⍵)⊃⍵⍵  ⍝ var in old: subs new.
+            0=≡⍵:⍵              ⍝ atom: pass through.
+            ∇¨⍵                 ⍝ tree: traverse.
+        }(⍺~vlft)\⍵             ⍝ translated right expr.
+    }
+
+⍝ The left argument of dv is the "pool" of
+⍝ variables, available for substitution.
+
+    ft¨clash
+ (⍺→⍺)→⍵  ⍺→⍵→⍵
+
+⍝ Distinguish variables:
+
+    ft¨vars dv clash
+ (⍺→⍺)→⍵  ∆→∊→∊
+
+⍝ Unify succeeds:
+
+    ft vars unify vars dv clash
+(⍺→⍺)→∊→∊
+
+See max.dws/Implementation.
+
+See also: tokens parse
+
+Index:unification|parsing|polymorphism
+Index;Brown J.A.|Robinson J.A.

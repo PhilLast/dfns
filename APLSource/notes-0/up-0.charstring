@@ -1,0 +1,22 @@
+sref ← {from←⎕this} ##.up gens              ⍝ Reference to ancestor space.
+
+Returns  a  space  reference  to the [gens]-parent of the space reference [from],
+(default current space).  Gens  is the number of generations to go "up" the name-
+space tree:
+
+    0 - Self,
+    1 - Parent,
+    2 - Grandparent,
+    3 - ...
+
+Examples:
+
+      ⎕se.mb.options.tt.show up 3           ⍝ Great grandparent of ref.
+⎕SE.mb
+
+      here←up 0                             ⍝ Ref to current space.
+
+See also: refs Namespaces refpath
+
+Index:parent space|ancestor space|namespace references
+

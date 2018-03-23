@@ -1,0 +1,66 @@
+nvec ← ##.sieve nvec                    ⍝ Sieve of Eratosthenes
+                                        ⍝ Eratosthenes of Cyrene (¯276-¯194)
+
+Removes multiples of numbers within the argument vector. Thus sieve 2..⍵ returns
+those  primes in the range 2..⍵.  An illustration of most of the D-function con-
+structs: left argument defaulting; local definition; guards; tail recursion.
+
+(muse:
+
+    Among other accomplishments, Eratosthenes estimated the circumference of the
+    Earth to a surprising accuracy. This is even more impressive if you remember
+    that, as late as Columbus's time, many people still believed the Earth to be
+    flat.
+
+    http://en.wikipedia.org/wiki/Eratosthenes  reports Eratasthenes' estimate to
+    be 16% too large, taking the value of the stadion to be 185m. However, if we
+    take  a  value  of  157.2, which some people derive from Pliny, the estimate
+    comes in at only 3% too small.
+)
+
+(muse:
+
+    A succinct way to express the vector of prime numbers up to (say) 100 is:
+
+          (~v∊v∘.×v)/v←1↓⍳100           ⍝ primes to 100.
+    2 3 5 7 11 13 17 19 23 29 31 37 41 43 47 53 59 61 67 71 73 79 83 89 97
+
+    This expression may be read left-to-right as: "Those items of v that are not
+    in the  product-table of v,  where v is a vector of all but the first of the
+    numbers from 1 to 100."
+
+        (~ v ∊ v ∘.× v) / v ← 1 ↓ ⍳100
+         │   │ └──┬──┘  └┬┘ │ └┬┘ └┬─┘
+         │   │    │      └────────────────Those items of v that
+         │   │    │         │  │   │
+         └────────────────────────────────are not
+             │    │         │  │   │
+             └────────────────────────────in
+                  │         │  │   │
+                  └───────────────────────the product table of v,
+                            │  │   │
+                            └─────────────where v is a vector of
+                               │   │
+                               └──────────all but the first of
+                                   │
+                                   └──────the numbers from 1 to 100.
+
+    Note however, that this is an O(n*2) algorithm in both space and time and so
+    is infeasible for large arguments.
+
+    A criticism that the APL language encourages "over computation",  in that it
+    leads us into calculating many more values than are required,  is misdirect-
+    ed.  The  _language_ has no interest in which values are actually calculated
+    and a smart, lazy implementation might well avoid creating (parts of) inter-
+    mediate arrays.
+)
+
+Example:
+
+    sieve 2 to 100
+2 3 5 7 11 13 17 19 23 29 31 37 41 43 47 53 59 61 67 71 73 79 83 89 97
+
+See also: pco to
+
+Index:prime number
+Index;Eratosthenes

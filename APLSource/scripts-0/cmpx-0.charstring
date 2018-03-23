@@ -1,0 +1,28 @@
+⍝ Approx expression timings:
+
+⍝ This test is problematic in that timings can vary slightly depending on
+⍝ machine loading.   To avoid false negatives, the results are amended to
+⍝ ignore tenths of a second.
+
+    fudge←{v←⍕⍵ ⋄ ((¯1+v⍳'E')⊃v)←'?' ⋄ v}       ⍝ 1.?E¯1
+
+⍝ The volatile percentage differences are removed from the graphical display:
+
+    squish←{(~≠\∧⌿⍵∊'|%')/⍵}                    ⍝ without percentages
+
+⍝ Finally, to reduce the time taken to run this test, cmpx is modified so that
+⍝ it finishes after the expressions have run for just a tenth of second.
+
+    {}⎕fx'secs×1000' 'secs×100'∘subs¨⎕nr'cmpx'  ⍝ reduce no of iterations.
+
+⍝ timing of single expression:
+
+    fudge cmpx'⎕dl 0.1'
+1.?E¯1
+
+⍝ comparison of multiple expressions:
+
+    ↑ fudge¨ ↓ squish 0 0 10 cmpx'⎕dl 0.2' '⎕dl 0.4'
+  ⎕dl 0.2 → 2.?E¯1 % ⎕⎕⎕⎕⎕     
+* ⎕dl 0.4 → 4.?E¯1 % ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+

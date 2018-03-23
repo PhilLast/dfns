@@ -1,0 +1,155 @@
+cmat ← {attributes} ##.attrib namelist      ⍝ Function/operator attributes.
+
+The right argument is a namelist of functions or operators and the optional left
+argument,  a  character  vector  of  the attributes to be displayed. By default,
+date,  name  and first comment are shown in date-time order. The attributes that
+can be displayed are:
+
+    n   name of function or operator,
+    d   date of fix yyyy-mm-dd,
+    t   time of fix   hh:mm:ss,
+    i   id of fixer,
+    r   number of rows,
+    c   number of cols,
+    s   size or "workspace footprint" in bytes.
+    ∇   function or operator syntax which is depicted:
+
+        ⍴←     explicit result.
+        {⍴←}   shy result.
+        ⍺      required left argument.
+        {⍺}    optional left argument.
+        ⍺⍺     left operand.
+        ⍵      right argument.
+        ⍵⍵     right operand.
+        ∇      function.
+        ∇∇     operator.
+
+    ⍝   first line comment,
+
+In addition, sort characters '⍋' and '∧' are acknowledged:
+
+    ⍋   use following row as a  _visible_   sort field.
+    ∧   use following row as an _invisible_ sort field.
+
+    ·    any other character is passed literally to the result column.
+
+[attrib]  is  a good candidate for invocation using a programmable function (PF)
+key, see →PF_keys←.
+
+Technical notes:
+
+APL's  traditional  "name clash" problem is avoided by executing the name refer-
+encing  system functions: ⎕AT, ⎕NR, ⎕SIZE, chronologically _before_ the creation
+of any of attrib's local names. This means that at system function time, none of
+the subject names are obscured by local definitions.
+
+    ···
+    names lines sntx time ids sizes←↑{  ⍝ names local to attrib.
+        (⊂↓⍵){⍺,⍵                       ⍝   names,
+        }(⊂⎕NR¨↓⍵){⍺,⍵                  ⍝   ⎕NR,
+        }(1 1 0 1/↓⍉↑,↓⎕AT ⍵){⍺,⍵       ⍝   ⎕AT,
+        }⊂⎕SIZE ⍵                       ⍝   ⎕SIZE.
+    }⎕FMT↑⍵                             ⍝ executed _before_ local name creation.
+    ···
+
+Notice  that  a more readable and seemingly equivalent version of the inner four
+lines above:
+
+        names←⊂↓⍵                       ⍝ fn/op names.
+        lines←⊂⎕NR¨↓⍵                   ⍝ ⎕NR,
+        attrs←1 1 0 1/↓⍉↑,↓⎕AT ⍵        ⍝ ⎕AT,
+        sizes←⊂⎕SIZE ⍵                  ⍝ ⎕SIZE,
+        names,lines,attrs,sizes         ⍝ accumulated attributes.
+
+...  would defeat the object by creating "early" local names. For example, local
+names: [names], [lines] and [attrs], would obscure a workspace function or oper-
+ator  of  the  same name from the following system functions. An alternative but
+ungainly coding would be to string the whole thing across a single source line:
+
+        (⊂↓⍵),(⊂⎕NR¨↓⍵),(1 1 0 1/↓⍉↑,↓⎕AT ⍵),⊂⎕SIZE ⍵
+
+...  but  this  is  over-long and hard to comment or amend. The compromise is to
+spread it over several lines using the linking function: {⍺,⍵}
+
+         (···){⍺,⍵
+        }(···){⍺,⍵
+        }(···)
+
+Incidentally,  "workspace footprint"  is  perhaps a less misleading term for the
+result of ⎕SIZE. If we imagine the footprints from a number of people on a dusty
+floor,  some of the prints will probably overlap and in extremis, the total area
+of  individual  footprints  might exceed that of the floor. Similarly, the ⎕SIZE
+reported  for each function or operator includes that of the symbols and literal
+constants  it  references.  As  symbols  and constants with identical values are
+shared (or overlap) between functions and operators, (+/⎕SIZE ⎕NL 3 4) could ex-
+ceed the value of ⎕WA in an empty workspace!
+
+Examples:
+
+      attrib 'a'⎕nl 3                       ⍝ a-functions in date-time order.
+2000-10-01  ascfile  ⍝ Ascii file as nested vector.
+2000-11-09  ambiv    ⍝ Ambivalize traditional functions.
+2001-11-02  assign   ⍝ Hungarian method cost assignment.
+2002-10-31  attrib   ⍝ Function/operator attributes.
+
+      names←'attrib' 'wsdiff' 'pow' 'else'  ⍝ selection of fns/ops.
+
+      attrib names                          ⍝ default fields in fixtime order.
+1998-03-05  else    ⍝ Condition f else g ...
+2000-10-11  pow     ⍝ Explicit function power.
+2002-10-31  wsdiff  ⍝ Workspace differences.
+2002-10-31  attrib  ⍝ Function/operator attributes.
+
+      'n ⍝'attrib names                     ⍝ names and comments.
+attrib ⍝ Function/operator attributes.
+wsdiff ⍝ Workspace differences.
+pow    ⍝ Explicit function power.
+else   ⍝ Condition f else g ...
+
+      '⍋n ⍝'attrib names                    ⍝ names and comments in name order.
+attrib ⍝ Function/operator attributes.
+else   ⍝ Condition f else g ...
+pow    ⍝ Explicit function power.
+wsdiff ⍝ Workspace differences.
+
+      'n i r×c ∇ ⍝'attrib names             ⍝ name id rows cols syntax comment.
+attrib Dyadic  56×82 ⍴←{⍺}∇⍵        ⍝ Function/operator attributes.
+wsdiff Dyadic 102×82 ⍴←{⍺}∇⍵        ⍝ Workspace differences.
+pow    Dyadic   3×50 ⍴←{⍺}(⍺⍺∇∇)⍵   ⍝ Explicit function power.
+else   Dyadic   4×45 ⍴←{⍺}(⍺⍺∇∇⍵⍵)⍵ ⍝ Condition f else g ...
+
+      'dTt s'attrib names                   ⍝ ISO timestamp and size.
+2002-10-31T14:19:22 5340
+2002-10-31T10:42:03 8528
+2000-10-11T12:14:54  360
+1998-03-05T16:41:54  436
+
+      'n ⍋s'attrib names                    ⍝ names in order of WS footprint.
+pow     360
+else    436
+attrib 5340
+wsdiff 8528
+
+      'n ⍋r×⍋c'attrib names                 ⍝ names in row, then col order.
+pow      3×50
+else     4×45
+attrib  56×82
+wsdiff 102×82
+
+⍝ The final examples show the difference in sorting on date or date-time.
+
+      '⍋d ⍋t n'attrib 2↑names               ⍝ date-time order
+2002-10-31 10:42:03 wsdiff
+2002-10-31 14:19:22 attrib
+
+      '⍋d n'attrib 2↑names                  ⍝ date order.
+2002-10-31 attrib
+2002-10-31 wsdiff
+
+      '⍋d∧t n'attrib 2↑names                ⍝ date-(time) order.
+2002-10-31 wsdiff
+2002-10-31 attrib
+
+See also: PF_keys
+
+Index:attributes|⎕AT|⎕SIZE|syntax|name-clash problem

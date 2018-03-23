@@ -1,0 +1,86 @@
+d ← L ##.dist R                             ⍝ Levenshtein distance.
+
+From Jay Foad, [dist] returns the "distance" between simple vectors L and R.
+
+The O(m×n) algorithm compares sequences, calculating the minimum number of edits
+required to transform one into the other. The notional costs of the edit operat-
+ions are:
+
+    Insert item:  1
+    Delete item:  1
+    Replace item: 1
+    Copy item:    0
+
+For example, comparing vectors 'Sunday' and  'Saturday' implies  the  following
+table, where each item is:
+
+    0 + its NW neighbour, if the corresponding items match.
+    1 + the minimum of its N, W and NW neighbours, otherwise.
+
+      S a t u r d a y
+    S 0 1 2 3 4 5 6 7
+    u 1 1 2 2 3 4 5 6
+    n 2 2 2 3 3 4 5 6
+    d 3 3 3 3 4 3 4 5
+    a 4 3 4 4 4 4 3 4
+    y 5 4 4 5 5 5 4 3
+
+Each number in the table is the edit distance between the sub-strings above  and
+to its left.  For example, the 2 in the second  row, fourth column, is the dist-
+ance from 'Su' to 'Satu': two copies and two insertions.
+
+Note that, as the cost of insertion  and  deletion  is the same, the function is
+commutative. 'Satu' → 'Su' : two copies and two deletions.
+
+The Levenshtein distance between the two sequences is thus the lower-right table
+item (3 in the above example).
+
+See: http://en.wikipedia.org/wiki/Levenshtein_distance
+
+Technical note:
+
+    dist←{⎕ML←0                     ⍝ Levenshtein distance.
+        a←(n+1)⍴(⍴⍺)+n←⍴⍵           ⍝ first row of matrix
+        f←⍵{⌊\⍵⌊(⊃⍵),(¯1↓⍵)-1+⍺=⍺⍺} ⍝ iteration step
+        z←⊃f/(⌽⍺),⊂a                ⍝ last row of matrix
+        ⊃⌽z
+    }
+
+[dist] calculates a row of the matrix at a time.  The / iterates over successive
+characters from ⍺, generating a new matrix row each time. The ⌊\ is key to calc-
+ulating a whole row quickly.
+
+Examples
+
+    'Sunday' dist 'Saturday'                ⍝ distance between strings.
+3
+    'sitting' dist 'kitten'                 ⍝ examples from Wikipedia.
+3
+    mons ← 'January' 'February' 'March'
+    mons,← 'April'   'May'      'June'
+    mons,← 'July'    'August'   'September'
+    mons,← 'October' 'November' 'December'
+
+    mons ∘.dist mons                        ⍝ distances between months
+0 4 6 7 5 5 4 6 9 7 8 8
+4 0 7 7 6 7 6 7 8 7 8 7
+6 7 0 4 3 5 5 6 9 7 8 8
+7 7 4 0 5 5 5 5 8 7 8 8
+5 6 3 5 0 4 3 6 9 7 8 8
+5 7 5 5 4 0 2 5 8 6 7 7
+4 6 5 5 3 2 0 5 9 7 8 8
+6 7 6 5 6 5 5 0 9 7 8 8
+9 8 9 8 9 8 9 9 0 5 4 3
+7 7 7 7 7 6 7 7 5 0 5 4
+8 8 8 8 8 7 8 8 4 5 0 3
+8 7 8 8 8 7 8 8 3 4 3 0
+
+    fuzzy←{({⍵⍳⌊/⍵}(lcase ⍺)∘dist∘lcase¨⍵)⊃⍵}   ⍝ fuzzy selection
+
+    fuzzy∘mons¨ 'dcmbr' 'marching' 'febury'     ⍝ fuzzy matches
+ December  March  February
+
+See also: lcase
+
+Index:string comparison|fuzzy
+Index;Levenshtein V.|Foad J.

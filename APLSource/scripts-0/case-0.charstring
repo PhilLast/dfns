@@ -1,0 +1,12 @@
+⍝ Select operator:
+
+      1 0 0 0 + case - case × case ÷ 10      ⍝ +10
+10
+      0 1 0 0 + case - case × case ÷ 10      ⍝ -10
+¯10
+      0 0 1 0 + case - case × case ÷ 10      ⍝ ×10
+1
+      0 0 0 1 + case - case × case ÷ 10      ⍝ ÷10
+0.1
+      0 0 0 0 + case - case × case ÷ 10      ⍝  10 (no case selected).
+10

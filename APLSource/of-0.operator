@@ -1,0 +1,12 @@
+ of←{                            ⍝ Pick of F of G of H ... arg.
+     indx rslt←⍺⍺{               ⍝ 'countdown' and received result.
+         2=⎕NC'⍺⍺':⍺⍺ ⍵          ⍝ left leaf of tree: pick-index and arg.
+         'int'⍺⍺ ⍵               ⍝ intermediate level: recur left.
+     }⍵
+
+     next←(⍵⍵⍣(⎕IO=indx))rslt    ⍝ apply ⍵⍵ if at right level.
+
+     ⍺←'top'                     ⍝ missing ⍺ => top level.
+     ⍺≡'top':next                ⍝ top level: return result.
+     (indx-1)next                ⍝ otherwise: index and rslt.
+ }

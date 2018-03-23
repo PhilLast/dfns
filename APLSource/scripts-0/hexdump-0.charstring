@@ -1,0 +1,221 @@
+⍝ Hex dump of native file.
+
+⍝ Hexdump uses ⍞← and ←⍞ for input/output. For testing, we modify
+⍝ the  temporary copy  of the function in this namespace to input
+⍝ from variable ∆i and output to variable ∆o.
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+    ∆in←{                               ⍝ input from buffer         ⍝
+        nl←⊃⌽⎕tc                                                    ⍝
+        in←(∧\nl≠∆i)/∆i                                             ⍝
+        buf←⍵,in                                                    ⍝
+        ∆o,←buf,nl                                                  ⍝
+        {buf}∆i∘←(1+⍴in)↓∆i                                         ⍝
+    }                                                               ⍝
+                                                                    ⍝
+    qp←'⍞⊣⍞←' '∆in'∘subs                ⍝ subs quote quad prompt    ⍝
+    qt←'⍞←' '_←{∆o,←⍵}'∘subs            ⍝ subs quote quad output    ⍝
+                                                                    ⍝
+    _←⎕fx qt qp ⎕cr'hexdump'            ⍝ modify function.          ⍝
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+    make←{                              ⍝ make test file.
+        22::⍵  ⎕ncreate 0               ⍝ create if not already there.
+        tie←⍵  ⎕ntie 0                  ⍝ attempt to tie and
+        {tie}0 ⎕nresize tie             ⍝   empty file.
+    }
+
+    nfid←'hexdump test file'            ⍝ test file.
+    ntie←make nfid                      ⍝ create file.
+    _←(323type⍳4)⎕nappend ntie          ⍝ 32-bit words 1 2 3 4
+    _←'hexdump test'⎕nappend ntie       ⍝ char vector
+    _←(323type 0 ¯1)⎕nappend ntie       ⍝ 32-bit words 0··0  f··f
+    ⎕nsize ntie
+36
+    _←⎕nuntie ntie                      ⍝ release
+
+⍝ accumulate from script:
+
+    in←{{1:}_in,←⍵,⊃⌽⎕tc}               ⍝ append command.
+
+⍝ Command Stream:
+
+    _in←''                              ⍝ null cmd vector.
+    in'\\0\⎕dw=0'
+    in'                          ⍝ base' 
+    in'100\⊥\10\0\!\⊥'
+    in'c *                       ⍝ indirect'
+    in'?                         ⍝ help'
+    in'                          ⍝ arithmetic:'
+    in'+10\-8\×5\÷3\%10'
+    in'''msg''                     ⍝ message'
+    in'msg=''hello\               world'''
+    in'msg                       ⍝ multi-msg'
+    in'along = )+4(              ⍝ macro defn'
+    in'(                         ⍝ call'
+    in'100                      ⍝ go 100'
+    in'along                    ⍝ macro call'
+    in')                        ⍝ retn'
+    in'(1 :+ :- :× :÷)4          ⍝ select case'
+    in'0(⊤(0:+4))                ⍝ trace'
+    in'<sub                      ⍝ include subscript'
+    in'<sub1                     ⍝ test <indentation'
+    in'eh                        ⍝ error'
+    in'reps=(::dec-1reps)'
+    in'9reps'
+    in'1000hex                   ⍝ conv dec to hex\0'
+    in'(10 ascs)'
+    in'(2+\(\3)\)'
+    in'1+(1+(1+1))               ⍝ right arg'
+    in'⎕dw=2                     ⍝ 2 cols'
+    in'←dead'
+    in'(8←(beef×10000))'
+    in'0⎕dw=0'
+    in'sum ⍵ = + ⍵'
+    in'2 sum 3'
+    in'osc⍵=(⍵ dec'' ''::1:(⍵%2:osc(⍵÷2):osc(⍵×3+1)))'
+    in'osc 7'
+    in')'
+    
+⍝ Input and output buffers:
+
+    ∆i←'\'(⊃⌽⎕tc)subs _in
+    ∆o←''
+
+⍝ subscripts:
+
+    sub←'''hello world'''         ⍝ subscript.
+
+    sub1←'\'(⊃⌽⎕tc)subs 'ok='':-(''\⍝\        <sub2\        ok='':-)''\ok'
+    sub2←'sub2='
+
+⍝ chars script:
+
+    _in←''                              ⍝ null cmd vector.
+    in'ascs=(*%100::(*%100 asc) +1 ascs)       ⍝ ASCII string from file.'
+    in''
+    in'asc=(                                   ⍝ ASCII char translation.'
+    in'    :''⌷'':'''':'''':'''':'''':'''':'''':'''':''·'':''	'':'''
+    in'                                             ''  :''⌶'':'''':''·'':''ɫ'':''^'''
+    in'    :''Ø'':''É'':''Ü'':''À'':''Ö'':''Ñ'':''Æ'':''ø'':''Ä'':''Å'':''í'':'''':''´'':''∣'':'''':'''''
+    in'    :'' '':''!'':''"'':''#'':''$'':''%'':''&'':'''''''':''('':'')'':''*'':''+'':'','':''-'':''.'':''/'''
+    in'    :''0'':''1'':''2'':''3'':''4'':''5'':''6'':''7'':''8'':''9'':'':'':'';'':''<'':''='':''>'':''?'''
+    in'    :''@'':''A'':''B'':''C'':''D'':''E'':''F'':''G'':''H'':''I'':''J'':''K'':''L'':''M'':''N'':''O'''
+    in'    :''P'':''Q'':''R'':''S'':''T'':''U'':''V'':''W'':''X'':''Y'':''Z'':''['':''\'':'']'':''∧'':''_'''
+    in'    :''`'':''a'':''b'':''c'':''d'':''e'':''f'':''g'':''h'':''i'':''j'':''k'':''l'':''m'':''n'':''o'''
+    in'    :''p'':''q'':''r'':''s'':''t'':''u'':''v'':''w'':''x'':''y'':''z'':''{'':''|'':''}'':''~'':'''''
+    in'    :''⊢'':''⊣'':''⊤'':''⊥'':''←'':''→'':''↑'':''↓'':''≤'':''≥'':''⍲'':''⍱'':''⎕'':''⍞'':''⌹'':''⍙'''
+    in'    :''⍫'':''∆'':''∇'':''⍋'':''⍒'':''⍕'':''⍎'':''⌈'':''⌊'':''⍀'':''⌿'':''⊂'':''⊃'':''∩'':''∪'':''∨'''
+    in'    :'' '':''¡'':''¢'':''£'':''⊢'':''¥'':''⌷'':''§'':''¨'':''⍝'':''⋄'':''⍬'':''≠'':''≡'':''⍪'':''¯'''
+    in'    :''∘'':''○'':''⌽'':''⍉'':''⊖'':''⍟'':''¶'':''·'':''⍺'':''∊'':''⍷'':''≢'':''⍳'':''⍴'':''⍵'':''¿'''
+    in'    :''└'':''Á'':''Â'':''Ã'':''┴'':''┬'':''├'':''Ç'':''È'':''┐'':''Ê'':''Ë'':''Ì'':''Í'':''Î'':''Ï'''
+    in'    :''Ð'':''─'':''Ò'':''Ó'':''Ô'':''Õ'':''┼'':''×'':''┘'':''Ù'':''Ú'':''Û'':''┌'':''Ý'':''þ'':''ß'''
+    in'    :''à'':''á'':''â'':''ã'':''ä'':''å'':''æ'':''ç'':''è'':''é'':''ê'':''ë'':''ì'':''│'':''î'':''ï'''
+    in'    :''ð'':''ñ'':''ò'':''ó'':''ô'':''õ'':''ö'':''÷'':''┤'':''ù'':''ú'':''û'':''ü'':''ý'':''⍨'':''⍣'''
+    in'    )'
+    chars←_in
+
+⍝ hexdec script:
+
+    _in←''
+    in'dec = (:''0'':''1'':''2'':''3'':''4'':''5'':''6'':''7'':''8'':''9'':(÷a dec)(%a dec))'
+    in''
+    in'hex ='
+    in'     . = ÷10 sub × a +'
+    in'     sub = (::(%10:.0:.1:.2:.3:.4:.5:.6:.7:.8:.9))'
+    in'     sub'
+    hexdec←_in
+
+    ('←',chars,hexdec)hexdump nfid ⋄ ∆o             ⍝ accumulated output.
+00000000:·00000001 00000002 00000003 00000004·         
+00000010:·64786568 20706d75 74736574 00000000·         
+00000020:·ffffffff·0                                   
+00000000:·00000001 00000002 00000003 00000004·⎕dw=0    
+00000000:·                          ⍝ base             
+00000000:·100                                          
+00000100:·⊥                                            
+00000100:·10                                           
+00000110:·0                                            
+00000100:·!                                            
+00000000:·⊥                                            
+00000000:·c *                       ⍝ indirect         
+00000004:·?                         ⍝ help             
+    hex   set file position.                           
+  + hex   increment.                                   
+  - hex   decrement.                                   
+  × hex   multiply.                                    
+  ÷ hex   integer divide.                              
+  % hex   integer remainder.                           
+  (       call.                                        
+  )       return.                                      
+  *       get word from file.                          
+  ← hex   put word to file.                            
+  ⊥       set base address.                            
+  !       absolute position.                           
+  : case  select case.                                 
+  '···'   display message.                             
+  ?       help.                                        
+  < var   include subscript.                           
+  ⊤       trace on/off.                                
+  ⍝       comment.                                     
+   name = niladic macro.                               
+ name ⍵ = monadic macro.                               
+    ⎕dw = display width 0-8.                           
+    ⎕be = big-endian 0/1.                              
+00000004:·                          ⍝ arithmetic:      
+00000004:·+10                                          
+00000014:·-8                                           
+0000000c:·×5                                           
+0000003c:·÷3                                           
+00000014:·%10                                          
+00000004:·'msg'                     ⍝ message          
+msg                                                    
+00000004:·msg='hello                                   
+               world'                                  
+00000004:·msg                       ⍝ multi-msg        
+hello                                                  
+world                                                  
+00000004:·along = )+4(              ⍝ macro defn       
+00000004:·(                         ⍝ call             
+00000004:··100                      ⍝ go 100           
+00000100:··along                    ⍝ macro call       
+00000008:··)                        ⍝ retn             
+00000008:·(1 :+ :- :× :÷)4          ⍝ select case      
+00000004:·0(⊤(0:+4))                ⍝ trace            
+00000000⊤··(0:+4))                ⍝ trace              
+00000000⊤···0:+4))                ⍝ trace              
+00000000⊤···:+4))                ⍝ trace               
+00000000⊤···)+4)                ⍝ trace                
+00000000⊤··+4)                ⍝ trace                  
+00000000⊤··4)                ⍝ trace                   
+00000004⊤··)                ⍝ trace                    
+00000000:·<sub                      ⍝ include subscript
+hello world                                            
+00000000:·<sub1                     ⍝ test <indentation
+:-)                                                    
+00000000:·eh                        ⍝ error            
+eh?                                                    
+00000000:·reps=(::dec-1reps)                           
+00000000:·9reps                                        
+987654321                                              
+00000000:·1000hex                   ⍝ conv dec to hex  
+000003e8:·0                                            
+00000000:·(10 ascs)                                    
+hexdump test                                           
+00000000:·(2+                                          
+00000002:··(                                           
+00000002:···3)                                         
+00000005:··)                                           
+00000000:·1+(1+(1+1))               ⍝ right arg        
+00000004:·⎕dw=2                     ⍝ 2 cols           
+00000004:·00000002 00000003·←dead                      
+00000004:·0000dead 00000003·(8←(beef×10000))           
+00000004:·0000dead beef0000·0⎕dw=0                     
+00000000:·sum ⍵ = + ⍵                                  
+00000000:·2 sum 3                                      
+00000005:·osc⍵=(⍵ dec' '::1:(⍵%2:osc(⍵÷2):osc(⍵×3+1))) 
+00000005:·osc 7                                        
+7 22 11 34 17 52 26 13 40 20 10 5 16 8 4 2 1           
+00000001:·)                                            
+                                                       
+    _←nfid ⎕nerase nfid ⎕ntie 0     ⍝ remove file.

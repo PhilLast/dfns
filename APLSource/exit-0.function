@@ -1,0 +1,9 @@
+ exit←{                              ⍝ Return to calling environment.
+     log←⎕SE.⎕WG'Log'                ⍝ session log.
+     sos ipt←'Dyalog APL' '      '   ⍝ start of session marker and prompt.
+     take←{⍺↑⍵,1↑⎕AV}                ⍝ distinguishes '' from '      '.
+     indx←{((⍴⍵)take¨⍺)⍳⊂⍵}          ⍝ index of first ⍵ in ⍺
+     hits←(⊂⌽log)indx¨ipt sos        ⍝ indices of input prompt and banner.
+     off←(>/hits)/'⎕OFF'             ⍝ '⎕OFF ' unless interactive session.
+     off,' ',⍕⍵                      ⍝ return vector for ⍎.
+ }

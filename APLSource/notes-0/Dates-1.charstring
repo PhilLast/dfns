@@ -1,0 +1,82 @@
+──────────────────────────────
+Date Conversion and Formatting
+──────────────────────────────
+Functions   →days←  and →date← convert between ⎕TS format and the number of days
+since   1899-12-31 00:00:00   (sometimes  called  "International  Day  Number").
+→timestamp←  prefixes  a character vector message with an ISO-standard(ish) date
+and time. (ISO puts a 'T' between date and time).
+
+      ⎕ts                                   ⍝ Time now.
+2000 12 25 13 48 52 0
+
+      days ⎕ts                              ⍝ IDN: Days since 1899-12-31
+36884.58333
+
+      date 36884.61729                      ⍝ Date from day number.
+2000 12 25 14 48 53 856
+
+      ⎕ts≡date days ⎕ts                     ⍝ Full circle.
+1
+
+      2000 12 25 14 48 46 timestamp 'Now'   ⍝ Formatted date.
+2000-12-25 14:48:46 Now
+
+A  complication  that arises with converting historical dates is the change from
+the Julian to the →Gregorian_calendar←.
+
+We can make a ⎕TS formatter by composing function →timestamp← with null:
+
+      show←timestamp∘''
+
+      show ⎕ts                              ⍝ Time now.
+2000-12-25 14:15:44
+
+Timestamps  on  file  components  are  in 60th of a second since 1970-01-01. The
+following function converts  ⎕frdci time into day number. Notice that the const-
+ants  (days 1970 1 1)  and  (÷×/1 3/24 60)  are evaluated at definition time and
+bound as operands to the derived function.
+
+      compidn←(days 1970 1 1){⍺⍺+⍵⍵×(⎕io+2)⊃⎕frdci ⍺ ⍵}(÷×/1 3/24 60)
+
+      show date 1 compidn 3                 ⍝ Write-time: fnum 1, component 3.
+2000-12-25 14:09:16
+
+      ⎕cr'compidn'                          ⍝ Canonical rep of derived function.
+┌─────┬──────────────────────────┬──────────────┐
+│25568│{⍺⍺+⍵⍵×(⎕IO+2)⊃⎕FRDCI ⍺ ⍵}│1.929012346E¯7│
+└─────┴──────────────────────────┴──────────────┘
+
+Here's a handy little function to return day-of-week from a ⎕TS-type argument:
+
+      dow←{(⎕io+7|⌊days ⍵)⊃'Sun' 'Mon' 'Tue' 'Wed' 'Thu' 'Fri' 'Sat'}
+
+      dow ⎕ts                               ⍝ TGI Friday!
+Fri
+
+Note  that  1899-12-31 00:00:00 is an _arbitrary_ choice of "epoch" selected for
+date  representation  with  the  ⎕SM/⎕SR  character-based screen manager. We can
+easily compose functions based on other starting points:
+
+The Julian epoch started at noon on Jan 1st, ¯4712:
+
+    days_julian ← 2415019.5∘+∘(15821004∘days)   ⍝ "Julian Days".
+    date_julian ← ¯115860∘date∘(-∘2415019.5)
+
+    days_mjd ← 15019∘+∘(15821004∘days)      ⍝ "Modified Julian Days".
+    date_mjd ← ¯115860∘date∘(-∘15019)
+
+    unix_time ← 86400∘×∘(-∘25568)∘days      ⍝ Secs since 1970-01-01 00:00:00.
+    unix_date ← date∘(+∘25568)∘(÷∘86400)
+
+    long_count ← mayan∘(1830735∘+∘days)     ⍝ Mayan Long Count (584,285 corr.).
+
+    days_excel_1900 ← 1∘+days               ⍝ Excel 1900 date system.
+    date_excel_1900 ← date∘(-∘1)
+
+    days_excel_1904 ← 1461∘+days            ⍝ Excel 1904 date system.
+    date_excel_1904 ← date∘(-∘1461)
+
+See also: days date cal timestamp mayan easter compidn
+See also: Gregorian_calendar British_Calendar_Act_1751
+
+Index:date|calendar

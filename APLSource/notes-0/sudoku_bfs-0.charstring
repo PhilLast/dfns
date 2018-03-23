@@ -1,0 +1,187 @@
+Breadth-First Search Sudoku Solver
+----------------------------------
+The Sudoku solver shown in YouTube: http://www.youtube.com/watch?v=DmT80OseAGs
+uses a breadth-first tree search technique.
+
+Taking a 4×4 puzzle as an example:
+
+    ┌───┬───┐
+    │· ·│· ·│
+    │· ·│2 1│
+    ├───┼───┤
+    │3 ·│· 4│
+    │· ·│· ·│
+    └───┴───┘
+
+Step[1]  Choose any blank cell and  make a vector of possible placements at that
+position.  Let's start with cell [1 1] at the top left corner.  In this case, as
+the possible placements are 1, 2 or 4, we wind up with a 3-vector of matrices:
+
+    ┌───┬───┐┌───┬───┐┌───┬───┐
+    │1 ·│· ·││2 ·│· ·││4 ·│· ·│
+    │· ·│2 1││· ·│2 1││· ·│2 1│
+    ├───┼───┤├───┼───┤├───┼───┤
+    │3 ·│· 4││3 ·│· 4││3 ·│· 4│
+    │· ·│· ·││· ·│· ·││· ·│· ·│
+    └───┴───┘└───┴───┘└───┴───┘
+
+Step[2] Choose a second position, say [2 2] and, for _each_ of the above, make a
+_vector_ of possible placements, giving us a vector-of-vectors-of-matrices:
+
+    ┌───┬───┐┌───┬───┐  ┌───┬───┐┌───┬───┐  ┌───┬───┐
+    │1 ·│· ·││1 ·│· ·│  │2 ·│· ·││2 ·│· ·│  │4 ·│· ·│
+    │· 3│2 1││· 4│2 1│  │· 3│2 1││· 4│2 1│  │· 3│2 1│
+    ├───┼───┤├───┼───┤  ├───┼───┤├───┼───┤  ├───┼───┤
+    │3 ·│· 4││3 ·│· 4│  │3 ·│· 4││3 ·│· 4│  │3 ·│· 4│
+    │· ·│· ·││· ·│· ·│  │· ·│· ·││· ·│· ·│  │· ·│· ·│
+    └───┴───┘└───┴───┘  └───┴───┘└───┴───┘  └───┴───┘
+
+Next, concatenate the items of this 3-vector-of-vectors-of-matrices into a sing-
+le 5-vector-of-matrices:
+
+    ┌───┬───┐┌───┬───┐┌───┬───┐┌───┬───┐┌───┬───┐
+    │1 ·│· ·││1 ·│· ·││2 ·│· ·││2 ·│· ·││4 ·│· ·│
+    │· 3│2 1││· 4│2 1││· 3│2 1││· 4│2 1││· 3│2 1│
+    ├───┼───┤├───┼───┤├───┼───┤├───┼───┤├───┼───┤
+    │3 ·│· 4││3 ·│· 4││3 ·│· 4││3 ·│· 4││3 ·│· 4│
+    │· ·│· ·││· ·│· ·││· ·│· ·││· ·│· ·││· ·│· ·│
+    └───┴───┘└───┴───┘└───┴───┘└───┴───┘└───┴───┘
+
+... and contine from Step[1] above.
+
+Choosing position [2 1] for our next move:
+
+    ┌───┬───┐  ┌┐  ┌───┬───┐  ┌┐  ┌┐
+    │1 ·│· ·│  ││  │2 ·│· ·│  ││  ││
+    │4 3│2 1│  ││  │4 3│2 1│  ││  ││
+    ├───┼───┤  ├┤  ├───┼───┤  ├┤  ├┤
+    │3 ·│· 4│  ││  │3 ·│· 4│  ││  ││
+    │· ·│· ·│  ││  │· ·│· ·│  ││  ││
+    └───┴───┘  └┘  └───┴───┘  └┘  └┘
+
+In this case,  only  one placement is possible at each of the 1st and 3rd items,
+and _none_ are possible at the 2nd, 4th and 5th.  This means that the lengths of
+the resulting vectors of matrices are 1, 0, 1, 0 and 0 respectively.
+
+Concatenating these vectors-of-vectors before returning to  Step[1] produces the
+2-vector of matrices:
+
+    ┌───┬───┐┌───┬───┐
+    │1 ·│· ·││2 ·│· ·│
+    │4 3│2 1││4 3│2 1│
+    ├───┼───┤├───┼───┤
+    │3 ·│· 4││3 ·│· 4│
+    │· ·│· ·││· ·│· ·│
+    └───┴───┘└───┴───┘
+
+Notice how "dead-ends"  in the tree search produce 0-length vectors are just ab-
+sorbed by the concatenation step.
+
+Choosing [3 2] next:
+
+    ┌───┬───┐┌───┬───┐  ┌───┬───┐┌───┬───┐
+    │1 ·│· ·││1 ·│· ·│  │2 ·│· ·││2 ·│· ·│
+    │4 3│2 1││4 3│2 1│  │4 3│2 1││4 3│2 1│
+    ├───┼───┤├───┼───┤  ├───┼───┤├───┼───┤
+    │3 1│· 4││3 2│· 4│  │3 1│· 4││3 2│· 4│
+    │· ·│· ·││· ·│· ·│  │· ·│· ·││· ·│· ·│
+    └───┴───┘└───┴───┘  └───┴───┘└───┴───┘
+
+Concatenating the 2 2-vectors to form a 4-vector:
+
+    ┌───┬───┐┌───┬───┐┌───┬───┐┌───┬───┐
+    │1 ·│· ·││1 ·│· ·││2 ·│· ·││2 ·│· ·│
+    │4 3│2 1││4 3│2 1││4 3│2 1││4 3│2 1│
+    ├───┼───┤├───┼───┤├───┼───┤├───┼───┤
+    │3 1│· 4││3 2│· 4││3 1│· 4││3 2│· 4│
+    │· ·│· ·││· ·│· ·││· ·│· ·││· ·│· ·│
+    └───┴───┘└───┴───┘└───┴───┘└───┴───┘
+
+... and so on.
+
+Repeating these steps for all blank cells results in a vector of possible solut-
+ions with numbers in all positions.
+
+Published Sudoku puzzles typically claim to have a solution vector of length 1.
+
+Improvements
+------------
+Using more suggestive names for the functions:
+
+Sudoku←{                                        ⍝ Solution vector for square Sudoku puzzle ⍵.
+    BoxNos  ← {⍵⌿⍵/⍵ ⍵⍴⍳⍵*2}                    ⍝ box numbers for a puzzle of size ⍵*2
+    RowColBoxNos  ← {(⍳⍵),¨BoxNos⊃⍵*0.5}        ⍝ row/column/box numbers
+    ContentionMap ← {⊂[⍳2] 1∊¨⍵∘.=⍵}            ⍝ contention map for puzzle ⍵
+    CMAP ← ContentionMap RowColBoxNos ⍴⍵        ⍝ fixed contention map for current puzzle
+
+    at   ← {⍵+⍺×(⍳⍴⍵)∊⊂⍺⍺}                      ⍝ puzzle ⍵ with ⍺ at position ⍺⍺
+    Available  ← {(⍳⊃⍴⍵)~⍵×⊃⍺⌷CMAP}             ⍝ list of available numbers at position ⍺ for puzzle ⍵
+    EmptyCells  ← {(,⍵=0)/,⍳⍴⍵}                 ⍝ row & column indices of empty cells
+    Placements ← {(⍺ Available ⍵) (⍺ at)¨ ⊂⍵}   ⍝ puzzle ⍵ with all available numbers at position ⍺
+    AllPlacements ← {⊃,/⍺∘Placements¨⍵}         ⍝ all possible Placements at ⍺ based on partial solutions ⍵
+    Solutions ← {⊃AllPlacements/(EmptyCells ⍵),⊂⊂⍵}  ⍝ solution vector
+
+    Solutions ⍵
+}
+
+The choice of "next node" is subject to  optimisation  using "Warndorff's rule",
+which prescribes selecting tree nodes in order of increasing degree. This means:
+for the next node, choose the one with the fewest available placements.
+
+An approximation to the rule can be arranged  by sorting  the result of function
+<EmptyCells> above:
+
+    Sorted ← {⍵[⍋↑⍴¨⍵ avl¨⊂⍺]}               ⍝ sorted into ⍴ Available order.
+
+then:
+
+    Solutions ← {⊃AllPlacements/(⌽⍵ Sorted EmptyCells ⍵),⊂⊂⍵} ⍝ solution vector
+                                 ¯¯¯¯¯¯¯¯¯
+
+Extension to higher rank puzzles
+--------------------------------
+Various extensions to higher-dimensional (3D 4D ...) puzzles have been proposed.
+The rules for one of these variations is simply that no number should be repeat-
+ed in any of the rank (¯1+⍴⍴⍵) sub-planes.  In the case of a 3×3×3 puzzle,  such
+as:
+
+    0 0 0
+    8 1 0
+    0 0 2
+
+    0 6 0
+    0 7 0
+    9 0 4
+
+    5 0 0
+    0 0 3
+    0 0 0
+
+this means there should be no repeats in any of the 9: x, y or z planes.  Notice
+that for this puzzle there are no "boxes",  so  we  won't  need  inner  function
+<RoColBoxNos>; instead, we need only the primitive indices function: ⍳. Here are
+the modifications:
+
+    ContentionMap ← {⊂[⍳⍴⍴⍵] 1∊¨⍵∘.=⍵}  ⍝ contention map for puzzle ⍵
+                        ¯¯¯
+    CMAP ← ContentionMap ⍳ ⍴⍵           ⍝ fixed contention map for current puzzle
+                         ¯
+    Available  ← {(⍳×/1↓⍴⍵)~⍵×⊃⍺⌷CMAP}  ⍝ list of available numbers at position ⍺ for puzzle ⍵
+                    ¯¯¯¯
+leading to solution:
+
+    3 4 9
+    8 1 6
+    7 5 2
+
+    1 6 8
+    2 7 5
+    9 3 4
+
+    5 2 7
+    4 9 3
+    6 8 1
+
+See also: sudoku X
+
+Index:sudoku, game of|Warndorff's rule|YouTube

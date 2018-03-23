@@ -1,0 +1,3 @@
+ gperm←{             ⍝ ⍵-permutation of vertices of graph ⍺.
+     (⊂⍵)⍳¨⍺[⍵]
+ }

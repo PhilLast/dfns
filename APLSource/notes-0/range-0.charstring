@@ -1,0 +1,30 @@
+indx ← brks ##.range nums                   ⍝ Numeric range classification.
+
+Each  item  of the result shows to which sub-range within the left argument, the
+corresponding  item  of the right argument belongs. Values below the first break
+report  0,  and  those above the upper break report ⍴⍵. A value is judged within
+a  sub-range if it is greater-or-equal to the lower bound and strictly less than
+the upper bound:  ⍺[i] ≤ ⍵ < ⍺[i+1].
+
+Range was supplied by Veli-Matti Jantunen.
+
+Examples:
+
+      0 5 10 15 range ¯1 to 16              ⍝ integer ranges.
+0 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4
+
+      ¯1 0 1 range 1○⍳40                    ⍝ real number ranges.
+2 2 2 1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2
+
+      (5 7 to 20)range 2 3 4⍴⍳24            ⍝ higher rank right arg.
+0 0 0 0
+1 1 2 2
+3 3 4 4
+
+5 5 6 6
+7 7 8 8
+8 8 8 8
+
+See also: to
+
+Index;Jantunen V-M.

@@ -1,0 +1,9 @@
+cvec← ##.unwrap lvec                        ⍝ Replace [LF] with blanks.
+
+Line-vector [lvec] is linearised by replacing each [LF] characters with a blank.
+
+Examples, See: Line_vectors
+
+See also: wrap justify squeeze
+
+Index:text|wrapping, words|line vector

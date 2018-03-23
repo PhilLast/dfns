@@ -1,0 +1,30 @@
+⍝ ⎕path-aware ⎕nc:
+
+    ncpath'display'                     ⍝ display is a function.
+3
+    notes.⎕nc'display'                  ⍝ display is a variable in notes.
+2
+    notes ncpath'display'               ⍝ no display function in notes.
+0
+    ncpath↑'display' 'rows'             ⍝ rows is an operator.
+3 4
+    n1 n2←'#.ncpath_test_ns'∘,¨'12'     ⍝ names of two temp spaces.
+    _←n1 n2 ⎕ns¨⊂''                     ⍝ make temp spaces.
+    r1 r2←⍎¨n1 n2                       ⍝ refs to temp spaces.
+
+    _←r1.⎕fx,⊂'aaa←{⍺⍺ ⍵}'              ⍝ ns1:  aaa is op.
+    _←r1.⎕fx,⊂'bbb←{(⍵)} '              ⍝       bbb is fn.
+
+    _←r2.⎕fx,⊂'aaa←{(⍵)} '              ⍝ ns2:  aaa is fn.
+    _←r2.⎕fx,⊂'bbb←{⍺⍺ ⍵}'              ⍝       bbb is op.
+
+    sv_path←⎕path                       ⍝ save ⎕PATH.
+
+    ⎕path←n1,' ',n2                     ⍝ search n1 then n2
+    ncpath 3 3⍴'aaabbbccc'              ⍝ aaa is op, bbb is fn.
+4 3 0
+    ⎕path←n2,' ',n1                     ⍝ search n2 then n1
+    ncpath 3 3⍴'aaabbbccc'              ⍝ aaa is fn, bbb is op.
+3 4 0
+    ⎕path←sv_path                       ⍝ restore ⎕PATH.
+    _←⎕ex↑n1 n2                         ⍝ remove temp spaces.

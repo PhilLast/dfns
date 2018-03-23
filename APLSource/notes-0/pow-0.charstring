@@ -1,0 +1,94 @@
+rslt ← count (fun ##.pow) argt              ⍝ Explicit function power.
+
+Monadic  operand  function:  [fun]  is applied cumulatively [count] times to the
+argument.
+
+NB:  Dyalog V11 implements [pow] as primitive operator ⍣, though with a slightly
+different assignment of arguments and operands.
+
+Technical notes:
+
+There are a number of ways to code this operator. One that perhaps first springs
+to mind, uses tail recursion with a guard:
+
+    pow←{                   ⍝ Explicit function power.
+        ⍺=0:⍵               ⍝ zero count: finished.
+        (⍺-1)∇ ⍺⍺ ⍵         ⍝ tail call with reduced count.
+    }
+
+Another, possibly due to Alan Graham, uses ⍎ and ⍕ to produce the expression: ⍺⍺
+⍺⍺ ⍺⍺ ... ⍺⍺ ⍵.  Note that an unquoted (but unreferenced) ⍺⍺ must be included to
+make it an operator:
+
+    pow←{⍎(⍕⍺⍴⊂'⍺⍺'),'⍵' ⋄ ⍺⍺}
+
+The following coding was provided by Phil Last.
+
+    pow←{↑⊢∘⍺⍺/(⍳⍺),⊂⍵}         ⍝ Explicit function power.
+
+Here's  how it works: The composition: ⊢∘⍺⍺ is a _function_, which applies ⍺⍺ to
+its right argument and ignores its left one. For example:
+
+        12 ⊢∘÷ 2 4              ⍝ reciprocal of 2 4 (the 12 is ignored).
+    0.5 0.25
+
+        1 ⊢∘÷ 2 ⊢∘÷ 2 4         ⍝ reciprocal of reciprocal of 2 4 (1 2 ignored).
+    2 4
+
+        ↑ ⊢∘÷ / 1 2 (2 4)       ⍝ recoding of the above using reduction /.
+    2 4
+
+        ↑ ⊢∘÷ / (⍳2),⊂2 4       ⍝ same as above.
+    2 4
+
+Notice  in  the above, that only the _number_ of items in (⍳2) is significant as
+item  values  are ignored. The expression is therefore ⎕IO independent. Choosing
+an index origin of 1, we can transform the body of the operator in the following
+steps:
+
+    ↑⊢∘⍺⍺/(⍳⍺),⊂⍵                       ⍝ body of the operator.
+→   ↑⊢∘⍺⍺/1 2 ... ⍺ ⍵                   ⍝ (⍳⍺) → 1 2 ... ⍺
+→   1 ⊢∘⍺⍺ 2 ⊢∘⍺⍺ ... ⊢∘⍺⍺ ⍺ ⊢∘⍺⍺ ⍵     ⍝ expanding the reduction /.
+→     ⊢∘⍺⍺   ⊢∘⍺⍺ ... ⊢∘⍺⍺   ⊢∘⍺⍺ ⍵     ⍝ left arguments ignored.
+→       ⍺⍺     ⍺⍺ ...   ⍺⍺     ⍺⍺ ⍵     ⍝ cumulative applications of ⍺⍺.
+
+The following related function uses monadic commute:
+
+    acc←{↑⊢∘(,∘⊂∘⍺⍺∘⊃∘⌽⍨)/(⍳⍺),⊂⊂⍵}             ⍝ ⍺-accumulator.
+
+    3 (1∘+) acc 10                              ⍝ 10 and 3 successors.
+10 11 12 13
+
+Examples:
+
+    6 {'<',⍵,'>'} pow 'wow'
+<<<<<<wow>>>>>>
+
+    display 4 ⊂pow 'wow'
+┌───────────────────┐
+│ ┌───────────────┐ │
+│ │ ┌───────────┐ │ │
+│ │ │ ┌───────┐ │ │ │
+│ │ │ │ ┌→──┐ │ │ │ │
+│ │ │ │ │wow│ │ │ │ │
+│ │ │ │ └───┘ │ │ │ │
+│ │ │ └∊──────┘ │ │ │
+│ │ └∊──────────┘ │ │
+│ └∊──────────────┘ │
+└∊──────────────────┘
+
+    display 6 ↑∘,∘⊂ pow 'hello'                 ⍝ 6-fold increase in rank.
+┌┌┌┌┌┌→────┐
+↓↓↓↓↓↓hello│
+└└└└└└─────┘
+
+    {⍬⍴ ⍵ {1↓⍵,+/⍵} pow 0 1}¨ 0 to 10           ⍝ Fibonacci numbers.
+0 1 1 2 3 5 8 13 21 34 55
+
+    {⍬⍴⌽ ⍵ {1++\+\⍵} pow 0 0}¨ 0 to 10          ⍝ squares.
+0 1 4 9 16 25 36 49 64 81 100
+
+See also: for to limit inverse traj while until
+
+Index:power operator|function power|fibonacci number
+Index;Graham A.|Last P.|Fibonacci L.

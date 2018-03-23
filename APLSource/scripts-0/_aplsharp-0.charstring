@@ -1,0 +1,64 @@
+⍝ Bunda-Gerth definitions for APL#
+
+A # n m a b c v 0 1 2 3 4 5 6 7 8 9 ⍺ ⍵     ⍝ Arrays
+F + - × ÷ ⍳ ⍴ = < | ∇                       ⍝ Functions
+Z / ⌿ \ ⍀                                   ⍝ Hybrid function/operators
+AF                                          ⍝ bound left argument
+JOT ∘                                       ⍝ null / compose
+DOT .                                       ⍝ ref / product.
+DX                                          ⍝ dotted ...
+MOP ¨ &                                     ⍝ Monadic operators
+DOP   ⍣                                     ⍝ Dyadic operators
+IDX                                         ⍝ index/axis
+SEM ;                                       ⍝ semicolon
+LST                                         ⍝ subscript list _;_;_
+CLN :                                       ⍝ colon token
+GRD                                         ⍝ guard :
+DMD ⋄                                       ⍝ diamond ⋄
+SEGS                                        ⍝ diamond segments .. ⋄ .. ⋄ ..
+ARO ←                                       ⍝ assignment arrow
+ASG                                         ⍝ name assignment
+ERR                                         ⍝ error
+() [IDX] {F}                                ⍝ brackets
+
+A:DOT→DX                                    ⍝ dotted ...
+DOT:A→ERR
+
+DX:A→A DX:F→F DX:Z→Z                        ⍝ dotted expression
+DX:MOP→MOP DX:DOP→DOP                       ⍝ dotted operator
+
+A:ARO→ASG                                   ⍝ name to assignment arrow
+
+A:A→A                                       ⍝ strand
+
+DOP:F→MOP DOP:Z→MOP DOP:A→MOP               ⍝ dyadic and
+A:MOP→F F:MOP→F Z:MOP→F                     ⍝ ... monadic operators
+A:IDX→A F:IDX→F Z:IDX→Z                     ⍝ axis / index
+F:Z→F   Z:Z→F                               ⍝ hybrid as operator
+DOT:F→MOP DOT:Z→MOP                         ⍝ inner product
+JOT:MOP→F DOP:JOT→MOP                       ⍝ jot-as-null (outer product)
+JOT:F→MOP JOT:Z→MOP JOT:A→MOP               ⍝ compose
+
+A:F→AF                                      ⍝ left argument to its function
+A:Z→AF                                      ⍝ hybrid as function
+IDX:F→ERR IDX:Z→ERR IDX:A→ERR
+
+AF:A→A F:A→A                                ⍝ function to its right argument
+
+  A:SEM→LST LST:SEM→SEM                     ⍝ [2;] [2;;]
+SEM:SEM→LST LST:A→LST                       ⍝ [;;] [2;3]
+SEM:A→LST                                   ⍝ [;3]
+
+A:CLN→GRD GRD:A→GRD                         ⍝ guards
+CLN:A→ERR                                   ⍝ for 1:2⋄ → (1:2)⋄
+
+   A:DMD→SEGS  DMD:A→SEGS                   ⍝ diamond segment
+ GRD:DMD→SEGS
+SEGS:SEGS→SEGS DMD:DMD→SEGS
+
+SEGS:GRD→SEGS  SEGS:A→SEGS                  ⍝ trailing segment.
+SEGS:DMD→SEGS                               ⍝ ⋄⋄⋄
+
+ASG:A→A                                     ⍝ array naming
+ASG:F→F      ASG:Z→Z                        ⍝ function naming
+ASG:MOP→MOP  ASG:DOP→DOP                    ⍝ operator naming

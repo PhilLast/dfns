@@ -1,0 +1,14 @@
+num ← ##.factorial num                      ⍝ Tail recursive factorial.
+
+An  illustration  of  tail recursion with a left argument accumulator. Note that
+this function is intended only as an illustration of a coding technique. The re-
+commended way of producing a factorial in APL is to use primitive function: _!_.
+
+Example:
+
+      factorial¨⍳10
+1 2 6 24 120 720 5040 40320 362880 3628800
+
+See also: fibonacci
+
+Index:tail recursion|accumulator|factorial

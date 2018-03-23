@@ -1,0 +1,94 @@
+sumvec ← {base←10} ##.colsum cols           ⍝ Sum of (default decimal) columns.
+
+Morten Kromberg's function adds columns of digits, resolving, in parallel, carr-
+ies from column-sum overflows.
+
+Left argument [base], default 10, determines in which number base the sum is to
+be evaluated.
+
+For example:
+
+    colsum ↑(0 0 1)(9 9 9)      ⍝ decimal sum: 1 + 999 → 1000
+1 0 0 0
+
+    2 colsum ↑(0 0 1)(1 1 1)    ⍝ binary sum: 1 + 7 → 8
+1 0 0 0
+
+Technical notes:
+
+    colsum←{⍺←10                            ⍝ Sum of (default decimal) columns.
+        ⍺{{(0=⍬⍴⍵)↓⍵}+⌿1 0⌽0,0 ⍺⊤⍵}⍣≡+⌿⍵    ⍝ repeat while overflow.
+    }
+
+[colsum] uses power-limit (⍺⍺⍣≡) to ripple carry values along the sum until none
+remain:
+
+        ⍺{{(0=⍬⍴⍵)↓⍵}+⌿1 0⌽0,0 ⍺⊤⍵}⍣≡+⌿⍵
+        │ ├─────────┘├┘├──┘├┘├──┘  ├┘└┴─ initial sum with overflow.
+        │ │          │ │   │ │     └──── while carries remain.
+        │ │          │ │   │ └────────── carry and ⍺-residue rows.
+        │ │          │ │   └──────────── extra 0-col to hold overflow.
+        │ │          │ └──────────────── carries shifted to next highest column.
+        │ │          └────────────────── carries added into new sum vector.
+        │ └───────────────────────────── surplus 0-col removed.
+        └─────────────────────────────── number base (default decimal).
+
+We can watch the carry-ripple working by injecting ⎕← into the code:
+
+        ⍺{{(0=⍬⍴⍵)↓⍵}⎕←+⌿1 0⌽0,0 ⍺⊤⍵}⍣≡+⌿⍵    ⍝ repeat while carries.
+                     └┴────────────────────── display intermediate sum.
+then:
+        colsum ↑(9 1/0 1)(10/9)     ⍝ 1 + 9999999999 → 10000000000
+    0 9 9 9 9 9 9 9 9 10 0
+    0 9 9 9 9 9 9 9 10 0 0
+    0 9 9 9 9 9 9 10 0 0 0
+    0 9 9 9 9 9 10 0 0 0 0
+    0 9 9 9 9 10 0 0 0 0 0
+    0 9 9 9 10 0 0 0 0 0 0
+    0 9 9 10 0 0 0 0 0 0 0
+    0 9 10 0 0 0 0 0 0 0 0
+    0 10 0 0 0 0 0 0 0 0 0
+    1 0 0 0 0 0 0 0 0 0 0
+    0 1 0 0 0 0 0 0 0 0 0 0
+    1 0 0 0 0 0 0 0 0 0 0
+
+Notice  that  carries  ripple along the resulting sum vector "in parallel".  The
+following sum overflows initially in the 5th and 10th columns;  then the 4th and
+9th and so on.
+
+        colsum ↑(4 1 4 1/0 1 0 1)(10/9)     ⍝ 100001 + 9999999999 → 10000100000
+    0 9 9 9 10 0 9 9 9 10 0
+    0 9 9 10 0 0 9 9 10 0 0
+    0 9 10 0 0 0 9 10 0 0 0
+    0 10 0 0 0 0 10 0 0 0 0
+    1 0 0 0 0 1 0 0 0 0 0
+    0 1 0 0 0 0 1 0 0 0 0 0
+    1 0 0 0 0 1 0 0 0 0 0
+
+Examples:
+
+    colsum ↑(9 9 9 9)(0 0 0 1)      ⍝ 9999 + 1 → 10000
+1 0 0 0 0
+
+    4 5⍴⍳9                          ⍝ 5 columns of numbers.
+1 2 3 4 5
+6 7 8 9 1
+2 3 4 5 6
+7 8 9 1 2
+
+    colsum 4 5⍴⍳9                   ⍝ 5-column sum. Compare with:
+1 8 2 6 0 4
+
+    +/12345 67891 23456 78912       ⍝ (for comparison with above).
+182604
+
+    2 colsum ↑(1 1 1 1)(0 0 1 0)    ⍝ binary: 15 + 2 → 17
+1 0 0 0 1
+
+    16 colsum ⍪, 1000               ⍝ decimal 1000 in hexadecimal.
+3 14 8
+
+See also: nats
+
+Index:addition|sum|column sum|infinite precision
+Index;Kromberg M.

@@ -1,0 +1,104 @@
+crep ← {tabs csep←4} ##.refmt crep          ⍝ Reformat dfn/op representation.
+
+Reformats  the (possibly nested) canonical representation of D-function or oper-
+ator [crep]. The optional left argument (default 4) specifies:
+
+    [tabs] the indentation width for nested inner functions and
+    [csep] the number of blank columns to separate code from comment lines.
+
+A  previous version of this function, which took and returned the name of a fun-
+ction to be reformatted, can be composed:
+
+    old_refmt ← ⎕fx∘refmt∘⎕cr
+
+NB:  If  [AutoFormat functions]  is  checked in the session's Options→Configure→
+Trace/Edit tab, the system will reimpose its own canonical formatting style when
+functions  are fixed. To preserve "non-standard" formatting, uncheck the box and
+try again.
+
+Examples:
+
+      display ⎕cr'refmt'                ⍝ unformatted dfn.
+┌→────────────────────────────────────────────────────────────────────┐
+↓refmt←{⎕IO ⎕ML←0                ⍝ Reformat dfn/op.                   │
+│    ⍺←4 ⋄ dent csep←⍺             ⍝ default indents and ⍝-separation.│
+│   ⎕FX{                          ⍝ refix function.                   │
+│   unqt←{~≠\⍵=''''}            ⍝ mask of unquoted tokens.            │
+│    code coms←↓⍉↑{              ⍝ code and comment vectors.          │
+│      umsk←unqt ⍵               ⍝ unquoted chars.                    │
+│    cmsk←∨\umsk∧⍵='⍝'         ⍝ comment mask.                        │
+│      code coms←(0 1=⊂cmsk)/¨⊂⍵ ⍝ code / comments.                   │
+│      rlb←{(∨\⍵≠' ')/⍵}         ⍝ remove leading blanks.             │
+│    clean←⌽rlb⌽rlb code       ⍝ cleaned code.                        │
+│      clean coms                ⍝ clean code / comment.              │
+│    }¨⍵                         ⍝ for each line.                     │
+│    dents←{                     ⍝ indentation for each line          │
+│       toks←(unqt ⍵){⍺\⍺/⍵}⍵     ⍝ unquoted code characters.         │
+│       dvec←-⌿0 1⌽+\'{}'∘.=toks  ⍝ brace-depth of each token.        │
+│     lmask←toks='·'            ⍝ start of each line.                 │
+│      (dent×lmask/dvec)/¨' '    ⍝ indentation for each line.         │
+│    }↑,/'·',¨code               ⍝ collected code vector.             │
+│     scoms←(⊂csep⍴' '),¨coms     ⍝ separated comments.               │
+│     icode←↓↑dents,¨code         ⍝ indented code lines.              │
+│    icode,¨scoms                ⍝ reunited code and comments.        │
+│  }⎕NR ⍵                        ⍝ lines of function.                 │
+│}                                                                    │
+└─────────────────────────────────────────────────────────────────────┘
+
+      display 4 refmt ⎕cr'refmt'        ⍝ generous formatting.
+┌→───────────────────────────────────────────────────────────────────────────┐
+↓refmt←{⎕IO ⎕ML←0                         ⍝ Reformat dfn/op.                 │
+│    ⍺←4 ⋄ dent csep←⍺                    ⍝ default indents and ⍝-separation.│
+│    ⎕FX{                                 ⍝ refix function.                  │
+│        unqt←{~≠\⍵=''''}                 ⍝ mask of unquoted tokens.         │
+│        code coms←↓⍉↑{                   ⍝ code and comment vectors.        │
+│            umsk←unqt ⍵                  ⍝ unquoted chars.                  │
+│            cmsk←∨\umsk∧⍵='⍝'            ⍝ comment mask.                    │
+│            code coms←(0 1=⊂cmsk)/¨⊂⍵    ⍝ code / comments.                 │
+│            rlb←{(∨\⍵≠' ')/⍵}            ⍝ remove leading blanks.           │
+│            clean←⌽rlb⌽rlb code          ⍝ cleaned code.                    │
+│            clean coms                   ⍝ clean code / comment.            │
+│        }¨⍵                              ⍝ for each line.                   │
+│        dents←{                          ⍝ indentation for each line        │
+│            toks←(unqt ⍵){⍺\⍺/⍵}⍵        ⍝ unquoted code characters.        │
+│            dvec←-⌿0 1⌽+\'{}'∘.=toks     ⍝ brace-depth of each token.       │
+│            lmask←toks='·'               ⍝ start of each line.              │
+│            (dent×lmask/dvec)/¨' '       ⍝ indentation for each line.       │
+│        }↑,/'·',¨code                    ⍝ collected code vector.           │
+│        scoms←(⊂csep⍴' '),¨coms          ⍝ separated comments.              │
+│        icode←↓↑dents,¨code              ⍝ indented code lines.             │
+│        icode,¨scoms                     ⍝ reunited code and comments.      │
+│    }⎕NR ⍵                               ⍝ lines of function.               │
+│}                                                                           │
+└────────────────────────────────────────────────────────────────────────────┘
+
+      display 2 1 refmt ⎕cr'refmt'      ⍝ frugal formatting.
+┌→──────────────────────────────────────────────────────────────────┐
+↓refmt←{⎕IO ⎕ML←0                ⍝ Reformat dfn/op.                 │
+│  ⍺←4 ⋄ dent csep←⍺             ⍝ default indents and ⍝-separation.│
+│  ⎕FX{                          ⍝ refix function.                  │
+│    unqt←{~≠\⍵=''''}            ⍝ mask of unquoted tokens.         │
+│    code coms←↓⍉↑{              ⍝ code and comment vectors.        │
+│      umsk←unqt ⍵               ⍝ unquoted chars.                  │
+│      cmsk←∨\umsk∧⍵='⍝'         ⍝ comment mask.                    │
+│      code coms←(0 1=⊂cmsk)/¨⊂⍵ ⍝ code / comments.                 │
+│      rlb←{(∨\⍵≠' ')/⍵}         ⍝ remove leading blanks.           │
+│      clean←⌽rlb⌽rlb code       ⍝ cleaned code.                    │
+│      clean coms                ⍝ clean code / comment.            │
+│    }¨⍵                         ⍝ for each line.                   │
+│    dents←{                     ⍝ indentation for each line        │
+│      toks←(unqt ⍵){⍺\⍺/⍵}⍵     ⍝ unquoted code characters.        │
+│      dvec←-⌿0 1⌽+\'{}'∘.=toks  ⍝ brace-depth of each token.       │
+│      lmask←toks='·'            ⍝ start of each line.              │
+│      (dent×lmask/dvec)/¨' '    ⍝ indentation for each line.       │
+│    }↑,/'·',¨code               ⍝ collected code vector.           │
+│    scoms←(⊂csep⍴' '),¨coms     ⍝ separated comments.              │
+│    icode←↓↑dents,¨code         ⍝ indented code lines.             │
+│    icode,¨scoms                ⍝ reunited code and comments.      │
+│  }⎕NR ⍵                        ⍝ lines of function.               │
+│}                                                                  │
+└───────────────────────────────────────────────────────────────────┘
+
+See also: wrapnote dots
+
+Index:formatting, functions

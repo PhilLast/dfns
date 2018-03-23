@@ -1,0 +1,110 @@
+cvec ← {tabstops←8} ##.xtabs cvec           ⍝ Expand/compress HT chars.
+
+The optional left argument (default 8) defines "tabstop" increments.
+
+For  a  positive  left argument, horizontal tab characters in the right argument
+are  replaced  with  appropriate  blanks  and  for a negative left argument, the
+reverse happens. Mnemonic:
+
+    +ive -> expand      ⍝ replace tabs with blanks
+    -ive -> compress    ⍝ replace blanks with tabs
+
+[xtabs] accommodates linefeed characters in its right argument, so a line-vector
+or the content of a whole text file may be converted in one call.
+
+Technical note:
+
+In the coding of the compression case, two subfunctions may be of general inter-
+est.  The first, suggested by Morten Kromberg, identifies runs of adjacent 1s in
+its boolean vector argument:
+
+    runs ← {s←+\⍵ ⋄ s-⌈\s×~⍵}       ⍝ runs of adjacent 1s.
+
+    runs ← {⍵{⍵-⌈\⍵×~⍺}+\⍵}         ⍝ ditto, but with no local variable.
+
+    runs 0 1 1 1 0 1 0 1 1 0        ⍝ runs of adjacent 1s.
+0 1 2 3 0 1 0 1 2 0
+
+and  the  second, by Nicolas Delcros, returns the effect of a state being set ON
+by  1s from its boolean left argument, and OFF by 1s from its right argument. In
+electronics, this function is known as the "SR (set-reset) flip flop".
+
+    onoff ← {1↓⊃,/∨\¨(1,⍵)⊂0,⍺}     ⍝ on where ⍺=1, off where ⍵=1.
+
+    ons ⋄ offs ⋄ ons onoff offs     ⍝ show ons, offs and resulting state.
+0 0 1 1 0 0 0 0 1 0 0 0 0
+0 0 0 0 0 1 0 1 0 0 0 1 0
+0 0 1 1 1 0 0 0 1 1 1 0 0
+
+Although this does not arise in the coding of xtabs, in general there is a prob-
+lem in deciding what to do if ON and OFF bits coincide.  Nicolas gives the foll-
+owing alternatives:
+
+    onoff ← {1↓⊃,/∨\¨(1,⍵)⊂1,⍺}     ⍝ priority given to ON, starting ON
+    onoff ← {1↓⊃,/∨\¨(1,⍵)⊂0,⍺}     ⍝ priority given to ON, starting OFF
+    onoff ← {1↓⊃,/∧\¨(1,⍺)⊂1,~⍵}    ⍝ priority given to OFF, starting ON
+    onoff ← {1↓⊃,/∧\¨(1,⍺)⊂0,~⍵}    ⍝ priority given to OFF, starting OFF
+
+and this one,  where coincident ON and OFF signals are ignored, may have pleased
+Gérard Langlet. The function starts in state OFF (to start in state ON, we could
+just invert the logic: on=0, off=1).
+
+    onoff ← {n←⍺≠⍵ ⋄ ≠\n\2≠/¯1,n/⍺-⍵}
+
+or, with an inner dfn instead of a local variable:
+
+    onoff ← {(⍺≠⍵){≠\⍺\2≠/¯1,⍺/⍵}⍺-⍵}
+
+(muse:
+·
+    There is an intriguing story surrounding the coding of onoff:
+·
+    Jim  Weigang says: "In his APL85 paper (on pg. 82), Clark Wiedmann describes
+    a  programming  problem  posed  to  STSC  employees. The task was to model a
+    state-switching device that toggled state based on signals from two separate
+    "on"  and  "off"  wires.  The device can be modeled trivially with a program
+    that  loops.  Clark  wrote:  "Over  a period of 10 days, 12 programmers con-
+    tributed  14  distinct solutions. Nine of the first ten were incorrect. [The
+    correct  one  was  the  looping  version.]  The  eleventh  solution (by Jeff
+    Chilton) was the first correct one that was non-iterative. It was:
+·
+        1↓((1,OFF>ON)PORSCAN 0,ON>OFF)≠(1,OFF≠ON)PNESCAN 0,ON∧OFF
+
+    The  two  subroutines  [are  partitioned or-scan and notequal-scan, from Bob
+    Smith's  APL79  paper]."  Clark  estimated that the "quest for a non-looping
+    solution  cost about $13,000 in programming time and correspondence." A year
+    or two after this description was published, someone sent Clark a stunningly
+    short  solution  that  everyone had missed. One should not underestimate the
+    amount  of work it sometimes takes to find noniterative solutions in APL, or
+    assume  that  finding  such  solutions  is worth the amount of time spent on
+    them. "
+
+    Presumably, the "stunningly short solution" predated nested arrays and part-
+    itioned reduction.
+)
+
+Example:
+
+    text
+whistles        far     and wee
+
+    ht ← (9+⎕io)⊃⎕av                        ⍝ horizontal tab char.
+
+    st ← ht'→'∘subs                         ⍝ show tabs as →.
+
+    st ¯8 xtabs text                        ⍝ compress using 8-tabs
+whistles→far→and wee
+
+    st ¯4 xtabs text                        ⍝ compress using 4-tabs
+whistles→→far→→and→wee
+
+    text ≡ 4 xtabs ¯4 xtabs text            ⍝ full circle
+1
+    {⍵≡4 xtabs ¯4 xtabs ⍵} #.notes.xtabs    ⍝ text with embedded linefeeds.
+1
+
+See also: Line_vectors getfile
+
+Index:tab expansion|horizontal tabs|adjacent 1s|flip flop (RS)
+Index;Weigang J.|Wiedmann C.|Smith R.A.|Chilton J.|Langlet G.
+Index;Kromberg M.|Delcros N.

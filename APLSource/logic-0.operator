@@ -1,0 +1,5 @@
+ logic←{                         ⍝ Logical function array.
+     ⊃(0 1 2 3=+/⍺ ⍺ ⍵)∨.∧{
+         ⊂⍤¯1⊢2 2 2 2⊤⍵
+     }⍺ ⍺⍺ ⍵
+ }

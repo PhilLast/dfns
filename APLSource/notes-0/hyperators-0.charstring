@@ -1,0 +1,46 @@
+Hyperators
+¯¯¯¯¯¯¯¯¯¯
+Functions take arrays as arguments;
+¯¯¯¯¯¯¯¯¯      ¯¯¯¯¯¯    ¯¯¯¯¯¯¯¯¯
+Operators take functions (and arrays) as operands;
+¯¯¯¯¯¯¯¯¯      ¯¯¯¯¯¯¯¯¯                 ¯¯¯¯¯¯¯¯
+Q: What takes operators?
+
+Hyperators take operators (and functions (and arrays)) as hyperands.
+¯¯¯¯¯¯¯¯¯¯      ¯¯¯¯¯¯¯¯¯                                 ¯¯¯¯¯¯¯¯¯
+Clearly, this is a never-ending sequence.
+
+
+A proof of the (need for the) existence of hyperators:
+
+0. We like to write tools that deal with  APL entities (arrays, functions, oper-
+   ators) as subjects. For example, we like to:
+
+   - Format them by drawing boxes around subarrays and by aligning the comments
+     within the source code of functions and operators.
+
+   - Search for text within the character representations of these entities.
+
+   - Determine the amount of worspace they occupy.
+
+   - ... and so on.
+
+1. APL entities may be named: "vec", "sum", "twice" or not: 'ab', +/, {⍺⍺ ⍺⍺ ⍵}.
+
+2. For named entities, we have the rather ugly option of passing the name to the
+   tool:  ⎕SIZE'vec', ⎕AT'sum', ⎕CR'twice', ...
+
+3. For unnamed entities, we do not have this option.
+
+   - To examine an unnamed array, we must pass it as argument to the analysis
+     function.             ¯¯¯¯¯                     ¯¯¯¯¯¯¯¯
+     ¯¯¯¯¯¯¯¯
+   - To examine an unnamed function, we must pass it as operand to an operator.
+                           ¯¯¯¯¯¯¯¯                     ¯¯¯¯¯¯¯       ¯¯¯¯¯¯¯¯
+   - To examine an unnamed operator, we must pass it as hyperand to a hyperator.
+                           ¯¯¯¯¯¯¯¯                     ¯¯¯¯¯¯¯¯      ¯¯¯¯¯¯¯¯¯
+   - ... and so on.
+
+Q.E.D.
+
+Index:hyperator

@@ -1,0 +1,50 @@
+cmp ← {cmp←1} ##.packN exp                  ⍝ Null packing.
+
+Returns  a 3-vector of: shape; boolean vector indicating non-null items; and the
+ravel  of  the original array with nulls removed. This compression is very quick
+and  is  effective  for  simple arrays containing a large proportion of zeros or
+blanks.
+
+The  saving   comes  from the fact that each item in the boolean vector requires
+only  a  single bit,  instead of from 8- to 64-bits in the original.  Of course,
+packN-ing a _boolean_ array is always counter-productive.
+
+Examples:
+
+    string←'whistles        far     and wee'    ⍝ text string.
+
+    packN string                                ⍝ format of packN'd string.
+┌──┬─────────────────────────────────────────────────────────────┬─────────────────┐
+│31│1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 1 1 1 0 1 1 1│whistlesfarandwee│
+└──┴─────────────────────────────────────────────────────────────┴─────────────────┘
+
+    size←{⎕size'⍵'}                             ⍝ show size.
+
+    size string                                 ⍝ size of char vector.
+48
+    size packN string                           ⍝ packed: nett loss.
+104
+    size 1000⍴string                            ⍝ larger string.
+1016
+    size packN 1000⍴string                      ⍝ packed: nett gain.
+760
+
+    mat                                         ⍝ numeric matrix.
+0    0 0 2.48 0 0 0 0    0 0 0    0
+0    0 0 0    0 0 0 0    0 0 0    0
+0    0 0 0    0 0 0 3.66 0 0 7.57 0
+9.92 0 0 0    0 0 0 0    0 0 0    6.33
+
+    packN mat                                   ⍝ format of packN'd matrix.
+┌────┬───────────────────────────────────────────────────────────────────────────────────────────────┬────────────────────────┐
+│4 12│0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 0 1 0 0 0 0 0 0 0 0 0 0 1│2.48 3.66 7.57 9.92 6.33│
+└────┴───────────────────────────────────────────────────────────────────────────────────────────────┴────────────────────────┘
+
+    size mat                                    ⍝ original size.
+404
+    size packN mat                              ⍝ packed: nett gain.
+128
+
+See also: Data_compression
+
+Index:packing|compression|stuff

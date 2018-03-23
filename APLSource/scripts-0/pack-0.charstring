@@ -1,0 +1,67 @@
+⍝ Save WS by sharing subarrays:
+
+      ⎕io ⎕ml←1 0
+
+      cvecs←''                          ⍝ make symbol: "cvecs".
+
+      wsused←{-(⌊⎕wa)-(⌊⎕wa)⊣∘⍎⍵}       ⍝ extra ws used by executing ⍵.
+
+:If {32=2×⎕size'⍵'}⍬                    ⍝ 32-bit interpreter:
+
+          wsused'cvecs←(⍳1e3)⌽¨⊂⎕a'     ⍝ WS used by distinct char vectors,
+    48008
+          wsused'cvecs←pack cvecs'      ⍝ sharing recovers most of it.
+    ¯42864
+:Else                                   ⍝ 64-bit
+          wsused'cvecs←(⍳1e3)⌽¨⊂⎕a'     ⍝ WS used by distinct char vectors,
+    72016
+          wsused'cvecs←pack cvecs'      ⍝ sharing recovers most of it.
+    ¯62352
+:EndIf
+
+      A←'Scissors' 'Paper' 'Stone'
+      B←'Paper' 'Stone' 'Scissors'
+      C←'Stone' 'Scissors' 'Paper'
+
+:If {32=2×⎕size'⍵'}⍬                    ⍝ 32-bit interpreter:
+
+          wsused'A B C←pack A B C'      ⍝ Sharing subarrays <among> variables,
+    ¯152
+
+          nested←⍳¨∘⍳¨∘⍳¨∘⍳¨∘⍳3 3       ⍝ complex nested array:
+          wsused'nested←pack nested'    ⍝ significant saving.
+    ¯17960
+
+          wsused'dups←{⍵ ⍵}/⍳12'        ⍝ deep, shared structure.
+    268
+          wsused'dups←dups+0'           ⍝ unsharing uses much space.
+    44764
+          wsused'dups←pack dups'        ⍝ resharing recovers space.
+    ¯44780
+
+          lvec←⊃{⍺ ⍵}/1↓¨10⍴⊂' ',⎕a     ⍝ unshared list of char vectors.
+
+          wsused 'lvec←pack lvec'       ⍝ sharing saves space.
+    ¯404
+
+:Else                                   ⍝ 64-bit interpreter:
+          wsused'A B C←pack A B C'      ⍝ Sharing subarrays <among> variables,
+    ¯256
+
+          nested←⍳¨∘⍳¨∘⍳¨∘⍳¨∘⍳3 3       ⍝ complex nested array:
+          wsused'nested←pack nested'    ⍝ significant saving.
+    ¯35920
+
+          wsused'dups←{⍵ ⍵}/⍳12'        ⍝ deep, shared structure.
+    536
+          wsused'dups←dups+0'           ⍝ unsharing uses much space.
+    89528
+          wsused'dups←pack dups'        ⍝ resharing recovers space.
+    ¯89560
+
+          lvec←⊃{⍺ ⍵}/1↓¨10⍴⊂' ',⎕a     ⍝ unshared list of char vectors.
+
+          wsused 'lvec←pack lvec'       ⍝ sharing saves space.
+    ¯592
+
+:EndIf

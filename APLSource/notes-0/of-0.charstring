@@ -1,0 +1,60 @@
+rslt ← pick ##.of F of G of H ... arg       ⍝ Pick'th fn applied to arg.
+
+[pick] is a ⎕IO-sensitive index into the "vector of" monadic functions": F G ··.
+The  [pick]th function is applied to [arg]. If [pick] is out-of-bounds, [arg] is
+returned unmodified.
+
+Technical note:
+
+The operator code looks like this:
+
+    of←{                            ⍝ pick of F of G of H ... arg.
+        indx rslt←⍺⍺{               ⍝ 'countdown' and received result.
+            2=⎕NC'⍺⍺':⍺⍺ ⍵          ⍝ left leaf of tree: pick-index and arg.
+            'int'⍺⍺ ⍵               ⍝ intermediate level: recur left.
+        }⍵
+
+        next←(⍵⍵⍣(⎕IO=indx))rslt    ⍝ apply ⍵⍵ if at right level.
+
+        ⍺←'top'                     ⍝ missing ⍺ => top level.
+        ⍺≡'top':next                ⍝ top level: return result.
+        (indx-1)next                ⍝ otherwise: index and rslt.
+    }
+
+As  with  the →case← operator, although the sequence: (p of F of G of H ··· arg)
+might look linear, in fact it represents a derived function _tree_:
+
+           ┌─··· arg
+         ┌─of─┐
+       ┌─of─┐ H
+     ┌─of─┐ G
+    pick  F
+
+[of]  traverses the left "spine" of this tree until it finds a left operand that
+is  not  a  function and so must be the [pick] index. It returns this [indx] and
+the value of the argument ⍵, as the "current" result.
+
+[indx]  is  decremented  as,  together with the result, it is passed back up the
+tree.  When and if [indx] matches ⎕IO, the target level has been reached and the
+[next] result passed back is: ⍵⍵ ⍵.
+
+A  final  twist is that, at the top of the derived function tree, [indx] must be
+discarded  from  the (index next) pair. This is achieved by using ⍺ to signal an
+intermediate depth in the tree and defaulting it to 'top'.
+
+Examples:
+
+      1 of + of - of × of ÷ 10      ⍝ +10
+10
+      2 of + of - of × of ÷ 10      ⍝ -10
+¯10
+      3 of + of - of × of ÷ 10      ⍝ ×10
+1
+      4 of + of - of × of ÷ 10      ⍝ ÷10
+0.1
+      5 of + of - of × of ÷ 10      ⍝  10 (out of range index returns arg).
+10
+
+See also: case Function_arrays pow case co_ops
+
+Index:function array|conditional operator|co-operator

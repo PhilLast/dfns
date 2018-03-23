@@ -1,0 +1,4 @@
+ while←{             ⍝ Conditional function power.
+     ⍵⍵ ⍵:∇ ⍺⍺ ⍵     ⍝ While ⍵⍵ ⍵: apply ⍺⍺ ⍺⍺ ··· ⍵.
+     ⍵               ⍝ Otherwise: finished.
+ }

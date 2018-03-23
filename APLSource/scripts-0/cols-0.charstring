@@ -1,0 +1,107 @@
+⍝ Multi-column display:
+
+    1 10 cols ⍳18           ⍝ check numeric alignment.
+1  6 11 16
+2  7 12 17
+3  8 13 18
+4  9 14   
+5 10 15   
+
+    1 10 cols ⍕¨⍳18         ⍝ wrap of char vectors.
+1 6  11 16
+2 7  12 17
+3 8  13 18
+4 9  14   
+5 10 15   
+
+    2 10 cols ⍳10           ⍝ 2-blank inter-column gap.
+1  5   9
+2  6  10
+3  7    
+4  8    
+
+   cols ⍳3                  ⍝ check single-row format.
+1 2 3
+
+    1 0 disp ∪{0 ⍵ cols ⎕a}¨0 to ⍴⎕a    ⍝ all possible wrappings of A-Z:
+┌→┬─┬──┬───┬────┬─────┬──────┬───────┬─────────┬─────────────┬──────────────────────────┐
+│ │A│AN│AJS│AHOV│AGMSY│AFKPUZ│AEIMQUY│ADGJMPSVY│ACEGIKMOQSUWY│ABCDEFGHIJKLMNOPQRSTUVWXYZ│
+│ │B│BO│BKT│BIPW│BHNTZ│BGLQV │BFJNRVZ│BEHKNQTWZ│BDFHJLNPRTVXZ│                          │
+│ │C│CP│CLU│CJQX│CIOU │CHMRW │CGKOSW │CFILORUX │             │                          │
+│ │D│DQ│DMV│DKRY│DJPV │DINSX │DHLPTX │         │             │                          │
+│ │E│ER│ENW│ELSZ│EKQW │EJOTY │       │         │             │                          │
+│ │F│FS│FOX│FMT │FLRX │      │       │         │             │                          │
+│ │G│GT│GPY│GNU │     │      │       │         │             │                          │
+│ │H│HU│HQZ│    │     │      │       │         │             │                          │
+│ │I│IV│IR │    │     │      │       │         │             │                          │
+│ │J│JW│   │    │     │      │       │         │             │                          │
+│ │K│KX│   │    │     │      │       │         │             │                          │
+│ │L│LY│   │    │     │      │       │         │             │                          │
+│ │M│MZ│   │    │     │      │       │         │             │                          │
+│ │N│  │   │    │     │      │       │         │             │                          │
+│ │O│  │   │    │     │      │       │         │             │                          │
+│ │P│  │   │    │     │      │       │         │             │                          │
+│ │Q│  │   │    │     │      │       │         │             │                          │
+│ │R│  │   │    │     │      │       │         │             │                          │
+│ │S│  │   │    │     │      │       │         │             │                          │
+│ │T│  │   │    │     │      │       │         │             │                          │
+│ │U│  │   │    │     │      │       │         │             │                          │
+│ │V│  │   │    │     │      │       │         │             │                          │
+│ │W│  │   │    │     │      │       │         │             │                          │
+│ │X│  │   │    │     │      │       │         │             │                          │
+│ │Y│  │   │    │     │      │       │         │             │                          │
+│ ↓Z↓  ↓   ↓    ↓     ↓      ↓       ↓         ↓             ↓                          ↓
+└⊖┴→┴─→┴──→┴───→┴────→┴─────→┴──────→┴────────→┴────────────→┴─────────────────────────→┘
+
+    1 12 cols 2/10*0 6 0            ⍝ tricky case.
+1 1000000 1
+1 1000000 1
+
+    0 80 cols ,\⎕a                  ⍝ wrap of char vectors.
+A      ABCDEFGH      ABCDEFGHIJKLMNO      ABCDEFGHIJKLMNOPQRSTUV    
+AB     ABCDEFGHI     ABCDEFGHIJKLMNOP     ABCDEFGHIJKLMNOPQRSTUVW   
+ABC    ABCDEFGHIJ    ABCDEFGHIJKLMNOPQ    ABCDEFGHIJKLMNOPQRSTUVWX  
+ABCD   ABCDEFGHIJK   ABCDEFGHIJKLMNOPQR   ABCDEFGHIJKLMNOPQRSTUVWXY 
+ABCDE  ABCDEFGHIJKL  ABCDEFGHIJKLMNOPQRS  ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ABCDEF ABCDEFGHIJKLM ABCDEFGHIJKLMNOPQRST                           
+ABCDEFGABCDEFGHIJKLMNABCDEFGHIJKLMNOPQRSTU                          
+
+    1 20 cols ,\⎕a                  ⍝ too-narrow wrap truncates.
+A                   
+AB                  
+ABC                 
+ABCD                
+ABCDE               
+ABCDEF              
+ABCDEFG             
+ABCDEFGH            
+ABCDEFGHI           
+ABCDEFGHIJ          
+ABCDEFGHIJK         
+ABCDEFGHIJKL        
+ABCDEFGHIJKLM       
+ABCDEFGHIJKLMN      
+ABCDEFGHIJKLMNO     
+ABCDEFGHIJKLMNOP    
+ABCDEFGHIJKLMNOPQ   
+ABCDEFGHIJKLMNOPQR  
+ABCDEFGHIJKLMNOPQRS 
+ABCDEFGHIJKLMNOPQRST
+ABCDEFGHIJKLMNOPQRST
+ABCDEFGHIJKLMNOPQRST
+ABCDEFGHIJKLMNOPQRST
+ABCDEFGHIJKLMNOPQRST
+ABCDEFGHIJKLMNOPQRST
+ABCDEFGHIJKLMNOPQRST
+
+
+    display 1 50 cols 100/⊂''       ⍝ all items null.
+┌→────────────────────────────────────────────────┐
+↓                                                 │
+│                                                 │
+└─────────────────────────────────────────────────┘
+    display 0 50 cols 100/⊂''       ⍝ all items null - no gap.
+┌⊖┐
+↓ │
+│ │
+└─┘

@@ -1,0 +1,4 @@
+ perv←{⍺←⊢               ⍝ Scalar pervasion
+     1=≡⍺ ⍵ ⍵:⍺ ⍺⍺ ⍵     ⍝ (⍺ and) ⍵ depth 0: operand fn application
+     ⍺ ∇¨⍵      ⍝ (⍺ or) ⍵ deeper: recursive traversal.
+ }

@@ -1,0 +1,6 @@
+⍝ ⍺'th root:
+
+      root 64       ⍝ square root.
+8
+      3 root 64     ⍝ cube root.
+4

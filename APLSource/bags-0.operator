@@ -1,0 +1,30 @@
+ bags←{                              ⍝ Multisets / bags.
+     pd_←{                           ⍝ "progressive dyadic ..." (Bob Smith).
+         r←(⍴⍵)⍴⍋⍋(⍺,⍬)⍳⍵,⍺
+         l←(⍴⍺)⍴⍋⍋(⍺,⍬)⍳⍺,⍵
+         l ⍺⍺ r
+     }
+     pde←∊pd_                        ⍝ progressive dyadic epsilon.
+     pdi←⍳pd_                        ⍝ progressive dyadic iota.
+     mad←{(~⍺ pde ⍵)/⍺}              ⍝ multiset asymmetric difference.
+
+     aa←⍺⍺ ⋄ fn←⍬⍴⎕CR'aa'            ⍝ '~', '∪', etc.
+
+     0::⎕SIGNAL ⎕EN                  ⍝ signal any error to caller.
+
+     0=⎕NC'⍺':{                      ⍝ monadic call.
+         '∪'≡fn:⍵,⍬                  ⍝ unique (noop for vector).
+         ⎕SIGNAL 16                  ⍝ unexpected operand: nonce error.
+     }⍵
+
+     '≡'≡fn:((⍴⍺)≡⍴⍵)>0∊⍺ pde ⍵      ⍝ match.
+     '≢'≡fn:((⍴⍺)≡⍴⍵)≤0∊⍺ pde ⍵      ⍝ natch.
+     '~'≡fn:⍺ mad ⍵                  ⍝ without.                  ⍺~⍵
+     '∪'≡fn:⍺,⍵ mad ⍺                ⍝ union.                    ⍺,⍵~⍺
+     '∩'≡fn:((⍺ pde ⍵)/⍺)            ⍝ intersection.
+     '∊'≡fn:⍺ pde ⍵                  ⍝ progressive membership.
+     '⍳'≡fn:⍺ pdi ⍵                  ⍝ progressive dyadic iota.
+     3=⎕NC'⍺⍺':⎕SIGNAL 16            ⍝ unexpected operand: nonce error.
+     '§'≡⍺⍺:(⍺ mad ⍵),⍵ mad ⍺        ⍝ multiset symmetric difference (msd).
+     ⎕SIGNAL 16                      ⍝ unexpected operand: nonce error.
+ }

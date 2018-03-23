@@ -1,0 +1,230 @@
+ ⍝ Brainfuck:
+
+    ∆←{{1:}⍙,←⍵,⎕ucs 13}    ⍝ accumulate into ⍙ buffer.
+    ⍙←''                    ⍝ null accumulation buffer.
+
+⍝ Here are macros ↓ and ↑ for pushing (down) and popping (up) stack items.
+⍝
+⍝   ┬─┬─┼A┬─┬─┬─┬─┬─┬─
+⍝   │c b│ │ │ │ │ │ │ ∘∘∘
+⍝   ┴─┴─┼0┴1┴2┴3┴4┴5┴─
+
+    ∆'↓=(           '   ⍝ push:                     S←A,S ⋄ A←0
+    ∆'  ←=[-/<+/>]  '   ⍝   ← move ⍺ cells left (local macro defn).
+    ∆'  →=[-/>+/<]  '   ⍝   → move ⍺ cells right    ..  ..  ..
+    ∆'  +           '   ⍝ increment value to be pushed
+    ∆'  4←          '   ⍝ copy A to t in stack base (S.t)
+    ∆'  <<<         '   ⍝ go (move BF's memory pointer) to S
+    ∆'  [< 2← <]    '   ⍝ move S.t to (T+1).t, where (T+1) is left of T
+    ∆'  < 1→ >      '   ⍝ move (T+1).t to (T+1).v
+    ∆'  [>>]        '   ⍝ skip back to (S-1).v (aka b)
+    ∆'  >           '   ⍝ go to A
+    ∆')             '
+
+    ∆'↑=(           '   ⍝ pop:                      A+←↑S ⋄ S←1↓A
+    ∆'  →=[-/>+/<]  '   ⍝   → move ⍺ cells right
+    ∆'  <<<         '   ⍝ go to S
+    ∆'  [<<] >>     '   ⍝ go to T
+    ∆'  1→          '   ⍝ move T.v to (T-1).t
+    ∆'  >>          '   ⍝ go to T-1
+    ∆'  [< 2→ > >>] '   ⍝ move value down stack to (S-1).t (aka c)
+    ∆'  <           '   ⍝ go to c
+    ∆'  2→          '   ⍝ move c to A
+    ∆'  >>          '   ⍝ go to A
+    ∆'  -           '   ⍝ decrement popped value.
+    ∆')             '
+
+    stk ⍙←⍙ ''          ⍝ stack macros ↓ and ↑.
+
+⍝ Macros ; and : code the standard BF sequences that convert between character
+⍝ digits '0'-'9' and their numeric equivalents, by adding or subtracting '0':
+
+    ∆';=(           '   ⍝ ; input digit   A←⎕
+    ∆'  ,           '   ⍝   input char '0'-'9'.
+    ∆'  ∆=/-        '   ⍝   minus.
+    ∆'  <6∆[+>8∆<]> '   ⍝   subtract '0'=48.
+    ∆')'
+
+    ∆':=(           '   ⍝ : output digit  ⎕←A
+    ∆'  ∆=/+        '   ⍝   plus.
+    ∆'  <6∆[->8∆<]> '   ⍝   add '0'=48.
+    ∆'  .           '   ⍝   output char '0'-'9'.
+    ∆')             '
+
+    io ⍙←⍙ ''           ⍝ numeric I/O macros ; and :.
+
+⍝ Macros ≡, → and ← implement directly-addressable or random-access BF memory:
+⍝
+⍝      ┬─┬─┼A┬─┬─┬─┬─┬─┬─
+⍝      │c b│ │ │ │ │ │ │ ∘∘∘
+⍝      ┴─┴─┼0┴1┴2┴3┴4┴5┴─
+
+    ∆'≡=(           '   ⍝ ≡ copy <n> to A.  eg: n≡
+    ∆'  />          '   ⍝   go to <n>
+    ∆'  [-/<+<+>/>] '   ⍝   move <n> to A and b.
+    ∆'  /<          '   ⍝   go to A.
+    ∆'  <           '   ⍝   go to b.
+    ∆'  [->/>+/<<]  '   ⍝   move b to <n>
+    ∆'  >           '   ⍝   go to A.
+    ∆')             '
+
+    ∆'→=(           '   ⍝ → move <n> to A.  eg: n→
+    ∆'  />          '   ⍝   go to <n>
+    ∆'  [-/<+/>]    '   ⍝   move <n> to A.
+    ∆'  /<          '   ⍝   go to A.
+    ∆')             '
+
+    ∆'←=(           '   ⍝ ← move A to <n>   eg: n←
+    ∆'  />[-]/<     '   ⍝   clear <n>
+    ∆'  [-/>+/<]    '   ⍝   move A to <n>
+    ∆')             '
+
+    ram ⍙←⍙ ''          ⍝ directly-addressable memory macros ≡, → and ←.
+
+⍝ and finally, here are {, ⋄ and }, which give us an if-else-fi control struct:
+
+    ∆'  {=<+>[<->   '   ⍝ {  if A≠0
+    ∆'  ⋄=<]<[->    '   ⍝ ⋄  else
+    ∆'  }=<<]>>     '   ⍝ }  fi
+
+    if ⍙←⍙ ''           ⍝ if-else-fi macros { ⋄ }.
+
+⍝ Example:
+
+    dark ← ∩∘'[]<>+-,.'         ⍝ without white space.
+
+    dark mac ram,io, 'm=1 n=2 ;m← ;n←'  ⍝ BF: store input digits at [1] and [2].
+,<------[+>--------<]>>[-]<[->+<],<------[+>--------<]>>>[-]<<[->>+<<]
+
+⍝ Now, at last, Ackermann's function:
+
+    ∆'  m=1 n=2             '   ⍝   declare posn of local vars.
+⍝   ∆'  ;m← ;n←             '   ⍝   input m and n
+    ∆'  m→+m←   n→+n←       '   ⍝   n m+←1
+    ∆'  ↓                   '   ⍝   push 0
+    ∆'  m≡[                 '   ⍝   repeat
+    ∆'  ·   -{              '   ⍝   ·   if 0≠m-1
+    ∆'  ·   ·   ↓           '   ⍝           push m-1
+    ∆'  ·   ·   n≡-{[-]     '   ⍝   ·   ·   if 0≠n-1
+    ∆'  ·   ·   ·   m→ ↓    '   ⍝   ·   ·   ·   push m
+    ∆'  ·   ·   ·   n→-↓    '   ⍝   ·   ·   ·   push n-1
+    ∆'  ·   ·   ⋄           '   ⍝   ·   ·   else
+    ∆'  ·   ·   ·    ++↓    '   ⍝   ·   ·   ·   push 1+1
+    ∆'  ·   ·   }           '   ⍝   ·   ·   fi
+    ∆'  ·   ⋄               '   ⍝   ·   else
+    ∆'  ·   ·   n→+↓        '   ⍝   ·   ·   push n+1
+    ∆'  ·   }               '   ⍝   ·   fi
+    ∆'  ·   ↑n←             '   ⍝   ·   pop n
+    ∆'  ·   ↑m←             '   ⍝   ·   pop m
+    ∆'  m≡]                 '   ⍝   while stacked items
+    ∆'  n→-                 '   ⍝   result is n-1
+⍝   ∆'  :                   '   ⍝   output result.
+    ack ⍙←⍙ ''
+
+    opt ← {↑{({⍵⍱¯1⌽⍵}⍺⍷⍵)/⍵}⍣≡/'><' '<>'⍵}     ⍝ cancelling >< pairs removed.
+
+    ack ← opt dark mac if,io,ram,stk, ack       ⍝ Ackermann in raw BF.
+
+    0~⍨ 0 2 2 bf ack                            ⍝ test: ack(2,2) → 7
+7
+
+    ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+    ⍝                                                       ⍝
+    ⍝                           ⍝ Ackermann's function.     ⍝
+    ∆'  m=1 n=2             '   ⍝   declare local vars.     ⍝
+    ∆'  ;+m← ;+n←           '   ⍝   input and incr m and n  ⍝
+    ∆'  ↓                   '   ⍝   push 0                  ⍝
+    ∆'  m≡[                 '   ⍝   repeat                  ⍝
+    ∆'  ·   -{              '   ⍝   ·   if 0≠m-1            ⍝
+    ∆'  ·   ·   ↓           '   ⍝   ·   ·   push m-1        ⍝
+    ∆'  ·   ·   n≡-{[-]     '   ⍝   ·   ·   if 0≠n-1        ⍝
+    ∆'  ·   ·   ·   m→ ↓    '   ⍝   ·   ·   ·   push m      ⍝
+    ∆'  ·   ·   ·   n→-↓    '   ⍝   ·   ·   ·   push n-1    ⍝
+    ∆'  ·   ·   ⋄           '   ⍝   ·   ·   else            ⍝
+    ∆'  ·   ·   ·    ++↓    '   ⍝   ·   ·   ·   push 1+1    ⍝
+    ∆'  ·   ·   }           '   ⍝   ·   ·   fi              ⍝
+    ∆'  ·   ⋄               '   ⍝   ·   else                ⍝
+    ∆'  ·   ·   n→+↓        '   ⍝   ·   ·   push n+1        ⍝
+    ∆'  ·   }               '   ⍝   ·   fi                  ⍝
+    ∆'  ·   ↑n←             '   ⍝   ·   pop n               ⍝
+    ∆'  ·   ↑m←             '   ⍝   ·   pop m               ⍝
+    ∆'  m≡]                 '   ⍝   while stacked items     ⍝
+    ∆'  n→-:                '   ⍝   output n-1              ⍝
+        ack ⍙←⍙ ''                                          ⍝
+    ⍝                                                       ⍝
+    ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+    ⍴opt dark mac if,io,ram,stk,ack     ⍝ Size of BF code for Ackermann.
+601
+
+    ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+    ⍝                                                           ⍝
+    ⍝  Ackermann's function: second attempt see ##.notes.bfack  ⍝
+    ⍝                                                           ⍝
+    ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+    track←{                             ⍝ Tail-recursive Ackermann.
+        a(m n)←(¯2↓⍵)(¯2↑¯1,⍵)
+        m=¯1:n
+        m=0:∇ a,n+1
+        n=0:∇ a,(m-1)1
+            ∇ a,(m-1)m(n-1)
+    }
+
+    track 3 3                           ⍝ ack 3 3 → 61
+61
+
+    ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+    ⍝                                                               ⍝
+    ⍝ Macros:                           ⍝ Ackermann's function.     ⍝
+    ⍝                                   ⍝                           ⍝
+⍝   ∆'  ;=(, ∆=/- >6∆[+<8∆>]<  )· · '   ⍝ input digit               ⍝
+⍝   ∆'  :=(  ∆=/+ >6∆[-<8∆>]< .)· · '   ⍝ output digit              ⍝
+    ∆'                              '   ⍝                           ⍝
+    ∆'  {=/>+/<[/>-/< · · · · · · · '   ⍝ if                        ⍝
+    ∆'  ⋄=/>]/>[-/< · · · · · · · · '   ⍝ else                      ⍝
+    ∆'  }=/>/>]/</< · · · · · · · · '   ⍝ fi                        ⍝
+    ∆'                              '   ⍝                           ⍝
+    ∆'  ≥=(                         '   ⍝ dup ⍺ right               ⍝
+    ∆'      [-/>+>+</<]/>>          '   ⍝   m .. 0  → 0 .. m m      ⍝
+    ∆'      [-</<+/>>]</<           '   ⍝   m .. m  ←               ⍝
+    ∆'  ) ·                         '   ⍝                           ⍝
+    ∆'                              '   ⍝                           ⍝
+    ∆'  ←=[-/<+/>]  · · · · · · · · '   ⍝ move ⍺ left               ⍝
+    ∆'  →=[-/>+/<]  · · · · · · · · '   ⍝ move ⍺ right              ⍝
+    ∆'                              '   ⍝                           ⍝
+    ⍝ Code:                             ⍝                           ⍝
+    ∆'                              '   ⍝                           ⍝
+    ∆' -                            '   ⍝  (¯1)                     ⍝
+    ∆' >;                           '   ⍝   ¯1(m)                   ⍝
+    ∆' >;<                          '   ⍝   ¯1(m)n                  ⍝
+    ∆' +[-                          '   ⍝   a(m)n                   ⍝
+    ∆'      2{                      '   ⍝   if m≠0:                 ⍝
+    ∆'          >1{                 '   ⍝       if n≠0:             ⍝
+    ∆'              <3≥             '   ⍝           a(m)n 0 m       ⍝
+    ∆'              >1→             '   ⍝           a m(0)n m       ⍝
+    ∆'              >>2←            '   ⍝           a m m n(0)      ⍝
+    ∆'              <-<<->>         '   ⍝           a(m-1)(m)(n-1)  ⍝
+    ∆'          1⋄                  '   ⍝       else if n=0:        ⍝
+    ∆'              <->+            '   ⍝           a(m+1)1         ⍝
+    ∆'          1}<                 '   ⍝       fi                  ⍝
+    ∆'      2⋄                      '   ⍝   else if m=0:            ⍝
+    ∆'          >1←<+<              '   ⍝       a(a)(n+1)0          ⍝
+    ∆'      2}                      '   ⍝   fi                      ⍝
+    ∆'  +]                          '   ⍝ until a(¯1)n              ⍝
+    ∆'  >:                          '   ⍝ output n                  ⍝
+        ack ⍙←⍙ ''                                                  ⍝
+    ⍝                                                               ⍝
+    ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+    ⍴ opt dark mac ack
+115
+    0~⍨ 0 2 3 bf opt dark mac ack       ⍝ ack 2 3 → 9
+9
+
+⍝ This program, transliterated from Böhm's P" language, a precursor to BF,
+⍝ returns the predecessor of a number represented in 2-adic number system:
+⍝ ⍬ 1 2 11 12 21 22 111 112 121 ...
+
+    +1 1 2 bf'>[>]<[-[<[<]]-<]>+'   ⍝ 8-1 → 7
+0 0 1 1 1 0

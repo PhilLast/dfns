@@ -1,0 +1,101 @@
+##.mmind ⎕A[?4⍴6]                           ⍝ Mastermind or "cows and bulls".
+
+Reima Naumanen provides this one-liner to play Mastermind (or "cows and bulls").
+
+The rules of the game are:
+
+- The  machine  chooses  a  4-letter code at random from characters A B C D E F.
+  Letters in the code may be repeated, so examples might be: ABDF, FFAB, BBBB,··
+
+- You try to guess the combination by suggesting a 4-letter code.
+
+- The  machine  responds  to your guess by reporting a "hint" of how many "cows"
+  and "bulls" you scored:
+
+    A bull (*) is a correct letter in its correct position.
+    A cow  (+) is a correct letter in the wrong position.
+
+    Note that the order and position of the *s and +s in the hint has no signif-
+    icance;  for example, **+ means that two of the letters (not necessarily the
+    first two) are in the correct position and that a further one is present but
+    in the wrong position.
+
+    For  example,  if  the code is ABBA, then the following guesses would elicit
+    hints:
+
+    code:       ABBA    ABBA    ABBA    ABBA    ABBA    ABBA    ABBA    ABBA
+    guess:      EACD    CDEF    BACD    AAAD    BAAB    BABA    AAAA    ABBA
+    hint:       +               ++      *+      ++++    **++    **      ****
+
+- Based  on  the  hints, you try repeated guesses until you score 4 bulls (****)
+  and the game finishes.
+
+- The aim of the game is to guess the hidden code in as few moves as possible.
+
+For example, if the code were ADEA, a game might look like this:
+
+ADEA                        (hidden code)
+
+    mmind ⎕A[?4⍴6]
+FECF                        1st guess
++                               0 bulls 1 cow
+BABC                        2nd guess
++                               1 cow
+EBDB                        3rd guess
+++                              2 cows
+DDFB                        4th guess
+*                               1 bull
+ADEA                        5th guess
+****                            4 bulls! (osuu oikein)
+
+Note  that  while  "official"  Mastermind  uses 4 letters chosen from 6, Reima's
+version works with any number chosen from any number. Try: mmind ⎕a[5?9], etc.
+
+Technical notes:
+
+Remarkably, the game can be both programmed and invoked by entering just 77 key-
+strokes (including the terminating _Return_) into a clear session!
+
+  {'*'∨.≠(⍴⍵)↑⎕←'*+'/⍨⍵{(⍺+.=⍵),⍺{+/⊃⌊/+/¨(⊂∪⍺)∘.=¨(⍺≠⍵)∘/¨⍺ ⍵}⍵}⍞:∇⍵}⎕A[?4⍴6]
+
+If we eschew codes with repeated letters, this number drops to 55!
+
+  {'*'∨.≠(⍴⍵)↑⎕←'*+'/⍨⍵{(⍺+.=⍵),+/(⍺∊⍵)>⍺=⍵}⍞:∇⍵}⎕A[5?6]
+
+Veli-Matti  Jantunen  suggests  this version, which copes with wrong-length ans-
+wers:
+
+  {⍵{⎕←(+/¨<\(⍵=⍺)(⍵∊⍺))/'*+' ⋄ ⍺≢⍵}(⍴⍵)↑⍞~' ':∇ ⍵}⎕A[?4⍴6]
+
+Alternatively,  as  Reima says, you can make a human opponent sweat by using the
+computer to help in guessing:
+
+At first 1296 possible codes:
+
+      p←4{⎕IO←0⋄ ↓⎕a[⍉(⍺⍴⍵)⊤⍳⍵*⍺]}6
+
+Say ABCC and hint is 1+1, then there are about 230 codes left:
+
+      {⍵⊃⍨?⍴⍵}p←p/⍨11=p{10⊥(⍺+.=⍵),⍺{+/⊃⌊/+/¨(⊂∪⍺)∘.=¨(⍺≠⍵)∘/¨⍺ ⍵}⍵}¨⊂'ABCC'
+CBBF
+
+Say CBBF and there'll be 46 left
+
+      {⍵⊃⍨?⍴⍵}p←p/⍨ 1=p{10⊥(⍺+.=⍵),⍺{+/⊃⌊/+/¨(⊂∪⍺)∘.=¨(⍺≠⍵)∘/¨⍺ ⍵}⍵}¨⊂'CBBF'
+ACAA
+
+Say ACAA and get 3+0 so
+
+      {⍵⊃⍨?⍴⍵}p←p/⍨30=p{10⊥(⍺+.=⍵),⍺{+/⊃⌊/+/¨(⊂∪⍺)∘.=¨(⍺≠⍵)∘/¨⍺ ⍵}⍵}¨⊂'ACAA'
+
+There will be 4 codes left. A Lucky quess ends the game:
+
+ACAE
+
+References:
+
+Mayer,A., "Cows and Bulls", Vector 10.1, July 1993.
+http://www.vector.org.uk/archive/v101/mayer101_39.htm
+
+Index:Mastermind|cows and bulls, game of|diversions|REPL
+Index;Naumanen R.|Jantunen V-M.

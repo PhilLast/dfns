@@ -1,0 +1,9 @@
+ wrap←{⎕IO←0                     ⍝ Wrap word vector at ⍺ cols.
+     ⍺←⎕PW                       ⍝ default ⎕PW-wrap.
+     ⍺≥⍴⍵:⍵                      ⍝ short enough vector: finished.
+     gaps←(' '=(⍺+1)↑⍵)/⍳⍺+1     ⍝ indices of blanks.
+     take←¯1↑⍺,(⍺≥gaps)/gaps     ⍝ chars to take.
+     drop←take+' '=take⊃⍵        ⍝ chars to drop.
+     head←(take↑⍵),3⊃⎕AV         ⍝ first line and <LF> then,
+     head,⍺ ∇ drop↓⍵             ⍝ wrapped following lines.
+ }

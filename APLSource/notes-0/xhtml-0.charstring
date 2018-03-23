@@ -1,0 +1,81 @@
+{fids} ← ##.xhtml dir                       ⍝ Export this WS to ⍵\*.htm.
+
+Extended by Stephen Taylor, [xhtml] writes UTF-8 encoded .htm files, correspond-
+ing to the structure of this workspace, into existing directory [dir].  Shy res-
+ult [fids] is a vector of the names of the files, which have been created.
+
+Function [xhtml] is specific to this workspace in  that  it  relies  on  various
+idiosyncracies  in  the  format of these notes. In general, it is unsuitable for
+producing html for other workspaces.
+
+Font Issues
+-----------
+The  style  sheet  (http://dfns.dyalog.com/xhtml.css) for these pages encourages
+browsers to use the Dyalog "APL385 Unicode" font, supplied by Adrian Smith.
+
+Ideally, the font should be able to display all of the following characters:
+
+      code_←↑,/##.(,∘⎕cr¨↓⎕nl 3 4)        ⍝ chars used in code.
+      note_←↑,/##.notes.(⍎¨↓⎕nl 2)        ⍝ chars used in notes.
+
+      ws_chars←⎕av∩~∘⎕tc,code_,note_      ⍝ chars used in WS:
+
+      ws_chars
+ %'⍺⍵_abcdefghijklmnopqrstuvwxyz¯.⍬0123456789$£∆ABCDEFGHIJKLMNOPQRSTUVWXYZ·⍙Áõ{⊢}⊣¨ÀÄÅÆ⍨ÉÑÖØÜßàäåæèéïñ[/⌿\⍀<≤=≥>≠∨∧-+÷×?∊⍴~↑↓⍳○*⌈⌊∇∘(⊂⊃∩∪⊥⊤|;,⍱⍲⍒⍋⍉⌽⊖⍟⌹!⍕⍎⍫⍪≡≢öø"#&┘┐┌└┼─├┤┴┬│@^ü:⍷¿⋄←→⍝)]⎕⍞
+
+In other words, the font should be able to draw the following little picture:
+
+      0 1 0∘\¨16 16⍴(⎕io+⎕av∊ws_chars)select' '⎕av      ⍝ chars used in WS:
+┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐
+│   │   │   │   │   │   │   │   │   │   │   │   │ % │ ' │ ⍺ │ ⍵ │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ _ │ a │ b │ c │ d │ e │ f │ g │ h │ i │ j │ k │ l │ m │ n │ o │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ p │ q │ r │ s │ t │ u │ v │ w │ x │ y │ z │   │   │ ¯ │ . │ ⍬ │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ 0 │ 1 │ 2 │ 3 │ 4 │ 5 │ 6 │ 7 │ 8 │ 9 │   │   │   │ $ │ £ │   │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ ∆ │ A │ B │ C │ D │ E │ F │ G │ H │ I │ J │ K │ L │ M │ N │ O │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ P │ Q │ R │ S │ T │ U │ V │ W │ X │ Y │ Z │   │   │   │ · │   │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ ⍙ │ Á │   │   │   │   │   │   │   │   │   │   │   │   │   │   │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│   │   │   │   │   │   │   │   │   │   │ õ │ { │ ⊢ │ } │ ⊣ │   │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ ¨ │ À │ Ä │ Å │ Æ │ ⍨ │ É │ Ñ │ Ö │ Ø │ Ü │ ß │ à │   │   │ ä │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ å │ æ │   │ è │ é │   │   │   │   │ ï │ ñ │ [ │ / │ ⌿ │ \ │ ⍀ │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ < │ ≤ │ = │ ≥ │ > │ ≠ │ ∨ │ ∧ │ - │ + │ ÷ │ × │ ? │ ∊ │ ⍴ │ ~ │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ ↑ │ ↓ │ ⍳ │ ○ │ * │ ⌈ │ ⌊ │ ∇ │ ∘ │ ( │ ⊂ │ ⊃ │ ∩ │ ∪ │ ⊥ │ ⊤ │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ | │ ; │ , │ ⍱ │ ⍲ │ ⍒ │ ⍋ │ ⍉ │ ⌽ │ ⊖ │ ⍟ │ ⌹ │ ! │ ⍕ │ ⍎ │ ⍫ │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ ⍪ │ ≡ │ ≢ │   │   │ ö │ ø │ " │ # │   │ & │   │ ┘ │ ┐ │ ┌ │ └ │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ ┼ │ ─ │ ├ │ ┤ │ ┴ │ ┬ │ │ │ @ │   │   │   │ ^ │ ü │   │   │   │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ : │ ⍷ │ ¿ │   │ ⋄ │ ← │ → │ ⍝ │ ) │ ] │   │   │   │ ⎕ │ ⍞ │   │
+└───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┘
+
+Code Format
+-----------
+The source code looks better in the html if you _UN_check [AutoFormat functions]
+in  the  Trace/Edit Tab from session menu: Options->Configure, while running the
+[xhtml] function.
+
+Requires: →subs←
+
+Example:
+
+    xhtml'c:\tmp'
+┌────────────────┬──────────────────┬──────────────────┬────
+│c:\tmp\index.htm│c:\tmp\n_ambiv.htm│c:\tmp\n_ascan.htm│ ...
+└────────────────┴──────────────────┴──────────────────┴────
+
+See also: htx index subs
+
+Index:www.dyalog.com|font|APL385 Unicode|Unicode|UTF-8
+Index;Smith A.|Taylor S.J.

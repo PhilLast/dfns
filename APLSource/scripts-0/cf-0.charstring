@@ -1,0 +1,4 @@
+⍝ Ratio of operand timings:
+
+    1>{(+/⍵)÷⍴⍵} cf {+/⍵÷⍴⍵}  ⍳1000        ⍝ compare codings of mean.
+1

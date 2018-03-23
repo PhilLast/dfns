@@ -1,0 +1,67 @@
+⍝ Permutation matrix of ⍳⍵:
+
+      ⎕io←1
+
+      pmat 3                            ⍝ 3-perms.
+1 2 3
+1 3 2
+2 1 3
+2 3 1
+3 1 2
+3 2 1
+
+      {⍵[pmat⍴⍵]}'tic' 'tac' 'toe'      ⍝ Perms of nested vector.
+ tic  tac  toe 
+ tic  toe  tac 
+ tac  tic  toe 
+ tac  toe  tic 
+ toe  tic  tac 
+ toe  tac  tic 
+
+      4 3 2⍴↓{⍵[pmat⍴⍵]}'abcd'          ⍝ Folded perms of simple 4-vector.
+ abcd  abdc 
+ acbd  acdb 
+ adbc  adcb 
+            
+ bacd  badc 
+ bcad  bcda 
+ bdac  bdca 
+            
+ cabd  cadb 
+ cbad  cbda 
+ cdab  cdba 
+            
+ dabc  dacb 
+ dbac  dbca 
+ dcab  dcba 
+
+      display∘pmat¨2 1 0                ⍝ Limiting cases
+ ┌→──┐  ┌→┐  ┌⊖┐ 
+ ↓1 2│  ↓1│  ↓0│ 
+ │2 1│  └~┘  └~┘ 
+ └~──┘           
+
+      (!0 to 5) ≡ ⎕io∘⊃∘⍴∘pmat¨0 to 5   ⍝ Result lengths.
+1
+                                        ⍝ Rows of the permutation matrix form
+      {⍵⍳⍵∘.{⍺⊃¨⊂⍵}⍵}↓pmat 3            ⍝ a group under ⊃¨∘⊂ with identity ⍳⍵.
+1 2 3 4 5 6
+2 1 4 3 6 5
+3 5 1 6 2 4
+4 6 2 5 1 3
+5 3 6 1 4 2
+6 4 5 2 3 1
+
+    perms←{                 ⍝ Apply ⍺⍺ to each perm of ⍳⍵
+        ⍬ ⍺⍺{               ⍝ null accumulator
+            1≥⍴⍵:⍺⍺ ⍺,⍵     ⍝ short tail: apply operand to perm
+            (⍺∘,¨⍵)∇¨⍵∘~¨⍵  ⍝ transfer each tail item to head
+        }⍳⍵                 ⍝ for initial vector.
+    }
+
+    disp +perms 3
+┌─────────────┬─────────────┬─────────────┐
+│┌─────┬─────┐│┌─────┬─────┐│┌─────┬─────┐│
+││1 2 3│1 3 2│││2 1 3│2 3 1│││3 1 2│3 2 1││
+│└─────┴─────┘│└─────┴─────┘│└─────┴─────┘│
+└─────────────┴─────────────┴─────────────┘

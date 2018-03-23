@@ -1,0 +1,46 @@
+cmp ← {cmp←1} ##.packR exp              ⍝ Run-Length Encoding (RLE packing).
+
+Run-length encoding is suitable for heavily repeated data, otherwise it's pretty
+inefficient. Repeated items are represented by the item and its repeat count.
+
+Technical note:
+
+Repeated  item  runs are detected in the coding by pairwise reduction using not-
+equal (≠):
+
+    runs←1,2≠/vect              ⍝ mask of start of runs.
+
+Changing the not-equal to a not-match (≢) would reduce performance a little, but
+allow packR to accommodate nested arguments.
+
+Examples:
+
+    packR'Mississippi'
+┌──┬───────────────┬────────┐
+│11│1 1 2 1 2 1 2 1│Misisipi│
+└──┴───────────────┴────────┘
+
+    packR 11 11 11 22 22 11 11
+┌─┬─────┬────────┐
+│7│3 2 2│11 22 11│
+└─┴─────┴────────┘
+
+    ⎕←mat←{⍵×[⎕io]⍵∘.≥⍵}⍳9      ⍝ lower-diagonal matrix.
+1 0 0 0 0 0 0 0 0
+2 2 0 0 0 0 0 0 0
+3 3 3 0 0 0 0 0 0
+4 4 4 4 0 0 0 0 0
+5 5 5 5 5 0 0 0 0
+6 6 6 6 6 6 0 0 0
+7 7 7 7 7 7 7 0 0
+8 8 8 8 8 8 8 8 0
+9 9 9 9 9 9 9 9 9
+
+    packR mat
+┌───┬─────────────────────────────────┬─────────────────────────────────┐
+│9 9│1 8 2 7 3 6 4 5 5 4 6 3 7 2 8 1 9│1 0 2 0 3 0 4 0 5 0 6 0 7 0 8 0 9│
+└───┴─────────────────────────────────┴─────────────────────────────────┘
+
+See also: Data_compression
+
+Index:packing|compression|run-length encoding

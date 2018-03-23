@@ -1,0 +1,22 @@
+⍝ parse-category of name(s) ⍵.
+
+    var←'var'
+    fun←{⍵ ⍵}
+    mop←{⍺⍺ ⍵}
+    dop←{⍵⍵ ⍵}    
+    
+    (kind,⊢) ↑'und' 'var' 'fun' 'mop' 'dop'
+0 und
+1 var
+2 fun
+3 mop
+4 dop
+
+    kind '##.scripts'       ⍝ namespace parses as var
+1
+    kind ⎕fx'foo' ''        ⍝ niladic fn parses as var
+1
+    mop←¨ ⋄ fun←+ ⋄ hyb←⌿   ⍝ primitive mop, fun and hybrid
+    kind 'fun' 'hyb' 'mop'
+2 2.5 3
+

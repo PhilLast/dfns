@@ -1,0 +1,3 @@
+ mtrim←{                 ⍝ Trim off trailing blank cols,
+     (⌽∨\⌽∨⌿⍵≠' ')/⍵     ⍝ from simple character matrix.
+ }

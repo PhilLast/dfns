@@ -1,0 +1,114 @@
+⍝ Expand/compress HT chars:
+
+    text←'whistles        far     and wee'
+
+    ht←⎕ucs 9                           ⍝ horizontal tab.
+
+    st ← ht '→'∘subs                    ⍝ show tab chars as →.
+
+    st ¯8 xtabs text                    ⍝ 8-tabs for multiple blanks.
+whistles→far→and wee
+
+    st ¯4 xtabs text                    ⍝ 4-tabs for multiple blanks.
+whistles→→far→→and→wee
+
+    4 xtabs ¯4 xtabs text               ⍝ 4-tabs round trip.
+whistles        far     and wee
+
+    trip ← {⍵≡⍺ xtabs(-⍺)xtabs ⍵}       ⍝ check round trip for tabs ⍺, text ⍵.
+
+    trips ← {∧/(0,⍳1+⍴⍵)trip¨⊂⍵}        ⍝ round trips for all ⍺∊0..1+⍴⍵.
+
+    trips text                          ⍝ check round-trips for all tabs ⍺.
+1
+    trips ,(6 35⍴↑,/(⍳20)↑¨'⎕'),⊃⌽⎕tc   ⍝ text with embedded linefeeds.
+1
+    4 trip scripts.xtabs                ⍝ round-trip this script.
+1
+    (2/ht' ')≡¯4 xtabs 10↑''            ⍝ all-blanks case works correctly.
+1
+    ∧/trips¨1↓,\10↑''                   ⍝ round-trip all-blank cases.
+1
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ test various codings of runs:
+
+    ones ← 0 1 1 1 0 1 0 1 1 0
+
+    runs ← {s←+\⍵ ⋄ s-⌈\s×~⍵}       ⍝ runs of adjacent 1s.
+
+    runs ones                       ⍝ runs of adjacent 1s.
+0 1 2 3 0 1 0 1 2 0
+
+    runs ← {⍵{⍵-⌈\⍵×~⍺}+\⍵}         ⍝ ditto, but with no local variable.
+
+    runs ones                       ⍝ runs of adjacent 1s.
+0 1 2 3 0 1 0 1 2 0
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ test various codings of onoff:
+⍝
+⍝ onoff codings must decide two issues:
+⍝
+⍝ - whether to start in state ON or OFF and
+⍝ - whether a clash of 1-bits results in ON or OFF or STAY or FLIP
+⍝
+⍝ where STAY means to remain in the current state (ignore concident bits),
+⍝ and   FLIP means to change state.
+⍝
+⍝ This gives rise to 8 permutations, labelled:
+⍝
+⍝   [00]   start OFF, resolve clash to OFF
+⍝   [01]     ··  OFF   ··  ··  ··  ··  ON
+⍝   [0+]     ··  OFF   ··  ··  ··  ··  STAY
+⍝   [0~]     ··  OFF   ··  ··  ··  ··  FLIP
+⍝   [10]     ··  ON    ··  ··  ··  ··  OFF
+⍝   [11]     ··  ON    ··  ··  ··  ··  ON
+⍝   [1+]     ··  ON    ··  ··  ··  ··  STAY
+⍝   [1~]     ··  ON    ··  ··  ··  ··  FLIP
+⍝
+⍝            .------------------------------  switch ON
+⍝            | .----------------------------  switch ON while ON
+⍝            | |       .--------------------  switch ON
+⍝            | |       |   .----------------  clash while ON
+     ons ← 0 1 1 0 0 0 1 0 1 0 0 0 1 0
+    offs ← 0 0 0 0 1 1 0 0 1 0 1 0 1 0
+⍝                  | |         |   '--------  clash while OFF
+⍝                  | |         '------------  switch OFF
+⍝                  | '----------------------  switch OFF while OFF
+⍝                  '------------------------  switch OFF while ON
+
+    op←{↑⍺ ⍵,⊂⍺ ⍺⍺ ⍵}                       ⍝ arg rows followed by result
+
+    ons {1↓⊃,/∨\¨(1,⍵)⊂0,⍺}op offs          ⍝ [01]
+0 1 1 0 0 0 1 0 1 0 0 0 1 0
+0 0 0 0 1 1 0 0 1 0 1 0 1 0
+0 1 1 1 0 0 1 1 1 1 0 0 1 1
+
+    ons {1↓⊃,/∨\¨(1,⍵)⊂1,⍺}op offs          ⍝ [11]
+0 1 1 0 0 0 1 0 1 0 0 0 1 0
+0 0 0 0 1 1 0 0 1 0 1 0 1 0
+1 1 1 1 0 0 1 1 1 1 0 0 1 1
+
+    ons {1↓⊃,/∨\¨(1,⍵)⊂0,⍺}op offs          ⍝ [01]
+0 1 1 0 0 0 1 0 1 0 0 0 1 0
+0 0 0 0 1 1 0 0 1 0 1 0 1 0
+0 1 1 1 0 0 1 1 1 1 0 0 1 1
+
+    ons {1↓⊃,/∧\¨(1,⍺)⊂1,~⍵}op offs         ⍝ [10]
+0 1 1 0 0 0 1 0 1 0 0 0 1 0
+0 0 0 0 1 1 0 0 1 0 1 0 1 0
+1 1 1 1 0 0 1 1 0 0 0 0 0 0
+
+    ons {1↓⊃,/∧\¨(1,⍺)⊂0,~⍵}op offs         ⍝ [00]
+0 1 1 0 0 0 1 0 1 0 0 0 1 0
+0 0 0 0 1 1 0 0 1 0 1 0 1 0
+0 1 1 1 0 0 1 1 0 0 0 0 0 0
+
+    ons {n←⍺≠⍵ ⋄ ≠\n\2≠/¯1,n/⍺-⍵}op offs    ⍝ [0+]
+0 1 1 0 0 0 1 0 1 0 0 0 1 0
+0 0 0 0 1 1 0 0 1 0 1 0 1 0
+0 1 1 1 0 0 1 1 1 1 0 0 0 0
+
+    ons {(⍺≠⍵){≠\⍺\2≠/¯1,⍺/⍵}⍺-⍵}op offs    ⍝ [0+]
+0 1 1 0 0 0 1 0 1 0 0 0 1 0
+0 0 0 0 1 1 0 0 1 0 1 0 1 0
+0 1 1 1 0 0 1 1 1 1 0 0 0 0

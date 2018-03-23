@@ -1,0 +1,217 @@
+C ← {trace←0} ##.scc G      ⍝ Strongly connected components of directed graph ⍵.
+
+Argument vector G is a graph (see →Graphs←).  Result C is a vector of  component
+numbers, indicating which vertices share the same strongly connected components.
+
+[scc] uses Tarjan's algorithm. See:
+http://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm
+
+In short:  the algorithm performs a depth-first search of the graph, maintaining
+a vector of the path between the starting (root) and current vertex. If a vertex
+is encountered that is already in the path,  this constitutes a cycle, the vert-
+ices of which are thus strongly connected. The items of this cycle are marked as
+belonging to the same component, and the process resumed until all vertices have
+been visited.
+
+The  algorithm  is "linear", of order O(≢⍵,∊⍵):  the number of vertices plus the
+number of edges.
+
+Here are three representations of the same graph:  pictorial; schematic; and the
+nested vector, suitable as an argument, when ⎕IO=1, for [scc]:
+
+                                   1 → 2
+    1------>2------>3<----->4      2 → 3 5 6     ┌→┬─────┬───┬───┬───┬─┬─┬───┐
+    ∧      /|       |       ∧      3 → 4 7       │2│3 5 6│4 7│3 8│1 6│7│6│4 7│
+    |    /  |       |       |      4 → 3 8       └→┴~───→┴~─→┴~─→┴~─→┴→┴→┴~─→┘
+    |  /    |       |       |      5 → 1 6
+    |└      ∨       ∨       ∨      6 → 7
+    5------>6<----->7<------8      7 → 6
+                                   8 → 4 7
+
+The strongly connected components are vertices (1 2 5)(3 4 8)(6 7) as represent-
+ed by the result: 1 1 2 2 1 3 3 2
+
+    1 2 3 4 5 6 7 8  ← vertex
+    1 1 2 2 1 3 3 2  ← strongly connected component number
+
+[scc] is origin-independent, so that it can accept graphs in either origin.
+
+Technical notes:
+
+Tarjan's algorithm is often presented in a procedural style, using an inner  and
+outer loop to mutate the state of some global values or of properties associated
+with each vertex of the subject graph.
+
+In contrast, as an exercise in pure functional programming, function [scc] main-
+tains no state.  Comparing the code with that in the Wikipedia article, propert-
+ies associated with vertices: "v.index" and "v.lowlink", together with the stack
+"S" and a counter for the next index value "index", are hosted as  a  vector-of-
+vectors "5-tuple" T, which is passed between subfunctions. The remaining item of
+this tuple: "C" is the accumulator for the result: a simple vector of the vertex
+indices of strongly connected components.
+
+    Tuple "fields"                                          Wikipedia equivalent
+    --------------                                          --------------------
+    C :: a vector of component group indices (the result)   (comment-only)
+    L :: a vector of low-link values per vertex ·   ·   ·   v.lowlink.
+    X :: vector of index number per vertex  ·   ·   ·   ·   v.index
+    x :: scalar: next index number  ·   ·   ·   ·   ·   ·   index
+    S :: stack of indices of unconnected vertices   ·   ·   S
+
+The items of the 5-tuple vector are accessed with named indices: C L X x S, est-
+ablished at initialisation time:
+
+    T ← ...             ⍝ initial value for tuple T ...
+    C L X x S ← ⍳⍴T     ⍝ access names for T's items.
+
+Coding in this way is significantly more complex than its procedural  equivalent
+(purity comes at a price).  Extensive  use is made of local operator →at← which,
+given an argument T0, returns a successor tuple T1.  It is hoped that this oper-
+ator  might  one  day become a language primitive (@), which should considerably
+improve the performance and appearance of such code.
+
+    Wikipedia               [scc]
+    ---------               -----
+    S                       S⊃T0
+    index := index + 1      T1←1+at x⊢T0
+    v.lowlink := index      T2←v L∆ T1
+                            where: L∆←x put L
+                            where: put←{(⍺⍺⊃⍵)⊣at(⊂⍵⍵ ⍺)⊢⍵}
+(muse:
+
+    The up-side of these contortions is that  function  [scc]  is  effectively a
+    single expression, which makes it amenable to agressive  code-transformation
+    techniques such as might be used by an internal code optimiser.
+
+    (muse:
+        It would be interesting to speculate about language mechanisms to assist
+        with this technique of replacing the modification of global  state  with
+        passing everything around as argument and result tuples.  The goal would
+        be to make it pleasant to denote a successor  tuple  in  which  specfied
+        items and their numerically indexed  elements differ  from  the argument
+        tuple.  It is JMS's guess that this is the motivation behind "monads" in
+        Haskell (but he's been wrong before).
+
+        Passing namespace "refs" with dottable field names doesn't help  because
+        the name assignement in this case is procedural and so can not easily be
+        embedded in a larger expression.  We would have to resort  to  something
+        like:
+
+            T1 ← T0.{⎕this⊣X[⍵]←x}v
+
+        which doesn't seem any more friendly than:
+
+            T1 ← (x⊃T0)⊣@(⊂X v)⊢T0
+    )
+
+    Notice that, where a procedural treatment would tend to use a statement sep-
+    arator, this more functional approach uses ⊢ to compose transformations:
+
+        ... ⋄ I+←1 ⋄ J⌊←k ⋄ S,⍨←v ⋄ ...     ⍝ procedural
+        ... ⊢ 1+@I ⊢ k⌊@J ⊢ v,¨@S ⊢ ...     ⍝ functional
+)
+
+Requires: →dsp← for optional tracing.
+
+An alternative coding
+---------------------
+Nick Nikolov provides this alternative one-liner, which uses the transitive
+closure of the adjacency matrix (see →Graphs←).
+
+    scc←{(∪⍳⊢)↓∧∘⍉⍨∨.∧⍨⍣≡i∘.∊⍵,¨i←⍳≢⍵}
+    ⍝    ·     ·   ·     ·   ·  i←⍳≢⍵   vertex indices
+    ⍝    ·     ·   ·     ·   ⍵,¨i   ·   consider each vertex a SCC by itself
+    ⍝    ·     ·   ·     i∘.∊   ·   ·   neighbour lists to adjacency matrix
+    ⍝    ·     ·   ∨.∧⍨⍣≡   ·   ·   ·   transitive closure: g[x;y] ←→ path x → y
+    ⍝    ·     ∧∘⍉⍨ ·   ·   ·   ·   ·   ... and from y to x
+    ⍝    (∪⍳⊢)↓ ·   ·   ·   ·   ·   ·   renumbering of component numbers
+
+The version is very good for small graphs but its space and time requirements
+grow rapidly as the size increases.
+
+Condensation
+------------
+Contracting  each  strongly  connected  component  into a single vertex yields a
+directed acyclic graph (DAG), the "condensation of G".  The  following  function
+returns a 2-vector pair:  the condensation graph,  together with a corresponding
+vector of condensed vertices from the original graph.
+
+    con←{               ⍝ Condensation of graph ⍵.
+        c←scc ⍵         ⍝ strongly connected components
+        v←{⊂⍵}⌸ c       ⍝ component-grouped vertex indices
+        e←c{⊂⍵}⌸ ⍵      ⍝   ..      ..      edges
+        x←∪¨(∊¨e)~¨v    ⍝ out-of-component edges
+        m←↓∨/¨x∘.∊v     ⍝ masks of remote vertices
+        g←m/¨⊂⍳⍴v       ⍝ condensed DAG
+        g v             ⍝ ... and contracted vertices
+    }
+
+Examples:
+
+⍝   1------>2------>3<------>4          ⍝ Wikipedia
+⍝   ∧      /|       |        ∧
+⍝   |    /  |       |        |
+⍝   |  /    |       |        |
+⍝   |└      ∨       ∨        ∨
+⍝   5------>6<----->7<-------8
+
+    ⊢ g ← 2(3 5 6)(4 7)(3 8)(1 6)7 6(4 7)   ⍝ directed (origin-1) graph.
+┌─┬─────┬───┬───┬───┬─┬─┬───┐
+│2│3 5 6│4 7│3 8│1 6│7│6│4 7│
+└─┴─────┴───┴───┴───┴─┴─┴───┘
+    scc g                               ⍝ strongly connected components.
+1 1 2 2 1 3 3 2
+                                        ⍝ Using function [con] from above:
+    con g                               ⍝ condensation and contracted vertices.
+┌────────┬─────────────────┐
+│┌───┬─┬┐│┌─────┬─────┬───┐│
+││2 3│3││││1 2 5│3 4 8│6 7││
+│└───┴─┴┘│└─────┴─────┴───┘│
+└────────┴─────────────────┘
+
+    isdag ← scc ≡ ⍳∘≢                   ⍝ is-a-DAG (contains no cycles)
+    isdag g                             ⍝ g contains at least one cycle
+0
+    isdag (⍳10),⊂⍬                      ⍝ graph is acyclic
+1
+
+⍝   1<------2<------3<------>4          ⍝ Wikipedia
+⍝   |      ┐∧       ∧        ∧
+⍝   |    /  |       |        |
+⍝   |  /    |       |        |
+⍝   ∨/      |       |        |
+⍝   5<------6<----->7<-------8<--.
+⍝                            '---'
+
+    ⊢ w ← 5 1(2 4)3 2(2 5 7)(3 6)(4 7 8)
+┌─┬─┬───┬─┬─┬─────┬───┬─────┐
+│5│1│2 4│3│2│2 5 7│3 6│4 7 8│
+└─┴─┴───┴─┴─┴─────┴───┴─────┘
+    scc w
+1 1 2 2 1 3 3 4
+
+    con w                               ⍝ condensation and contracted vertices.
+┌────────────┬─────────────────┐
+│┌┬─┬───┬───┐│┌─────┬───┬───┬─┐│
+│││1│1 2│2 3│││1 2 5│3 4│6 7│8││
+│└┴─┴───┴───┘│└─────┴───┴───┴─┘│
+└────────────┴─────────────────┘
+
+    ⍝ in the following trace, notice that the stack grows to the left:
+
+    1 scc w                             ⍝ left arg is trace option
+1│0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0│0 0 0 0 0 0 0 0│1│
+5│0 0 0 0 0 0 0 0│1 0 0 0 0 0 0 0│1 0 0 0 0 0 0 0│2│1
+2│0 0 0 0 0 0 0 0│1 0 0 0 2 0 0 0│1 0 0 0 2 0 0 0│3│5 1
+3│1 1 0 0 1 0 0 0│1 1 0 0 1 0 0 0│1 3 0 0 2 0 0 0│4│
+4│1 1 0 0 1 0 0 0│1 1 4 0 1 0 0 0│1 3 4 0 2 0 0 0│5│3
+6│1 1 2 2 1 0 0 0│1 1 4 4 1 0 0 0│1 3 4 5 2 0 0 0│6│
+7│1 1 2 2 1 0 0 0│1 1 4 4 1 6 0 0│1 3 4 5 2 6 0 0│7│6
+8│1 1 2 2 1 3 3 0│1 1 4 4 1 6 6 0│1 3 4 5 2 6 7 0│8│
+1 1 2 2 1 3 3 4
+
+See also: Graphs at dsp
+
+Index:Strongly connected components|graph|depth-first search|DAG
+Index:transitive closure|monad|tuple
+Index;Tarjan R.|Nikolov N.

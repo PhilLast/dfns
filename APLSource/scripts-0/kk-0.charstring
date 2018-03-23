@@ -1,0 +1,109 @@
+⍝ Kind Koloring of d-fnop named ⍵:
+
+    ∆←{⎕IO←0                                    ⍝ colouring of segs ⍵
+        0⊣⎕EX fnop←'fnop':                      ⍝ local name "fnop"
+        ⍎'fnop←{',⍵,'} ⋄ 0':                    ⍝ local fnop←{...}
+        xk←(,¨'NFMD')(1 2 3 4)                  ⍝ simulated external kinds
+        cv←⊃⍎'xk kk''fnop'''                    ⍝ colour vector
+        (6↑''),6↓¯1↓cv                          ⍝ alignment
+    }                                           ⍝ :: Kmap ← ∇ Body
+
+    ∆'a←⍺ ⋄ b←⍵ ⋄ a+b'                          ⍝ local a and b : nil
+      N·····N·····N·N
+
+    ∆'sum←+/⍵ ⋄ num←≢ ⋄ (sum÷num)⍵'             ⍝ (sum÷num) : fun
+      NNN·······FFF·····FNNN·FFFF·
+
+    ∆'sum←+/⍵ ⋄ num←≢⍵ ⋄ (sum÷num)'             ⍝ (sum÷num) : nil
+      NNN·······NNN······NNNN·NNNN
+
+    ∆'a(b(c d))←((e f)g)h←⍵'                    ⍝ struct and multiple assignment
+      N·N·N·N·····N·N·N·N··
+
+    ∆'vec[vec←⍵]'                               ⍝ indexing
+      NNN·NNN···
+
+    ∆'vec[vec←⍵]←⍵'                             ⍝ indexed assignment
+      NNN·NNN·····
+
+    ∆'mop←{⍺⍺}'                                 ⍝ monadic operator
+      MMM·M··M
+
+    ∆'dop←{⍵⍵}'                                 ⍝ dyadic operator
+      DDD·D··D
+
+    ∆'nil←{⍵}⍵'                                 ⍝ applied fn returns nil
+      NNN·F·F·
+
+    ∆'nil←1+2+3 ⋄ fun←1+2+-'                    ⍝ array v train
+      NNN·········FFF······
+
+    ∆'nil←⍺⍺ 0 ⋄ fun←⍵⍵ +'                      ⍝ array v train
+      NNN········FFF····
+
+    ∆'nil←N N ⋄ mop←D F ⋄ dop←D ⋄ fun←F M F'    ⍝ various expressions
+      NNN·N·N···MMM·D·F···DDD·D···FFF·F·M·F
+
+    ∆'nil←N D F N'                              ⍝ needs BG parsing?
+      NNN·N·D·F·N
+
+    ∆'((1))'                                    ⍝ nested parens
+      NN·NN
+
+    ∆'qqq←+ ⋄ nil←{qqq}0 ⋄ fun←{qqq} ⋄ qqq←0'   ⍝ deferred fn evaluation
+      FFF·····NNN·FFFFF····FFF·FNNNF···NNN··
+
+    ∆'aaa←(bbb←0)'                              ⍝ assignment expression
+      NNN·NNNN··N
+
+    ∆'(# #).(⍺+.×⍵)∘.,0'                        ⍝ space-ref and products
+      N···N·N·····N····
+
+    ∆'nil←(+)1'                                 ⍝ parenthises fn
+      NNN·F·F·
+
+    ∆'((x[0+0])⊃x)←0'                           ⍝ selective assignment
+      ·NN·····N·N···
+    ∆'(0/1,v)←1'                                ⍝ selective assignment
+      ·····N···
+
+    ∆'nil←⍺'                                    ⍝ alpha default
+      NNN··
+    ∆'⍺←0 ⋄ nil←⍺'                              ⍝ alpha assignment
+      ······NNN··
+    ∆'⍺←⊢ ⋄ rnd←⍺'                              ⍝ alpha assignment
+      ······rrr··
+
+    ∆'nil←0/¨0 ⋄ nil←+/¨0'                      ⍝ hybrid
+      NNN········NNN·····
+
+    ∆'zzz←⍎⍵'                                   ⍝ execute assumes N
+      NNN···
+
+    ∆'this←+ ⋄ ⍵:this←0 ⋄ this'                 ⍝ guarded expr: envt unaltered
+      FFFF·······NNNN·····FFFF
+
+    ∆'⍺{⍺⍺ ⍵}{⍺ ⍺⍺ ⍵⍵ ⍵}⍵⍵⊢⍵'                   ⍝ example from Cut operator
+      ·M····MD·········D····
+
+    show←{↑↑,/(⎕NR ⍵){⍺ ⍵}¨⍺⍺ ⍵}                ⍝ interleaved lines and colours
+
+    kk show'show'                               ⍝ selfie
+show←{↑↑,/(⎕NR ⍵){⍺ ⍵}¨⍺⍺ ⍵}
+MMMM·M····N·····NF···F·····M
+
+    kk show'∆'                                  ⍝ colouring of colouring fn
+∆←{⎕IO←0                                    ⍝ colouring of segs ⍵         
+F·F······························································         
+        0⊣⎕EX fnop←'fnop':                      ⍝ local name "fnop"       
+··············NNNN·················································       
+        ⍎'fnop←{',⍵,'} ⋄ 0':                    ⍝ local fnop←{...}        
+··································································        
+        xk←(,¨'NFMD')(1 2 3 4)                  ⍝ simulated external kinds
+········NN·N········NN·······N············································
+        cv←⊃⍎'xk kk''fnop'''                    ⍝ colour vector           
+········NN·····················································           
+        (6↑''),6↓¯1↓cv                          ⍝ alignment               
+········N····N······NN·····································               
+    }                                                                     
+····F                                                                     

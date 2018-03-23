@@ -1,0 +1,35 @@
+ cols←{⎕ML←1                         ⍝ Multi-column display.
+
+     ⍺←1 ⎕PW                         ⍝ default inter-column-gap and max-width.
+
+     split←{(+/∨\' '≠⌽⍵)↑¨↓⍵}        ⍝ without-trailing-blanks-split (idiom).
+
+     1<⍴⍴⍵:⍺ ∇ split ⍵               ⍝ char matrix: use the split vector.
+
+     maxcols←{                       ⍝ maximum number of cols.
+         ⍵=0:0                       ⍝ one or more items too wide: stop.
+         nr xs←|0 ⍵⊤-ni              ⍝ number of rows and excess.
+         xs≥nr:∇ ⍵-1                 ⍝ one or more empty columns: ignore.
+         ms←⍵ nr⍴lens                ⍝ matrix of sizes.
+         wid←(gap×⍵-1)++/⌈/ms        ⍝ total width.
+         wid≤max:⍵                   ⍝ it fits: hurrah!
+         ∇ ⍵-1                       ⍝ otherwise, try one less column.
+     }
+
+     reshape←{                       ⍝ ⍺-col reshape of ⍵.
+         ⍺=0:↑max↑¨↓col ⍵            ⍝ item too wide: truncated single col.
+         nr←⌈ni÷⍺                    ⍝ number of rows.
+         matr←⍺ nr⍴(⍺×nr)↑⍵,⍺/' '    ⍝ matrix blank-padded to whole no of cols.
+         pads←↑nr/↓gap/' '           ⍝ inter-column padding.
+         ↑{⍺,pads,⍵}/col¨↓matr       ⍝ gap-spaced cols.
+     }
+
+     col←⍕∘{1=≡⍵:⍪⍵ ⋄ ↑⍵}            ⍝ formatted numeric or char-vecs column.
+
+     gap max←2↑⍺,⎕PW                 ⍝ inter-column-gap and max-width.
+     ni←⊃⍴⍵                          ⍝ number of items.
+     lens←(2×⍴,⍵)↑,↑⍴¨⍕¨⍵            ⍝ item-lengths.
+     ulim←⌈max÷1⌈gap+⌊/ni↑lens       ⍝ cols: upper limit for search.
+
+     (maxcols ulim)reshape ⍵         ⍝ multi-column display.
+ }

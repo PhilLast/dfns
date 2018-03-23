@@ -1,0 +1,48 @@
+⍝ Approx inverse of real-valued function:
+
+    ⎕pp←5
+
+    ○invr ○ 2 3⍴⍳6              ⍝ inverse of primitive function pi-times.
+1 2 3
+4 5 6
+
+    {⍵+⍵}invr 2 4 6             ⍝ inverse of doubling function.
+1 2 3
+
+    {2*⍵}invr 16                ⍝ inverse of 2-exp is 2-log
+4
+    {⍵*2}invr 49                ⍝ inverse of square is sqrt.
+7
+
+    c2f←{32+⍵×1.8}              ⍝ define Celsius to Fahrenheit
+
+    f2c←c2f invr                ⍝ derive Fahrenheit to Celsius
+
+    match←{(⍵<⍺+⎕ct)≡⍺<⍵+⎕ct}   ⍝ match within ⎕ct
+
+    {⍵ match f2c c2f ⍵}(0 100)(¯40 ¯273)      ⍝ convert nested array of temps.
+1
+    {⍵ match c2f f2c ⍵}(32 212)(¯40 ¯459.4)   ⍝ convert using inverse function.
+1
+    sin←1∘○                     ⍝ Sin(⍵)
+
+    sin 10
+¯0.54402
+
+    arcs←sin invr               ⍝ ArcSin(⍵)
+
+    arcs sin 10                 ⍝ ArcSin(Sin(10)).
+68.54
+
+    9 arcs sin 10               ⍝ ArcSin(Sin(10)) near 9.
+10
+    **invr 1.23
+1.23
+    ⍟⍟invr 1.23
+1.23
+    !!invr 1.23
+1.23
+    ÷÷invr 1.23
+1.23
+    ○○invr 1.23
+1.23

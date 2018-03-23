@@ -1,0 +1,13 @@
+ span←{                      ⍝ Spanning tree for graph ⍺ from vertex(ices) ⍵.
+     graph←⍺                 ⍝ ⍺ is graph vector.
+     tree←¯2+(⍳⍴⍺)∊⍵         ⍝ initial spanning tree.
+     free←{(¯2=tree[⍵])/⍵}   ⍝ free vertices in ⍵.
+     {                       ⍝ visit adjacent vertices:
+         ⍵≡⍬:tree            ⍝ no vertices: done.
+         next←free¨graph[⍵]  ⍝ next vertices to visit.
+         back←↑,/⍵+0×next    ⍝ back links.
+         wave←↑,/next        ⍝ wave front.
+         tree[wave]←back     ⍝ set back links in tree
+         ∇∪wave              ⍝ advance wave front.
+     }⍵                      ⍝ from starting vertex.
+ }

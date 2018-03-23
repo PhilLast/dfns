@@ -1,0 +1,473 @@
+nmats ← {sreq←1} ##.kt (rows cols)          ⍝ Knight's Tour Chess Problem.
+
+The  challenge  is  to  move a knight around the chessboard visiting each square
+exactly once.  The 2-vector right argument is the board size (rows and cols) and
+the optional left argument is the number of solutions required (default 1).
+
+Technical notes:
+
+This is an example of a problem that is amenable to  tree-searching.  The knight
+starts  from  each  board  square  in  turn,  where he will have between 2 and 8
+possibilities  for  his  next  "step"  to  a previously unvisited, let's call it
+"k-adjacent",  square.  At  each  subsequent step he will have a choice of up to
+8  moves  until he has either visited all squares and so found a solution to the
+problem,  or  all of his ways forward are blocked by already visited squares and
+he  has "painted himself into a corner".  The choice of initial starting square,
+together  with  the decisions facing him at each step on the way, can be visual-
+ised as the forks of a dense branching tree.
+
+The algorithm proceeds by trying at each step, EACH possible branch of the tree,
+accumulating  solutions  when  all  squares have been visited and "backtracking"
+when  there  is  no  way  forward.  This  could  be coded by applying the search
+recursively  at  each  step  to  each  possible  way forward using the primitive
+"each" (¨) operator.
+
+However, a small complication, which arises with this particular problem, is the
+size  of  the  tree. The number of knight's moves from each square on a standard
+sized board is:
+
+    2 3 4 4 4 4 3 2
+    3 4 6 6 6 6 4 3
+    4 6 8 8 8 8 6 4
+    4 6 8 8 8 8 6 4
+    4 6 8 8 8 8 6 4
+    4 6 8 8 8 8 6 4
+    3 4 6 6 6 6 4 3
+    2 3 4 4 4 4 3 2
+
+which  means  that  to explore the complete tree would involve a number of steps
+in  the  order of the product of these numbers: 9E43. See the examples below for
+the number of solutions for some small-sized boards.
+
+One possible way forward is to _display_ each solution as it is discovered using
+⎕←···, and have the punter interrupt the process when s/he gets bored. An alter-
+native  approach,  adopted  here,  is to specify how many solutions are required
+(⍺←1)  and  exit from the process as soon as this many have been found. However,
+this  presents  a  further  problem in that, at this point APL's state indicator
+will contain ×/⍵ pendent each (¨) operations which must be interrupted. A rather
+clumsy  way  of achieving this would be to ⎕signal the vector of results back to
+a receiving error-guard at the top level, thus bypassing the pending eaches.
+
+The solution adopted here is to use primitive reduction (/) instead of each (¨).
+Reduction allows us to pass the vector of solutions-so-far as right argument and
+each  next  step  position  in  turn as left argument to the reduction's operand
+function:
+
+        {operand-function} / step0, step1, ··· stepn, solutions-so-far
+
+The  difference is that with _reduction_, successive applications of the operand
+function  can  be  aware  of the number of solutions accumulated by items to its
+right  in the reduction's argument, whereas with _each_, the items are processed
+in isolation. In some sense, _each_ is parallel, while _reduce_ is sequential.
+
+The  reduction's operand function is coded to terminate as soon as it finds that
+its  right  argument  contains  the  required number of solutions. The reduction
+continues to apply its operand with each remaining item as left argument but the
+function now returns immediately without searching its tree-branch. By observat-
+ion, this involves just 168 tests after the first solution for an 8×8 board.
+
+A heuristic (sneaky trick) employed in the code is to find easy solutions first.
+At  each  step, the following step that itself has the fewest available choices,
+is examined first. This has the effect of making the knight "cling to the walls"
+and eke out dark corners, leaving richer pickings in the centre of the board for
+when  things  get  tight  later. Note that he will still find all solutions this
+way,  but  they will become harder to find as the search progresses, rather than
+being  more  evenly  distributed  throughout.  The technique, suggested by H. C.
+Warnsdorff in 1823, is known as "Warnsdorff's rule".
+
+Coding details are as follows:
+
+    kt←{⎕ML←1                       ⍝ Knight's Tour Chess Problem.
+        ⍺←1 ⋄ sreq←⍺ ⋄ nsqs←×/⍵     ⍝ no. of solutions required, default: 1.
+        kdef←,0 1∘.⌽1 ¯1∘.,2 ¯2     ⍝ vector of relative knight's moves.
+        net←(⊂,⍳⍵)∩¨↓(⍳⍵)∘.+kdef    ⍝ absolute moves from each square.
+        ⍳∘(⍳⍵)¨↑⍬{                  ⍝ initially empty placement vector.
+            sreq=⍴⍵:⍵               ⍝ found required no. of solutions: stop.
+            path←⍺⍺,⊂⍺              ⍝ extended placement vector.
+            nsqs=⍴path:⍵,⊂path      ⍝ solution: accumulate.
+            nxt←(⊂⍺)⊃⍵⍵             ⍝ moves from current square.
+            0=⍴nxt:⍵                ⍝ stitched: back out.
+            net←⍵⍵~¨⊂⊂⍺             ⍝ compressed net.
+            ord←nxt[⍒↑⍴¨net[nxt]]   ⍝ tightest-rightmost order.
+            ↑path ∇∇ net/ord,⊂⍵     ⍝ pursue remaining possibilities.
+        }net/(⌽,⍳⍵),⊂0⍴⊂⍬           ⍝ from each starting position.
+    }
+
+Taking a line at a time:
+
+As  the  number  (⍺←1)  of  distinct  solutions required and the total number of
+squares  are  invariant  for the whole of the search, it is convenient to assign
+them  names  [sreq]  and  [nsqs] for reference from within the operand function.
+
+[kdef]  is  a  nested  8-vector  of  relative Knight's moves. The trivially easy
+Rook's,  King's,  Queen's  and  the clearly impossible Bishop's and Pawn's, Tour
+problems could be coded merely by changing [kdef] to reflect these pieces' rules
+of play.
+
+        kdef
+    ┌───┬────┬────┬─────┬───┬────┬────┬─────┐
+    │1 2│1 ¯2│¯1 2│¯1 ¯2│2 1│¯2 1│2 ¯1│¯2 ¯1│
+    └───┴────┴────┴─────┴───┴────┴────┴─────┘
+
+[net]  is  an  ⍵-matrix representing the network of possible next positions from
+each  square on the board. Each cell contains a vector of the coordinates of its
+k-adjacent squares. [net] is passed as an operand at each step in the search. As
+the  knight chooses his next step, the net is compressed to reflect squares that
+are  still  available.  The  top left corner of the initial [net] for a standard
+sized chessboard looks like this:
+
+        3 3↑net
+    ┌─────────────────┬─────────────────────────┬─────────────────────────────────┐
+    │┌───┬───┐        │┌───┬───┬───┐            │┌───┬───┬───┬───┐                │
+    ││2 3│3 2│        ││2 4│3 1│3 3│            ││2 1│2 5│3 2│3 4│                │
+    │└───┴───┘        │└───┴───┴───┘            │└───┴───┴───┴───┘                │
+    ├─────────────────┼─────────────────────────┼─────────────────────────────────┤
+    │┌───┬───┬───┐    │┌───┬───┬───┬───┐        │┌───┬───┬───┬───┬───┬───┐        │
+    ││1 3│3 3│4 2│    ││1 4│3 4│4 1│4 3│        ││1 1│1 5│3 1│3 5│4 2│4 4│        │
+    │└───┴───┴───┘    │└───┴───┴───┴───┘        │└───┴───┴───┴───┴───┴───┘        │
+    ├─────────────────┼─────────────────────────┼─────────────────────────────────┤
+    │┌───┬───┬───┬───┐│┌───┬───┬───┬───┬───┬───┐│┌───┬───┬───┬───┬───┬───┬───┬───┐│
+    ││1 2│2 3│4 3│5 2│││1 1│1 3│2 4│4 4│5 1│5 3│││1 2│1 4│2 1│2 5│4 1│4 5│5 2│5 4││
+    │└───┴───┴───┴───┘│└───┴───┴───┴───┴───┴───┘│└───┴───┴───┴───┴───┴───┴───┴───┘│
+    └─────────────────┴─────────────────────────┴─────────────────────────────────┘
+
+The  unnamed  body of code at the core of the search is a dyadic operator, whose
+derived function is operand to the reduction.
+
+        ↑⍬{                     ⍝ initially empty placement vector.
+            ···
+        }net/(⌽,⍳⍵),⊂0⍴⊂⍬       ⍝ from each starting position.
+
+It is convenient to use an operator, as the values of both the current placement
+vector  and  [net] are invariant for the duration of the reduction and so may be
+bound per-reduction as operands and referenced as ⍺⍺ and ⍵⍵ respectively. In the
+lower  line above, the argument to the reduction is a vector (⌽,⍳⍵) of all poss-
+ible starting positions followed by an initially empty result vector: 0⍴⊂⍬.
+
+Within the body of the derived function:
+
+    sreq=⍴⍵:⍵                   ⍝ found enough solutions: stop.
+
+returns  the  result  vector if enough solutions have been found. The next line
+appends the next step to the current placement vector:
+
+    path←⍺⍺,⊂⍺                  ⍝ extended placement vector.
+
+If  the  path  length  is  now  equal to the number of squares on the board, the
+knight has visited all squares and thus found a solution. The extended solutions
+vector is returned as result:
+
+    (⍴path)=×/⍴net:⍵,⊂path      ⍝ solution: accumulate.
+
+The vector of next possible steps is extracted from the current net:
+
+    nxt←(⊂⍺)⊃⍵⍵                 ⍝ moves from current square.
+
+If there are no moves open to the knight, the current solutions vector is passed
+along to the next item in the reduction to see if it has more luck:
+
+    0=⍴nxt:⍵                    ⍝ stitched: back out.
+
+Otherwise,  if progress is still possible, a new [net] is calculated by removing
+paths to the current square from each k-adjacent square.
+
+    net←⍵⍵~¨⊂⊂⍺                 ⍝ compressed net.
+
+The  heuristic described above is applied by sorting remaining k-adjacent square
+coordinates  so  that  the  one  with  the fewest exits is on the right and thus
+visited first by the reduction.
+
+    ord←nxt[⍒↑⍴¨net[nxt]]       ⍝ tightest-rightmost order.
+
+The  final  line calls the operator recursively with newly-bound operands [path]
+and  [net]  as  operand  to  the reduction of the sorted next-step vector [ord].
+Notice  that because the operands are supplied explicitly, the recursive call is
+on the operator _∇∇_, rather than its derived function _∇_.
+
+    ↑path ∇∇ net/ord,⊂⍵         ⍝ pursue remaining possibilities.
+
+When the required number of results have been found, the ⍺-vector of (×/⍵)-paths
+is  converted  into  an  ⍺-vector  of  index-origin-sensitive  ⍵-matrices by the
+function: ⍳∘(⍳⍵)¨.
+
+Examples:
+
+    kt 8 8                      ⍝ 1 tour around a standard 8×8 board.
+┌───────────────────────┐
+│ 1 26 15 24 29 50 13 32│
+│16 23 28 51 14 31 64 49│
+│27  2 25 30 63 60 33 12│
+│22 17 52 59 44 57 48 61│
+│ 3 42 21 56 53 62 11 34│
+│18 39 54 43 58 45  8 47│
+│41  4 37 20 55  6 35 10│
+│38 19 40  5 36  9 46  7│
+└───────────────────────┘
+
+    3 kt 5 5                    ⍝ 3 tours around a smaller board.
+┌──────────────┬──────────────┬──────────────┐
+│ 1 12 25 18  7│ 1 12 23 18  7│ 1 12 23 18  7│
+│22 17  8 13 24│22 17  8 13 24│24 17  8 13 22│
+│11  2 23  6 19│11  2 25  6 19│11  2 21  6 19│
+│16 21  4  9 14│16 21  4  9 14│16 25  4  9 14│
+│ 3 10 15 20  5│ 3 10 15 20  5│ 3 10 15 20  5│
+└──────────────┴──────────────┴──────────────┘
+
+    kt 3 4                      ⍝ Tour around a non-square board.
+┌──────────┐
+│ 1 4  7 10│
+│12 9  2  5│
+│ 3 6 11  8│
+└──────────┘
+
+    4 4⍴ ¯1 kt 3 4              ⍝ All 16 solutions for a 3x4 board.
+┌──────────┬──────────┬──────────┬──────────┐
+│ 1 4  7 10│1  4 7 10 │10  7 4  1│10 7  4 1 │
+│12 9  2  5│8 11 2  5 │ 5  2 9 12│ 5 2 11 8 │
+│ 3 6 11  8│3  6 9 12 │ 8 11 6  3│12 9  6 3 │
+├──────────┼──────────┼──────────┼──────────┤
+│12 9  6 3 │ 8 11 6  3│10  7 2  5│10 7  2 5 │
+│ 1 4 11 8 │ 1  4 9 12│ 1  4 9 12│ 1 4 11 8 │
+│10 7  2 5 │10  7 2  5│ 8 11 6  3│12 9  6 3 │
+├──────────┼──────────┼──────────┼──────────┤
+│3  6 9 12 │ 3 6 11  8│ 5 2  7 10│5  2 7 10 │
+│8 11 4  1 │12 9  4  1│12 9  4  1│8 11 4  1 │
+│5  2 7 10 │ 5 2  7 10│ 3 6 11  8│3  6 9 12 │
+├──────────┼──────────┼──────────┼──────────┤
+│3  6 9 12 │ 3 6 11  8│12 9  6 3 │ 8 11 6  3│
+│8 11 2  5 │12 9  2  5│ 5 2 11 8 │ 5  2 9 12│
+│1  4 7 10 │ 1 4  7 10│10 7  4 1 │10  7 4  1│
+└──────────┴──────────┴──────────┴──────────┘
+
+    ≡∘∪⍨ 1000 kt 8 8            ⍝ First 1000 solutions are all distinct.
+1
+    ≢¨ ¯1 kt¨ (⍳7 7)-⎕io        ⍝ Number of solutions for some small boards.
+0 0 0  0    0     0       0
+0 1 0  0    0     0       0
+0 0 0  0    0     0       0
+0 0 0  0   16     0       0
+0 0 0 16    0   164    1488
+0 0 0  0  164  1728   37568
+0 0 0  0 1488 37568 6637920
+
+⍝ Here is an alternative coding for a square board from Arthur Whitney:
+
+    kt_aw←{⎕io ⎕ml←0
+        n←⍵
+        m←,0 1∘.⌽1 ¯1∘.,2 ¯2
+        m←{n⊥¨(⍵≡¨n|⍵)/⍵}¨↓(,⍳n n)∘.+m
+        k←{0<⍴⍵:⍵⋄(⍴m)=⍴x←⍺⍺,⍺:x⋄⊃x∇∇/z[⍒↑⍴¨m[z←(⍺⊃m)~x]~¨⊂x],⊂⍵}
+        n n⍴⍋0(⍬k)⍬
+    }
+
+    kt_aw 8                 ⍝ 8x8 board
+ 0 57 14 31 48 27 12 29
+15 32 53 62 13 30 49 26
+58  1 56 45 54 47 28 11
+33 16 61 52 63 44 25 50
+ 2 59 42 55 46 51 10 39
+17 34 19 60 43 40  7 24
+20  3 36 41 22  5 38  9
+35 18 21  4 37  8 23  6
+
+⍝ ... and this from Roger Hui:
+
+    ktourw←{⎕io ⎕ml←0  ⍝ Warnsdorff's algorithm for the (⍵,⍵) knight's tour
+        f←{⍵,c[{⍵⍳⌊/⍵}+/~⍺[c←⍺[⊃⌽⍵;]~⍵;]∊⍵]}
+        M←↑(↓∧/(↑t)∊⍳⍵)/¨↓⍵⊥¨t←(,⍳⍵,⍵)∘.+,0 1∘.⌽2 ¯2∘.,1 ¯1
+        (⍵,⍵)⍴⍋M f⍣(¯1+⍵×⍵),0
+    }
+
+    ktourw 8
+ 0 49 14 31 60 27 12 29
+15 32 63 54 13 30 59 26
+50  1 48 43 56 61 28 11
+33 16 55 62 53 46 25 58
+ 2 51 44 47 42 57 10 39
+17 34 19 52 45 40  7 24
+20  3 36 41 22  5 38  9
+35 18 21  4 37  8 23  6
+
+⍝ See: http://www.jsoftware.com/jwiki/Essays/Knight's%20Tour
+
+
+---------------------------------
+The General Knight's Tour Problem
+---------------------------------
+It  is  characteristic of APL's generality, with respect to array rank, that the
+function  can  be  extended  to  higher-rank chessboards, merely by defining the
+relative  moves for a "hyper-knight". For example, a "normal" (1 2)-knight moves
+1 square in any of 4 directions, followed by 2 squares in either of 2 directions
+perpendicular to the first move. By analogy, a (1 2 3)-knight on a rank-3 board,
+moves 1 square in any of 6 directions, followed by 2 squares in any of 4 direct-
+ions  perpendicular  to  the  first  move,  followed by 3 squares in either of 2
+directions perpendicular to the first two moves.
+
+In the generalised version [gkt],  the right argument extends to a 2-row matrix,
+whose first row is the board size and second (default: 1 .. 1 2) is the definit-
+ion of the hyper-knight's moves. Notice the use of function →pmat← to generate a
+permutation matrix.
+
+    gkt←{⎕ML←1                          ⍝ General Knight's Tour Chess Problem.
+        ⍺←1 ⋄ sreq←⍺                    ⍝ no. of solutions required, default: 1.
+        bsize kdefn←{                   ⍝ board size and moves definition.
+            1+(-⍴⍺)↑⍵-1                 ⍝ extend to left with 1's.
+        }\2↑(↓⍵),⊂1 2                   ⍝ default (1 2)-knight.
+        nsqs←×/⍴grid←,¨⍳bsize           ⍝ number of squares and grid coords.
+        net←(⊂,grid)∩¨↓grid∘.+∪,↓↑{     ⍝ absolute moves from each square.
+            ⍵[pmat⍴⍵]                   ⍝ all permutations of moves,
+        }∘,¨↑∘.,/1 ¯1∘×¨kdefn           ⍝ in each possible direction.
+        ⍳∘grid¨↑⍬{                      ⍝ initially empty placement vector.
+            sreq=⍴⍵:⍵                   ⍝ found required no. of solutions: stop.
+            path←⍺⍺,⊂⍺                  ⍝ extended placement vector.
+            nsqs=⍴path:⍵,⊂path          ⍝ solution: accumulate.
+            nxt←(⊂⍺)⊃⍵⍵                 ⍝ moves from current square.
+            0=⍴nxt:⍵                    ⍝ stitched: back out.
+            net←⍵⍵~¨⊂⊂⍺                 ⍝ compressed net.
+            ord←nxt[⍒↑⍴¨net[nxt]]       ⍝ tightest-rightmost order.
+            ↑path ∇∇ net/ord,⊂⍵         ⍝ pursue remaining possibilities.
+        }net/(⌽,grid),⊂0⍴⊂⍬             ⍝ from each starting position.
+    }
+
+(muse:
+
+    Solutions for high-rank boards appear to be much sparser than for  matrices.
+    Perhaps this is due  to the increase in the proportion of "hedged-in" cells,
+    those close to edges, as the rank increases.  The  sparsity  of solutions is
+    greatly reduced if we play on an N-torus,  where opposite (N-1)-faces of the
+    N-board are glued  together.  This could be achieved  by changing line[6] in
+    the above function from:
+
+        net←(⊂,grid)∩¨↓grid∘.+∪,↓↑{     ⍝ absolute moves from each square.
+    to:
+        net←{                           ⍝ absolute moves from each square.
+            ⎕io+(⊂⊂bsize)|⍵-⎕io         ⍝ opposite (N-1)-faces deemed adjacent.
+        }↓grid∘.+∪,↓↑{
+
+    whence:
+
+         ⍕ disp¨ gkt¨(3 3)(4 4)         ⍝ regular (1 2)-knight on small 2-tori.
+     ┌─────┐  ┌───────────┐
+     │1 6 8│  │ 1 10  3 12│
+     │4 9 2│  │14  7 16  5│
+     │7 3 5│  │11  4  9  2│
+     └─────┘  │ 8 13  6 15│
+              └───────────┘
+
+        gkt 3 3 3                       ⍝ (1 1 2)-knight on a 3-torus
+    ┌────────┐
+    │ 1  6  8│
+    │15 17 10│
+    │26 19 24│
+    │        │
+    │18 11 13│
+    │20 22 27│
+    │ 4  9  2│
+    │        │
+    │23 25 21│
+    │ 7  3  5│
+    │12 14 16│
+    └────────┘
+)
+
+Examples:
+
+    gkt 8 8                     ⍝ Tour of a regular board by a (1 2)-knight.
+┌───────────────────────┐
+│ 1 26 15 24 29 50 13 32│
+│16 23 28 51 14 31 64 49│
+│27  2 25 30 63 60 33 12│
+│22 17 52 59 44 57 48 61│
+│ 3 42 21 56 53 62 11 34│
+│18 39 54 43 58 45  8 47│
+│41  4 37 20 55  6 35 10│
+│38 19 40  5 36  9 46  7│
+└───────────────────────┘
+
+    gkt ↑(4 5 5)(1 2 2)         ⍝ Tour of a 4×5×5 board by a (1 2 2)-knight.
+┌───────────────┐
+│ 1  60 33 66  7│
+│54  39 92 27 56│
+│29 100 47 94 37│
+│64  35 96 31 62│
+│ 3  58 25 52  5│
+│               │
+│48  79 16 89 42│
+│85  22 73 10 83│
+│12  71 20 75 24│
+│91  18 69 14 77│
+│46  81 50 87 44│
+│               │
+│99  28 55 38 93│
+│34  65  8 61 32│
+│59   2 67  6 51│
+│40  53  4 57 26│
+│97  30 63 36 95│
+│               │
+│72  11 84 23 74│
+│17  90 41 78 15│
+│80  49 98 43 88│
+│21  86 45 82  9│
+│70  13 76 19 68│
+└───────────────┘
+
+    gkt 3 3 4 5                 ⍝ Tour of a 3×3×4×5 board by a (1 1 1 2)-knight.
+┌───────────────────┐
+│  1 144  43  96  51│
+│ 86 155  90 129  22│
+│123  14 121  76 107│
+│170  71 180  33 164│
+│                   │
+│136  79 150  25 132│
+│153  38 147  48  99│
+│ 62 173  64 159  28│
+│ 11 116  57 102  73│
+│                   │
+│  3 142  35  94  45│
+│ 82 139  88 127  20│
+│119   8 113  60 105│
+│168  69 178  31 162│
+│                   │
+│                   │
+│138  81 140  19 126│
+│151   6 135  46  93│
+│ 54 167  74 161  30│
+│  9 114  61 104  59│
+│                   │
+│ 15 118  83 108  77│
+│ 36 179  52 177  34│
+│175   4 165  42  91│
+│112  89 124  17 110│
+│                   │
+│148  85 154  23 130│
+│145  40 133  50  97│
+│ 56 171  72 157  26│
+│ 13 122  67 100  65│
+│                   │
+│                   │
+│ 39 146  41  98  49│
+│ 84 149  78 131  24│
+│117  12 111  66 101│
+│172  63 176  27 158│
+│                   │
+│134  87 156  21 128│
+│141   2 143  44  95│
+│ 68 169  70 163  32│
+│  7 120  55 106  75│
+│                   │
+│  5 152  37  92  47│
+│ 80 137  16 125  18│
+│115  10 109  58 103│
+│166  53 174  29 160│
+└───────────────────┘
+
+    ¯1 gkt ⍪3 1                 ⍝ All tours of a 3 board by a 1-knight.
+┌─────┬─────┐
+│1 2 3│3 2 1│
+└─────┴─────┘
+
+See also: queens pmat
+
+Index:chess puzzle|knight's tour|graph|tree searching|diversions|torus
+Index:Warndorff's rule
+Index;Warndorff H.C.|Whitney A.|Hui R.K.W.

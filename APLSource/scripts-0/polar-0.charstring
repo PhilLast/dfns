@@ -1,0 +1,46 @@
+⍝ Polar from cartesian coordinates:
+⍝ Cartesian from polar coordinates:
+
+    cmpts ← ⍉↑ ¯1 0 1∘.,1 0 ¯1              ⍝ compass points.
+
+    ⍴cmpts                                  ⍝ 3×3 array of coordinate pairs.
+2 3 3
+
+    disp ⊂[⎕io] cmpts
+┌─────┬────┬────┐
+│¯1 1 │0 1 │1 1 │
+├─────┼────┼────┤
+│¯1 0 │0 0 │1 0 │
+├─────┼────┼────┤
+│¯1 ¯1│0 ¯1│1 ¯1│
+└─────┴────┴────┘
+
+    rnd ← {(10*-⍺)×⌊0.5+⍵×10*⍺}             ⍝ rounding to ⍺ decimal places.
+
+    4 rnd polar cmpts                       ⍝ polar from cartesian.
+1.4142 1      1.4142
+1      0      1     
+1.4142 1      1.4142
+                    
+2.3562 1.5708 0.7854
+3.1416 3.1416 0     
+3.927  4.7124 5.4978
+
+    polar 0 0                               ⍝ singularity at 0 0
+0 3.141592654
+
+    ¯1 polar polar 0 0                      ⍝ round-trip awkward case.
+0 0
+
+    cmpts ≡ 6 rnd ¯1 polar polar cmpts      ⍝ round-trip.
+1
+
+    poly←{2 1∘.○(○2÷⍵)×(⍳⍵)-⍳1}             ⍝ cartesian ⍵-polygon.
+
+    3 rnd poly 12                           ⍝ dodecagon.
+1 0.866 0.5   0 ¯0.5   ¯0.866 ¯1 ¯0.866 ¯0.5    0  0.5    0.866
+0 0.5   0.866 1  0.866  0.5    0 ¯0.5   ¯0.866 ¯1 ¯0.866 ¯0.5  
+
+    (1,12÷○2) ×[1] polar poly 12            ⍝ points evenly spaces 0 ≤< ○2.
+1 1 1 1 1 1 1 1 1 1  1  1
+0 1 2 3 4 5 6 7 8 9 10 11

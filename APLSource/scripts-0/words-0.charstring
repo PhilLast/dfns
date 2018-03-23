@@ -1,0 +1,51 @@
+⍝ Source vector split into words:
+
+    1 disp words 'It''s only words,'                ⍝ Word split at A-Z,a-z,Á-õ.
+┌→─┬─┬─┬─┬────┬─┬─────┬─┐
+│It│'│s│ │only│ │words│,│
+└─→┴→┴→┴→┴───→┴→┴────→┴→┘
+
+    1 disp words'4x1+x2'                            ⍝ Trailing 0-9 bind to left.
+┌→┬──┬─┬──┐
+│4│x1│+│x2│
+└→┴─→┴→┴─→┘
+
+    1 disp (lcase ⎕a) words'mete and dole'          ⍝ Simple alphabet split.
+┌→───┬─┬───┬─┬────┐
+│mete│ │and│ │dole│
+└───→┴→┴──→┴→┴───→┘
+
+    1 disp (lcase ⎕a) words':If ⎕IO=0'              ⍝ Split at a-z.
+┌→─┬─┬──────┐
+│:I│f│ ⎕IO=0│
+└─→┴→┴─────→┘
+
+    1 disp (⎕A,lcase ⎕a) words':If ⎕IO=0'           ⍝ Split at A-Z,a-z.
+┌→┬──┬──┬──┬──┐
+│:│If│ ⎕│IO│=0│
+└→┴─→┴─→┴─→┴─→┘
+
+    1 disp (':⎕',⎕A,lcase ⎕a) words':If ⎕IO=0'      ⍝ Split at :,⎕,A-Z,a-z.
+┌→──┬─┬───┬──┐
+│:If│ │⎕IO│=0│
+└──→┴→┴──→┴─→┘
+
+    1 disp (⎕D,':⎕',⎕A,lcase ⎕a) words':If ⎕IO=0'   ⍝ Split at 0-9,:,⎕,A-Z,a-z.
+┌→──┬─┬───┬─┬─┐
+│:If│ │⎕IO│=│0│
+└──→┴→┴──→┴→┴→┘
+
+    1 disp ⎕A (lcase ⎕a) words 'ThatsAllFolks!'     ⍝ Split at A-Z; a-z trail.
+┌→────┬───┬─────┬─┐
+│Thats│All│Folks│!│
+└────→┴──→┴────→┴→┘
+
+    1 disp (1 to 10) words 1 0 0 2 3 0 4 5 6        ⍝ Numeric 'alphabet'.
+┌→┬───┬───┬─┬─────┐
+│1│0 0│2 3│0│4 5 6│
+└→┴~─→┴~─→┴→┴~───→┘
+
+    1 disp (1 to 10) 0 words 1 0 0 2 3 0 4 5 6      ⍝ Numeric;  0s trail.
+┌→────┬─────┬─────┐
+│1 0 0│2 3 0│4 5 6│
+└~───→┴~───→┴~───→┘

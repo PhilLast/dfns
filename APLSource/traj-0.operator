@@ -1,0 +1,5 @@
+ traj←{              ⍝ Function limit 'trajectory'.
+     ⍺←⍬             ⍝ Initial null history.
+     (⊂⍵)∊⍺:⍺        ⍝ Argument in history: finished.
+     (⍺,⊂⍵)∇ ⍺⍺ ⍵    ⍝ Extended history with next argument.
+ }

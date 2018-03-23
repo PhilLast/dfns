@@ -1,0 +1,83 @@
+                                                ⍝ Variations on primitive scan:
+ nvec ← {axis}      ##.mscan   nvec             ⍝ Minus scan.
+ nvec ← {axis}      ##.dscan   nvec             ⍝ Divide scan.
+ vect ←         (fn ##.ascan)  vect             ⍝ Associative vector scan.
+array ← {ascan} (fn ##.ascana) array            ⍝ Associative higher rank scan.
+
+Provided  by  Phil Last  and  Nicolas Delcros, these operators out-perform their
+primitive counterparts by scanning cumulatively from left to right.
+
+The primitive scan operator is defined as a vector of reductions:
+    ¯¯¯¯¯¯¯¯¯
+    ⍺⍺\⍵  →  ⍺⍺/¨(1 to ⍴⍵)↑¨⊂⍵
+
+For example:
+
+    +\3 1 4 1 6
+→   +/¨(1 to 5)↑¨⊂3 1 4 1 6
+→   +/¨(3)(3 1)(3 1 4)(3 1 4 1)(3 1 4 1 6)
+→   (+/3)(+/3 1)(+/3 1 4)(+/3 1 4 1)(+/3 1 4 1 6)
+→   3 4 8 9 15
+
+Defn: An associative dyadic function f is one where: (A f B) f C ←→ A f (B f C).
+         ¯¯¯¯¯¯¯¯¯¯¯
+For  associative operand functions, such as + and ×, the interpreter can "cheat"
+by  accumulating  the  result in a single left-to-right pass of the vector argu-
+ment, but for non-associative functions, it is obliged to do it the slow way us-
+ing reductions of increasingly longer sequences as above, resulting in an O(n×n)
+algorithm.
+
+Mscan  and dscan provide linear O(n) functions to simulate -\ and ÷\ respective-
+ly.
+
+      -\⍳1000                       ⍝ slow primitive minus-scan.
+1 ¯1 2 ¯2 3 ¯3 4 ¯4 5 ¯5 ...
+
+      mscan ⍳1000                   ⍝ quick minus-scan.
+1 ¯1 2 ¯2 3 ¯3 4 ¯4 5 ¯5 ...
+
+
+      ÷\⍳1000                       ⍝ slow primitive divide-scan.
+1 0.5 1.5 0.375 1.875 0.3125 ...
+
+      dscan ⍳1000                   ⍝ quick divide-scan.
+1 0.5 1.5 0.375 1.875 0.3125 ...
+
+
+In general, the interpreter can "cheat" only if it can determine that scan's op-
+erand function is associative. For example, even though dfn {⍺+⍵} is clearly as-
+sociative,  the interpreter cannot know this and so uses the slow O(n×n) method.
+
+In cases such as these, where it is known that the operand function is associat-
+ive, ascan can be used to force a left-to-right cumulative O(n) scan.
+
+      {⍺+⍵}\⍳10000                  ⍝ slow primitive scan.
+1 3 6 10 15 21 28 36 45 55 ...
+
+      {⍺+⍵}ascan⍳1000               ⍝ quick associative scan.
+1 3 6 10 15 21 28 36 45 55 ...
+
+Note  that  if  the operand turns out to be non-associative, ascan will return a
+result that differs from primitive scan.
+
+      {⍺-⍵}\⍳10                     ⍝ slow primitive scan.
+1 ¯1 2 ¯2 3 ¯3 4 ¯4 5 ¯5
+
+      {⍺-⍵}ascan⍳10                 ⍝ quick left to right accumulation.
+1 ¯1 ¯4 ¯8 ¯13 ¯19 ¯26 ¯34 ¯43 ¯53
+
+    nums← ↑('one' 'two' 'three')('un' 'deux' 'trois')('yan' 'tan' 'tethera')
+
+    {⍺,'-',⍵} ascan nums            ⍝ left-to-right scan along rows
+┌───┬───────┬───────────────┐
+│one│one-two│one-two-three  │
+├───┼───────┼───────────────┤
+│un │un-deux│un-deux-trois  │
+├───┼───────┼───────────────┤
+│yan│yan-tan│yan-tan-tethera│
+└───┴───────┴───────────────┘
+
+See also: acc
+
+Index:scan operators
+Index;Last P.|Delcros N.

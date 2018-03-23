@@ -1,0 +1,10 @@
+ draw←{                                      ⍝ Draw over '*'s.
+     ⎕IO←1 ⋄ ⍺←'*'                           ⍝ index origin, default marker
+     rh←(×/¯1↓⍴⍵),¯1↑1,⍴⍵                    ⍝ result shape
+     ch←'│─┌─┐─┬││└├┘┤┴┼'                    ⍝ box drawing characters
+     z←,' '⍪(' ',(rh⍴⍵),' ')⍪' '             ⍝ matricise, add blank frame
+     bv←z∊⍺ ⋄ ix←bv/⍳⍴bv                     ⍝ hit indices
+     in←{2⊥bv[((-⍵),¯1 1,⍵)∘.+ix]}2+2⊃rh     ⍝ moves ↑,←,→ and ↓
+     z[(×in)/ix]←ch[in~0]                    ⍝ replace with approp char
+     (⍴⍵)⍴1 1↓¯1 ¯1↓(rh+2)⍴z                 ⍝ remove frame, original shape
+ }

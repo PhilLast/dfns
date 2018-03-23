@@ -1,0 +1,142 @@
+{mbrot←0}(cxfn ##.cxdraw) zoom              ⍝ Complex function drawing.
+
+A tool for visual exploration of complex function [cxfn]. For example:
+
+    *∘0.5 cxdraw 2      ⍝ explore complex square root.
+
+NB:  The  operand function is called with a single complex point as argument and
+must return a <single> complex point as result; a multiple-valued function, such
+as '⍵+2 3', won't work.
+
+Right argument [zoom] determines the part of the complex plane that  is  visible
+in the GUI window.  For example, ...cxdraw 8 shows a square of "radius" 8,  with
+corners at ¯8j8 and 8j¯8. Real and imaginary axes and the unit circle are marked
+on the plane.
+
+Drawing:
+
+    Mark:  Double-click to draw domain (blue) and range (red) markers.
+    Draw:  Click and hold Left button to draw.
+    Clear: Click Right button to clear.
+    Quit:  Press <Esc> or close window to quit.
+
+As  you  hold down the left mouse button and draw, the function's domain path is
+tracked in blue and its corresponding range path is calculated and drawn in red.
+It is informative  to draw small circles crossing any branch cuts of the operand
+function.
+
+Notice that, while drawing, the GUI form's caption displays the complex coordin-
+ates of current domain and range.
+
+Continuity
+----------
+Domain  points that are close to,  but which straddle a branch cut, map to (red)
+range points that are typically far apart.  It is less distracting if the funct-
+ion  refrains  from connecting range points on either side of such a discontinu-
+ity.  An  example  might be the square-root function ⍵*÷2: as the domain crosses
+the negative real axis, the range flips to its conjugate (mirror-image) point on
+the other side of the real axis.
+
+We  avoid this effect by looking at the _differential_ of the blue and red lines
+and  by  refusing to draw segments of the red line that correspond to a slope of
+more than an arbitrary limit (say 100). We sample the slope at a number (100) of
+points along the blue and red lines.
+
+Ideally, we should compare the ratio of the _lengths_ of these "delta" sections:
+
+        length←{+⌿under(*∘2)2-/zg ⍵}    ⍝ length of line segment at ⍵.
+where:
+        under←{⍵⍵⍣¯1 ⍺⍺ ⍵⍵ ⍵}           ⍝ aka "dual" see →pow←.
+
+but for this exercise, the distance around two sides of the bounding rectangle
+
+        +/|2-/[1]↑rng dom
+
+is considerably quicker to calculate and is accurate enough.
+
+        ┌──────────∘z+∆z
+        │        ./│|
+        │      ./  │|
+        │    ./ ←──│|─── real length of line segment [z, z+∆z].
+        │  ./      │|
+        │./        │|─┐
+       z∘──────────┘/ │
+         ¯¯¯¯¯¯¯¯¯¯¯  │
+                  └───┴─ "good-enough" length of line segment [z, z+∆z].
+
+Mandelbrot mode
+---------------
+If optional left argument [mbrot], default 0, is set, only mouse  movements  are
+detected and button clicks are ignored.  In this mode, for each MouseMove event,
+we:
+
+    Set the value of ⍺ to the new position of the mouse cursor.
+    Set temp variable z to 0.
+    Apply expression (z←⍺ cxfn z) a large (10) number of times. Then,
+    If z is still within the square ¯2J2..2J¯2
+        draw a dot at ⍺; otherwise, don't.
+
+Using [cxfn] +∘(×⍨) reveals an approximation to the Mandelbrot  set:  by  moving
+the mouse, shade the region around the unit circle as if  shading  with a pencil
+on a piece of grease-spotted  paper.  In particular, by shading more thoroughly,
+discover the _boundary_ of the revealed figure.
+
+    http://en.wikipedia.org/wiki/Mandelbrot_set
+
+Technical note: the above iteration is coded using the power operator ⍣:
+
+        to←,map⍣10⍨zg↑,↓y x                 ⍝ after 10 iterations.
+
+where:
+    y and x are the GUI window coordinates,
+    zg translates these coordinates to complex number (z) and
+    map⍣10 applies cxfn ten times.
+
+Notice that monadic commute ⍨ starts the iteration with z←⍺, rather than at z←0,
+but, in the case of the mandelbrot expression, this just saves one iteration.
+
+(Perhaps  this technique might be extended to investigate the more general Julia
+ and Fatou sets http://en.wikipedia.org/wiki/Julia_set).
+
+Technical note:
+
+Notice, with the function that maps a GUI coordinate to a complex number, rather
+than using an easier-to-read dfn:
+
+    zg←(⍺÷100÷2 ¯2)∘{↑⍺×↓⊖⍉⍵-50}            ⍝ scale: complex from gui coords.
+
+it is coded instead as a more obscure derived function:
+
+    zg←↑∘((⍺÷100÷2 ¯2)∘×)∘↓∘(-∘50)∘⊖∘⍉      ⍝ scale: complex from gui coords.
+
+This is so that we can _generate_ zg's inverse directly (as zg⍣¯1),  rather than
+having to  code a separate explicit inverse function.  In fact, it is convenient
+to supply an "under" operator, which applies its left operand _under_ the effect
+of its right operand.
+
+    under←{⍵⍵⍣¯1 ⍺⍺ ⍵⍵ ⍵}                   ⍝ aka "dual".
+
+Thanks to Giangluigi Quario for help with the GUI.
+
+Examples:
+
+    + cxdraw 2          ⍝ complex conjugate (horizontal mirror-image).
+
+    *∘0.5 cxdraw 2      ⍝ complex square root (investigate branch cut).
+
+    8∘○ cxdraw 2        ⍝ Pythagorian function (investigate both branch cuts).
+
+    * cxdraw 8          ⍝ complex exponential (find 4 "fixpoints", where z≡*z).
+
+    *∘○ cxdraw 2        ⍝ see that *○0j1 → ¯1 (Euler).
+
+    {+/×⍨1 2○⍵}cxdraw 2 ⍝ sin-squared + cos-squared (watch form Caption).
+
+    0j1∘* cxdraw 2      ⍝ see that 0j1*0j1 is a real(!) number.
+
+    ÷ cxdraw 2          ⍝ complex reciprocal (maps until circle inside out).
+
+    +∘(×⍨)cxdraw 2      ⍝ mandelbrot mode: try shading in the region 2>|⍵.
+
+Index:complex numbers|drawing|unit circle|fixpoint|Mandelbrot set|dual|under
+Index;Quario G.|Euler L.|Mandelbrot B.

@@ -1,0 +1,36 @@
+⍝ Simulation of 'fork' syntax:
+
+    ge ← > _fk ∨ fk_ =        ⍝ defined ≥ function (dyadic).
+
+    (⍳5) ∘.ge ⍳5
+1 0 0 0 0
+1 1 0 0 0
+1 1 1 0 0
+1 1 1 1 0
+1 1 1 1 1
+
+    mean ← +/ _fk ÷ fk_ ⍴     ⍝ arithmetic mean (monadic).
+
+    mean 1 2 3 4
+2.5
+
+    disp 6(+ fk , fk - fk , fk × fk , fk ÷)2    ⍝ 6(+,-,×,÷)2
+8 4 12 3
+
+    mkfn←{_←⍎⍵,'←{⍺←⊢ ⋄ ⍺''',⍵,'''⍵}' ⋄ ⍵}      ⍝ make function '⍵'
+    
+    mkfn¨'ABCDE'
+ABCDE
+    '⍺'A'⍵'
+⍺A⍵
+
+    disp '⍺'(A fk B fk C fk D fk E)'⍵'          ⍝ NB: operators associate left.
+┌───────────┬─┬───┐
+│┌───┬─┬───┐│D│⍺E⍵│
+││⍺A⍵│B│⍺C⍵││ │   │
+│└───┴─┴───┘│ │   │
+└───────────┴─┴───┘
+
+    ∘.(∧fk∨fk⍱fk⍱fk<fk∨fk=)⍨0 1
+1 0
+1 1

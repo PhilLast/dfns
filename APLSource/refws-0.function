@@ -1,0 +1,8 @@
+ refws←{⎕ML←1                            ⍝ Ref to saved ws ⍵.
+     ⍵≡'':∇ ⎕WSID                        ⍝ '' is shorthand for ⎕wsid
+     nsv1←'⎕CT' '⎕IO' '⎕DIV' '⎕ML'       ⍝ namespace extent ...
+     nsv2←'⎕PP' '⎕RL' '⎕RTL' '⎕WX'       ⍝ ... system variables.
+     copy←'⎕CY''',⍵,''' ⋄ '              ⍝ copy command.
+     lasv←'(##.(↑nsv1,nsv2))'            ⍝ left argt for sysvar copy.
+     (⎕NS'')⍎copy,lasv,copy,'⎕this'      ⍝ ref to copied ws.
+ }

@@ -1,0 +1,4 @@
+⍝ Ref to "saved" ws ⍵:
+
+      ⎕wsid≡(refws'').(refws'').⎕wsid
+1

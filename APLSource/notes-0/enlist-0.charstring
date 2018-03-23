@@ -1,0 +1,81 @@
+list ← {leaves} ##.enlist array             ⍝ List ⍺-leaves of nested array.
+
+Suggested  by Yves Bopp, this function generalises primitive enlist (∊⍵), to re-
+turn a list of the (at most) depth-⍺ leaves of its array argument.
+
+Technical note:
+
+The  function uses ↑,/ to concatenate array items. If the array were empty, this
+would cause an error as the primitive catenate function has no associated ident-
+ity  item.  This  situation is avoided by prefixing an item before the reduction
+and  removing it afterwards. In this null case, the correct prototypical item is
+maintained by using the first item of the array itself as the dummy item.
+
+Examples:
+
+    vecs                        ⍝ uniform depth 4 array.
+┌───────────────────────────────┬─────────────────────────┐
+│┌─────────────┬───────────────┐│┌────────────┬──────────┐│
+││┌─────┬─────┐│┌───────┬─────┐│││┌────┬─────┐│┌───┬────┐││
+│││hello│world│││bonjour│monde│││││good│night│││bon│soir│││
+││└─────┴─────┘│└───────┴─────┘│││└────┴─────┘│└───┴────┘││
+│└─────────────┴───────────────┘│└────────────┴──────────┘│
+└───────────────────────────────┴─────────────────────────┘
+
+    0 enlist vecs               ⍝ list (vector) of depth-0 leaves.
+helloworldbonjourmondegoodnightbonsoir
+
+    1 enlist vecs               ⍝ list of depth-1 leaves.
+┌─────┬─────┬───────┬─────┬────┬─────┬───┬────┐
+│hello│world│bonjour│monde│good│night│bon│soir│
+└─────┴─────┴───────┴─────┴────┴─────┴───┴────┘
+
+    2 enlist vecs               ⍝ list of depth-2 leaves.
+┌─────────────┬───────────────┬────────────┬──────────┐
+│┌─────┬─────┐│┌───────┬─────┐│┌────┬─────┐│┌───┬────┐│
+││hello│world│││bonjour│monde│││good│night│││bon│soir││
+│└─────┴─────┘│└───────┴─────┘│└────┴─────┘│└───┴────┘│
+└─────────────┴───────────────┴────────────┴──────────┘
+
+    3 enlist vecs               ⍝ list of depth-3 leaves.
+┌───────────────────────────────┬─────────────────────────┐
+│┌─────────────┬───────────────┐│┌────────────┬──────────┐│
+││┌─────┬─────┐│┌───────┬─────┐│││┌────┬─────┐│┌───┬────┐││
+│││hello│world│││bonjour│monde│││││good│night│││bon│soir│││
+││└─────┴─────┘│└───────┴─────┘│││└────┴─────┘│└───┴────┘││
+│└─────────────┴───────────────┘│└────────────┴──────────┘│
+└───────────────────────────────┴─────────────────────────┘
+
+    tea                         ⍝ non-uniform depth-3 array.
+┌───────────┬──────────┐
+│┌───┬─┬───┐│┌─┬───┬─┐ │
+││tea│4│two│││2│for│T│ │
+│└───┴─┴───┘│└─┴───┴─┘ │
+├───────────┼──────────┤
+│┌──┬─┬───┐ │┌─┬───┬──┐│
+││me│&│you│ ││u│and│me││
+│└──┴─┴───┘ │└─┴───┴──┘│
+└───────────┴──────────┘
+
+    0 enlist tea                ⍝ list of depth-0 leaves.
+tea 4 two 2 forTme&youuandme
+
+    1 enlist tea                ⍝ list of (at most) depth-1 leaves.
+┌───┬─┬───┬─┬───┬─┬──┬─┬───┬─┬───┬──┐
+│tea│4│two│2│for│T│me│&│you│u│and│me│
+└───┴─┴───┴─┴───┴─┴──┴─┴───┴─┴───┴──┘
+
+    2 enlist tea                ⍝ list of depth-2 leaves.
+┌───────────┬─────────┬──────────┬──────────┐
+│┌───┬─┬───┐│┌─┬───┬─┐│┌──┬─┬───┐│┌─┬───┬──┐│
+││tea│4│two│││2│for│T│││me│&│you│││u│and│me││
+│└───┴─┴───┘│└─┴───┴─┘│└──┴─┴───┘│└─┴───┴──┘│
+└───────────┴─────────┴──────────┴──────────┘
+
+    {⎕ml←1 ⋄ (enlist ⍵)≡∊⍵}¨vecs tea    ⍝ 0∘enlist agrees with primitive fn.
+1 1
+
+See also: saw perv
+
+Index:enlist|array, nested
+Index;Bopp Y.

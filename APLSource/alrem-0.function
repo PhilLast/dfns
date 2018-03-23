@@ -1,0 +1,3 @@
+ alrem←{                     ⍝ Association list ⍺ with name ⍵ removed.
+     (⊂~<\(⎕IO⊃⍺)∊⊂⍵)/¨⍺     ⍝ list without leftmost name and corresp. value.
+ }

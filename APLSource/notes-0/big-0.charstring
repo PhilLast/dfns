@@ -1,0 +1,66 @@
+cvec ← {larg} (fn ##.big) rarg              ⍝ Arithmetic on large integers.
+
+Big performs integer arithmetic using a primitive operand function chosen from:
+
+    fn  dyadic  monadic
+    --  ------  -------
+    +   add     identity
+    -   sub     negate
+    ×   mult    signum
+    ÷   div
+    |   mod     abs
+    <   lt
+    ≤   le
+    =   eq
+    ≥   ge
+    >   gt
+    ≠   ne
+
+The  arguments may be either numeric or for larger numbers, the character vector
+representation of a number. In each case, the result is a character vector.
+
+The operator was developed by Maria Wells, with a multiply function from John R.
+Clark.
+
+Examples:
+
+      2 ×big 3                              ⍝ numb × numb
+6
+      '2' ×big 3                            ⍝ char × numb
+6
+      '2' ×big '3'                          ⍝ char × char
+6
+      '6'=2 ×big 3                          ⍝ result is char.
+1
+
+      '¯7000000000000000000'+big 18         ⍝ addition to large number.
+¯6999999999999999982
+
+      '23000000000000000000'-big 1          ⍝ subtract  ..      ..
+22999999999999999999
+
+      '199999999999999999999999' ×big 2     ⍝ multiply  ..      ..
+399999999999999999999998
+
+      '19999999999' <big '20000000000'      ⍝ less than ..      ..
+1
+
+      ×big '¯20000000000000'                ⍝ signum    ..      ..
+¯1
+
+      |big '¯199999999999999999999999'      ⍝ abs value ..      ..
+199999999999999999999999
+
+      ↑×big/64⍴2                            ⍝ 2*64
+18446744073709551616
+
+    ↑×big/⍳100                              ⍝ factorial 100.
+93326215443944152681699238856266700490715968264381621468592963895217599993229915
+      60894146397615651828625369792082722375825118521091686400000000000000000000
+      0000
+
+See also: nats xtimes
+See also: numbers
+
+Index:infinite precision|factorial
+Index;Wells M.|Clark J.R.

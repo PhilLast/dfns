@@ -1,0 +1,14 @@
+⍝ Pick of F of G of H ... arg:
+
+      ⎕io←1
+
+      1 of + of - of × of ÷ 10      ⍝ +10
+10
+      2 of + of - of × of ÷ 10      ⍝ -10
+¯10
+      3 of + of - of × of ÷ 10      ⍝ ×10
+1
+      4 of + of - of × of ÷ 10      ⍝ ÷10
+0.1
+      5 of + of - of × of ÷ 10      ⍝  10 (out of range index returns arg).
+10

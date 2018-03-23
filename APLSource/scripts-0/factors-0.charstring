@@ -1,0 +1,13 @@
+⍝ Prime factors of ⍵:
+
+    factors +441256830030           ⍝ Dyalog phone number.
+2 3 3 5 71 73 945949
+
+    factors +441256830031           ⍝ Dyalog fax number.
+587 9007 83459
+
+    {⍵≡factors×/⍵}sieve 2 to 30     ⍝ Factors of product of primes.
+1
+
+    2 3 5{⍺≡∪factors×/⍺*⍵}4 5 6     ⍝ Unique factors of product of prime powers.
+1

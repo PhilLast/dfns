@@ -1,0 +1,221 @@
+{ok} ← {opts←'q'} ##.test script        ⍝ Run test script: no news => good news.
+
+Namespace _scripts_ contains character-vector test scripts,  which  exercise the
+functions and operators in this workspace. In general, test's argument is a vec-
+tor or matrix of the names of scripts to be executed. For example:
+
+      test'display'     ⍝ test display function.
+
+      test'hex' 'dec'   ⍝ test functions: hex and dec.
+
+      test ⎕nl 4        ⍝ test scripts for all operators.
+
+As a convenience, right argument '' is interpreted as (scripts.⎕nl 2),  a matrix
+of all scripts, except for those starting with '_'.   Such names may be used for
+auxiliary sub-scripts, which are not intended to be run in isolation.
+
+During test's evaluation of each script, differences between actual and expected
+results  are displayed in the session; the shy result is a boolean vector indic-
+ating which scripts succeeded without fault.
+
+If  a  difference  is detected, the script name, and expected and actual results
+are shown in the form:
+
+    name expected → actual
+
+Blanks  in  expected and actual results are replaced with '·' characters to show
+where differences may be attributed to spacing. A common example of this is with
+nested arrays, where the display form often contains trailing blanks.
+
+      ⍳1 2              ⍝ nested array.
+ 1 1  1 2
+
+      ' ·'subs ⍕⍳1 2    ⍝ note trailing blank in output:
+·1·1··1·2·
+
+In  this case, expected trailing blanks must be present in the script, otherwise
+differences will be reported.
+
+Optional left argument [opts] determines:
+
+    'q' quietly execute each script (default),
+    'v' (verbosely) show the progress of each script.
+    'e' edit script(s).
+    'l' list script names, for example: cols'l'test''.
+    's' stop on difference and display the actual result in an edit window.
+
+Option 's' is useful when developing scripts. When a difference is detected, ex-
+ecution is paused and the actual result is presented in an edit window.  If this
+new value is acceptable,  just copy it into the clipboard;  close the window and
+then paste it into the script edit-window at the appropriate place.  On  closing
+script-window, execution will proceed until the  end  of  the  script or another
+difference is detected.
+
+The left argument value is set in variable "Alpha", which is visible from within
+the script. This is useful, for example, in passing the "show progress" value to
+a recursive call on test. For example, a script may contain the lines:
+
+        Alpha test '_sub'       ⍝ pass verbose option to auxiliary script.
+    1
+
+Scripts may contain :If control structures for conditional inclusion of tests.
+
+    :If 80=⎕dr' '
+        ... unicode-specific tests
+    :Else
+        ... classic-specific tests
+    :EndIf
+
+Note  that  variables  and (even multi-line) functions defined in the script are
+local  to  that  script.  An example of a script might be the following newline-
+delimited character vector:
+
+          display scripts.sample
+┌→──────────────────────────────────────────────────┐
+│      ⍝ Sample Script                              │
+│                                                   │
+│      cvec ← 1↓'                                   │
+│mult-line                                          │
+│character                                          │
+│vector'                 ⍝ Temp variable.           │
+│                                                   │
+│      dup←{             ⍝ Temp function.           │
+│          ⍵ ⍵                                      │
+│      }                                            │
+│                                                   │
+│      disp dup cvec     ⍝ disp available to script.│
+│┌→────────┬─────────┐                              │
+││mult-line│mult-line│                              │
+││character│character│                              │
+││vector   │vector   │                              │
+│└────────→┴────────→┘                              │
+│                                                   │
+│:If 'v'∊Alpha       ⍝ verbose mode:                │
+│        'Sqrt ¯1:',¯1*÷2                           │
+│    Sqrt ¯1: 0J1                                   │
+│:Else                                              │
+│        ¯1*÷2                                      │
+│    0J1                                            │
+│:EndIf                                             │
+└───────────────────────────────────────────────────┘
+
+It  is  easy  to add extra tests to a script: we just execute a test case in the
+session,  and if we're sure the result is correct, copy and paste the input line
+and its result into the script. Note however, the following restrictions:
+
+Bugs:
+
+[1] Some of the scripts will report differences unless [AutoFormat functions] is
+    switched _off_, using the Session menu:
+
+    ┌──···Options···───────────────
+    │ ┌──···Configure···─────────────
+    │ │ ┌──···Trace/Edit···────────────
+    │ │ │   ···
+    │ │ │    [ ] AutoFormat functions
+    │ │ │     ↑
+    │ │ │     └── Uncheck box.
+
+    Or set environment variable AUTOFORMAT=0 in the calling line (or shell).
+
+[2] Test is currently confused by script lines that contain:
+
+    Embedded assignments:   ·   ·   ·   ·   ·   2+a←3
+    Diamonds:   ·   ·   ·   ·   ·   ·   ·   ·   2+3 ⋄ 4+5
+    Shy results:·   ·   ·   ·   ·   ·   ·   ·   ⎕ex'a'
+    System commands ·   ·   ·   ·   ·   ·   ·   )erase a
+    Quad output ·   ·   ·   ·   ·   ·   ·   ·   ⎕←...
+    Assigned result of raw dfn application: ·   a←{...}0
+    Assigned functions derived from dfns:   ·   f←{...}¨
+
+    (
+        The  latter  two  problems occur because the lines are misinterpreted as
+        simple dfn definitions. The test function could be more sophisticated in
+        distinguishing  such  cases, but it is easy to avoid the error by coding
+        it as: "a← {...}0" or "f← {...}¨" (with a blank after the ←), which con-
+        founds the part of the code that is looking for dfns to fix.
+    )
+
+[3] It would be nice to have :ElseIf, :Select/:Case[List] and :Return keywords.
+
+Technical notes:
+
+[test] creates a temporary namespace in which to execute scripts, and into which
+all  root space functions and operators (#.⎕nl 3 4) are copied. Within the temp-
+orary space, the script is processed as follows:
+
+    Removing comments and ignoring blank lines:
+
+    If the next line contains an unclosed quoted vector
+        form a multi-line character vector with the following line.
+
+    Otherwise, if the next line starts with a ':'
+        process the :If/:Else/:End[If] control structure.
+
+    Otherwise, if the next line contains a dfn definition:
+        identify and ⎕fx the single- or multiple-line dfn.
+
+    Otherwise, if the next line is an assign ('←' at outer level):
+        execute the assignment in the tmp space.
+
+    Otherwise:
+        execute the expression and compare the result with following lines.
+
+Examples:
+
+      test'hex'                 ⍝ test hex function (no news is good news).
+
+      test'hex' 'dec'           ⍝ test two scripts.
+
+      test scripts.⎕nl 2        ⍝ test all scripts.
+
+      (∧/test'')/'ok'           ⍝ test all scripts.
+ok
+      test time''               ⍝ time the test.
+19.30
+
+    'l' test 'a' ⎕nl 4          ⍝ scripts for a-operators.
+acc
+ascan
+ascana
+
+    'q' test'gcd' 'osc'         ⍝ quiet: report only differences.
+
+    'e' test'gcd' 'osc'         ⍝ edit script(s).
+
+    'v' test'gcd' 'osc'         ⍝ verbose: show test running.
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ scripts.gcd
+⍝ Greatest Common Divisor:
+
+      105 gcd 330
+15
+
+      factors (3×5×7) gcd 5×7×11
+5 7
+
+      lcm←{⍺×⍵÷⍺ gcd ⍵}                     ⍝ lowest common multiple
+
+      factors (3×5×7) lcm 5×7×11
+3 5 7 11
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ scripts.osc
+⍝ Oscillate - probably returns 1:
+
+      osc¨1 to 40
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+
+      {2|⍵:1+3×⍵ ⋄ ⍵÷2}traj 27
+27 82 41 124 62 31 94 47 142 71 214 107 322 161 484 242 121 364 182 91 274 137 4
+
+      12 206 103 310 155 466 233 700 350 175 526 263 790 395 1186 593 1780 890 4
+
+      45 1336 668 334 167 502 251 754 377 1132 566 283 850 425 1276 638 319 958
+
+      479 1438 719 2158 1079 3238 1619 4858 2429 7288 3644 1822 911 2734 1367 41
+
+      02 2051 6154 3077 9232 4616 2308 1154 577 1732 866 433 1300 650 325 976 48
+
+      8 244 122 61 184 92 46 23 70 35 106 53 160 80 40 20 10 5 16 8 4 2 1
+
+See also: time
+
+Index:quality assurance|unit testing|autoformat

@@ -1,0 +1,114 @@
+⍝ Function memoization:
+
+      ⎕io←1
+
+      afib←{⎕io←0                   ⍝ Naïve coding of ⍺-fibonacci number.
+          ⍵∊⍳⍺:⍵                    ⍝ small number: done,
+          +/⍺ afib¨⍵-1+⍳⍺           ⍝ otherwise: sum of preceding ⍺ fib numbers.
+      }
+
+      2 afib¨⍳10                    ⍝ *slow* ⍺-fibonacci sequence.
+1 1 2 3 5 8 13 21 34 55
+
+      afib←(afib)memo(cache ⍬)      ⍝ Memoize afib.
+
+      2 afib¨⍳20                    ⍝ *fast* ⍺-fibonacci sequence.
+1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584 4181 6765
+
+⍝ Notice that afib is coded to use its own name explicitly, rather than '∇'
+⍝ for the recursion. This is so that the recursive call references the newly-
+⍝ assigned derived function, whereas '∇' would have referenced the original
+⍝ function and circumvented the memoization.
+
+⍝ Perhaps surprisingly, the cache can be relied upon to supply the "base values"
+⍝ of the recursion, thus simplifying the initial function coding.
+
+      fib←{                         ⍝ Naïve coding of regular fibonacci number.
+          +/fib¨⍵-1 2               ⍝ sum of preceding 2 fib numbers.
+      }
+
+      fib←(fib)memo(cache 2/¨0 1)   ⍝ Cache pre-populated with base values.
+
+      fib¨⍳20                       ⍝ Fast fibonacci sequence.
+1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584 4181 6765
+
+      div←÷ memo (cache ⍬)          ⍝ Ambivalent operand function
+
+      2 div 7                       ⍝ Dyadic use distinct from ...
+0.2857142857
+
+      div 2 7                       ⍝ ... monadic use.
+0.5 0.1428571429
+
+      osc←{                         ⍝ Oscillate - probably returns 1.
+          2|⍵:osc 1+3×⍵             ⍝ odd:  triple 'n add-one,
+              osc ⍵÷2               ⍝ even: halve.
+      }
+
+      ∆osc←cache⊂1 1                ⍝ Initialise cache for osc.
+
+      osc←(osc)memo ∆osc            ⍝ derive "fast" osc function.
+
+      ∆osc.⎕nl 2                    ⍝ cache-space contents.
+keys
+vals
+
+      show←{⎕ML←0                       ⍝ Show cache <rslts ← args>
+          ↑⍵.(vals{⍺'←',⊂¯1↓⍵}¨keys)    ⍝ (dropping extra rarg).
+      }
+
+      show ∆osc                     ⍝ Show initial cache.
+1 ← 1 
+
+      osc 2                         ⍝ Apply derived function, extending cache.
+1
+      show ∆osc                     ⍝ Show extended cache.
+1 ← 1 
+1 ← 2 
+
+      osc 3                         ⍝ Apply function again.
+1
+
+      show ∆osc                     ⍝ Show extended cache.
+1 ← 1  
+1 ← 2  
+1 ← 4  
+1 ← 8  
+1 ← 16 
+1 ← 5  
+1 ← 10 
+1 ← 3  
+
+      zap←{⎕ml←0                        ⍝ Remove value ⍵ from cache ⍺.
+          ⍺.{⎕ml←0                      ⍝ within cache:
+              mask←⍵∘≡¨↓⍉↑vals keys     ⍝ mask of matches.
+              {1}vals keys/⍨←⊂~mask     ⍝ retain non-matches.
+          }(⊃⍵)(1↓⍵,¯1↑⍵)               ⍝ target value and key.
+      }
+
+      ∆osc∘zap¨(1 16)(1 10)(1 3)    ⍝ Zap selected cache entries.
+1 1 1
+
+      show ∆osc                     ⍝ Show compacted cache.
+1 ← 1 
+1 ← 2 
+1 ← 4 
+1 ← 8 
+1 ← 5 
+
+      osc 3                         ⍝ Re-run function.
+1
+
+      show ∆osc                     ⍝ Partially restored cache.
+1 ← 1  
+1 ← 2  
+1 ← 4  
+1 ← 8  
+1 ← 5  
+1 ← 10 
+1 ← 3  
+
+      +⎕ex'∆osc'                    ⍝ Seal access to osc's cache.
+1
+      osc¨⍳10                       ⍝ Derived function still operates normally.
+1 1 1 1 1 1 1 1 1 1

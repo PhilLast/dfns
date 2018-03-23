@@ -1,0 +1,66 @@
+⍝ Unsigned from signed integer:
+
+      8 uns ¯3 to 3                         ⍝ unsigned byte values.
+253 254 255 0 1 2 3
+
+      hex ¯3 to 3                           ⍝ hex of signed values,
+ fd  fe  ff  00  01  02  03 
+
+      hex 8 uns ¯3 to 3                     ⍝ same as hex of unsigned values.
+ fd  fe  ff  00  01  02  03 
+
+      8 int 8 uns ¯3 to 3                   ⍝ full circle.
+¯3 ¯2 ¯1 0 1 2 3
+
+⍝ alternative definitions:
+
+      uns←{256|256+⍵}                       ⍝ unsigned from integer.
+
+      int←{¯128+256|128+⍵}                  ⍝ integer from unsigned.
+      uns ¯3 to 3
+253 254 255 0 1 2 3
+
+      hex ¯3 to 3                           ⍝ hex of signed ints,
+ fd  fe  ff  00  01  02  03 
+
+      hex uns ¯3 to 3                       ⍝ same as hex of uns.
+ fd  fe  ff  00  01  02  03 
+
+      int uns ¯3 to 3                       ⍝ full circle.
+¯3 ¯2 ¯1 0 1 2 3
+
+      uns←{65536|65536+⍵}                   ⍝ unsigned from 16-bit integer.
+
+      int←{¯32768+65536|32768+⍵}            ⍝ integer from  16-bit unsigned.
+
+      ¯30000 ¯20000 to 30000
+¯30000 ¯20000 ¯10000 0 10000 20000 30000
+
+      uns ¯30000 ¯20000 to 30000
+35536 45536 55536 0 10000 20000 30000
+
+      int uns ¯30000 ¯20000 to 30000
+¯30000 ¯20000 ¯10000 0 10000 20000 30000
+
+      4 hex 16 uns ¯3 to 3                  ⍝ hex of uns,
+ fffd  fffe  ffff  0000  0001  0002  0003 
+      4 hex ¯3 to 3                         ⍝ same as hex of uns.
+ fffd  fffe  ffff  0000  0001  0002  0003 
+
+      disp  8 uns 8 int  2 3 4⍴256-⍳24      ⍝ ok for higher rank arrays.
+255 254 253 252
+251 250 249 248
+247 246 245 244
+               
+243 242 241 240
+239 238 237 236
+235 234 233 232
+
+    disp 8int 8uns ↑,∘⊂/-⍳5                 ⍝ ok for nested arrays.
+┌──┬───────────────┐
+│¯1│┌──┬──────────┐│
+│  ││¯2│┌──┬─────┐││
+│  ││  ││¯3│¯4 ¯5│││
+│  ││  │└──┴─────┘││
+│  │└──┴──────────┘│
+└──┴───────────────┘

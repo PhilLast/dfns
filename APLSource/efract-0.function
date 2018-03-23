@@ -1,0 +1,12 @@
+ efract←{        ⍝ Egyptian fractions: Fibonacci-Sylvester algorithm
+
+     ⎕ML←3
+
+     ⍬{
+         (p q)←⍵÷(↑⍵){⍵=0:|⍺ ⋄ ⍵ ∇ ⍵|⍺}↑⌽⍵
+         p=1:⍺,q
+
+         r←p|q ⋄ s←(q-r)÷p
+         (⍺,s+1)∇(p-r)(q×s+1)
+     }⍺ ⍵
+ }

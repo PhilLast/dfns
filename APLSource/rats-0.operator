@@ -1,0 +1,73 @@
+ rats←{⎕ML ⎕IO←1                     ⍝ Rational arithmetic.
+
+     arith←{                         ⍝ ⍺ ⍺⍺ ⍵, where ⍺⍺ ∊ +-×÷*∨∧⍕⍎.
+         fn←⍺⍺{aa←⍺⍺ ⋄ ⊃⎕CR'aa'}⍵    ⍝ char rep of operand function.
+         '+'≡fn:norm ⍺+sum ⍵         ⍝ + sum.
+         '-'≡fn:norm ⍺-sum ⍵         ⍝ - difference.
+         '×'≡fn:norm ⍺,⍵             ⍝ × product.
+         '÷'≡fn:norm ⍺,⍵ pow ¯1      ⍝ ÷ quotient.
+         '*'≡fn:norm ⍺ exp ⍵         ⍝ * exponent.
+         '∨'≡fn:norm ⍺ gcd ⍵         ⍝ ∨ greatest common divisor.
+         '∧'≡fn:norm ⍺ lcm ⍵         ⍝ ∧ least common multiple.
+         '⍕'≡fn:fmt req¨sep norm ⍵   ⍝ ⍕ format.
+         '⍎'≡fn:req ⍵                ⍝ ⍎ real equivalent.
+         err'unexpected: ',fn        ⍝ unexpected operand function.
+     }
+
+     sum←{                           ⍝ sum (difference).
+         0∊⍵:⍺                       ⍝ ⍺+0 → ⍺, ⍺-0 → ⍺
+         0∊⍺:⍵×nchk ⍺⍺ 1             ⍝ 0+⍵ → ⍵, 0-⍵ → error
+         mul←⍺ gcd ⍵                 ⍝ gcd multiplier
+         div←mul pow ¯1              ⍝   and divider.               ┌  a     b  ┐
+         top←⍺⍺/req∘norm¨⍺ ⍵,¨⊂div   ⍝ integer sum.     a+b = a∨b × │ --- + --- │
+         top<0:err'negative'         ⍝ negative: error.  ¯          └ a∨b ¯ a∨b ┘
+         mul,top conv 1              ⍝ sum/difference.
+     }                               ⍝ :: r ∇ r → r
+
+     over←{                          ⍝  ┌gcd──────────────┐   ┌lcm──────────────┐
+         (a b)(c d)←↓¨∘sep¨⍺ ⍵       ⍝  │ a     c     a∨c │   │ a     c     a∧c │
+         top←↑a ⍺⍺ c                 ⍝  │--- ∨ --- = -----│   │--- ∧ --- = -----│
+         bot←↑b ⍵⍵ d                 ⍝  │ b  ¯  d     b∧d │   │ b  ¯  d     b∨d │
+         top,bot pow ¯1              ⍝  └─────────────────┘   └─────────────────┘
+     }                               ⍝ :: r ∇ r → r
+
+     mesh←{                          ⍝ merge for gcd / lcm.
+         tt bb←↓⍉↑⍺ ⍵                ⍝ prime factors and powers.
+         top←↑⍺⍺/tt                  ⍝ ∪ / ∩ of prime factors.
+         bot←⍵⍵⌿↑bb+.×¨tt∘.=¨⊂top    ⍝ ⌈ / ⌊ of powers.
+         ↑top bot                    ⍝ gcd / lcd matrix.
+     }                               ⍝ :: r ∇ r → r
+
+     norm←{                          ⍝ cancel common factors.
+         top bot←↓⍵                  ⍝ factors and powers.
+         0∊top:2 1⍴0 1               ⍝ special case: 0r⍵ → 0r1.
+         upfs←∪∊top                  ⍝ unique prime factors.
+         pows←bot+.×top∘.=upfs       ⍝ corresponding powers.
+         {(~1 0∨.=⍵)/⍵}↑upfs pows    ⍝ normal rational matrix.
+     }                               ⍝ :: ∇ r → r
+
+     conv←{norm mat facts∘chks¨⍺ ⍵}  ⍝ rational representation.
+     chks←{nchk wchk ⍵}              ⍝ check that ⍵ is a natural number.
+     facts←{⍵=0:,0 ⋄ factors ⍵}      ⍝ 0 is special.
+     mat←{↑,/1 ¯1{↑0 ⍺+2↑⊂⍵}¨⍵}      ⍝ matrix of factors/powers.
+
+     pow←{↑1 ⍵×↓⍺}                   ⍝ integer power: ⍺ * ⍵
+     req←{×/*⌿⍵}                     ⍝ real equivalent.
+     sep←{0⌈⍵∘pow¨1 ¯1}              ⍝ numerator/denominator separation.
+     fmt←{1↓∊'r',∘⍕¨⍵}               ⍝ r-format
+     exp←{echk ⍺ pow÷/req¨sep ⍵}     ⍝ rational exponent.
+
+     else←{⍺⍺ ⍵:⍵ ⋄ err ⍵⍵}          ⍝ error checking:
+     echk←{⍵≡⌊⍵}else'irrational'     ⍝ check integral denominator.
+     wchk←{⍵≡⌊⍵}else'bad number'     ⍝ check whole number.
+     nchk←{⍵≥0}else'negative'        ⍝ check non-negative number.
+     err←⎕SIGNAL∘11                  ⍝ signal domain error.
+
+     imin←∩mesh⌊                     ⍝ intersection min.
+     umax←∪mesh⌈                     ⍝ union max.
+     gcd←imin over umax              ⍝ derived gcd.
+     lcm←umax over imin              ⍝ derived lcm.
+
+     2=⎕NC'⍺⍺':⍺⍺ conv ⍵             ⍝ numeric operand: rational ⍺⍺÷⍵.
+     ⍺←⊢ ⋄ ⍺ ⍺⍺ arith ⍵              ⍝ apply fn ⍺⍺ between rational nos ⍺ ⍵.
+ }

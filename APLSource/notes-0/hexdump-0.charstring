@@ -1,0 +1,953 @@
+{cmds←''} ##.hexdump file                   ⍝ Hex dump of native file.
+
+Native  [file]  is opened and the first few words displayed in hexadecimal. Type
+<enter> to show successive words of the binary file, and ")" to quit.
+
+Each output line starts with the file position, followed by the file content (if
+any) at this position, displayed as hexadecimal 32-bit words:
+
+      hexdump'myfile'
+00000000:·020801aa 00000000 00000001 00000001·
+00000010:·00000001 00000000 00000034 00000001·
+00000020:·00000054 00000054 00000000 00000000·
+00000030:·fffffffc 00000014 36a33e18 00000000·
+00000040:·00000006 0000222f 00000001 00000003·
+00000050:·ff00ff00 ffffffab 00000000 00000002·
+00000060:·00000000 00000002 00000000·
+00000070:·
+00000080:·
+00000090:·
+000000a0:·)     ⍝ quit
+
+The file position may be changed using expressions, which are evaluated left-to-
+right.  The  current  value is an implicit left argument to otherwise niladic or
+monadic functions. For example:
+
+    +3      ⍝ increment.
+    %4      ⍝ 4-residue.
+    ⊥       ⍝ set base.
+
+Numeric input is interpreted as hexadecimal.
+
+Input  sequences, including partial expressions and commands, may be named using
+a simple macro definition scheme.
+
+Hexdump's optional left argument, character vector [cmds] is a sequence of com-
+mands to be processed prior to interactive input.
+
+Hexdump has a somewhat arcane user interface, reminiscent of software tools dat-
+ing from the 1970s. The function could be viewed as a simple hexadecimal calcul-
+ator, which just happens to display the content (if any) of its file at the pos-
+ition of the current value.
+
+Note that the current value is a 32-bit unsigned quantity, which means that only
+the first 4GB of the subject file is accessible.
+
+Expressions:
+
+      hex   set value (file position).
+
+    + hex   increment.
+    - hex   decrement.
+    × hex   multiply.
+    ÷ hex   integer divide.
+    % hex   integer remainder (residue commute).
+
+    ⊥       set address base.
+    !       absolute position (subtract base).
+    *       get 32-bit word from file
+    ← hex   put 32-bit word to file.
+
+    : case  case selection (see below).
+
+Commands:
+
+    (       call, saving current state.
+    )       return / quit.
+
+    ⍝ ···   comment.
+    '···'   message.
+    ?       help.
+    ⊤       trace on/off.
+    < var   include sub-script.
+
+    name = ···· niladic macro.
+    name ⍵ = ·· monadic macro.
+
+System variables:
+
+    ⎕dw = · display width (words).
+    ⎕be = · big-endian 0/1.
+
+Some examples
+-------------
+    42                  ⍝ set file position to hex 42 (decimal 66) bytes.
+    10*×4-(c*)⊥         ⍝ set base to 4 × value at 0x10, minus value at 0x0c.
+    ÷100×100            ⍝ value with least significant byte cleared.
+    (%2:'even':'odd')   ⍝ display parity.
+    clsb = ÷100×100     ⍝ define macro.
+
+Relative Addresses
+------------------
+Many binary files have an internal structure, where values in the file represent
+positions relative to a "base". A Dyalog workspace, for example, contains memory
+pointers  that  were  in  effect  when the workspace was saved. In the .dws file
+these can be viewed as offsets from a notional base.
+
+Command "⊥" is used to set the base, which is then added to:
+
+    - directly  entered  hexadecimal values _excluding_ those immediately to the
+      right of a monadic function:
+
+      00000000:·2
+                └────────── base added to this value.
+
+      00000002:·+ 3 + 4
+                  └───┴── base _not_ added to this value
+
+    - values retrieved from the file content using monadic *:
+
+      00000099:·*
+                └────────── base added to value of file word at 0x99.
+
+Apart  from  indirection  (*), the content of the file has no bearing on address
+calculation. Only the current base and position play a part. To illustrate this,
+the following examples use the  special file "nul", which is of zero length:
+
+          hexdump'nul'
+    00000000:·
+
+⊥ Sets  the  base  to  the current file position. This base is then added to all
+  subsequent input values to calculate the absolute file position.
+
+    ········:·1000      ⍝ set file position to 0x1000.
+    00001000:·⊥         ⍝ set base to 0x1000.
+    00001000:·ab        ⍝ go to _relative_ file position 0xab,
+    000010ab:·          ⍝ which is _absolute_ file position 0x10ab.
+
+! Foils relative addressing by subtracting the current base:
+
+    ········:·cd        ⍝ relative 0xcd
+    000010cd:·!         ⍝ absolute 0xcd
+    000000cd:·ef!       ⍝ absolute 0xef
+    000000ef:·
+
+To remove relative addressing, reset the base to 0:
+
+    ········:·0!⊥       ⍝ reset base.
+
+Call / Return
+-------------
+When  investigating  a tree structure, for example, it is often convenient to be
+able  to return to a parent node after examining subnodes. Command "(" saves the
+current state (file position, base, macro table, trace state) and it is restored
+by a matching ")".
+
+Note that saving the base allows a temporary base to be installed for the durat-
+ion of a local operation.
+
+The current calling level is indicated by the number of white dots (·) following
+the input prompt. Entering ")" at level one terminates hexdump.
+
+A nuance: there is a subtle difference between parentheses used in the above way
+and those used to bind the right argument of a monadic function: 1+(2×3). In the
+latter  case,  the  current  value  (6)  is _returned_ as the result of the sub-
+expression,  whereas  in  the  former  (call/return) case, the pre-call value is
+_restored_. Notice this distinction in the following:
+
+          hexdump'nul'
+    00000000:·2+3           ⍝ set file position to 5.
+    00000005:·0''           ⍝ note file position is _5_.
+
+    00000000:·(2+3)         ⍝ call; set file position to 5; return.
+    00000000:·0''           ⍝ note file position is _0_.
+
+    00000000:·1+(2+3)       ⍝ set file position to 1+5.
+    00000006:·0''           ⍝ note file position is _6_.
+
+    00000000:·(2+3)+1       ⍝ call; set file position to 5; return; advance 1.
+    00000001:·0''           ⍝ note file position is _1_.
+
+This rarely causes a problem in practice, as parentheses are never needed to the
+left of a function, just as in APL they are never needed to the right.
+
+Message Output
+--------------
+Consecutive messages are concatenated and may contain embedded newlines:
+
+          display example       ⍝ sample script vector.
+    ┌→───────┐
+    │'join ' │
+    │'these '│
+    │'up'    │
+    │        │
+    │'       │
+    │output  │
+    │separate│
+    │lines   │
+    │        │
+    │'       │
+    └────────┘
+
+          example hexdump'nul'
+    join these up
+    output
+    separate
+    lines
+
+    00000000:·)
+
+Case Selection
+--------------
+A case is selected using the construct (value :case0 :case1 ··· :default).
+
+To  allow  the  selected  case to modify the environment _outside_ the construct
+(for example, to set the file position) it is copied to the input stream _after_
+processing the construct's closing parenthesis.
+
+On encountering a colon:
+
+    if the current value is zero or
+    if this is the final (default) case:
+        the first case is moved to immediately after the closing ")" and
+        any other cases are discarded:
+
+        ┌─┬─────────────────────────────────┐ ┌──────────────────┐
+        │0│:first case:next case:··· ) more │→│) first case more │
+        └─┴─────────────────────────────────┘ └──────────────────┘
+        ┌─┬─────────────────────────────────┐ ┌──────────────────┐
+        │n│              :final case ) more │→│) final case more │
+        └─┴─────────────────────────────────┘ └──────────────────┘
+
+    otherwise:
+        the first case is discarded and
+        the current value is decremented by 1:
+
+        ┌─┬─────────────────────────────────┐ ┌───┬──────────────────────┐
+        │n│:first case:next case: ···) more │→│n-1│:next case: ···) more │
+        └─┴─────────────────────────────────┘ └───┴──────────────────────┘
+
+For example:
+
+    00000000:·('The value at 0x0c is ' c*%2 :'even':'odd')'.'
+    The value at 0x0c is even.
+    00000000:·123           ⍝ set value to 123.
+    00000123:·$             ⍝ display current value, see $ macro below.
+    123
+    00000123:·(99:$)        ⍝ selects default case $, which is
+    123
+    00000123:·(99)$         ⍝ evaluated like this,
+    123
+    00000123:·(99$)         ⍝ not like this.
+    99
+    00000123:·
+
+Tip:  a case may not contain an unbalanced ")", as this would terminate the con-
+struct.  However, the ")" may be _named_ outside the case selection and the name
+used within:
+
+    ] = )               ⍝ ] means )
+    pop = (depth::])    ⍝ pop if depth≠0.
+
+Macros
+------
+File  exploration is made a little easier by being able to define simple macros.
+Macro  names  may include any character and those composed exclusively from A-Z,
+a-z, 0-9, _ and ⎕ may be of any length (otherwise, they are of length 1 and lex-
+ically equivalent to primitive commands). This means, for example, that a macro
+with a name such as ⍟, need not be blank-separated from a literal number: ⍟99.
+
+    string      interpretation
+    ------      --------------
+    aabb        name "aabb"
+    aa bb       two names: "aa" and "bb"
+    ⍟           name "⍟"
+    ⍺⍺          two names: "⍺" and "⍺"
+    __          one name "__"
+    ∆_⍙         three names "∆", "_" and "⍙"
+    {oct}       three names "{", "oct" and "}"
+    ⎕this       single name.
+
+When a macro name is encountered in the input stream, it is immediately replaced
+with  the  corresponding value and processing resumed. In particular, this means
+that  the  macro value is re-scanned, so that any sub-macros are also evaluated.
+Unbounded recursion will "hang" hexdump:
+
+          hexdump'nul'      ⍝ don't try this at home:
+    00000000:·hang = hang   ⍝ unboundedly recursive macro,
+    00000000:·hang          ⍝ ...  hangs until interrupted.
+
+Macros  may  redefine  (cover)  even primitive constructs. For example "!" (non-
+relative value) could be coded as:
+
+    !=-(0)  ⍝ subtract base value.
+
+⌿ and ⍀
+-------
+Keystrokes <enter> and <backspace> are converted to tokens ⌿ and ⍀ respectively.
+By default these system commands advance and reverse the file position by 4×⎕dw,
+where  ⎕dw  is the current display width (number of word-columns). We can change
+the  effect  of  entering  these  keystrokes  by  redefining them. Notice in the
+following example, how backing up over the prompt, generates ⍀ commands.
+
+          '100'hexdump'nul'
+    00000100:·⌿='<er>'+1    │ advance one byte per <enter>.
+    00000100:·⍀='<bs>'-1    │ back up one byte per <backspace>.
+    00000100:·              │ <er>
+    <er>                    │
+    00000101:·              │ <er>
+    <er>                    │
+    00000102:               │ <bs>
+    <bs>                    │
+    000001                  │ <bs><bs><bs><bs>
+    <bs><bs><bs><bs>        │
+    000000fd:·)             │
+
+⍀ might be coded to return from a call:
+
+        hexdump''
+    00000000:·⍀=)           │ <bs> = return from call
+    00000000:·((((((        │ call to depth 7
+    00000000:·······        │ <er> at depth 7
+    00000010:···            │ <bs><bs><bs><bs> over 4 dots to return 4 levels
+    00000000:···            │ enter at depth 3
+    00000010:·              │ <bs><bs> return 2 further levels
+    00000000:               │ <bs> return right out of hexdump.
+
+NB:  ⍀ generation depends _only_ on detecting that the input is shorter than the
+prompt.  If  so, a corresponding number of '⍀' chars are injected into the input
+stream.  In  particular,  no  account  is  taken of the _content_ of the shorter
+input. This means that chars following backspaces, up to the initial size of the
+prompt, are ignored:
+
+          hexdump''
+    00000000:·((((          │ increase depth to 5.
+    00000000:·····          │ <er> advances file posn 0→10.
+    00000010:···1234        │ <bs><bs>1234: only 34 recognised  :-(
+    00000034:·····          │ <er> advances 34→44.
+    00000044:···            │ <bs><bs> reverses 44→24.
+    00000024:·····1234      │ 1234 sets file posn.
+    00001234:·····)))))     │ quit.
+
+    to avoid confusion, always enter <bs> chars on a separate line. See note on
+    "Prior line editing", below.
+
+Providing  code for ⌿ can be used to great effect in annotating a structure that
+extends over a number of lines of output.
+
+NB: be wary of the effects of redefining primitive commands:
+
+          hexdump'nul'      ⍝ don't try this at home:
+    00000000:·)=            ⍝ ) expands to the null string, so
+    00000000:·)             ⍝ there is no way out!
+    00000000:·)
+    ...
+
+Even  hexadecimal  numbers  may  be used as macro names! When processing a token
+from the input stream, hexdump looks first in the macro table _before_ wondering
+whether it's a number. A hex value, occluded by a macro name, may be accessed by
+prefixing an extra 0:
+
+          hexdump'nul'
+    00000000:·face          ⍝ go to 0xface.
+    0000face: 0             ⍝ go to 0.
+    00000000:·face='happy'  ⍝ macro definition.
+    00000000:·face          ⍝ macro reference.
+    happy
+    00000000:·0face         ⍝ go to 0xface
+    0000face:·
+
+          hexdump'nul'
+    00000000:·3='three'
+    00000000:·1
+    00000001:·2
+    00000002:·03
+    00000003:·4
+    00000004:·)
+
+The  body  of  a  macro extends as far as the next newline together, if input is
+from  a  script,  with  any  following  lines that are indented further than the
+defining  "=". This "offside rule" allows definitions to extend over a number of
+lines and enables macros to define macros:
+
+    aa = ...                ⍝ definition of aa, which when called
+         bb = ...           ⍝   aa defines bb, which when called
+              cc = ...      ⍝       bb defines cc
+         dd = ...           ⍝   aa defines dd.
+       ee = ...             ⍝ ee is _not_ part of aa (not right of aa's =).
+
+Note that the above macro-defined macros are global; the only way to localise a
+definition is with () call/return.
+
+Some examples of macro definitions might be:
+
+    right = (+4*            ⍝ call right pointer in binary tree.
+    retn = )                ⍝ return from call
+    line = '---------------------------------'
+    help = 'm: more rows    ⍝ multi-line help output.
+    ·    ·  n: next sibling
+    ·    ·  q: quit'
+
+    symb =  '········  ········ ········ ········ lft····· rgt····· val····· spc·····'
+    ·    ·  lft = (+0c*
+    ·    ·  rgt = (+10*
+    ·    ·  val = (+14*
+    ·    ·  spc = (+18*+c* nsr
+
+    how_many = (::'one':'two':'plenty')         ⍝ primitive counting.
+
+    quit = ) quit           ⍝ exit from any level of ")"s.
+
+    aa = bb = cc = 'hello'  ⍝ aa defines bb, which defines cc.
+
+Notice that indented macro definitions may be rendered more legible by the pres-
+ence of "white dots" (·), which are interpreted as white space and ignored.
+
+Macros are stored in a table, which is local to the current calling level.  This
+means that macros defined after a "(", disappear with the corresponding ")".
+
+Part of the charm, power and danger of any macro system is that incomplete expr-
+essions  may  be  named; it is inherently type-unsafe. This means that erroneous
+definitions may be hard to track down.
+
+Prior line editing
+------------------
+It is often convenient to modify and resubmit lines previously entered into the
+hexdump session:
+
+        '⎕dw=2'hexdump ⎕wsid,'.dws'         │ Examine WS with display width = 2.
+    00000000:·050903aa 80050009·1234        │ set file posn to 1234 · · · · [A]
+    00001234:·00000005 00003401·            │ <er> advances 1234+8→123c
+    0000123c:·037e4fb8 037e50bc·            │ <er> advances 123c+8→1244
+    00000000:·050903aa 80050009·1234+4321   │ edit & reinput line [A].
+    00005555:·e4000008 e8037f1c·            │ file posn is now 1234+4321.
+
+Beware  however, that all (and only) those characters in the modified input line
+to  the right of the original prompt are entered into the input stream. This can
+be confusing if the display width differs between the prior and current lines:
+
+        '⎕dw=2'hexdump ⎕wsid,'.dws'     │ Examine WS with display width = 2.
+    00000000:·050903aa 80050009·'hello' │ file posn 0; output string  · · · [A]
+    hello                               │
+    00000000:·050903aa 80050009·⎕dw=1   │ reduce display width to 1.
+    00000000:·050903aa·                 │ <er> advances 4 bytes.
+    00000004:·80050009·                 │ edit and resubmit line [A]
+    00000000:·050903aa 80050009·'world' │ the prompt has been overwritten
+    world                               │ note that the last word of the
+    80050009:·)                         │ prompt 80050009 has been input!
+
+This  is  also the cause of the problem, mentioned above, when following a sequ-
+ence of backspaces with some characters intended for input:
+
+        '(((('hexdump''     │ start hexdump at depth 5.
+    00000000:·····          │ <er> advances to posn 10.
+    00000010:···1234        │ <bs><bs>1234, only '34' extends beyond prompt
+    00000034:·····          │ so only 34 input.
+
+    to avoid confusion, always enter <bs> chars on a separate line.
+
+Writing to file
+---------------
+Command  "←"  overwrites  the  word  at the current position with its hex-valued
+right  argument.  As a safeguard, writing is enabled only if the first character
+in hexdump's left argument is a '←'.
+
+          '←'hexdump'myfile'                                ⍝ enable write.
+    00000000:·03020100 07060504 0b0a0908 0f0e0d0c·←ace
+    00000000:·00000ace 07060504 0b0a0908 0f0e0d0c·(4←dead)
+    00000000:·00000ace 0000dead 0b0a0908 0f0e0d0c·(8←(beef×10000))
+    00000000:·00000ace 0000dead beef0000 0f0e0d0c·
+
+To overwrite a single byte, we might use a macro to merge the new value with the
+existing word:
+
+    00000000:·00000ace 0000dead beef0000 0f0e0d0c·setb = *÷100×100+
+    00000000:·00000ace 0000dead beef0000 0f0e0d0c·(f←(f setb aa))
+    00000000:·00000ace 0000dead beef0000 aa0e0d0c·
+
+Tracing
+-------
+Setting trace mode using "⊤" shows the current input line as each token is proc-
+essed.  Addresses  generated during the trace are distinguished by a "⊤" char in
+place of the ":", following the file position.
+
+          hexdump'nul'
+    00000000:·2+3×4 ''       ⍝ untraced expression.
+
+    00000014:·⊤2+3×4⊤ ''     ⍝ traced expression.
+    00000014⊤ 2+3×4⊤ ''     ⍝ traced expression.
+    00000002⊤ +3×4⊤ ''     ⍝ traced expression.
+    00000002⊤ 3×4⊤ ''     ⍝ traced expression.
+    00000005⊤ ×4⊤ ''     ⍝ traced expression.
+    00000005⊤ 4⊤ ''     ⍝ traced expression.
+    00000014⊤ ⊤ ''     ⍝ traced expression.
+
+    00000014:·2+⊤3×4⊤ ''     ⍝ traced subexpression.
+    00000002⊤ 3×4⊤ ''     ⍝ traced subexpression.
+    00000005⊤ ×4⊤ ''     ⍝ traced subexpression.
+    00000005⊤ 4⊤ ''     ⍝ traced subexpression.
+    00000014⊤ ⊤ ''     ⍝ traced subexpression.
+
+    00000014:·
+
+Including sub-scripts
+---------------------
+Command  "<"  executes the APL name to its right and inserts the result into the
+input stream at that point. It would typically be used to include a subscript in
+the same way as the C language preprocessor's #include statement.
+
+In  order  for sub-scripts to take advantage of the offside rule, incoming lines
+are  aligned  with  the "<" symbol in the calling script. This means that a sub-
+script  may  form  part  or all of the body of a macro definition in the calling
+script:
+
+    00000000:·000901aa 00000002 00000001 00000001·<file     ⍝ include subscript.
+    00000000:·000901aa 00000002 00000001 00000001·file      ⍝ show file type.
+    Dyalog Component File V10.1
+    00000000:·000901aa 00000002 00000001 00000001·
+
+Coding with macros
+------------------
+With a little ingenuity, macros can be surprisingly flexible. For example:
+
+          display xd            ⍝ script for hex and decimal conversion macros.
+    ┌→────────────────────────────────────────────────────────────────────┐
+    │⍝ display decimal equivalent of hex value:                           │
+    │                                                                     │
+    │    dec = (:'0':'1':'2':'3':'4':'5':'6':'7':'8':'9':(÷a dec)(%a dec))│
+    │                                                                     │
+    │⍝ set hex equivalent of decimal value:                               │
+    │                                                                     │
+    │    hex =                                                            │
+    │         . = ÷10 sub × a +                                           │
+    │         sub = (::(%10:.0:.1:.2:.3:.4:.5:.6:.7:.8:.9))               │
+    │         sub                                                         │
+    └─────────────────────────────────────────────────────────────────────┘
+
+          xd hexdump'nul'
+    00000000:·(42 dec)          ⍝ show decimal equivalent of 0x42.
+    66
+    00000000:·66 hex            ⍝ set hex equivalent of decimal 66.
+    00000042:·)
+
+Decode the "magic" word at the start of a Dyalog binary file:
+
+          display file          ⍝ script for file identification macro:
+    ┌→──────────────────────────────────────────────────────────┐
+    │file = (0!⊥                                                │
+    │·   ·   ; = '   ⍝ newline                                  │
+    │·   ·       '                                              │
+    │·   ·   dec = (_d:(÷a dec)(%a dec))                        │
+    │·   ·   hex = (_d:'a':'b':'c':'d':'e':'f':(÷10hex)(%10hex))│
+    │·   ·   ·_d = :'0':'1':'2':'3':'4':'5':'6':'7':'8':'9'     │
+    │·   ·   dd  = (%100 dec) ÷100  ⍝ show dec 'n skip.         │
+    │·   ·   xx  = (%100 hex) ÷100  ⍝  ..  hex  ..              │
+    │·   ·                                                      │
+    │·   ·   wsfile =                                           │
+    │·   ·   ·   ·   'Version:  ' 2* dd '.' dd ;                │
+    │·   ·   ·   ·   'Saved by: ' 4* dd '.' dd '.' dd ;         │
+    │·   ·   ·   ·   'Type:     '                               │
+    │·   ·   ·   ·   ·   (÷80%2:'big':'little')'-endian'        │
+    │·   ·   ·   ·   ·   (÷40%2::' ,dextend')                   │
+    │·   ·   ·   ·   ·   (÷20%2::' ,64-bit' )                   │
+    │·   ·   ·   ·   ·   (÷10%2::' ,dalign' )                   │
+    │·   ·   ·   ·   ·   (÷08%2::' ,unicode')                   │
+    │·   ·                                                      │
+    │·   ·   (0*%100-aa                                         │
+    │·   ·   ·:'Dyalog '                                        │
+    │·   ·   ·   default = 1* 'file 0x' xx                      │
+    │·   ·   ·   (1*%100                                        │
+    │·   ·   ·   : default                                      │
+    │·   ·   ·   :'32-bit component file: ' 2* dd '.' dd        │
+    │·   ·   ·   :'External Variable: '     2* dd '.' dd        │
+    │·   ·   ·   :'Workspace'; wsfile                           │
+    │·   ·   ·   : default                                      │
+    │·   ·   ·   : default                                      │
+    │·   ·   ·   : default                                      │
+    │·   ·   ·   :'Session';   wsfile                           │
+    │·   ·   ·   : default                                      │
+    │·   ·   ·   :'64-bit component file: ' 2* dd '.' dd        │
+    │·   ·   ·   : default                                      │
+    │·   ·   ·   )                                              │
+    │·   ·   ·:'File ' 0* xx' 'xx' 'xx' 'xx' ...'               │
+    │·   ·   )                                                  │
+    │·   )                                                      │
+    └───────────────────────────────────────────────────────────┘
+
+Here is the osc function (see →osc← and the example in →traj←):
+
+          hexdump'nul'
+    00000000:·osc = dec ' '(:'?'::(%2:÷2:×3+1) osc)
+    00000000:·dec = (:'0':'1':'2':'3':'4':'5':'6':'7':'8':'9':(÷a dec)(%a dec))
+    00000000:·3 osc
+    3 10 5 16 8 4 2 1
+    00000001:·7 osc
+    7 22 11 34 17 52 26 13 40 20 10 5 16 8 4 2 1
+    00000001:·)
+
+This repeater macro calls its operand sequence a specified number of times.
+
+00000000:·reps=(::oseq -1 reps)         ⍝ repeater macro.
+00000000:·oseq='ding '                  ⍝ operand sequence.
+00000000:·3 reps                        ⍝ 3 repetitions.
+ding ding ding
+00000000:·oseq=dec ' '                  ⍝ new operand sequence.
+00000000:·5 reps                        ⍝ 5 repetitions.
+5 4 3 2 1
+00000000:·
+
+Monadic macros
+--------------
+As  the  above  examples show, a surprising amount may be achieved using niladic
+macros,  which operate on the current value. Sometimes however, it is convenient
+to "parameterise" a macro with a right argument. Monadic macros are distinguish-
+ed with a "⍵" between the name and the "=". Compare the niladic macro:
+
+    ⍝ Display current value "⍺" in decimal:
+
+        da   = (:'0':'1':'2':'3':'4':'5':'6':'7':'8':'9':(÷a da)(%a da))
+
+with its monadic counterpart:
+
+    ⍝ Display ⍵ in decimal:
+
+        dw ⍵ = (⍵:'0':'1':'2':'3':'4':'5':'6':'7':'8':'9':(dw(⍵÷a))(dw(⍵%a)))
+then:
+    ...
+    00000000:·(3e8 da)      ⍝ display "⍺"
+    1000
+    00000000:·dw 3e8        ⍝ display ⍵
+    1000
+    00000000:·
+    ...
+
+we can recode the osc function from above to take an explicit (right) argument:
+
+        osc ⍵ = dw ⍵                ⍝ osc: probably returns 1.
+        ·     · (⍵                  ⍝ arg is :
+        ·     · :'?'                ⍝ 0: huh?
+        ·     · :1                  ⍝ 1: done.
+        ·     · :' '                ⍝ display inter-number gap.
+        ·     ·  (⍵%2               ⍝ parity:
+        ·     ·  : osc(⍵÷2)         ⍝ even: ∇⍵÷2
+        ·     ·  : osc(⍵×3+1)       ⍝ odd:  ∇1+3×⍵
+        ·     ·  )
+        ·     · )
+    ...
+    00000000:·osc 3
+    3 10 5 16 8 4 2 1
+    00000001:·osc 7
+    7 22 11 34 17 52 26 13 40 20 10 5 16 8 4 2 1
+    00000001:·)
+
+and even access both implicit (left) and explicit (right) arguments to emulate a
+dyadic function. Here is Ackermann's function - but with the usual order of arg-
+uments reversed, as this is easier to code. In other words: ack_ ≡≡ ack⍨.
+
+        ack_ ⍵ = ⍝ da'-'dw ⍵            ⍝ (commuted) Ackermann's function.
+        ·     · (⍵                      ⍝   ack_←{
+        ·     · :+1 ⍝ ' '               ⍝       ⍵=0:⍺+1
+        ·     · :   ⍝ ' '               ⍝
+        ·     · ·(                      ⍝
+        ·     · ·: 1 ack_ (⍵-1)         ⍝       ⍺=0:1 ∇ ⍵-1
+        ·     · ·:-1 ack_ ⍵ ack_ (⍵-1)  ⍝       ((⍺-1)∇ ⍵)∇ ⍵-1
+        ·     · ·)                      ⍝   }
+        ·     · )
+
+    ...
+    00000000:·dw(0 ack_ 0)      ⍝ 0 ack⍨ 0
+    1
+    00000000:·dw(1 ack_ 1)      ⍝ 1 ack⍨ 1
+    3
+    00000000:·dw(1 ack_ 2)      ⍝ 1 ack⍨ 2
+    5
+    00000000:·dw(2 ack_ 3)      ⍝ 2 ack⍨ 3
+    29
+    00000000:·dw(3 ack_ 3)      ⍝ 3 ack⍨ 3 (takes a minute or so).
+    61
+    00000000:·)
+
+(remove the ⍝ from within the first, third and forth lines to watch it working).
+
+Finally,  this  macro displays the sequence of prime numbers, until it is inter-
+rupted:
+
+        primes = all=(prime 2::da' ')+1 all         ⍝ display primes.
+        ·      · da = (:'0':'1':'2':'3':'4':'5':'6':'7':'8':'9':(÷a da)(%a da))
+        ·      · prime ⍵=(-⍵:1:(%⍵:0:prime(⍵+1)))   ⍝ ⍺ is prime?
+        ·      · 2 all                              ⍝ starting from 2 ...
+    ...
+    00000000:·primes            ⍝ display the primes.
+    2 3 5 7 11 13 17 19 23 29 31 37 41 43 47 53 59 61 67 71 73 79 83 89 97 101
+
+Technical notes
+---------------
+[hexdump] maintains state variables, relatively global to the main command loop.
+It  commits the sin of destructive assignment, which is generally a bad thing as
+this  introduces  "state". The presence of state makes reasoning about a program
+difficult  and hinders code transformation. However, in this case, the alternat-
+ive  would  be  to  pass  the variables among all participating functions, which
+would make the code considerably more unwieldy.
+
+Extending Hexdump:
+
+For  aesthetic (and pedagogic) reasons, hexdump is a pure macro processor; it is
+surprising how much can be achieved with nothing other than simple text replace-
+ment.  However, for serious use, coding macros would be considerably easier with
+the addition of an extra primitive function or two.
+
+For example,  if we want to implement a _stack_ in which to pass values as para-
+meters, we need only add two more command lines to the loop function:
+
+            '↓'≡cmd:rem ∇ vpush ⍵               ⍝⍝ ↓       push value.
+            '↑'≡cmd:rem ∇ vpop ⍵                ⍝⍝ ↑       pop value.
+
+together with their support functions and an initialisation line:
+
+        vpush←{stack,⍨←⍵}                       ⍝ push value onto stack.
+        vpop←{(stack↓⍨←1)⊢⊃stack,⍵}             ⍝ pop value from stack.
+        stack←⍬                                 ⍝ global stack variable.
+
+Then:
+
+      hexdump_pro''             ⍝ extended hexdump.
+00000000:·50    ⍝ go 50
+00000050:·↓     ⍝ push value
+00000050:·80    ⍝ go 80
+00000080:·↓999  ⍝ push and go 999
+00000999:·↑     ⍝ pop last value (80)
+00000080:·↑     ⍝ pop previous value (50)
+00000050:·↑     ⍝ empty stack: pop does nothing
+00000050:·)     ⍝ quit.
+
+and  we  could commute the (implicit) left argument with the right argument of a
+monadic function mfn:
+
+00000000:·larg ↓ rarg mfn ↑     ⍝ mfn⍨
+
+Some handy scripts
+------------------
+Open an edit window on a new character vector using, for example:
+
+    )ed →script_name
+
+then cut & paste lines from the following:
+
+⍝─snip─here─────────────────────────────────────────────────────────────────────
+
+apls=(*!%100::(*!%100 apl) +1 apls)     ⍝ APL string from file.
+
+apl=(                                   ⍝ APL char translation.
+    :'⌷':'⌷':'
+             '  :'⌷':' ':'':'':'':'':'	':'⌶':'ɫ':'%':'''':'⍺':'⍵'
+    :'_':'a':'b':'c':'d':'e':'f':'g':'h':'i':'j':'k':'l':'m':'n':'o'
+    :'p':'q':'r':'s':'t':'u':'v':'w':'x':'y':'z':'':'':'¯':'.':'⍬'
+    :'0':'1':'2':'3':'4':'5':'6':'7':'8':'9':'':'⊢':'¥':'$':'£':'¢'
+    :'∆':'A':'B':'C':'D':'E':'F':'G':'H':'I':'J':'K':'L':'M':'N':'O'
+    :'P':'Q':'R':'S':'T':'U':'V':'W':'X':'Y':'Z':'':'':'ý':'·':''
+    :'⍙':'Á':'Â':'Ã':'Ç':'È':'Ê':'Ë':'Ì':'Í':'Î':'Ï':'Ð':'Ò':'Ó':'Ô'
+    :'Õ':'Ù':'Ú':'Û':'Ý':'þ':'ã':'ì':'ð':'ò':'õ':'{':'⊢':'}':'⊣':'⌷'
+    :'¨':'À':'Ä':'Å':'Æ':'⍨':'É':'Ñ':'Ö':'Ø':'Ü':'ß':'à':'á':'â':'ä'
+    :'å':'æ':'ç':'è':'é':'ê':'ë':'í':'î':'ï':'ñ':'[':'/':'⌿':'\':'⍀'
+    :'<':'≤':'=':'≥':'>':'≠':'∨':'∧':'-':'+':'÷':'×':'?':'∊':'⍴':'~'
+    :'↑':'↓':'⍳':'○':'*':'⌈':'⌊':'∇':'∘':'(':'⊂':'⊃':'∩':'∪':'⊥':'⊤'
+    :'|':';':',':'⍱':'⍲':'⍒':'⍋':'⍉':'⌽':'⊖':'⍟':'⌹':'!':'⍕':'⍎':'⍫'
+    :'⍪':'≡':'≢':'ó':'ô':'ö':'ø':'"':'#':'':'&':'´':'┘':'┐':'┌':'└'
+    :'┼':'─':'├':'┤':'┴':'┬':'│':'@':'ù':'ú':'û':'^':'ü':'`':'∣':'¶'
+    :':':'⍷':'¿':'¡':'⋄':'←':'→':'⍝':')':']':'':' ':'§':'⎕':'⍞':'⍣'
+    )
+
+⍝─snip─here─────────────────────────────────────────────────────────────────────
+
+ascs=(*!%100::(*!%100 asc) +1 ascs)     ⍝ ASCII string from file.
+
+asc=(                                   ⍝ ASCII char translation.
+    :'⌷':'':'':'':'':'':'':'':'·':'	':'
+                                             '  :'⌶':'':'·':'ɫ':'^'
+    :'Ø':'É':'Ü':'À':'Ö':'Ñ':'Æ':'ø':'Ä':'Å':'í':'':'´':'∣':'':''
+    :' ':'!':'"':'#':'$':'%':'&':'''':'(':')':'*':'+':',':'-':'.':'/'
+    :'0':'1':'2':'3':'4':'5':'6':'7':'8':'9':':':';':'<':'=':'>':'?'
+    :'@':'A':'B':'C':'D':'E':'F':'G':'H':'I':'J':'K':'L':'M':'N':'O'
+    :'P':'Q':'R':'S':'T':'U':'V':'W':'X':'Y':'Z':'[':'\':']':'∧':'_'
+    :'`':'a':'b':'c':'d':'e':'f':'g':'h':'i':'j':'k':'l':'m':'n':'o'
+    :'p':'q':'r':'s':'t':'u':'v':'w':'x':'y':'z':'{':'|':'}':'~':''
+    :'⊢':'⊣':'⊤':'⊥':'←':'→':'↑':'↓':'≤':'≥':'⍲':'⍱':'⎕':'⍞':'⌹':'⍙'
+    :'⍫':'∆':'∇':'⍋':'⍒':'⍕':'⍎':'⌈':'⌊':'⍀':'⌿':'⊂':'⊃':'∩':'∪':'∨'
+    :' ':'¡':'¢':'£':'⊢':'¥':'⌷':'§':'¨':'⍝':'⋄':'⍬':'≠':'≡':'⍪':'¯'
+    :'∘':'○':'⌽':'⍉':'⊖':'⍟':'¶':'·':'⍺':'∊':'⍷':'≢':'⍳':'⍴':'⍵':'¿'
+    :'└':'Á':'Â':'Ã':'┴':'┬':'├':'Ç':'È':'┐':'Ê':'Ë':'Ì':'Í':'Î':'Ï'
+    :'Ð':'─':'Ò':'Ó':'Ô':'Õ':'┼':'×':'┘':'Ù':'Ú':'Û':'┌':'Ý':'þ':'ß'
+    :'à':'á':'â':'ã':'ä':'å':'æ':'ç':'è':'é':'ê':'ë':'ì':'│':'î':'ï'
+    :'ð':'ñ':'ò':'ó':'ô':'õ':'ö':'÷':'┤':'ù':'ú':'û':'ü':'ý':'⍨':'⍣'
+    )
+
+⍝─snip─here─────────────────────────────────────────────────────────────────────
+
+⍝ display ASCII chars:
+
+    ch4 = ⎕dw=4                     ⍝ display 4 words ASCII
+        · <ascs                     ⍝ include ascii translation.
+        · ch = (*!%100' 'asc) +1    ⍝ display char,
+        · wd = ' 'ch ch ch ch       ⍝   ..    word,
+        · '         'wd wd wd wd    ⍝   ..    line.
+
+⍝─snip─here─────────────────────────────────────────────────────────────────────
+
+⍝ display decimal equivalent of hex value:
+
+    dec = (:'0':'1':'2':'3':'4':'5':'6':'7':'8':'9':(÷a dec)(%a dec))
+
+⍝ set hex equivalent of decimal value:
+
+    hex =
+         . = ÷10 sub × a +
+         sub = (::(%10:.0:.1:.2:.3:.4:.5:.6:.7:.8:.9))
+         sub
+
+⍝─snip─here─────────────────────────────────────────────────────────────────────
+
+⍝ display current value in hex:
+
+    $ = (:'0':'1':'2':'3':'4':'5':'6':'7':'8':'9':'a':'b':'c':'d':'e':'f':(÷10$)(%10$))
+
+⍝─snip─here─────────────────────────────────────────────────────────────────────
+
+Examples:
+                                                                │Notes
+      hexdump ⎕wsid,'.dws'                      ⍝ dump this WS  │
+00000000:·050903aa 80050009 02310050 fffc3c45·                  │
+00000010:·00000060 000019c0 00000000 02432f9b·'message'         │display msg.
+message                                                         │
+00000010:·00000060 000019c0 00000000 02432f9b·                  │
+00000020:·00000000 00000000 00000000 00000000·                  │
+00000030:·00000000 02432cdd 00000000 00000000·0 ''              │go 0.
+                                                                │
+00000000:·050903aa 80050009 02310050 fffc3c45·18c-(8*)⊥         │set base.
+0000018c:·fffffff9 00000003 00003121 023141f8·⎕dw=2             │reduce width.
+0000018c:·fffffff9 00000003·lft = +0c*  ⍝ follow left subtree   │define,
+0000018c:·fffffff9 00000003·rgt = +10*  ⍝ follow right subtree  │   macros.
+0000018c:·fffffff9 00000003·⎕dw=5                               │increase width.
+0000018c:·fffffff9 00000003 00003121 023141f8 00000000·lft      │follow left.
+00004334:·fffffff9 00000004 00004001 023123e8 02314d38·lft      │
+00002524:·fffffff8 00000003 00000001 02315218 023152d0·rgt      │follow right.
+0000540c:·fffffff9 00000003 00000001 02317210 02313a0c·rgt      │
+00003b48:·fffffff9 00000003 00000001 0231546c 02315b80·?        │show help.
+  hex   relative file posn.                                     │
++ hex   add.                                                    │
+- hex   subtract.                                               │
+× hex   multiply.                                               │
+÷ hex   integer divide.                                         │
+% hex   integer remainder.                                      │
+*       get word from file.                                     │
+← hex   put word to file.                                       │
+!       absolute position.                                      │
+: case  select case.                                            │
+(       call.                                                   │
+)       return.                                                 │
+⊥       set base.                                               │
+'···'   display message.                                        │
+⍝       comment.                                                │
+?       help.                                                   │
+⊤       trace on/off.                                           │
+< var   include subscript.                                      │
+name=·· define macro.                                           │
+00003b48:·fffffff9 00000003 00000001 0231546c 02315b80·0!⊥''    │reset base = 0.
+                                                                │
+00000000:·050903aa 80050009 02310050 fffc3c45 00000060·1234     │absolute addr.
+00001234:·0000c801 0231c8e8 02311894 02311108 fffffffb·         │
+00001248:·00000001 0000001f 00000003 00604010 fffffff8·)        │quit.
+
+⍝ Macro definitions may be included in the left argument command stream:
+
+      'tlx=14*' hexdump 'comp.dcf'                      ⍝ component file dump.
+00000000:·000901aa 00000002 00000001 00000001·
+00000010:·0000001b 00000234 00000000 00000000·tlx       'top level index'
+top level index
+00000234:·0000004c 000001f4 00000000 00000000·
+00000244:·00000000 00000000 00000000 00000000·
+00000254:·00000000 00000000 00000000 00000000·
+00000264:·00000000 00000000 00000000 00000000·tlx*      'second level index'
+second level index
+0000004c:·00000000 00000034 0000008c 000000a4·
+0000005c:·000000bc 000000d4 000000ec 00000104·
+0000006c:·0000011c 00000134 0000014c 00000164·
+0000007c:·0000017c 00000194 000001ac 000001c4·tlx*+4*   'first component'
+first component
+00000034:·0000000c 41166bcd 00000000 00000004·
+0000007c:·0000017c 00000194 000001ac 000001c4·tlx*+8*   'second component'
+second component
+0000008c:·0000000c 41166bcd 00000000 00000004·
+0000007c:·0000017c 00000194 000001ac 000001c4·tlx*+c*   'third component'
+third component
+000000a4:·0000000c 41166bcd 00000000 00000004·
+000000b4:·0000000f 00000043 0000000c 41166bcd·)
+
+⍝ The following vector might be used by Dyalog developers
+⍝ to analyse the state indicator in an aplcore file:
+
+      display stack
+┌→──────────────────────────────────────────────────────────────────────────────────┐
+│⍝ Examine aplcore stack                                                            │
+│                                                                                   │
+│    10*×4+c-(8*)⊥                   ⍝ Set WS bias                                  │
+│                                                                                   │
+│⍝ Stack                                                                            │
+│                                                                                   │
+│    n         =   +c*               ⍝ next frame                                   │
+│    shad      = ( _shad +14         ⍝ call shadow block                            │
+│    sname     = ( _sym +0*          ⍝ call shadow name                             │
+│    svalue    = ( _gen +4*          ⍝ call shadow value                            │
+│                                                                                   │
+│⍝ Symbol                                                                           │
+│                                                                                   │
+│    lft   = ( _sym +c*              ⍝ call left subtree                            │
+│    rgt   = ( _sym +10*             ⍝ call right subtree                           │
+│    val   = ( _gen +14*             ⍝ call value                                   │
+│                                                                                   │
+│⍝ Cols and annotation by type:                                                     │
+│                                                                                   │
+│    _sym  = ⎕dw=8    'symbol:                              left     right    value'│
+│    _shad = ⎕dw=3    'shadow:   sname    svalue   class'                           │
+│    _gen  = ⎕dw=8                                                                  │
+│                                                                                   │
+│ ⎕dw=3  94!+c*                       ⍝ top of stack.                               │
+└───────────────────────────────────────────────────────────────────────────────────┘
+
+      stack hexdump 'aplcore'               ⍝ examine stack:
+000e55d8:·ffffffec 00000001 00003085·n
+000e5570:·ffffffe6 00000001 00004005·n
+000e554c:·fffffff7 00000001 00005385·n
+000e5520:·fffffff5 00000001 00005475·n
+000e54a4:·fffffff9 00000001 00006005·n
+000e543c:·ffffffec 00000001 00003095·n
+000e53d4:·ffffffe6 00000001 00004005·shad
+shadow:   sname    svalue   class
+000e53e8:·02323270 00000000 00000000··
+000e53f4:·02323250 00000000 00000000··
+000e5400:·02311cc4 00000000 00000000··
+000e540c:·02311ce4 00000000 00000000··
+000e5418:·02311d44 00000000 00000000··
+000e5424:·02311d24 0237c8d4 00000002··svalue
+0006ca10:·fffffff8 00000005 00000627 00000001 00000003 02312084 0237c89c 0237c790···)
+000e5424:·02311d24 0237c8d4 00000002··sname
+symbol:                              left     right    value
+00001e60:·fffffff8 00000009 00002001 02323270 02311d44 0237c89c 22202815 1d221f00···val
+0006c9d8:·fffffff2 00000004 00000627 00000001 00000009 023121e4 0237c7b0 0237c7d0····(+14*
+00002320:·fffffffc 00000003 0000000f 000000a6 fffffffa 00000003 0000c001 023242b8·····)))
+000e5424:·02311d24 0237c8d4 00000002··
+000e5430:·02311d04 0236f1b0 00000002··svalue
+0005f2ec:·ffffd973 00000004 00000627 000009a2 00000004 0235a440 0235a334 0235a4b0···)
+000e5430:·02311d04 0236f1b0 00000002··
+000e543c:·ffffffec 00000001 00003095··)
+000e53d4:·ffffffe6 00000001 00004005·n
+0006cd0c:·fffffff7 00000001 00002015·n
+0006ccbc:·ffffffec 00000001 00003095·n
+0006cc84:·fffffff2 00000001 00004005·n
+0006cc64:·fffffff8 00000001 00005455·n
+0006cc4c:·fffffffa 00000001 000058a5·)
+
+See also: hex osc traj
+
+Index:hexadecimal|macro|native file|assignment, destructive|endian|offside rule
+Index:Ackermann's function|prime number|white dots|REPL
+Index;Ackermann W.

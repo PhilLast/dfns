@@ -1,0 +1,75 @@
+rslt ← {larg} {''} ##.lof F lof G lof H ... rarg    ⍝ List of functions.
+
+From Phil Last:
+
+[lof] simulates the distribution of the argument(s) to a "list of functions".
+
+         F lof G lof H ··· rarg  ←→  (F rarg)(G rarg)(H rarg) ···
+    larg F lof G lof H ··· rarg  ←→  (larg F rarg)(larg G rarg)(larg H rarg) ···
+
+Technical notes:
+
+    lof←{                   ⍝ List of functions.
+        ⍺←⊢                 ⍝ ambivalent.
+        (⍺ ⍺⍺ ⍵),⊂⍺ ⍵⍵ ⍵    ⍝ one at a time.
+    }
+
+One  obstacle  is that the result from the leftmost function application must be
+_enclosed_  prior to concatenation with the vector of results to its right. How-
+ever,  it is not easy for the operator to determine when its left operand is the
+leftmost.  One  way  to overcome it takes several lines of additional code to be
+interpreted  at  each  iteration (level) and involves the analysis of the ⎕CR of
+the derived function of itself by itself (not very nice really) so here we do it
+by an additional, apparently redundant call to the operator with a constant null
+function {''}. Using the example above we write:
+
+    {''} lof F lof G lof H lof J array
+
+As  we  go  down  the  tree,  each function in turn (J H G & F) is run as ⍵⍵ and
+enclosed  while  ⍺⍺  gets  progressively  shallower  until it is just {''} whose
+result is ineffectively catenated to the left of the combined result.
+
+The null call is only strictly necessary when the result of what would otherwise
+be the leftmost function is other than a simple scalar, a real possibility! This
+is because the result of ⍺⍺ cannot be enclosed as it is the entire left spine of
+the tree.
+
+An alternative would be to provide a slightly different "special" coding for the
+leftmost operator:
+
+    _lof←{                  ⍝ Close list of functions.
+        ⍺←⊢                 ⍝ ambivalent.
+        (⍺ ⍺⍺ ⍵)(⍺ ⍵⍵ ⍵)    ⍝ one at a time.
+    }
+
+Examples:
+
+    ⊃÷/ +/lof⍴ 1 2 3 4                              ⍝ arithmetic mean.
+2.5
+    cvex←'will' 'you' 'nill'                        ⍝ vector of vectors.
+
+    {2↑⍵} lof {2↑⌽⍵} lof {⌽2↑⍵} cvex                ⍝ without left closure.
+┌────┬───┬──────────┬──────────┐
+│will│you│┌────┬───┐│┌───┬────┐│
+│    │   ││nill│you│││you│will││
+│    │   │└────┴───┘│└───┴────┘│
+└────┴───┴──────────┴──────────┘
+
+    {''} lof {2↑⍵} lof {2↑⌽⍵} lof {⌽2↑⍵} cvex       ⍝ explicit closure.
+┌──────────┬──────────┬──────────┐
+│┌────┬───┐│┌────┬───┐│┌───┬────┐│
+││will│you│││nill│you│││you│will││
+│└────┴───┘│└────┴───┘│└───┴────┘│
+└──────────┴──────────┴──────────┘
+
+    {2↑⍵} _lof {2↑⌽⍵} lof {⌽2↑⍵} cvex               ⍝ closure using [_lof].
+┌──────────┬──────────┬──────────┐
+│┌────┬───┐│┌────┬───┐│┌───┬────┐│
+││will│you│││nill│you│││you│will││
+│└────┴───┘│└────┴───┘│└───┴────┘│
+└──────────┴──────────┴──────────┘
+
+See also: vof Function_arrays truth_tables co_ops
+
+Index:conditional operator|functions, list of|co-operator
+Index;Last P.

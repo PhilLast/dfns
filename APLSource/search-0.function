@@ -1,0 +1,9 @@
+ search←{                    ⍝ Breadth-first search of graph ⍺.
+     graph←⍺                 ⍝ ⍺ is graph vector.
+     ⍵{                      ⍝ from starting vertex.
+         ⍵≡⍬:⍺               ⍝ no unvisited vertices: done.
+         adjv←⍵⊃¨⊂graph      ⍝ adjacent vertices.
+         next←∪(↑,/adjv)~⍺   ⍝ unvisited vertices.
+         (⍺,next)∇ next      ⍝ advance wave of visited vertices.
+     }⍵                      ⍝ from starting vertex.
+ }

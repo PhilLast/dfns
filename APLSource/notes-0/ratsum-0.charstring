@@ -1,0 +1,373 @@
+sum ← {larg} (digs ##.ratsum) rarg          ⍝ ⍺⍺-rational sum of ⍺ and ⍵.
+cmp ←        (digs ##.ratsum) rarg          ⍝ ⍺⍺-complement (negative) of ⍵.
+
+Operator [ratsum] returns the sum of arguments [larg] and [rarg], which are each
+rational scalars in the number system defined by [digs].
+
+Called  without  a left argument,  [ratsum] returns the complement (negative) of
+[rarg].
+
+This  operator  codes  some  of  the ideas presented in LeRoy Eide's magnificent
+representation scheme for rational numbers.
+
+    See: →ratrep←.
+
+[digs] is a character vector of the digits used by the number system. The digits
+may be any characters, except that:
+
+    - They must distinct from each other,
+    - Exactly one of them must be '0',
+    - They must not include any of the special characters ' {}[]()<>\|/,:.'
+
+The digits vector may, but need not, be embraced by braces.
+
+Arguments  [larg]  and  [rarg]  are character vectors of the form <lru|man|rru>,
+where lru, man and rru are vectors of [digs] and man may additionally contain an
+embedded '.' radix point.
+
+For example, if [digs] is
+
+        0123456789      (decimal numbers)
+then
+        <0|123|0>  is 123
+        <0|98.4|0> is 98.4
+        <0|0|0>    is 0
+        <0|4|9>    is 4.99..
+        <9|9|0>    is ..999
+
+LeRoy's  paper →ratrep← makes it all clear and function →esh← provides an inter-
+active shell for exploring these numbers.
+
+Technical notes on the coding of [ratsum]
+-----------------------------------------
+Called dyadically, [ratsum] compiles its rational-number-expression (rexp) argu-
+ments into an "lmrs" triple of 2-row matrices, which represents the sum.
+
+    (lrus mans rrus)   ⍝ :: lmrs
+
+where:
+
+    lrus: 2-row left replication units matrix.
+    mans: 2-row mantissas matrix.
+    rrus: 2-row right replication units matrix.
+
+for example:
+
+        '<0|123.45|7>' compile '<14|2.3|789>'
+    ┌──┬──────┬───┐
+    │00│123.45│777│
+    │14│142.37│897│
+    └──┴──────┴───┘
+
+Addition Table
+--------------
+Inner  function [atab] returns an addition table for a number system with digits
+⍺⍺. Each item in the table is the 2-vector: carry-out and sum.
+
+        7 10↑disp atab '012'    ⍝ (partial) addition table for regular ternary.
+    ┌──┬──┬──┬
+    │00│01│02│
+    ├──┼──┼──┼
+    │01│02│10│
+    ├──┼──┼──┼
+    │02│10│11│
+    ├──┼──┼──┼
+
+        7 10↑disp atab '-0+'    ⍝ (partial) addition table for balanced ternary.
+    ┌──┬──┬──┬
+    │-+│0-│00│
+    ├──┼──┼──┼
+    │0-│00│0+│
+    ├──┼──┼──┼
+    │00│0+│+-│
+    ├──┼──┼──┼
+
+It is convenient for the addition table to accept numbers containing an embedded
+radix point. This requires only one extra row and column for the dots:
+
+      i   j  ...  k   .
+    ·   ·   ·   ·   ┬───┐
+  i ·   ·   ·   ·   │i .│   In other words:
+    ·   ·   ·   ·   ┼───┤
+  j ·   ·   ·   ·   │j .│   "Dot add dot is dot, carry 0".
+    ·   ·   ·   ·   ┼───┤   "Dot add thing is dot, carry thing".
+ ...·   ·   ·   ·   │   │
+    ·   ·   ·   ·   ┼───┤       0 1 1 0   ← carries
+  k ·   ·   ·   ·   │k .│       1 2 . 3 4
+    ├───┼───┼───┼───┼───┤       4 5 . 7 5 +
+  . │i .│j .│   │k .│0 .│       ---------
+    └───┴───┴───┴───┴───┘       5 8 . 0 9
+
+giving:
+
+        atab '012'          ⍝ full addition table for regular ternary.
+    ┌──┬──┬──┬──┐
+    │00│01│02│0.│
+    ├──┼──┼──┼──┤
+    │01│02│10│1.│
+    ├──┼──┼──┼──┤
+    │02│10│11│2.│
+    ├──┼──┼──┼──┤
+    │0.│1.│2.│0.│
+    └──┴──┴──┴──┘
+
+        atab '-0+'          ⍝ full addition table for balanced ternary.
+    ┌──┬──┬──┬──┐
+    │-+│0-│00│-.│
+    ├──┼──┼──┼──┤
+    │0-│00│0+│0.│
+    ├──┼──┼──┼──┤
+    │00│0+│+-│+.│
+    ├──┼──┼──┼──┤
+    │-.│0.│+.│0.│
+    └──┴──┴──┴──┘
+
+Here's the code:
+
+    atab←{⎕io ⎕ml←0                         ⍝ addition table for digits ⍵.
+        min←⍵⍳'0'                           ⍝ - minimum value.
+        vals←-min-⍳⍴⍵                       ⍝ numeric values of digits.
+        ntab←vals∘.+vals                    ⍝ all sums larg vs. rarg.
+        base←2/⍴⍵                           ⍝ 2-digit encode/decode vector.
+        vtab←-min-base⊤base⊥min+base⊤ntab   ⍝ base-⍵:  2-digit addition values.
+        ptab←↓(min+(¯1⌽⍳3)⍉vtab)⊃¨⊂⍵        ⍝ array of (carry_out result) pairs,
+        {(ptab,⍵)⍪⍵,⊂'0.'}⍵,¨'.'            ⍝ with additional rows/cols for '.'.
+    }                                       ⍝ :: [[carry sum];] ← ∇ [digits]
+
+APL likes to do things in parallel:  armed with our addition table, we can sum a
+2-row  matrix  of digits in one pop by indexing the table with a vector of pairs
+of  digits  to  be summed. The result is a vector of carry-out, sum-digit pairs,
+which  idiom ↓⍉↑ renders as a pair of carry-out, sum-digit vectors. Then, if the
+carry-out  vector is all-zeros, we're done; otherwise, we recursively [rsum] the
+left-shifted carry-out vector with the total and try again:
+
+    rsum←(atab digs){⎕io ⎕ml←0              ⍝ row sum of matrix ⍵, carry_in ⍺.
+        cov itot←↓⍉↑⍺⍺[↓⍉digs⍳⍵]            ⍝ carry vector and initial total.
+        '0'∧.=cov,⍺:'0'itot                 ⍝ all-zero carry: done.
+        co tot←'0'∇↑(1↓cov,⍺)itot           ⍝ total with shifted carry vector.
+        (⊃⊃⌽'0'∇↑co,⊂1↑cov)tot              ⍝ aggregate carry and total.
+    }                                       ⍝ :: d [d] ← ∇ [d;]
+
+Notice  how we snuck the initial carry-in ⍺ into the process on the right of the
+first left-shift of the carry vector.
+
+Here is a trace of rsum: 147258369.147258369 + 123456789.987654321  with initial
+carry-in '1':
+
+  + 147258369.147258369 1   initial carry-in '1' (waiting in the wings).
+    123456789.987654321
+    -------------------     digit-wise sum produces ...
+  < 0010111110111011001 1   carry-out vector (initial carry-in still waiting).
+    260604048.024802680     and total vector.
+                            shifting carry vector left and absorbing carry-in:
+  + 0101111101110110011 0   carry-out shifted left, initial carry-in absorbed.
+    260604048.024802680
+    -------------------     digit-wise sum produces ...
+  < 0000000001000000000 0   carry-out vector.
+    270715158.134912691     and total vector.
+                            shifting carry vector left produces ...
+  + 0000000010000000000 0   carry-out shifted left (zero appended).
+    270715158.134912691
+    -------------------     digit-wise sum produces ...
+    0000000000000000000     all-zero carry-out vector
+    270715159.134912691     and final total.
+
+Hence, using vector addition, in this case we were able to sum a pair of 18-dig-
+it numbers in just three iterations. The very worst case would be to sum '0..01'
+with '9..99', which would require one iteration per digit.
+
+Notice  how  a  carry is just passed along by the '.' column. The inclusion of a
+row  and column for '.' in the addition table effectively renders the dot invis-
+ible  to  the  process, except as in the above case, where it occasions a single
+extra iteration.
+
+Notice finally that [rsum] is a derived function, whose left operand (atab digs)
+is  evaluated  just once (per call on ratsum), when rsum is defined, rather than
+each time [rsum] is called.
+
+(muse:
+
+    [ratsum]  would be a good candidate for conversion to a function returning a
+    "closure",  should such a mechanism become available.  In this case, instead
+    of:
+            ↑ ⎕d ratsum/ ⎕d     ⍝ reduction using derived function.
+        45
+
+    if ratsum returned a closure, we would type:
+
+            ↑ (ratsum ⎕d)/ ⎕d   ⍝ reduction using closure.
+        45
+
+    the  advantage  of using a closure is that we could arrange for the addition
+    table  for a particular number system to be generated just once, at closure-
+    formation  time,  rather  than each time the derived function is applied. In
+    the  first example above, [atab] is called nine times, whereas in the second
+    example, it is called just once.
+
+    For more on closures, see: http://dfns.dyalog.com/downloads/fre.pdf
+)
+
+Inner  functions  [clru] and [fmt] make use of auxiliary function [repl],  which
+takes a left argument pair (to from) of strings to find and replace in its right
+argument ⍵:
+
+        posh ← 'oun' 'in' ∘ repl    ⍝ Talk like the Duke of Edinburgh.
+
+        '' ⋄ posh 'A bounder in the grounds? Release the hounds!'
+
+    A binder in the grinds? Release the hinds!
+
+(muse:
+    In  some treatments of the lambda calculus, this (to from) order of items is
+    preferred  to  the more common (from to).  Syntax "[to/fm]expr" means "expr"
+    with each occurrence of "fm" replaced with "to". A pleasing mnemonic for the
+    syntax is to think of [to/fm] as a fraction applied to expr; it cancels "fm"
+    and multiplies by "to". We could vocalise [to/fm]... as "to for fm in ...".
+)
+
+Replication Unit Alignment
+--------------------------
+Note that, when aligning LLUs and RRUs, as in:
+
+    <12|3|456> + <123|4|56>
+
+the  resulting  RUs  should each contain a number of digits equal to the lowest-
+common-multiple  (LCM)  of those of its corresponding summands. In the above ex-
+ample, this is 6 in each case:
+
+    <12|3|456>              ⍝ LRU and RRU misaligned    :-(
+    <123|4|56> +
+
+rewrite:
+
+    <121212|3|456456>       ⍝ LRU and RRU aligned       :-)
+    <123123|4|565656> +
+
+Normal form of numbers
+----------------------
+[ratsum] attempts to normalise its result in a number of ways.
+
+    Internal contraction of LRU and RRU:        <123123|45|676767> → <123|45|67>
+                                                 ¯¯¯¯¯¯    ¯¯¯¯¯¯     ¯¯¯    ¯¯
+    External absorption from the mantissa:      <231|23456|76> → <123|45|67>
+                                                 ¯¯¯ ¯¯  ¯        ¯¯¯
+    Clearing the LRU to 0 or ~0:                <12|34|56> → <0|22|4>
+                                                 ¯¯
+    Replacing the RRU if it is ~0:              <0|4|9> → <0|5|0>
+                                                   ¯ ¯       ¯
+    Using an external '¯' where appropriate:    <9|726.85|0> → ¯273.15
+                                                 ¯
+where  ~0  is the complement of 0 (e.g., 9 in the decimal system).  See →ratrep←
+for details.
+
+Examples
+--------
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Decimal
+
+    sum ← neg ← ⎕d ratsum               ⍝ standard decimal sum and negation fns.
+
+    '<0|92|34>'sum'<0|8.6|1>'           ⍝ 92.3434... + 8.611... → 100.95454...
+<0|100.9|54>
+
+    '<9|9|0>'sum'<0|1|0>'               ⍝ ¯1 + 1 → 0                    →ratrep←
+<0|0|0>
+
+    '<0|0|3>'sum neg'<0|0|6>'           ⍝ (1÷3) + - (2÷3) → -(1÷3)      →ratrep←
+<9|9|6>
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Balanced Ternary
+
+    sum ← '-0+'ratsum                   ⍝ balanced ternary sum.
+
+    '<|0|+-|0>'sum'<0|+0|0>'            ⍝ balanced ternary 2 + 3 → 5
+<0|+--|0>
+
+    '<0|0|+>'sum'<0|+|->'               ⍝ balanced ternary 0.5 + 0.5 → 1
+<0|+|0>
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Binary
+
+    sum ← '01'ratsum                    ⍝ binary sum.
+
+    '<0|1001|0>'sum'<0|111|0>'          ⍝ binary 9 + 7 → 16
+10000
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Positively-skewed four
+
+    e←{'<0|',⍵,'|0>'}                   ⍝ Eidify simple number.
+
+    '-0+#'ratsum\e¨'0++++++++'          ⍝ ⍳9 in positively-skewed four {-0+#}.
+┌───────┬───────┬───────┬────────┬────────┬────────┬────────┬────────┬────────┐
+│<0|0|0>│<0|+|0>│<0|#|0>│<0|+-|0>│<0|+0|0>│<0|++|0>│<0|+#|0>│<0|#-|0>│<0|#0|0>│
+└───────┴───────┴───────┴────────┴────────┴────────┴────────┴────────┴────────┘
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Negatively-skewed four
+
+    '=-0+'ratsum\e¨'0+++++++'           ⍝ ⍳8 in negatively-skewed four {=-0+}.
+┌───────┬───────┬────────┬────────┬────────┬────────┬─────────┬─────────┐
+│<0|0|0>│<0|+|0>│<0|+=|0>│<0|+-|0>│<0|+0|0>│<0|++|0>│<0|+==|0>│<0|+=-|0>│
+└───────┴───────┴────────┴────────┴────────┴────────┴─────────┴─────────┘
+
+⍝ Here's a handy little function to convert an array of regular integers into
+⍝ ⍺-numbers:
+
+    encode←{⎕IO ⎕ML←0                           ⍝ ⍺-encode of int array ⍵.
+        u←(2⊥'0'=2↑¯1⌽⍺)⊃0 1 ¯1                 ⍝ extremal '0': unsigned.
+        (|u)∧u∊-×⍵:((0>u××⍵)/¨'¯'),¨⍺ ∇ u×|⍵    ⍝ explicit '¯', where needed.
+        min←⍺⍳'0'                               ⍝ - minimum value.
+        width←1+⌈(⍴⍺)⍟⌈/1⌈,|⍵                   ⍝ upper bound for no of digits.
+        base←width/⍴⍺                           ⍝ encode/decode vector.
+        vals←-min-base⊤base⊥min+base⊤⍉⍵         ⍝ base-⍺ integers.
+        nlz←{(-1⌈+/∨\⍵≠'0')↑⍵}                  ⍝ without surplus leading zeros.
+        nlz¨↓⍺[min+⍉vals]                       ⍝ array of ⍺-numbers.
+    }
+
+    '-0+'encode ¯9 to 10                        ⍝ balanced ternary ¯9..10
+┌───┬───┬───┬───┬───┬──┬──┬──┬─┬─┬─┬──┬──┬──┬───┬───┬───┬───┬───┬───┐
+│-00│-0+│-+-│-+0│-++│--│-0│-+│-│0│+│+-│+0│++│+--│+-0│+-+│+0-│+00│+0+│
+└───┴───┴───┴───┴───┴──┴──┴──┴─┴─┴─┴──┴──┴──┴───┴───┴───┴───┴───┴───┘
+
+    ⍝ Various number systems:
+
+    bases ← ⎕d '-0+' '01' '-0+#' '=-0+' '≡=-0+#' '210' (16↑⎕d,⎕a)
+
+    disp bases
+┌──────────┬───┬──┬────┬────┬──────┬───┬────────────────┐
+│0123456789│-0+│01│-0+#│=-0+│≡=-0+#│210│0123456789ABCDEF│
+└──────────┴───┴──┴────┴────┴──────┴───┴────────────────┘
+
+    ↑bases encode¨⊂¯5 to 12                      ⍝ ¯5..12 per number system.
+┌────┬────┬───┬───┬──┬─┬──┬──┬───┬───┬───┬───┬───┬────┬────┬────┬────┬────┐
+│¯5  │¯4  │¯3 │¯2 │¯1│0│1 │2 │3  │4  │5  │6  │7  │8   │9   │10  │11  │12  │
+├────┼────┼───┼───┼──┼─┼──┼──┼───┼───┼───┼───┼───┼────┼────┼────┼────┼────┤
+│-++ │--  │-0 │-+ │- │0│+ │+-│+0 │++ │+--│+-0│+-+│+0- │+00 │+0+ │++- │++0 │
+├────┼────┼───┼───┼──┼─┼──┼──┼───┼───┼───┼───┼───┼────┼────┼────┼────┼────┤
+│¯101│¯100│¯11│¯10│¯1│0│1 │10│11 │100│101│110│111│1000│1001│1010│1011│1100│
+├────┼────┼───┼───┼──┼─┼──┼──┼───┼───┼───┼───┼───┼────┼────┼────┼────┼────┤
+│--  │-0  │-+ │-# │- │0│+ │# │+- │+0 │++ │+# │#- │#0  │#+  │##  │+-- │+-0 │
+├────┼────┼───┼───┼──┼─┼──┼──┼───┼───┼───┼───┼───┼────┼────┼────┼────┼────┤
+│--  │-0  │-+ │=  │- │0│+ │+=│+- │+0 │++ │+==│+=-│+=0 │+=+ │+-= │+-- │+-0 │
+├────┼────┼───┼───┼──┼─┼──┼──┼───┼───┼───┼───┼───┼────┼────┼────┼────┼────┤
+│-+  │-#  │≡  │=  │- │0│+ │# │+≡ │+= │+- │+0 │++ │+#  │#≡  │#=  │#-  │#0  │
+├────┼────┼───┼───┼──┼─┼──┼──┼───┼───┼───┼───┼───┼────┼────┼────┼────┼────┤
+│12  │11  │10 │2  │1 │0│¯1│¯2│¯10│¯11│¯12│¯20│¯21│¯22 │¯100│¯101│¯102│¯110│
+├────┼────┼───┼───┼──┼─┼──┼──┼───┼───┼───┼───┼───┼────┼────┼────┼────┼────┤
+│¯5  │¯4  │¯3 │¯2 │¯1│0│1 │2 │3  │4  │5  │6  │7  │8   │9   │A   │B   │C   │
+└────┴────┴───┴───┴──┴─┴──┴──┴───┴───┴───┴───┴───┴────┴────┴────┴────┴────┘
+
+    ⍝ Various answers to the meaning of Life, the Universe, and Everything:
+
+    ↑bases encode¨42
+┌──┬─────┬──────┬───┬────┬───┬─────┬──┐
+│42│+---0│101010│###│+--=│++0│¯1120│2A│
+└──┴─────┴──────┴───┴────┴───┴─────┴──┘
+
+    ⍝ For more examples see test script: ##.scripts.ratsum
+
+See also: ratrep esh JitSub
+See also: ary rats nats
+
+Index:Eide numbers|rational number|balanced ternary|skewed four
+Index:Function Results Edition|closure|posh
+Index;Eide L.N.|Edinburgh, Duke of

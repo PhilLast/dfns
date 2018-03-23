@@ -1,0 +1,88 @@
+Declarative Programming
+-----------------------
+The essence of the declarative programming paradigm is that we tell the computer
+what we want, not how to go about doing it.  For example,  the  APL function for
+the mean item of a vector: {(+/⍵)÷⍴⍵}  declares that the mean is the quotient of
+the sum and number of items.  Contrast this with the coding in a typical proced-
+ural language, where we are obliged to determine the sequence of operations:
+
+    rslt = mean(vec length):
+        sum = 0
+        index = 0
+        while index < length
+            sum = sum + vec[index]
+        rslt = sum ÷ length
+
+The penultimate line: sum = sum + ... is particularly thought-provoking:
+
+There  is  a story that Ken Iverson, the inventor of APL, was passing a terminal
+at which a Fortran programmer had just typed:
+
+       I = I+1
+
+Ken paused for a moment, muttered "no it doesn't", and passed on.
+
+A similar yarn relates to a computer scientist who, many years ago,  before  the
+concept of declarative programming was generally understood, was teaching  prog-
+ramming to a group of geography students.  The students were having a hard  time
+understanding what I=I+1 means. To his immense credit, on reflection, the teach-
+er realised that he didn't understand either. Thus came a significant advance in
+computer science.
+
+
+Note however, in a lazy functional language such as Haskell, min.dws or max.dws,
+such statements have meaning. For example, in max, we can say:
+
+      max''     ⍝ start max session.
+
+    i = +i      / declare i to be its own successor.
+
+    i::         / the type of i is "num".
+#
+    / However, a problem occurs if we try to display the value of i
+    / by reducing it to a number: the reduction fails to terminate
+    / as max tries to display a number which is its own successor.
+
+    i           / this will not terminate !!!
+
+... INTERRUPT
+
+FP theorists assign a special symbol "⊥", pronounced "bottom" to non-termination
+in order that they can reason about expressions containing such values.
+
+(muse:
+
+    Stupid questions ...
+
+    During the time we were implementing  the  very  first  version of Dyalog, a
+    friend, who was not a programmer, asked me how much of it was coded in  APL.
+    I thought he was bonkers.
+
+        We now have exactly this internal "magic function" prototyping facility.
+
+    When "Visual Display Units" first appeared alongside scrolling paper termin-
+    als, a participant on a course I was giving asked me  where the writing went
+    when it disappeared off the top of the screen.  I  explained  it  was  just,
+    well, gone; same place the ticking goes when the clock stops.
+
+        We now have scrolling sessions.
+
+    On another course, someone asked me what (A B) means, when A and B are vari-
+    ables. I explained that it didn't mean anything as there wasn't  a  function
+    between the A and the B.
+
+        We now have vector notation.
+
+    Sound bite: A stupid question is a portal into an alternative mindset.
+)
+
+Landin prefers the term "denotative":
+"The word "denotative" seems more appropriate than nonprocedural, declarative or
+ functional. The antithesis of denotative is "imperative"."
+"The Next 700 Programming Languages", Landin,P.J., Comms ACM 9.3, March 1966.
+
+See also: pearly
+
+Index:declarative programming|bottom ⊥|non-termination|denotative
+Index:stupid questions|magic function|sound bite
+Index;Iverson K.E.|Landin P.J.

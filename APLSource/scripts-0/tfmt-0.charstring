@@ -1,0 +1,18 @@
+⍝ Char matrix from tree:
+
+      tfmt'tea'
+tea
+
+      tfmt'hot' 'tea' 'coffee'
+hot       
+·   tea   
+·   coffee
+
+      tfmt'drink'('hot' 'tea' 'coffee')('cold' 'milk' 'beer')
+drink         
+·   hot       
+·   ·   tea   
+·   ·   coffee
+·   cold      
+·   ·   milk  
+·   ·   beer  

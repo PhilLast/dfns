@@ -1,0 +1,55 @@
+⍝ Base64 en/decoding:
+
+    base64 0 1 2 3 4 253 254 255 ⍝ encode some octets
+AAECAwT9/v8=
+
+    base64 'AAECAwT9/v8='
+0 1 2 3 4 253 254 255
+
+    base64 ⎕ucs 'If I were only dafter' ⍝ encode some ASCII text
+SWYgSSB3ZXJlIG9ubHkgZGFmdGVy
+
+    ⎕ucs base64 'SWYgSSB3ZXJlIG9ubHkgZGFmdGVy'
+If I were only dafter
+
+    base64 'UTF-8' ⎕ucs '+/⍵÷⍴⍵' ⍝ encode some UTF-8 text
+Ky/ijbXDt+KNtOKNtQ==
+
+    'UTF-8' ⎕ucs base64 'Ky/ijbXDt+KNtOKNtQ=='
++/⍵÷⍴⍵
+
+    ⍝ Example from Wikipedia article:
+
+    Hobbes ← 'Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.'
+
+    80 wrap Hobbes
+Man is distinguished, not only by his reason, but by this singular passion from 
+other animals, which is a lust of the mind, that by a perseverance of delight in
+the continued and indefatigable generation of knowledge, exceeds the short      
+vehemence of any carnal pleasure.                                               
+
+    80 wrap base64 ⎕ucs Hobbes
+TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNp
+bmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1p
+bmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBp
+bmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhl
+bWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=                                        
+
+    tails ← (0 to ¯4) ↓¨ ⊂¯20↑Hobbes
+
+    ↑ tails
+any carnal pleasure.
+any carnal pleasure 
+any carnal pleasur  
+any carnal pleasu   
+any carnal pleas    
+
+    ↑ base64∘⎕ucs¨ tails
+YW55IGNhcm5hbCBwbGVhc3VyZS4=
+YW55IGNhcm5hbCBwbGVhc3VyZQ==
+YW55IGNhcm5hbCBwbGVhc3Vy    
+YW55IGNhcm5hbCBwbGVhc3U=    
+YW55IGNhcm5hbCBwbGVhcw==    
+
+    tails ≡ {⎕ucs base64 base64 ⎕ucs ⍵}¨ tails  ⍝ check round trip.
+1

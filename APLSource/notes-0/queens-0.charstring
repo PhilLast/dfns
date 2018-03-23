@@ -1,0 +1,300 @@
+cmats ← ##.queens N                         ⍝ The N-Queens Problem
+
+Place  N  Queens on an N×N chessboard such that no queen is attacking any other.
+This  coding  returns  all  unique solutions for the given board as a  vector of
+character matrices with '⍟' representing a queen. Trivially equivalent solutions
+that represent rotations and reflections are omitted.
+
+Technical notes:
+
+There  are  many  ways  to  approach this problem. A simple but rather expensive
+method  is  to  generate all permutations (see →pmat←) of ⍳⍵ and then filter out
+those that represent a solution. The approach used here is a tree search: First,
+place  a queen anywhere in the first row (or "rank" in chess-speak). Next, place
+a second  queen in the second rank on any square not attacked  by the first one.
+Continue  placing  queens on "safe" squares in successive ranks until either all
+ranks have been covered (a configuration that constitutes a solution) or until a
+rank  is  reached where all squares are attacked by previously placed queens. In
+the  latter  case,  "back track" to the last rank where all squares have not yet
+been tried and after moving that queen to a different square, try again.
+
+For  a  standard 8×8 chessboard, there are 96 solutions but these include 2 ref-
+lections  and 4 rotations of each "distinct" solution, so in fact there are only
+12 interesting solutions. Part of the challenge is to avoid generating or to re-
+move these duplicates.
+
+During the search, the current state of play is represented by two vectors, each
+item  of which corresponds to a rank. The first is a simple vector of placements
+already  made  and the second, a vector of vectors of remaining free squares per
+rank.  For  example,  after  placing the first 4 queens, the state of play might
+look like this:
+
+    file:    0 1 2 3 4 5 6 7
+            ┌───────────────┐   ⍟ placed queen.
+    rank: 0 │· ⍟ · · · · · ·│   ○ free square.
+          1 │· · · ⍟ · · · ·│
+          2 │· · · · · · ⍟ ·│
+          3 │⍟ · · · · · · ·│
+          4 │· · ○ · · · · ○│
+          5 │· · · · ○ ○ · ·│
+          6 │· · · · ○ ○ · ·│
+          7 │· · ○ · · ○ · ○│
+            └───────────────┘
+
+The  vector  of  placements is 1 3 6 0, and the vector of free squares is (2 7),
+(4 5)(4 5)(2 5 7). Placing the next queen in column 2, would render the state of
+play:
+
+    file:    0 1 2 3 4 5 6 7
+            ┌───────────────┐   ⍟ placed queen.
+    rank: 0 │· ⍟ · · · · · ·│   ○ free square.
+          1 │· · · ⍟ · · · ·│
+          2 │· · · · · · ⍟ ·│
+          3 │⍟ · · · · · · ·│
+          4 │· · ⍟ · · · · ·│
+          5 │· · · · ○ ○ · ·│
+          6 │· · · · · ○ · ·│
+          7 │· · · · · · · ○│
+            └───────────────┘
+
+with placement vector: 1 3 6 0 2, and free-square vector: (4 5)(5)(7).
+
+The  search  is implemented by passing the placement vector as left argument and
+free-square vector as right argument to inner function [search]: The tree search
+consists  of  appending  in  turn,  each  free square from the next rank, to the
+placement  vector  and  recursively calling search with a reduced vector of free
+squares. Search returns if either any of the  ranks  contain  no  free  squares:
+(⊂⍬)∊⍵,  or  no ranks remain: 0=⍴⍵, which constitutes a solution. Notice a small
+detail:  the  result  when  there are no free squares must be suitably enclosed:
+0⍴⊂⍬,  so that in the three cases where there are no solutions queens¨0 2 3, the
+overall result is a vector of _matrices_ in common with all other cases.
+
+    search←{                        ⍝ Search for all solutions.
+        (⊂⍬)∊⍵:0⍴⊂⍬                 ⍝ stitched: abandon this branch.
+        0=⍴⍵:rmdups ⍺               ⍝ all done: solution!
+        hd tl←(⊃⍵)(1↓⍵)             ⍝ head 'n tail of remaining ranks.
+        next←⍺∘,¨hd                 ⍝ possible next steps.
+        rems←hd free¨⊂tl            ⍝ unchecked squares.
+        ↑,/next ∇¨rems              ⍝ ... in following ranks.
+    }
+
+[Free]  returns  a new vector of free-squares after those in check from the next
+placement have been removed:
+
+    free←{⍵~¨⍺+(⍴⍵)↑cvex}           ⍝ Unchecked squares.
+
+As [cvex], is invariant during the search, it is computed initially as an optim-
+isation.
+
+    cvex←(1+⍳⍵)×⊂¯1 0 1             ⍝ Checking vectors.
+
+Given that the final solution vector must contain no duplicates, a further opti-
+misation  is to start the tree search from only half of the squares in the first
+rank.  Any  solution resulting from a search starting from the remaining squares
+must constitute a "reflected" solution. So instead of:
+
+    squares←⍵⍴⊂⍳⍵                   ⍝ (0 1 2 3 4 5 6 7) (0 1 2 3 4 5 6 7) ···
+
+we have:
+
+    squares←(⊂⍳⌈⍵÷2),1↓⍵⍴⊂⍳⍵        ⍝ (0 1 2 3)         (0 1 2 3 4 5 6 7) ···
+
+which _halves_ the total search time.
+
+[rmdups]  discards  "boring"  equivalent solutions by generating all 4 rotations
+and  2  reflections  and  then  rejecting  the putative solution if it isn't the
+most attractive member of this set:
+
+    rmdups←{                        ⍝ Ignore duplicate solution.
+        rots←{{⍒⍵}\4/⊂⍵}            ⍝ 4 rotations.
+        refs←{{⍋⍵}\2/⊂⍵}            ⍝ 2 reflections.
+        best←{(⊃⍋↑⍵)⊃⍵}             ⍝ best (=lowest) solution.
+        all8←,↑refs¨rots ⍵          ⍝ all 8 orientations.
+        (⍵≡best all8)⊃⍬(,⊂⍵)        ⍝ ignore if not best.
+    }
+
+Finally, [fmt] renders each solution as a character matrix with '·' for an empty
+square  and  '⍟' for an occupied one. Each matrix is spread horizontally to make
+it appear more square-shaped on the screen.
+
+    fmt←{                           ⍝ Format solution.
+        chars←'·⍟'[(↑⍵)∘.=⍳⍺]       ⍝ char array of placed queens.
+        expd←1↓,↑⍺⍴⊂0 1             ⍝ expansion mask.
+        ↑¨↓↓expd\chars              ⍝ vector of char matrices.
+    }
+
+Alternative Codings
+-------------------
+The  following,  perhaps  rather  opaque  coding, is  remarkable in that it is a
+_single expression_  for  the  vector  of unique solutions to the problem in the
+same  way  that  {+/⍵÷⍴⍵} is a single expression for the mean value of a numeric
+vector.  It  contains  no guards; just applications of operators to operands and
+functions to arguments.  The code assumes an index-origin and migration-level of
+0.
+
+      {⍵{↑¨↓↓(2|1↓⍳2×⍺)\((↑⍵)∘.=⍳⍺)⊃¨⊂'·⍟'}∪{{(⊃⍋↑⍵)⊃⍵},↑⍵}¨{{⍋⍵}\2/⊂⍵}¨∘{{⍒⍵}\4/⊂⍵}¨⍵{(⍺=,↑⍴¨⍵)/⍵},¨↑⍬{↑(⍺⍺,⍺)∇∇(1↓⍵⍵~¨⍺+(1+⍳⍴⍵⍵)×⊂¯1 0 1)/((⊃⍵⍵)~⍺+¯1 0 1),⊂⍵,⊂⍺⍺,⍺}(1↓⍵⍴⊂⌽⍳⍵)/(⌽⍳⌈⍵÷2),⊂0⍴⊂⍬}
+
+We can prove that it works by pasting it into the session and appending an argu-
+ment  (such  as 8) after remembering to set ⎕io ⎕ml←0. To examine it further, we
+might  find  it  helpful  to  assign  a name and use the editor to split it up a
+little:
+
+    qn←{
+        ⍵{
+            ↑¨↓↓(2|1↓⍳2×⍺)\((↑⍵)∘.=⍳⍺)⊃¨⊂'·⍟'
+        }∪{
+            {(⊃⍋↑⍵)⊃⍵},↑⍵
+        }¨{
+            {⍋⍵}\2/⊂⍵
+        }¨∘{
+            {⍒⍵}\4/⊂⍵
+        }¨⍵{
+            (⍺=,↑⍴¨⍵)/⍵
+        },¨↑⍬{
+            ↑(⍺⍺,⍺)∇∇(1↓⍵⍵~¨⍺+(1+⍳⍴⍵⍵)×⊂¯1 0 1)/((⊃⍵⍵)~⍺+¯1 0 1),⊂⍵,⊂⍺⍺,⍺
+        }(1↓⍵⍴⊂⌽⍳⍵)/(⌽⍳⌈⍵÷2),⊂0⍴⊂⍬
+    }
+
+The left side (top in the wrapped version) of the expression is much the same as
+[queens], except that the slightly shorter and quicker: '·⍟'[(↑⍵)∘.=⍳⍺] has been
+replaced by the slightly purer ((↑⍵)∘.=⍳⍺)⊃¨⊂'·⍟', in order to avoid APL's argu-
+ably anomalous square-bracket syntax.
+
+The  main  difference  is  in  the  search sub-expression, which uses _reduce /_
+rather than _each ¨_ to recur along ranks.
+
+    ↑⍬{
+        ↑(⍺⍺,⍺)∇∇(1↓⍵⍵~¨⍺+(1+⍳⍴⍵⍵)×⊂¯1 0 1)/((⊃⍵⍵)~⍺+¯1 0 1),⊂⍵,⊂⍺⍺,⍺
+    }(1↓⍵⍴⊂⌽⍳⍵)/(⌽⍳⌈⍵÷2),⊂0⍴⊂⍬
+
+The  operand of the  outer reduction is a function derived from the inner dyadic
+operator  whose  left and right array operands are the placement and free-square
+vectors respectively:
+
+    ↑···                ⍝ disclose result of reduction.
+    ·⍬{                 ⍝ left operand: placement vector.
+        ···             ⍝ inner dyadic operator.
+    }(1↓⍵⍴⊂⌽⍳⍵)···      ⍝ right operand: free-square vector.
+    ···········/···     ⍝ reduction with above derived function.
+
+The  argument  to  the  reduction is the vector of squares in the first rank and
+emulates  queens  in representing only half of the files as an optimisation. The
+final  item  is  the  vector  of  solutions so-far and is enclosed to ensure the
+correct rank for the three cases where there are no solutions.
+
+    ············(⌽⍳⌈⍵÷2),⊂0⍴⊂⍬
+
+The inner dyadic operator then, has operands/arguments:
+
+    Left argument:  next square in current rank.
+    Left operand:   current placement vector.
+    Right operand:  free-square vector.
+    Right argument: vector of solutions-so-far.
+
+This  leaves  just  the  code  _inside_ the operator, which is another reduction
+using a recursive call with new values for the left and right operands:
+
+    ↑(⍺⍺,⍺)∇∇(1↓⍵⍵~¨⍺+(1+⍳⍴⍵⍵)×⊂¯1 0 1)/((⊃⍵⍵)~⍺+¯1 0 1),⊂⍵,⊂⍺⍺,⍺
+
+This breaks down as a reduction:
+
+    ↑···································  ⍝ disclose result of reduction.
+    ·······∇∇···························  ⍝ recursive call on operator with
+    ·(⍺⍺,⍺)·····························  ⍝ operands: extended placement vector
+    ·········(1↓⍵⍵~¨⍺+(1+⍳⍴⍵⍵)×⊂¯1 0 1)·  ⍝ and reduced free-square vector.
+    ···································/  ⍝ ... reduction.
+
+The  argument  to  the reduction is the vector of solutions-so-far extended with
+the new path and prefixed with the vector of remaining squares in the next rank:
+
+    ····································((⊃⍵⍵)~⍺+¯1 0 1),⊂⍵,⊂⍺⍺,⍺
+
+The  new  path:  _⍺⍺,⍺_  does  not  constitute a solution if it's shorter than ⍵
+items.  These  'short'  solutions are removed later when full-length vectors are
+filtered out by the next function:
+
+        ⍵{                  ⍝ board size.
+            (⍺=,↑⍴¨⍵)/⍵     ⍝ filter out full-length solutions.
+        }
+
+
+Roger Hui  suggests  this  coding. Transliterated from J, it finds all solutions
+including reflections and rotations:
+
+    queens←{⍵{((+/b)⌿⍵),⍺|(,b)/⍳×/⍴b←~↑(⊂⍳⍺)∊¨(↓⍵)+[0]¨⊂(c-⍳c←1↓⍴⍵)∘.×¯1 0 1}⍣⍵⍳1 0}
+
+See: http://jsoftware.com/jwiki/Essays/N_Queens_Problem
+
+
+This coding, which includes reflections and rotations, uses depth-first travers-
+al operator →trav←:
+
+    qtrav←{                             ⍝ N-queens using trav DFS.
+        subs←{(⊂⍵),¨(⍳⍴⊃⍺)~atk ⍵}       ⍝ sub-trees of tree-node ⍵.
+        accm←{⍺,((⍴⍵)=⍴⊃⍺)/⊂⍵}          ⍝ accumlation of N-placement.
+        atk←{↑(⊂⍵)+¯1 0 1×⊂⌽⍳⍴⍵}        ⍝ columns under attack in row 1+⍵.
+        fmt←{⍵∘.=⍳⍴⍵}                   ⍝ formatted as bool matrix.
+        fmt¨(↓0 ⍵⍴0)accm trav subs ⍬    ⍝ formatted solutions.
+    }
+
+Examples:
+
+    1 disp∘queens¨0 1 2 3 4 5 6         ⍝ solutions for small boards.
+┌───┬───┬─────┬───────┬─────────┬─────────────────────┬─────────────┐
+│┌⊖┐│┌→┐│┌⊖──┐│┌⊖────┐│┌→──────┐│┌→────────┬─────────┐│┌→──────────┐│
+││ ⌽││⍟↓││   ⌽││     ⌽││· ⍟ · ·│││⍟ · · · ·│· ⍟ · · ·│││· ⍟ · · · ·││
+│└⊖┘│└→┘│└──→┘│└────→┘││· · · ⍟│││· · ⍟ · ·│· · · · ⍟│││· · · ⍟ · ·││
+│   │   │     │       ││⍟ · · ·│││· · · · ⍟│· · ⍟ · ·│││· · · · · ⍟││
+│   │   │     │       ││· · ⍟ ·↓││· ⍟ · · ·│⍟ · · · ·│││⍟ · · · · ·││
+│   │   │     │       │└──────→┘││· · · ⍟ ·↓· · · ⍟ ·↓││· · ⍟ · · ·││
+│   │   │     │       │         │└────────→┴────────→┘││· · · · ⍟ ·↓│
+│   │   │     │       │         │                     │└──────────→┘│
+└───┴───┴─────┴───────┴─────────┴─────────────────────┴─────────────┘
+
+    queens 7
+┌─────────────┬─────────────┬─────────────┬─────────────┬─────────────┬─────────────┐
+│⍟ · · · · · ·│⍟ · · · · · ·│· ⍟ · · · · ·│· ⍟ · · · · ·│· ⍟ · · · · ·│· ⍟ · · · · ·│
+│· · ⍟ · · · ·│· · · ⍟ · · ·│· · · ⍟ · · ·│· · · · ⍟ · ·│· · · · ⍟ · ·│· · · · · ⍟ ·│
+│· · · · ⍟ · ·│· · · · · · ⍟│⍟ · · · · · ·│⍟ · · · · · ·│· · · · · · ⍟│· · ⍟ · · · ·│
+│· · · · · · ⍟│· · ⍟ · · · ·│· · · · · · ⍟│· · · ⍟ · · ·│· · · ⍟ · · ·│· · · · · · ⍟│
+│· ⍟ · · · · ·│· · · · · ⍟ ·│· · · · ⍟ · ·│· · · · · · ⍟│⍟ · · · · · ·│· · · ⍟ · · ·│
+│· · · ⍟ · · ·│· ⍟ · · · · ·│· · ⍟ · · · ·│· · ⍟ · · · ·│· · ⍟ · · · ·│⍟ · · · · · ·│
+│· · · · · ⍟ ·│· · · · ⍟ · ·│· · · · · ⍟ ·│· · · · · ⍟ ·│· · · · · ⍟ ·│· · · · ⍟ · ·│
+└─────────────┴─────────────┴─────────────┴─────────────┴─────────────┴─────────────┘
+
+    3 4⍴ queens 8
+┌───────────────┬───────────────┬───────────────┬───────────────┐
+│⍟ · · · · · · ·│⍟ · · · · · · ·│· ⍟ · · · · · ·│· ⍟ · · · · · ·│
+│· · · · ⍟ · · ·│· · · · · ⍟ · ·│· · · ⍟ · · · ·│· · · · ⍟ · · ·│
+│· · · · · · · ⍟│· · · · · · · ⍟│· · · · · ⍟ · ·│· · · · · · ⍟ ·│
+│· · · · · ⍟ · ·│· · ⍟ · · · · ·│· · · · · · · ⍟│⍟ · · · · · · ·│
+│· · ⍟ · · · · ·│· · · · · · ⍟ ·│· · ⍟ · · · · ·│· · ⍟ · · · · ·│
+│· · · · · · ⍟ ·│· · · ⍟ · · · ·│⍟ · · · · · · ·│· · · · · · · ⍟│
+│· ⍟ · · · · · ·│· ⍟ · · · · · ·│· · · · · · ⍟ ·│· · · · · ⍟ · ·│
+│· · · ⍟ · · · ·│· · · · ⍟ · · ·│· · · · ⍟ · · ·│· · · ⍟ · · · ·│
+├───────────────┼───────────────┼───────────────┼───────────────┤
+│· ⍟ · · · · · ·│· ⍟ · · · · · ·│· ⍟ · · · · · ·│· ⍟ · · · · · ·│
+│· · · · ⍟ · · ·│· · · · · ⍟ · ·│· · · · · ⍟ · ·│· · · · · · ⍟ ·│
+│· · · · · · ⍟ ·│⍟ · · · · · · ·│· · · · · · · ⍟│· · ⍟ · · · · ·│
+│· · · ⍟ · · · ·│· · · · · · ⍟ ·│· · ⍟ · · · · ·│· · · · · ⍟ · ·│
+│⍟ · · · · · · ·│· · · ⍟ · · · ·│⍟ · · · · · · ·│· · · · · · · ⍟│
+│· · · · · · · ⍟│· · · · · · · ⍟│· · · ⍟ · · · ·│· · · · ⍟ · · ·│
+│· · · · · ⍟ · ·│· · ⍟ · · · · ·│· · · · · · ⍟ ·│⍟ · · · · · · ·│
+│· · ⍟ · · · · ·│· · · · ⍟ · · ·│· · · · ⍟ · · ·│· · · ⍟ · · · ·│
+├───────────────┼───────────────┼───────────────┼───────────────┤
+│· ⍟ · · · · · ·│· · ⍟ · · · · ·│· · ⍟ · · · · ·│· · ⍟ · · · · ·│
+│· · · · · · ⍟ ·│· · · · ⍟ · · ·│· · · · ⍟ · · ·│· · · · · ⍟ · ·│
+│· · · · ⍟ · · ·│· ⍟ · · · · · ·│· · · · · · · ⍟│· ⍟ · · · · · ·│
+│· · · · · · · ⍟│· · · · · · · ⍟│· · · ⍟ · · · ·│· · · · ⍟ · · ·│
+│⍟ · · · · · · ·│⍟ · · · · · · ·│⍟ · · · · · · ·│· · · · · · · ⍟│
+│· · · ⍟ · · · ·│· · · · · · ⍟ ·│· · · · · · ⍟ ·│⍟ · · · · · · ·│
+│· · · · · ⍟ · ·│· · · ⍟ · · · ·│· ⍟ · · · · · ·│· · · · · · ⍟ ·│
+│· · ⍟ · · · · ·│· · · · · ⍟ · ·│· · · · · ⍟ · ·│· · · ⍟ · · · ·│
+└───────────────┴───────────────┴───────────────┴───────────────┘
+
+    {⊃⍴queens ⍵}¨0 to 16            ⍝ Number of solutions for various boards.
+0 1 0 0 1 2 1 6 12 46 92 341 1787 9233 45752 285053 1846955
+
+See also: kt sudoku pmat queensX trav X
+
+Index:diversions|chess puzzle|tree searching|pure function|N-Queens

@@ -1,0 +1,58 @@
+rslt ← i j k ··· F ##.case G case H ··· arg     ⍝ Select statement.
+
+i j k ···  is  a  simple  boolean  vector  whose length is the number of monadic
+functions  (F G H ···)  in  the  derived  function.  [case] applies the function
+selected by the boolean left argument to the derived function's right argument.
+
+The statement is equivalent to:
+
+    :Select 1
+    :Case i ⋄ rslt←F arg
+    :Case j ⋄ rslt←G arg
+    :Case k ⋄ rslt←H arg
+    :Case l ⋄ rslt←I arg
+    ...
+    :Else ⋄ rslt←arg
+    :End
+
+The  simple alternating pattern of ... fn op fn op fn ... in the statement hides
+the fact that the functions are at different "depths" in the derived function.
+
+For  illustration  the  derived fn (f05) below has two operands to the "topmost"
+compose operator; the right being (÷) and the left, all the rest (⌈∘⌊∘-∘×)
+
+    f05←⌈∘⌊∘-∘×∘÷ ⋄ ⎕cr'f05'
+┌───────────────┬─┬─┐
+│┌─────────┬─┬─┐│∘│÷│
+││┌───┬─┬─┐│∘│×││ │ │
+│││⌈∘⌊│∘│-││ │ ││ │ │
+││└───┴─┴─┘│ │ ││ │ │
+│└─────────┴─┴─┘│ │ │
+└───────────────┴─┴─┘
+
+Similarly  in  fns  derived  with (case), only (⍵⍵) is necessarily available for
+immediate  use  so we run (⍵⍵) if the last of (⍺) is set. If not, and if (⍺) has
+length  2 and the first is one we can run (⍺⍺) which must be at the "top" level.
+cf.  (⌈∘⌊) in (f05) above. If there are more than two items in (⍺), (⍺⍺) must be
+derived with another (case) call so we run it dyadically losing the last (⍺).
+
+A no-guard one-liner using conditional monad-reduction (see →pow←) is possible.
+
+    case←{⊃⍺⍺{b ⍺⍺ ⍵}/(i~∨/b←¯1↓b),⍺⍺{⍺⍺ ⍵}/(⍳i←1 0≡b),⍵⍵{⍺⍺ ⍵}/(⍳¯1↑b←<\⍺),⊂⍵}
+
+Examples:
+
+      1 0 0 0 + case - case × case ÷ 10      ⍝ +10
+10
+      0 1 0 0 + case - case × case ÷ 10      ⍝ -10
+¯10
+      0 0 1 0 + case - case × case ÷ 10      ⍝ ×10
+1
+      0 0 0 1 + case - case × case ÷ 10      ⍝ ÷10
+0.1
+      0 0 0 0 + case - case × case ÷ 10      ⍝  10 (no case selected).
+10
+
+See also: for of Function_arrays pow co_ops
+
+Index:conditional operator|select operator|co-operator

@@ -1,0 +1,48 @@
+⍝ Line list to nested vector:
+
+    nl←⎕ucs 13                  ⍝ newline.
+
+    lvec←'fooling around', nl, 'with barrels', nl, 'in alleys'
+
+    disp ltov lvec
+┌──────────────┬────────────┬─────────┐
+│fooling around│with barrels│in alleys│
+└──────────────┴────────────┴─────────┘
+
+    (ltov lvec)≡ltov lvec,nl    ⍝ terminating separator.
+1
+
+    nl=vtol∘ltov⍣≡ lvec         ⍝ converges after 1 iteration.
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1
+
+    disp (nl,' ')ltov lvec                  ⍝ split at newline or blank.
+┌───────┬──────┬────┬───────┬──┬──────┐
+│fooling│around│with│barrels│in│alleys│
+└───────┴──────┴────┴───────┴──┴──────┘
+
+    disp 0 ltov 1 2 3 0 4 5 6 0 7 8 9       ⍝ split numeric vector.
+┌─────┬─────┬─────┐
+│1 2 3│4 5 6│7 8 9│
+└─────┴─────┴─────┘
+
+    0 vtol 0 ltov 1 2 3 0 4 5 6 0 7 8 9     ⍝ join numeric vector.
+1 2 3 0 4 5 6 0 7 8 9 0
+
+    disp (⊂'and')ltov 'red' 'and' 'yellow' ',' 'pink' 'and' 'green'
+┌─────┬───────────────┬───────┐
+│┌───┐│┌──────┬─┬────┐│┌─────┐│
+││red│││yellow│,│pink│││green││
+│└───┘│└──────┴─┴────┘│└─────┘│
+└─────┴───────────────┴───────┘
+
+    disp (⊂'and')vtol (⊂'and')ltov 'red' 'and' 'yellow' ',' 'pink' 'and' 'green'
+┌───┬───┬──────┬─┬────┬───┬─────┬───┐
+│red│and│yellow│,│pink│and│green│and│
+└───┴───┴──────┴─┴────┴───┴─────┴───┘
+
+    disp 'and' ',' ltov 'red' 'and' 'yellow' ',' 'pink' 'and' 'green'
+┌─────┬────────┬──────┬───────┐
+│┌───┐│┌──────┐│┌────┐│┌─────┐│
+││red│││yellow│││pink│││green││
+│└───┘│└──────┘│└────┘│└─────┘│
+└─────┴────────┴──────┴───────┘

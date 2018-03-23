@@ -1,0 +1,167 @@
+ hexdump←{⎕IO ⎕ML←0 1                            ⍝ Hex dump of native file.
+     ⍺←''                                        ⍝ ⍺ is input stream.
+     ⍵≡'':⍺ ∇'nul'                               ⍝ '' → null file.
+     ⍺{
+         {'' ''}⍞←⍺,(⊃⍵),'?',(⊃⌽⎕TC)~⍺           ⍝ error msg operand for:
+     }{                                          ⍝ command stream import.
+         2≠⎕NC⊃⍵:⍺ ⍺⍺ ⍵                          ⍝ not a var name: stop.
+         cmds rem←⌽⊢∘⍎\⌽⍵                        ⍝ nameclash-free execute.
+         1≠≡,cmds:⍺ ⍺⍺ ⍵                         ⍝ not simple: error.
+         1≠⍴⍴,cmds:⍺ ⍺⍺ ⍵                        ⍝ not vector: error.
+         ' '≠⊃0⍴cmds:⍺ ⍺⍺ ⍵                      ⍝ not chars:  error.
+         cmds rem                                ⍝ subscript and remainder.
+     }{
+         loop←{                                  ⍝ loop until ')'.
+             cmd rem←⍺ next ⍵                    ⍝ command and remaining script.
+             isnum cmd:rem ∇ base+num cmd        ⍝⍝    hex   set file position.
+             '⌿'≡cmd:rem ∇ ⍵+4×q'dw'             ⍝   ⌿       next row.
+             '⍀'≡cmd:rem ∇ ⍵-4×q'dw'             ⍝   ⍀       previous row.
+             '+'≡cmd:lp rem+rarg ⍵               ⍝⍝  + hex   increment.
+             '-'≡cmd:lp rem-rarg ⍵               ⍝⍝  - hex   decrement.
+             '×'≡cmd:lp rem×rarg ⍵               ⍝⍝  × hex   multiply.
+             '÷'≡cmd:lp rem{⌊⍺÷1⌈⍵}rarg ⍵        ⍝⍝  ÷ hex   integer divide.
+             '%'≡cmd:lp rem|⍨rarg ⍵              ⍝⍝  % hex   integer remainder.
+             '('≡cmd:(⊃rem ∇ call ⍵)∇ ⍵          ⍝⍝  (       call.
+             ')'≡cmd:rem ⍵                       ⍝⍝  )       return.
+             '*'≡cmd:rem ∇ base+⊃⍵ read 1        ⍝⍝  *       get word from file.
+             '←'≡cmd:lp rem write rarg ⍵         ⍝⍝  ← hex   put word to file.
+             '⊥'≡cmd:rem ∇ ⍵⊣base∘←⍵             ⍝⍝  ⊥       set base address.
+             '!'≡cmd:rem ∇ ⍵-base                ⍝⍝  !       absolute position.
+             ':'≡cmd:rem ∇ case ⍵                ⍝⍝  : case  select case.
+             ''''≡cmd:(rem msg ⍵)∇ ⍵              ⍝⍝  '···'   display message.
+             '?'≡cmd:rem ∇ ⍵⊣put ch,help⊃⎕SI     ⍝⍝  ?       help.
+             '<'≡cmd:(exec rem)∇ ⍵               ⍝⍝  < var   include subscript.
+             rem ∇ ⍵⊣put ch,cmd,'?'              ⍝ unrecognised command.
+         }                                       ⍝ :: cmds ∇ posn → cmds posn
+
+         next←{                                  ⍝ next item from input buffer ⍺.
+             ''≡(lws ⍺)↓⍺:(ask depth inpt ⍵)∇ ⍵  ⍝ empty: ask for more.
+             cmd rem←word ⍺                      ⍝ first word and remainder.
+             cmd≡eom:rem ∇ pop ⍵                 ⍝ end of macro: pop ⍵-stack.
+             cmd≡nl:rem ∇ ⍵+icol∘←0              ⍝ skip newline.
+             cmd≡'⊤':rem ∇ ⍵×tc≠←1               ⍝⍝  ⊤       trace on/off.
+             cmd≡'⍝':((∨\⍺=nl)/⍺)∇ ⍵             ⍝⍝  ⍝       comment.
+             icol+←⍴,cmd                         ⍝ track input col for < cmd.
+             ⍞←(⊃⍺ upto nl)trace hex ⍵           ⍝ output trace.
+             '='≡⊃rem~' ':(0 mdef vex ⍺)∇ ⍵      ⍝⍝   name = niladic macro.
+             '⍵='≡2↑rem~' ':(1 mdef vex ⍺)∇ ⍵    ⍝⍝ name ⍵ = monadic macro.
+             '⍵'≡cmd:hex fst tos rem             ⍝ replace ⍵ with value.
+             (⊂cmd)∊⊃¨mtab:(cmd rem mexp ⍵)∇ ⍵   ⍝ replace macro name with value.
+             cmd rem                             ⍝ command and remainder.
+         }                                       ⍝ :: cmds ∇ posn → cmd cmds
+
+         mdef←{                                  ⍝ macro definition: name=value.
+             rows←+/∧\('='⍳⍨⊃⍵)<lws↑1↓⍵          ⍝ number of trailing macro rows.
+             name row←{(1+⍵⍳'=')↓⍵}\word⊃⍵       ⍝ macro name and first row.
+             trim←{(⌊/lws↑⍵,' ')↓¨⍵}             ⍝ left justify of macro body.
+             body←vec rmcm¨(⊂row),trim rows↑1↓⍵  ⍝ (uncommented) macro body.
+             rem←¯1↓vec 1↓rows↓⍵,⊂''             ⍝ remainder of script.
+             defn←body,(nl=⊃⌽body)↓nl            ⍝ terminated definition.
+             rem⊣mtab,⍨←⊂name(defn ⍺(⊃tos 0))    ⍝ prefix defn to symtab.
+         }                                       ⍝ :: term ∇ [cmds] → cmds
+
+         mexp←{                                  ⍝ macro expansion.
+             name rem←⍺                          ⍝ name and remainder.
+             body adic wval←mval name            ⍝ body, arity and defn ⍵-val.
+             adic=0:body,eom,rem push wval       ⍝ niladic: body, remainder.
+             body,eom,⊃rem push rarg ⍵           ⍝ monadic: collect right arg.
+         }                                       ⍝ :: name rem ∇ cmds → cmds
+
+         call←{                                  ⍝ recursively call command loop.
+             save←base depth mtab tc             ⍝ save state variables.
+             rem←⍺ ⍺⍺ ⍵⊣depth+←1                 ⍝ call with extra paren depth.
+             rem⊣base depth mtab tc∘←save        ⍝ restore state variables.
+         }                                       ⍝ :: loop ∇∇ cmds → cmds
+
+         case←{                                  ⍝ select case.
+             toks←rmix sigs ⍺                    ⍝ significant tokens.
+             cons←∧\~toks=')'                    ⍝ mask for complete construct.
+             clns←cons∧toks=':'                  ⍝ mask for colons.
+             ~0∊cons:((∨\clns)/⍺)⍺⍺ ⍵-1          ⍝ no closing ")": skip 1 case.
+             segt←cons∧(⍵⌊+/clns)=+\clns         ⍝ mask for selected case.
+             cmds←{(':'=⊃⍵)↓⍵}segt/⍺             ⍝ selected case.
+             (')',cmds,1↓(~cons)/⍺)⍺⍺ ⍵          ⍝ continue with selected segt.
+         }                                       ⍝ :: cmds (loop ∇∇) index
+
+         rarg←{                                  ⍝ right arg from rem.
+             cmd rem←⍺ next ⍵                    ⍝ next command and remainder.
+             isnum cmd:rem(uns ⍵ ⍺⍺ num cmd)     ⍝ all hex: apply fn, continue.
+             '('≠cmd:''(⍵⊣put cmd,'?')           ⍝ not parenthesised: error.
+             depth+←1                            ⍝ parens: increase call depth,
+             rem val←rem loop ⍵                  ⍝ evaluate rarg,
+             depth-←1                            ⍝ restore depth.
+             rem(uns ⍵ ⍺⍺ val)                   ⍝ apply fn and continue.
+         }                                       ⍝ :: cmds (∆val ∇∇) posn → rem val
+
+         word←{                                  ⍝ next word from buffer.
+             (⊃⍵)∊⎕D:⍵ all xd                    ⍝ starts with 0-9: hex number.
+             (⊃⍵)∊ac:⍵ all ac,⎕D                 ⍝ starts with alpha: name.
+             (⊃⍵)(1↓⍵)                           ⍝ otherwise: single char token.
+         }∘{(icol+←lws ⍵)↓⍵}                     ⍝ ... removing leading blanks.
+
+         ask←{close ⍵ diff get ⍵}                ⍝ prompt for more commands.
+         get←{⍞⊣⍞←(ch~←ch),⍵}                    ⍝ quote-quad prompt and input.
+         diff←{⍵ take-/⊃∘⍴¨⍺ ⍵}                  ⍝ prompt-return size difference.
+         take←{((0⌈⍵)(0=⍵)/'⍀⌿'),(0⌊⍵)↑⍺}        ⍝ insert ⍀ ⌿ for <bs> <er>.
+         alab←{(hex ⍺),':·',⍵,(×⍴⍵)/'·'}         ⍝ label with offset.
+         inpt←{(⍵ alab hex ⍵ read q'dw'),⍺/'·'}  ⍝ input prompt.
+         close←{open ⍵:∇ ⍵,nl,get'' ⋄ ⍵}         ⍝ prompt for closing quote.
+         open←{2|+/''''=sigs ⍵}                  ⍝ unclosed quote?
+         sigs←{vec rmcm¨vex rmqt ⍵}              ⍝ filter out significant tokens.
+         trace←{tc/(ch~←tc/ch),⍵,tee ⍺,nl}       ⍝ traced output.
+         tee←{'⊤·',(depth/'·'),⍵}                ⍝ '⊤···
+         put←{ch∘←nl~⊃⌽⍞←⍵}                      ⍝ quote-quad output.
+         write←{⊃repl\⍺,wacc/int ⍵}∘{wchk end ⍵} ⍝ write word to file,
+         wchk←{⍵⊣⍞←(~wacc)/ch,'←?',nl}           ⍝ read-only warning.
+         read←{end¨uns ⎕NREAD tie 323,⍵,f_1 ⍺}   ⍝ read ⍵ file words from ⍺.
+         uns←(2*32)∘|                            ⍝ 32-bit unsigned.
+         int←(2*32){(⍺⍺|⍵⍵+⍵)-⍵⍵}(2*31)          ⍝ 32-bit signed.
+         f_1←{⍵-⍵=¯1+2*32}∘uns                   ⍝ avoiding file posn ¯1+2*32.
+         repl←{⍵ ⎕NREPLACE tie ⍺ 323}            ⍝ replace word ⍵ on file at ⍺.
+         hex←{¯1↓,xd[⍉(8/16)⊤⍵],' '}             ⍝ hex char string from number.
+         num←{16⊥xd⍳⍵}                           ⍝ number from hex char string.
+         isnum←{∧/⍵∊xd}                          ⍝ is a hex number.
+         help←{vec('⍝' '⍝'⍷↑⍵)xcom ⍵}∘⎕NR        ⍝ help from function comments.
+         xcom←{2↓¨(∨/⍺)/(+/∧\~⍺)↓¨⍵}             ⍝ extract double-⍝ comments.
+         all←{(1 0=⊂∧\(rmqt ⍺)∊⍵)/¨⊂⍺}           ⍝ ⍺, split after all ⍵.
+         upto←{⍺ all ⎕AV~⍵}                      ⍝ ⍺, split at first ⍵.
+         zap←{(⍺⍺ ⍵){⍺\⍺/⍵}⍵}                    ⍝ clear ⍵ according to ⍺⍺.
+         rmix←{0≥(')'=⍵)++\1 ¯1 0['()'⍳⍵]}zap    ⍝ remove inner expressions.
+         rmcm←{∧\'⍝'≠rmqt ⍵}zap                  ⍝ ignore comments.
+         rmqt←{~⍵∧0,¯1↓⍵}∘{≠\''''=⍵}zap          ⍝ clear quoted text.
+         vex←{1↓¨(1,⍵=nl)⊂nl,⍵}                  ⍝ split at newlines.
+         vec←{↑{⍺,nl,⍵}/⍵}                       ⍝ join with newlines.
+         to←{⎕AV[↑+/{⍳-⍵-1}\-\⎕AV⍳⍺ ⍵]}          ⍝ character range.
+         lws←{+/∧\⍵∊' ·'}                        ⍝ leading white space.
+         msg←{↑{⍵{1↓⍺}put ⍺}/⍺ upto''''}         ⍝ display message.
+         exec←⍺⍺{↑,/dent fst ch ⍺⍺ word ⍵}       ⍝ include external script.
+         dent←{vec(icol/' ')∘,¨vex ⍵}            ⍝ icol-indent of subscript.
+         fst←{⌽⊢∘⍺⍺\⌽⍵}                          ⍝ apply to 1st item of pair.
+         lp←{cmds posn←⍵ ⋄ cmds loop posn}       ⍝ tail-recursive call of loop.
+         mval←{↑⍵{(⍺⍳⊂⍺⍺)⊃⍵}/↓⍉↑mtab}            ⍝ macro value.
+         q←{↑{⊃⌽⍵ eval ⍺,'!)'}/1 0 1/mval'⎕',⍵}  ⍝ system value ⎕⍵.
+         eval←{pop ⍵ loop notc 0 push ⍺}         ⍝ evaluation of token string ⍵.
+         notc←{t←tc ⋄ tc∘←0 ⋄ (tc∘←t)⊢⍺ ⍺⍺ ⍵}    ⍝ without a trace.
+         end←{q'be':256⊥⌽(4/256)⊤⍵ ⋄ ⍵}          ⍝ endian switch.
+
+         push←{⍺⊣_wstk∘←⍵ _wstk}                 ⍝ push ⍵-stack; return ⍺.
+         pop←{⍵⊣_wstk∘←⊃⌽_wstk}                  ⍝ pop  ⍵-stack; return ⍵.
+         tos←{(⊃_wstk)⍵}                         ⍝ top of ⍵-stack stranded ⍵.
+
+         ch←0/nl←⊃⌽⎕TC                           ⍝ (pending) newline.
+         xd←'0123456789abcdef'                   ⍝ hex digits.
+         ac←↑,/'⎕aA_'to¨'⎕zZ_'                   ⍝ alpha chars.
+         eom←⊃⎕AV                                ⍝ end-of-macro-body marker.
+         wacc←'←'=⊃⍺                             ⍝ write access.
+         base depth tc icol _wstk←0              ⍝ state variables.
+
+         mtab←{(⍕⍵),0 0}\¨{                      ⍝ system definitions.
+             ⍵,⊂'⎕dw' 4}{                        ⍝⍝    ⎕dw = display width 0-8.
+             ⍵,⊂'⎕be' 0}⍬                        ⍝⍝    ⎕be = big-endian 0/1.
+
+         22::⍵,'?' ⋄ tie←⍵ ⎕NTIE 0,64+2×wacc     ⍝ share-tie file.
+         open ⍺:(⍺,nl,get'')∇ ⍵                  ⍝ unclosed quote: get more.
+         1000::⍺ ∇ ⍵⊣⎕NUNTIE tie⊣put ch          ⍝ restart on interrupt.
+         1:rem←(⎕NUNTIE tie)⊢(wacc↓⍺)loop 0      ⍝ loop until quit.
+     }⍵
+ }

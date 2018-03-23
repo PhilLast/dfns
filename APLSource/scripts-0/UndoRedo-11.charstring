@@ -1,0 +1,172 @@
+⍝ Derive undo/redo function:
+
+      commit←(⎕ns'')UndoRedo            ⍝ derive a commit function.
+
+      '!'commit 0                       ⍝ initialise history stacks.
+
+      '?'commit 0                       ⍝ both stacks empty.
+0 0
+      A B C D←'now' 'is' 'the' 'time'   ⍝ initial application state.
+      commit A B C D                    ⍝ commit application state.
+
+      A B←'then' 'was'                  ⍝ change state,
+      commit A B C D                    ⍝ commit changes.
+
+      A C←'that' 'a'                    ⍝ change state,
+      commit A B C D                    ⍝ commit changes.
+
+      B D←'took' 'while'                ⍝ change state,
+
+      A B C D                           ⍝ show current state.
+ that  took a while 
+
+      '?'commit 0                       ⍝ undo stack present.
+0 3
+      A B C D←'<'commit A B C D         ⍝ Undo last change,
+      A B C D                           ⍝ show current state.
+ that  was a time 
+
+      '?'commit 0                       ⍝ items on both stacks.
+1 2
+      A B C D←'<'commit A B C D         ⍝ and previous change,
+      A B C D                           ⍝ show current state.
+ then  was  the  time 
+      A B C D←'<'commit A B C D         ⍝ and change before that.
+      A B C D                           ⍝ show current state.
+ now  is  the  time 
+
+      '?'commit 0                       ⍝ undo stack empty.
+3 0
+
+      A B C D← '>'commit A B C D        ⍝ Redo last undo.
+      A B C D                           ⍝ show current state.
+ then  was  the  time 
+
+      A B C D← '>'commit A B C D        ⍝ Redo previous undo.
+      A B C D                           ⍝ show current state.
+ that  was a time 
+      A B C D← '>'commit A B C D        ⍝ Redo undo before that.
+      A B C D                           ⍝ show current state.
+ that  took a while 
+
+      A B C D←'<'commit A B C D         ⍝ Undo last Redo.
+      A B C D                           ⍝ show current state.
+ that  was a time 
+      A B C D←'<'commit A B C D         ⍝ Undo previous redo.
+      A B C D                           ⍝ show current state.
+ then  was  the  time 
+      A B C D←'<'commit A B C D         ⍝ Undo redo before that.
+      A B C D                           ⍝ show current state.
+ now  is  the  time 
+
+      commit¨⍳10                        ⍝ commit 10 transactions.
+          
+      '?'commit 0                       ⍝ 10 items in undo stack.
+0 10
+      {}'↑'commit 4                     ⍝ cut to ...
+
+      '?'commit 0                       ⍝ ... 4 items.
+0 4
+      '!'commit 0                       ⍝ clear history
+      commit¨ 1 2 3                     ⍝ commits
+      '⊃'commit '∘'                     ⍝ most recent undo/redo (Kai)
+3 ∘
+      '<'commit 4                       ⍝ undo
+3
+      '⊃'commit '∘'                     ⍝ most recent undo/redo
+2 4
+      '!'commit 0                       ⍝ clear history
+      '≠'commit¨ 1 2 2 3 3 3 4          ⍝ avoid duplicates
+      '?'commit 0                       ⍝ only 4 commits
+0 4
+
+⍝ The following example shows that the space overhead of history is small.
+
+      rand←{1e4?1e4}
+      a b c d e f g h i j←rand¨⍳10      ⍝ ten large variables.
+
+      '!'commit 0                       ⍝ initialise history.
+
+      wsused←{                          ⍝ WS bytes used.
+          wa←⎕wa
+          6::wa-⎕wa
+          _←⍺⍺ ⍵
+      }
+
+          commit         a b c d e f g h i j    ⍝ commit vars.
+
+     2000>|commit wsused a b c d e f g h i j    ⍝ committing unchanged vars ...
+1
+     2000>|commit wsused a b c d e f g h i j    ⍝ ... consumes little workspace.
+1
+     2000>|commit wsused a b c d e f g h i j    ⍝ ... consumes little workspace.
+1
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝  This version uses a limited size vector for history ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+    UndoRedoV←{⎕ml←0                    ⍝ Derive undo/redo fn (vector history).
+        ⍺←⊢                             ⍝ default: commit values.
+
+        pop←{(⊃⍵)(1↓⍵)}                 ⍝ pop top vector item.
+        psh←{(⊂⍺),⍵}                    ⍝ push ⍺ to vector ⍵.
+
+        1≡⍺ 1:⍺⍺{                       ⍝ monadic commit: push new hist record.
+            size←⍺.(max⌊1+⍴undo)        ⍝ max size of undo vector.
+            ⍺.undo←size↑⍵ psh ⍺.undo    ⍝ push new undo record.
+            1:⍺.redo←⍬                  ⍝ discard redo history.
+        }⍵
+
+        '!'≡⍺:⍺⍺.(redo undo max←⍬ ⍬ ⍵)  ⍝ initialize history vectors.
+
+        '?'≡⍺:,↑⍴¨⍺⍺.(redo undo)        ⍝ query history vectors.
+
+        '<'≡⍺:⍺⍺{                       ⍝ undo:
+            0=⍴⍺.undo:⍵                 ⍝ no more undo: state unchanged.
+            ⍺.redo←⍵ psh ⍺.redo         ⍝ push current state on redo vector.
+            ⊃last ⍺.undo←pop ⍺.undo     ⍝ pop last state.
+        }⍵
+
+        '>'≡⍺:⍺⍺{                       ⍝ redo:
+            0=⍴⍺.redo:⍵                 ⍝ no more redo: state unchanged.
+            ⍺.undo←⍵ psh ⍺.undo         ⍝ push current state on undo vector.
+            ⊃next ⍺.redo←pop ⍺.redo     ⍝ pop last state.
+        }⍵
+
+        '↑'≡⍺:⍺⍺{                       ⍝ resize undo vector.
+            ⍺.max←⍵                     ⍝ set new undo vector size limit.
+            ⍺.(undo←(⍵⌊⍴undo)↑undo)     ⍝ truncate undo vector.
+            1:⍺.redo←⍬                  ⍝ remove redo records.
+        }⍵
+    }
+
+    commitV←(⎕ns'')UndoRedoV
+
+    '!'commitV 4                ⍝ history limited to 4 records.
+
+       commitV¨⍳10              ⍝ commit 10 transactions.
+                    
+    '?'commitV 0                ⍝ last 4 items in undo vector.
+0 4
+
+    '<'commitV ¨10+⍳2           ⍝ undo last two changes.
+10 9
+
+    '?'commitV 0                ⍝ lengths of redo and undo vectors.
+2 2
+
+    '<'commitV ¨12+⍳4           ⍝ only first 2 undos take effect.
+8 7 15 16
+
+    '?'commitV 0                ⍝ sizes of redo and undo vectors.
+4 0
+
+    '>'commitV ¨16+⍳3           ⍝ redo 3 transactions.
+14 13 12
+
+    '?'commitV 0                ⍝ sizes of redo and undo vectors.
+1 3
+
+    '↑'commitV 2                ⍝ reduce history size.
+
+    '?'commitV 0                ⍝ sizes of redo and undo vectors.
+0 2

@@ -1,0 +1,34 @@
+indx ← (fun ##.bsearch) range               ⍝ Binary search.
+
+Range  is  a  2-item  integer  vector  specifying a range of values. The operand
+function  takes  a  scalar  integer argument in this range and returns a boolean
+scalar result. By doing a "binary chop", bsearch finds the _lowest_ value in the
+range  for which (fun value) is true. The values might typically be indices into
+a  data  stucture, for example a component file, where some property (fun value)
+is false for all components before a certain index, and true thereafter. For ex-
+ample,  if  'tie'  is  a  handle on a file whose components have been written in
+strictly  chronological order (using only ⎕fappend), then the following express-
+ion finds the index of the first component written after timestamp 5.5e10:
+
+    {5.5e10<3⊃⎕frdci tie ⍵} bsearch 2↑⎕fsize tie
+
+Note that the operand function, must be constructed so that it returns 0 for all
+values  up  to a certain point in the range, and 1 for those thereafter (~∨/1 0⍷
+fun¨range), otherwise the result is unpredictable.
+
+The attraction of a binary search is that it makes only around 2⍟-/⌽range tests.
+This  is  important  if the cost of the test is significant: perhaps it incurs a
+file  access or some lengthy calculation. If the file in the above example had a
+million  components,  bsearch  would find the index using only 20 or so calls on
+⎕frdci.
+
+Examples:
+
+      {⍵≥5} bsearch 3 7
+5
+      {⍵≥9} bsearch 3 7
+8
+      {⍵≥1} bsearch 3 7
+3
+
+Index:binary search

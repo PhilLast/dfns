@@ -1,0 +1,433 @@
+mat ← m ##.cmat n                           ⍝ ⍺-combination matrix of ⍳⍵.
+
+Returns  an  m!n-row,  m-column, matrix of the m-item combination vectors of ⍳n.
+Both  rows  and  row  items  of  the result are in ascending order, thus for any
+⍺ ⍵≥0:
+
+        {⍵≡⍳⍴⍵}⍋⍺ cmat ⍵            ⍝ Rows in ascending order.
+
+        ∧/{{⍵≡⍳⍴⍵}⍋⍵}¨↓⍺ cmat ⍵     ⍝ Items in each row in ascending order.
+
+Technical notes:
+
+Notice that a combination matrix can be divided into sections, some of which are
+themselves, combination matrices. For example:
+
+                             ┌─┬───┐              ┌───┐
+                  1 2 3      │1│2 3│              │1 2│
+                  1 2 4      │1│2 4│              │1 3│
+                  1 2 5      │1│2 5│      1 , 1 + │1 4│     1 , 1 + 2 cmat 4
+                  1 3 4      │1│3 4│              │2 3│
+    3 cmat 5  =>  1 3 5  =>  │1│3 5│  =>    ⍪     │2 4│  =>   ⍪
+                  1 4 5      │1│4 5│              │3 4│
+                  2 3 4      ├─┴───┤              └───┘
+                  2 3 5      │2 3 4│              ┌─────┐
+                  2 4 5      │2 3 5│          1 + │1 2 3│       1 + 3 cmat 4
+                  3 4 5      │2 4 5│              │1 2 4│
+                             │3 4 5│              │1 3 4│
+                             └─────┘              │2 3 4│
+                                                  └─────┘
+
+This observation leads to the recurrence relationship:
+
+    ⍺ cmat ⍵ ←→ (1,1+(⍺-1)cmat ⍵-1)⍪1+⍺ cmat ⍵-1
+
+Successive transformations of the expression on the right, produce:
+
+        Expression                              Transformation
+        ----------                              --------------
+        (1,1+(⍺-1)cmat ⍵-1)⍪1+⍺ cmat ⍵-1        [0] cmat → ∇
+                  ¯¯¯¯          ¯¯¯¯
+    →   (1,1+(⍺-1)∇⍵-1)⍪1+⍺ ∇⍵-1                [1] ⍺⍪⍵ → ↑⍪/⍺ ⍵
+                       ¯
+    →   ↑⍪/(1,1+(⍺-1)∇ ⍵-1)(1+⍺ ∇ ⍵-1)          [2] ⍺ ⍵ → ⌽ ⍵ ⍺
+            ¯¯¯¯¯¯¯¯¯¯¯¯¯¯  ¯¯¯¯¯¯¯¯¯
+    →   ↑⍪/⌽(1+⍺ ∇ ⍵-1)(1,1+(⍺-1)∇⍵-1)          [3] ⍺({}⍵) → {}\⍺ ⍵
+                        ¯¯
+    →   ↑⍪/⌽{1,⍵}\(1+⍺ ∇ ⍵-1)(1+(⍺-1)∇⍵-1)      [4] (1+⍺)(1+⍵) → 1+⍺ ⍵
+                   ¯¯         ¯¯
+    →   ↑⍪/⌽{1,⍵}\1+(⍺ ∇ ⍵-1)((⍺-1)∇⍵-1)        [5] (⍺{}⍵)(ß{}⍵) → ⍺ ß{}¨⊂⍵
+                     ¯¯¯      ¯¯¯¯¯¯
+    →   ↑⍪/⌽{1,⍵}\1+(⍺-0 1)¨∇⍵-1                [6]
+
+Notice  transformation[3]:  ⍺({}⍵) → {}\⍺ ⍵,  which  applies  a  function to the
+_second_  item of a 2-vector. Using this technique, we can avoid temporary local
+names in situations such as:
+
+    lft rgt←pair ⋄ lft({···⍵}rgt)           ⍝ clumsier.
+
+    {···⍵}\pair                             ⍝ neater.
+
+The base cases for the recursion are:
+
+    0 cmat ⍵ → 1 0⍴0
+    ⍺ cmat 0 → 0 ⍺⍴0
+
+or:
+    0∊⍺ ⍵:(⍺=0)⍺⍴0
+
+The (index-origin independent) code is therefore:
+
+    cmat←{                              ⍝ ⍺-combination matrix of ⍳⍵.
+        0∊⍺ ⍵:(⍺=0)⍺⍴0                  ⍝ done if zero ⍺ or ⍵, otherwise,
+        ↑⍪/⌽{⎕IO,⍵}\1+(⍺-0 1)∇¨⍵-1      ⍝ catenate sub-combinations.
+    }
+
+Notice  however,  that  the  algorithm is inefficient in the same way as a naïve
+coding  of  →fibonacci←, in that the function is applied to the _same_ arguments
+many  times  over. If we display the arguments for the function calls as a tree,
+by injecting:
+
+        ⎕←(,↑(⍴⎕LC)⍴⊂'·   '),'[',(⍕⍺ ⍵),']'
+
+as the first line of the function, we see the following "dependency tree", where
+[⍺ ⍵] stands for (⍺ cmat ⍵):
+
+      2 cmat 4
+·   [2 4]
+·   ·   [2 3]
+·   ·   ·   [2 2]
+·   ·   ·   ·   [2 1]
+·   ·   ·   ·   ·   [2 0]
+·   ·   ·   ·   ·   [1 0]
+·   ·   ·   ·   [1 1]
+·   ·   ·   ·   ·   [1 0]
+·   ·   ·   ·   ·   [0 0]
+·   ·   ·   [1 2]
+·   ·   ·   ·   [1 1]
+·   ·   ·   ·   ·   [1 0]
+·   ·   ·   ·   ·   [0 0]
+·   ·   ·   ·   [0 1]
+·   ·   [1 3]
+·   ·   ·   [1 2]
+·   ·   ·   ·   [1 1]
+·   ·   ·   ·   ·   [1 0]
+·   ·   ·   ·   ·   [0 0]
+·   ·   ·   ·   [0 1]
+·   ·   ·   [0 2]
+
+This is interpreted:
+
+    [2 4] depends on
+    ·   [2 3] which depends on
+    ·   ·   [2 2] which depends on
+    ·   ·   ···
+        and
+    ·   ·   [1 2] which depends on     ⍝ [1 2] evaluated here.
+    ·   ·   ···
+    and
+    ·   [1 3] which depends on
+    ·   ·   [1 2] which depends on     ⍝ [1 2] evaluated again here.
+    ·   ·    ···
+··· and so on.
+
+Notice  how [1 2], together with its whole sub tree, is evaluated twice. In this
+case,  [2 4] generates 21 function calls. This number increases very rapidly and
+in general, [⍵ ⍵] generates (¯1+2*⍵+1) calls.
+                                                              ┌─┐     ┌───┐
+The dependencies are better represented as a _lattice_, where │↑│ and │←--│ mean
+"depends on":                                                 │|│     └───┘
+                                                              └─┘
+    [2 4]←--[2 3]←--[2 2]←--[2 1]←--[2 0]
+    ↑       ↑       ↑       ↑
+    |       |       |       |
+    [1 3]←--[1 2]←--[1 1]←--[1 0]
+    ↑       ↑       ↑
+    |       |       |
+    [0 2]   [0 1]   [0 0]
+
+This expresses exactly the same recurrence relationship as the tree, except that
+in  this representation, the nodes are _shared_. Notice how the lattice has only
+12,  as opposed to the tree's 21 nodes. If we can find a way to evaluate each of
+its nodes only once, a significant performance benefit should result.
+
+In  fact,  we can do a little better than this. We chose [⍺ 0] and [0 ⍵] as base
+cases for the recursion, because we can "conjure these results out of thin air".
+Looking  at  the  lattice,  we see a column at the base of the "ramp", which has
+values  [2 2] [1 1] [0 0].  As  we  know that [⍵ ⍵] = (1 ⍵⍴⍳⍵) for all ⍵, we can
+equally  easily  use  [⍵ ⍵]  and [0 ⍵] as base cases, as long as we make special
+provision  for starting values from _inside_ the ramp where ⍺>⍵. This enables us
+to trim the lattice to:
+
+    [2 4]←--[2 3]←--[2 2]
+    ↑       ↑
+    |       |
+    [1 3]←--[1 2]←--[1 1]
+    ↑       ↑
+    |       |
+    [0 2]   [0 1]
+
+A slightly larger example (4 cmat 8), shows more clearly what's going on. Notice
+that  this lattice has 24 nodes, while its corresponding dependency _tree_ would
+have 325.
+
+    [4 8]←--[4 7]←--[4 6]←--[4 5]←--[4 4]
+    ↑       ↑       ↑       ↑
+    |       |       |       |
+    [3 7]←--[3 6]←--[3 5]←--[3 4]←--[3 3]
+    ↑       ↑       ↑       ↑
+    |       |       |       |
+    [2 6]←--[2 5]←--[2 4]←--[2 3]←--[2 2]
+    ↑       ↑       ↑       ↑
+    |       |       |       |
+    [1 5]←--[1 4]←--[1 3]←--[1 2]←--[1 1]
+    ↑       ↑       ↑       ↑
+    |       |       |       |
+    [0 4]   [0 3]   [0 2]   [0 1]
+
+The  diagram  suggests  using  right-to-left  or  bottom-to-top  _reduction_  to
+accumulate  values towards the top left corner which is the required result. For
+reasons  that  will  become apparent, reduction from the right turns out to be a
+slightly better bet. Using ⎕ML←2, so that "↑" means "first":
+
+    ↑↑{⍺···⍵}/ [0 4] ··· [0 2] [0 1] ,⊂ [4 4] ··· [2 2] [1 1]
+
+Now,  as  the  [0 ⍵]'s  all have the same value: (1 0⍴0), we can substitute this
+value for ⍺ _inside_ the reduction's operand and ignore the value that is passed
+into  the  operand function as left argument. This means that we may replace the
+vector [0 4] ··· [0 2] [0 1] by _any_ vector providing it has the same number of
+items:  (⍳⍵-⍺) will suffice.
+
+    ↑↑{(1 0⍴0)···⍵}/ (⍳⍵-⍺),⊂ [4 4] ··· [2 2] [1 1]
+
+Finally,  to  squeeze out the last drop of refinement, we can compute the little
+array  (1 0⍴0)  just  once and bind it as an operand to the reduction's operand,
+where it becomes "⍺⍺".
+
+    ↑↑(1 0⍴0){⍺⍺···⍵}/ (⍳⍵-⍺),⊂ [4 4] ··· [2 2] [1 1]
+
+The base cases: [4 4] ··· [2 2] [1 1], evaluate to ({1 ⍵⍴⍳⍵}¨+\⍺⍴1), noting that
+(+\⍺⍴1) is an origin independent expression for "1 to ⍺", which gives:
+
+    ↑↑(1 0⍴0){⍺⍺···⍵}/ (⍳⍵-⍺),⊂{1 ⍵⍴⍳⍵}¨+\⍺⍴1
+
+At this point, we can cover the "special provision" for the null case where ⍺>⍵.
+The result is a matrix of shape (0 ⍺), so the reshape becomes: (⍺≤⍵){⍺ ⍵⍴⍳⍵}.
+
+    ↑↑(1 0⍴0){⍺⍺···⍵}/ (⍳⍵-⍺),⊂(⍺≤⍵){⍺ ⍵⍴⍳⍵}¨+\⍺⍴1
+
+Now  all  that  remains,  is  to  code  the workings of the reduction's operand:
+{⍺⍺···⍵}. Each application of the operand will take a _column_ of the lattice as
+right argument and a nominal [0 ⍵] as left operand.
+
+Transposing  the  rightmost  column  of  the  lattice above, the operand will be
+
+applied to:    ⍵: [4 4]   [3 3]   [2 2]   [1 1]  ⍺⍺: [0 1]
+                  ↓       ↓       ↓       ↓          ↓
+with result:      [4 5]←--[3 4]←--[2 3]←--[1 2]←-----'
+
+To  achieve  this  result,  we need to do a further, but this time, _cumulative_
+reduction. Without accumulation, the result of the "inner" reduction in the case
+above  would be [4 5], whereas we need the whole vector [4 5] ··· [1 2], but ex-
+cluding the initial base case ⍺⍺:[0 1], to pass back to the outer reduction. The
+template for such a reduction is:
+
+    ¯1↓↑{(⍺ ··· ↑⍵),⍵}/(⊂···),···,(⊂···),(⊂⊂···)
+      ││     │  │  │    │          │      └────── _Extra_ rightmost enclosure,
+      ││     │  │  │    │          │                      for accumulation.
+      ││     │  │  │    └──────────┴───────────── Items of reduction argument.
+      ││     │  │  └─── Prefix new result item to accumulation.
+      ││     │  └────── First item of accumulated result.
+      ││     └───────── Operation between successive left and right args.
+      │└─────────────── Disclose vector result of vector reduction.
+      └──────────────── Discard initial base case ⍺⍺:[0 1].
+
+Substituting our specific cases:
+
+    ¯1↓↑{(⍺ ··· ↑⍵),⍵}/⍵,⊂⊂⍺⍺
+
+The  remaining "···" is exactly the expression developed right back at the start
+for the "tree" algorithm: ⍪/⌽{⎕IO,⍵}\1+···, so the complete operand function is:
+
+    ¯1↓↑{(⍪/⌽{⎕IO,⍵}\1+⍺(↑⍵)),⍵}/⍵,⊂⊂⍺⍺
+
+A last tweak is to "factor out" (⊂⊂⍺⍺) to where ⍺⍺ is generated, so that:
+
+        ···(1 0⍴0){···{···}/⍵,⊂⊂⍺⍺}/···
+becomes:    __                ¯¯
+        ···(⊂⊂1 0⍴0){···{···}/⍵,⍺⍺}/···
+
+The final code looks like this. Notice that apart from the specification of ⎕ML,
+it's  a one-liner. More to the point, there are no assignments, tests or control
+branches; it is a single expression:
+
+    cmat←{⎕ML←2                             ⍝ ⍺-combination matrix of ⍳⍵.
+        ↑↑(⊂⊂1 0⍴0){                        ⍝ base-case: [0 ⍵].
+            ¯1↓↑{                           ⍝ removing base case from,
+                (⍪/⌽{⎕IO,⍵}\1+⍺(↑⍵)),⍵      ⍝ accumulation of,
+            }/⍵,⍺⍺                          ⍝ sub- (⍺ ⍵-1) combinations,
+        }/(⍳0⌈⍵-⍺),⊂(⍺≤⍵){⍺ ⍵⍴⍳⍵}¨⌽+\⍺⍴1    ⍝ with base cases [⍺ 0].
+    }
+
+Alternative codings
+-------------------
+John  Niss  Hansen  suggests  the  following  much  simpler coding. Effectively,
+the  function  generates  all binary numbers of width ⍵ and selects those with ⍺
+bits set. Each binary "mask" is then used to select a different ⍺ combination of
+numbers  from  0  to ⍵-1.  This  works  well  for small values of ⍵ but the sub-
+expression  (⍳⍵⍴2)  uses  an  exponential  amount  of space (and time) as ⍵ gets
+larger. The function assumes ⎕io=0 and ⎕ml<2.
+
+      cmat←{↑⌽((⍺=+/¨t)/t←,⍳⍵⍴2)/¨⊂⍳⍵}
+
+VMJ suggests the following one-line speedy alternative for small-to-medium sized
+results.
+
+      cmat←{⎕ML←3 ⋄ ⊃⊃{{(</2↑[⎕IO+1]⊃⍵)/⍵},⍺∘.,⍵}/(⍳⍺)+⊂(-⎕IO)+⍳⍵-⍺-1}
+
+and also:
+
+      cmat←{
+           (⎕IO ⎕ML)←1 3 ⋄ wd←⍺ ⋄ mx←⍵
+           ⊃↑2{⍺>wd:⍵
+               a←2⊃⍵
+               b←mx-a+wd-⍺ ⋄ q←∊a+⍳¨b
+               (⍺+1)∇((b/↑⍵),¨q)q
+           }2⍴⊂⍳⍵-⍺-1
+       }
+
+This  version  is based on Ken Gradney's code, which was published in Vector Vol
+18.1:
+
+      cmat←{
+          ⎕ML←3 ⋄ n←1+⍵-⍺ ⋄ c←(⍺-1)+⍳n
+
+          c{⎕IO≥↑⍺:↑⍵
+              m←⌽+\⌽↑1↓⍵
+              (⍺-1)∇((m/⍺-1),(↑⍵)[∊((↑m)-m)+⍳¨m;])m
+          }((n,1)⍴c)(n⍴1)
+      }
+
+
+Roger Hui proposes this short coding:
+
+      cmat←{⊖⊃⍪/{k,¨⍪\1+⍵}⍣⍺⊢(⊂⍉⍪⍬),d⍴⊂0 0⍴k←⌽⍳1+d←⍵-⍺}
+
+which  is  faster than the others except on really large arguments (when it is a
+bit slower).
+
+Roger says:  The ⊖ is needed because Dyalog does not have "suffix scan" (⊖f⍀⊖⍵).
+I am led to doing the regular APL scan on the reversed argument,  then reversing
+the whole thing at the end.
+
+Examples:
+
+      display 0 cmat 5
+┌⊖┐
+↓0│
+└~┘
+
+      display 1 cmat 5
+┌→┐
+↓1│
+│2│
+│3│
+│4│
+│5│
+└~┘
+
+      display 2 cmat 5
+┌→──┐
+↓1 2│
+│1 3│
+│1 4│
+│1 5│
+│2 3│
+│2 4│
+│2 5│
+│3 4│
+│3 5│
+│4 5│
+└~──┘
+
+      display 3 cmat 5
+┌→────┐
+↓1 2 3│
+│1 2 4│
+│1 2 5│
+│1 3 4│
+│1 3 5│
+│1 4 5│
+│2 3 4│
+│2 3 5│
+│2 4 5│
+│3 4 5│
+└~────┘
+
+      display 4 cmat 5
+┌→──────┐
+↓1 2 3 4│
+│1 2 3 5│
+│1 2 4 5│
+│1 3 4 5│
+│2 3 4 5│
+└~──────┘
+
+      display 5 cmat 5
+┌→────────┐
+↓1 2 3 4 5│
+└~────────┘
+
+      display 6 cmat 5
+┌→──────────┐
+⌽0 0 0 0 0 0│
+└~──────────┘
+
+      ⍉↑{⍴⍵ cmat 5}¨0 to 6                      ⍝ Row and column sizes.
+1 5 10 10 5 1 0
+0 1  2  3 4 5 6
+
+      2{⍵[⍺ cmat⍴⍵]}'scissors' 'paper' 'stone'  ⍝ 2-combos of nested vector.
+ scissors  paper
+ scissors  stone
+ paper     stone
+
+      ↓3{⍵[⍺ cmat⍴⍵]}'abcde'                    ⍝ 3-combos of char vector.
+ abc  abd  abe  acd  ace  ade  bcd  bce  bde  cde
+
+      display¨0 1 2 3∘.cmat 0 1 2 3             ⍝ Combos of small vectors.
+ ┌⊖┐      ┌⊖┐      ┌⊖┐      ┌⊖┐
+ ↓0│      ↓0│      ↓0│      ↓0│
+ └~┘      └~┘      └~┘      └~┘
+ ┌→┐      ┌→┐      ┌→┐      ┌→┐
+ ⌽0│      ↓1│      ↓1│      ↓1│
+ └~┘      └~┘      │2│      │2│
+                   └~┘      │3│
+                            └~┘
+ ┌→──┐    ┌→──┐    ┌→──┐    ┌→──┐
+ ⌽0 0│    ⌽0 0│    ↓1 2│    ↓1 2│
+ └~──┘    └~──┘    └~──┘    │1 3│
+                            │2 3│
+                            └~──┘
+ ┌→────┐  ┌→────┐  ┌→────┐  ┌→────┐
+ ⌽0 0 0│  ⌽0 0 0│  ⌽0 0 0│  ↓1 2 3│
+ └~────┘  └~────┘  └~────┘  └~────┘
+
+      ⎕io←0 ⋄ 2 cmat 4                          ⍝ Code is "origin sensitive".
+0 1
+0 2
+0 3
+1 2
+1 3
+2 3
+
+      ⍉ ∘.{⍬⍴⍴⍺ cmat ⍵}⍨ 0 to 12                ⍝ Pascal's triangle.
+1  0  0   0   0   0   0   0   0   0  0  0 0
+1  1  0   0   0   0   0   0   0   0  0  0 0
+1  2  1   0   0   0   0   0   0   0  0  0 0
+1  3  3   1   0   0   0   0   0   0  0  0 0
+1  4  6   4   1   0   0   0   0   0  0  0 0
+1  5 10  10   5   1   0   0   0   0  0  0 0
+1  6 15  20  15   6   1   0   0   0  0  0 0
+1  7 21  35  35  21   7   1   0   0  0  0 0
+1  8 28  56  70  56  28   8   1   0  0  0 0
+1  9 36  84 126 126  84  36   9   1  0  0 0
+1 10 45 120 210 252 210 120  45  10  1  0 0
+1 11 55 165 330 462 462 330 165  55 11  1 0
+1 12 66 220 495 792 924 792 495 220 66 12 1
+
+See also: pmat fibonacci rr
+
+Index:combination|expression transformation|Pascal's triangle|fibonacci number
+Index:⎕ML
+Index;Hansen J.N.|Hui R.K.W.|Gradney K.|Jantunen V-M.

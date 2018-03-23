@@ -1,0 +1,6 @@
+ utf8get←{                               ⍝ Char vector from UTF-8 file ⍵.
+     0::⎕SIGNAL ⎕EN                      ⍝ signal error to caller.
+     tie←⍵ ⎕NTIE 0                       ⍝ file handle.
+     ints←⎕NREAD tie 83,⎕NSIZE tie       ⍝ all UTF-8 file bytes.
+     ('UTF-8'⎕UCS 256|ints)⊣⎕NUNTIE tie  ⍝ ⎕AV chars.
+ }

@@ -1,0 +1,138 @@
+{excl←'⍵'} ##.wsdiff (wsa wsb)              ⍝ Workspace differences.
+
+Saved  workspaces  [wsa] and [wsb] are located using WSPATH, and any differences
+are  displayed  in  the session (the function returns no explicit result). Lines
+that  are  in one workspace,  but not in the other are displayed "split-screen".
+Note  that  wsdiff does not detect differences that amount to a _re-ordering_ or
+_duplication_ of lines within a function or variable. [wsdiff] is a good candid-
+ate  for  copying  into  a  utility  namespace in ⎕SE for reference via ⎕PATH or
+invocation using a programmable function (PF) key: see →PF_keys←.
+
+By default, functions named [wsdiff] are  excluded  from  the  comparison.  This
+means that [wsdiff] may be copied into the active workspace and  called  without
+reporting its presence as a difference.
+
+A workspace name of: '' refers to the current active workspace.
+A simple vector right argument 'wsid' is short for: '' 'wsid'.
+A null right argument '', is short for: '' ⎕wsid.
+
+For example:
+
+    wsdiff 'max' 'min'  ⍝ compare two saved workspaces.
+    wsdiff 'dfns.bak'   ⍝ compare active workspace with saved workspace.
+    wsdiff ''           ⍝ compare active workspace with saved version.
+
+The optional left argument is a character vector exclusion list:
+
+    '⍝' Exclude function/operator comments from comparison.
+    ' ' Exclude function/operator white space from comparison.
+    '~' Ignore variables.
+    '∇' Ignore functions and operators.
+    '⍵' Ignore functions called 'wsdiff' (default).
+    '⎕' Discard output of differences - show only object names.
+
+Variables, if included are compared "line by line".
+
+Technical notes:
+
+A complication arises in wsdiff, with trapping the DOMAIN ERROR resulting from a
+mis-spelling  of  one  of the workspace names.  Wsdiff must copy ⎕TRAP from each
+subject  workspace  in  order  to compare the values. As error-guards are imple-
+mented  using ⎕TRAP, the incoming value _overwrites_ the error-guard. In itself,
+this  doesn't  cause  a  problem as by this time, the error-guard's job is done.
+However,  when the error-guard goes out of scope, the incoming value of ⎕TRAP is
+lost. The solution is to pass back the _value_ of the incoming  ⎕TRAP along with
+any other workspace-wide variables, as part of the result of the copy function.
+
+A  related  problem  occurs with using ⍎ to determine the values of variables in
+the  respective  workspaces.  An  "external execute" operand function is used so
+that  subject  names do not clash with local names in wsdiff. However, executing
+the  subject name should be protected with an error guard; an example might be a
+VALUE ERROR for an unitialised external variable. Again, ⎕TRAP causes a problem,
+as its value will be changed by setting the error guard prior to the execute. In
+this  case  the code-around is to extract ⎕TRAP's value explicitly; this is easy
+as ⎕TRAP has the same value, workspace-wide.
+
+Bugs:
+[wsdiff] ignores differences in arrays that contain references to namespaces.
+
+Examples:
+
+      ' 'wsdiff'c:\dyalog82\ws\patch' 'c:\dyalog90\ws\patch'  ⍝ ignoring blanks.
+Patch.Config.GET·   ·   ·   ·   ·   ·  │Patch.Config.GET·   ·   ·   ·   ·   ·
+·   :If '8'=⊃2⊃'.'⎕WG'APLVersion'   ·  │·   :If '7'=⊃2⊃'.'⎕WG'APLVersion'   ·
+Patch.Config.PUT·   ·   ·   ·   ·   ·  │Patch.Config.PUT·   ·   ·   ·   ·   ·
+·   :If '8'=⊃2⊃'.'⎕WG'APLVersion'   ·  │·   :If '7'=⊃2⊃'.'⎕WG'APLVersion'   ·
+Patch.P ·   ·   ·   ·   ·   ·   ·   ·  │·   ·   ·   ·   ·   ·   ·   ·   ·   ·
+·   ·8.1.4  (DV)· 23·Dec·1999  1955328 │·   ·   ·   ·   ·   ·   ·   ·   ·   ·
+·   ·8.1.4  (RT)· 23·Dec·1999  1955328 │·   ·   ·   ·   ·   ·   ·   ·   ·   ·
+Patch.PATCHABLES·   ·   ·   ·   ·   ·  │Patch.PATCHABLES·   ·   ·   ·   ·   ·
+·   ·8.2.2  (DV)· 23·Dec·1999  2260992 │·   ·9.0.1  (DV)· 18·Aug·2000  2692608
+·   ·8.2.2  (RT)· 23·Dec·1999  2260992 │·   ·9.0.1  (RT)· 18·Aug·2000  2692608
+·   ·   ·   ·   ·   ·   ·   ·   ·   ·  │·   ·8.2.3  (DV)· 17·Aug·2000  2270720
+·   ·   ·   ·   ·   ·   ·   ·   ·   ·  │·   ·8.2.3  (RT)· 17·Aug·2000  2270720
+·   ·   ·   ·   ·   ·   ·   ·   ·   ·  │·   ·7.4.2  (DV)· 17·Aug·2000  2185036
+·   ·   ·   ·   ·   ·   ·   ·   ·   ·  │·   ·7.4.2  (RT)· 17·Aug·2000  2184976
+Patch.SHOWMSG   ·   ·   ·   ·   ·   ·  │Patch.SHOWMSG   ·   ·   ·   ·   ·   ·
+·   :If 0=⎕NC M ·   ·   ·   ·   ·   ·  │·   :If 9≠⎕NC M ·   ·   ·   ·   ·   ·
+·   ·   ·   ·   ·   ·   ·   ·   ·   ·  │·   :OrIf 'Text'≢M ⎕WG'Type'·   ·   ·
+Patch.UPDATE_PROGRESS   ·   ·   ·   ·  │Patch.UPDATE_PROGRESS   ·   ·   ·   ·
+·   M ⎕WC'Static'POS(18 200)('3D' 'Rece│·   M ⎕WC'Static'POS(18 200)('EdgeStyle
+
+
+      '⎕'wsdiff'max' 'min'  ⍝ Discarding output lines.
+⎕LX ·   ·   ·   ·   ·   ·   ·   ·   ·  │⎕LX ·   ·   ·   ·   ·   ·   ·   ·   ·
+·   ·   ·   ·   ·   ·   ·   ·   ·   ·  │combo   ·   ·   ·   ·   ·   ·   ·   ·
+compile ·   ·   ·   ·   ·   ·   ·   ·  │compile ·   ·   ·   ·   ·   ·   ·   ·
+const   ·   ·   ·   ·   ·   ·   ·   ·  │·   ·   ·   ·   ·   ·   ·   ·   ·   ·
+defn·   ·   ·   ·   ·   ·   ·   ·   ·  │defn·   ·   ·   ·   ·   ·   ·   ·   ·
+equn·   ·   ·   ·   ·   ·   ·   ·   ·  │·   ·   ·   ·   ·   ·   ·   ·   ·   ·
+extend  ·   ·   ·   ·   ·   ·   ·   ·  │·   ·   ·   ·   ·   ·   ·   ·   ·   ·
+·   ·   ·   ·   ·   ·   ·   ·   ·   ·  │format  ·   ·   ·   ·   ·   ·   ·   ·
+lambda  ·   ·   ·   ·   ·   ·   ·   ·  │·   ·   ·   ·   ·   ·   ·   ·   ·   ·
+local   ·   ·   ·   ·   ·   ·   ·   ·  │·   ·   ·   ·   ·   ·   ·   ·   ·   ·
+max ·   ·   ·   ·   ·   ·   ·   ·   ·  │·   ·   ·   ·   ·   ·   ·   ·   ·   ·
+·   ·   ·   ·   ·   ·   ·   ·   ·   ·  │min ·   ·   ·   ·   ·   ·   ·   ·   ·
+parse   ·   ·   ·   ·   ·   ·   ·   ·  │parse   ·   ·   ·   ·   ·   ·   ·   ·
+reduce  ·   ·   ·   ·   ·   ·   ·   ·  │reduce  ·   ·   ·   ·   ·   ·   ·   ·
+show·   ·   ·   ·   ·   ·   ·   ·   ·  │·   ·   ·   ·   ·   ·   ·   ·   ·   ·
+·   ·   ·   ·   ·   ·   ·   ·   ·   ·  │trace   ·   ·   ·   ·   ·   ·   ·   ·
+trees   ·   ·   ·   ·   ·   ·   ·   ·  │trees   ·   ·   ·   ·   ·   ·   ·   ·
+type·   ·   ·   ·   ·   ·   ·   ·   ·  │·   ·   ·   ·   ·   ·   ·   ·   ·   ·
+typex   ·   ·   ·   ·   ·   ·   ·   ·  │·   ·   ·   ·   ·   ·   ·   ·   ·   ·
+unify   ·   ·   ·   ·   ·   ·   ·   ·  │·   ·   ·   ·   ·   ·   ·   ·   ·   ·
+·   ·   ·   ·   ·   ·   ·   ·   ·   ·  │Background  ·   ·   ·   ·   ·   ·   ·
+Example ·   ·   ·   ·   ·   ·   ·   ·  │Example ·   ·   ·   ·   ·   ·   ·   ·
+Implementation  ·   ·   ·   ·   ·   ·  │·   ·   ·   ·   ·   ·   ·   ·   ·   ·
+Introduction·   ·   ·   ·   ·   ·   ·  │Introduction·   ·   ·   ·   ·   ·   ·
+
+
+      wsdiff'aaa' 'bbb'     ⍝ system variable differences.
+⎕TRAP   ·   ·   ·   ·   ·   ·   ·   ·  │⎕TRAP   ·   ·   ·   ·   ·   ·   ·   ·
+·   · 11·C aaa  ·   ·   ·   ·   ·   ·  │·   · 12·C bbb  ·   ·   ·   ·   ·   ·
+⎕IO ·   ·   ·   ·   ·   ·   ·   ·   ·  │⎕IO ·   ·   ·   ·   ·   ·   ·   ·   ·
+·   1   ·   ·   ·   ·   ·   ·   ·   ·  │·   0   ·   ·   ·   ·   ·   ·   ·   ·
+
+
+      wsdiff''              ⍝ changes since )load.
+notes.wsdiff·   ·   ·   ·   ·   ·   ·  │notes.wsdiff·   ·   ·   ·   ·   ·   ·
+·   A workspace name·of:·'' refers to t│·   A  workspace·name of: ''·refers to
+·   A simple·vector right argument 'wsi│·   argument·of is shorthand·for: ''·⎕w
+·   A null right·argument '', is·short │·   ·   wsdiff 'max'·'min'  ·   ⍝ compa
+·   For example:·   ·   ·   ·   ·   ·  │·   ·   wsdiff '' 'dfns.bak'·   ⍝ compa
+·   ·   wsdiff 'max'·'min'  ⍝ compare t│·   ·   wsdiff ''   ·   ·   ·   ⍝ compa
+·   ·   wsdiff 'dfns.bak'   ⍝ compare a│·   ·   ·   ·   ·   ·   ·   ·   ·   ·
+·   ·   wsdiff ''   ·   ·   ⍝ compare a│·   ·   ·   ·   ·   ·   ·   ·   ·   ·
+wsdiff  ·   ·   ·   ·   ·   ·   ·   ·  │wsdiff  ·   ·   ·   ·   ·   ·   ·   ·
+·   ·   ·   wsv←,'⎕LX' '⎕TRAP'  ·   ·  │·   ·   ·   wsv←,'⎕LX' '⎕TRAP'  · ⍝ '⎕S
+·   ·   ·   ⎕LX←''  ·   ·   ·   ·   ·  │·   ·   ·   ⎕LX←'' ⍝⋄ ⎕SM←0 3⍴0 ·   ·
+
+
+      wsdiff'aaa' 'ccc'     ⍝ Error trapping for bad wsname.
+Can't copy: ccc
+      wsdiff'aaa' 'ccc'
+     ∧
+
+See also: fndiff refws Workspaces PF_keys
+
+Index:compare workspaces|workspace|name-clash problem

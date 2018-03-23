@@ -1,0 +1,3 @@
+ insnode←{           ⍝ Insert vertex ⍵ in graph ⍺.
+     (⍵⌈⍴⍺)↑⍺,⍵⍴⊂⍬   ⍝ extend graph with sufficient nulls.
+ }

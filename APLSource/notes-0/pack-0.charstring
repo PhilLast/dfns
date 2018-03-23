@@ -1,0 +1,70 @@
+array ← ##.pack array                       ⍝ Saves WS by sharing subarrays.
+
+Pack attempts to increase the amount of workspace available by sharing identical
+subarrays in its argument.  For a sizeable argument, this takes a very long time
+as  each  subarray  is  compared  with every other one (n*2 comparisons).  It is
+worth  doing  only when workspace availability is at a premium, perhaps prior to
+shipping  an  application  containing complex nested variables. Notice that sub-
+arrays  can  be shared _among_ distinct variables - see example below. Note that
+in  this  context,  system  function ⎕SIZE can be misleading as it ignores array
+sharing.
+
+NB: [pack] shares items at _and_ _between_ all depths in its argument array. For
+sharing of subarrays at any particular level,  the following simple  function is
+considerably  faster.  Note that it may be applied under each (¨) to share items
+at (but not between) greater depths.
+
+    pack1 ← {(∪,⍵){⍺[⍺⍳⍵]}⍵}    ⍝ share top level items.
+
+    ditty ← ('Dime' 'cuándo' 'serás' 'mia') ('Dime' 'cuándo' 'cuándo' 'cuándo')
+
+All recent versions of Dyalog share literal constants, such as  'cuándo'  above.
+To emulate a more real situation, where array items  are  typically  created  by
+function application, let's make sure we start with an array of unshared items:
+
+    unsh ← ⌽∘⌽                  ⍝ reversal creates a new vector.
+
+    ditty ← unsh¨ ditty         ⍝ force unsharing.
+
+Now pack:
+
+    ditty ← pack1¨ ditty        ⍝ share inside, but not among, sub vectors.
+
+    ditty ← pack   ditty        ⍝ share _all_ subarrays.
+
+NB: Related function →nspack← shares all subarrays within a given namespace.
+
+Technical note:
+
+Pack uses (6≠10|⎕DR ⍵:) to determine whether a subarray is homogeneous or heter-
+ogeneous.  In  the  latter  case, the array's items may be shared as well as the
+array itself. Compare the following two depth-1 arrays:
+
+      1 0 6 6       ⍝ hom: try to share whole array.
+
+      '1' 0 6 6     ⍝ het: try to share array _and_ its subarrays.
+
+Examples:
+
+      wa←⎕wa ⋄ cvecs←(⍳1e3)⌽¨⊂⎕a ⋄ wa-⎕wa   ⍝ WS used by distinct char vectors,
+48032
+      wa←⎕wa ⋄ cvecs←pack cvecs  ⋄ wa-⎕wa   ⍝ sharing recovers most of it.
+¯42856
+
+      A ← ⌽∘⌽¨ 'Scissors' 'Paper' 'Stone'
+      B ← ⌽∘⌽¨ 'Paper' 'Stone' 'Scissors'
+      C ← ⌽∘⌽¨ 'Stone' 'Scissors' 'Paper'
+      wa←⎕wa
+      ⎕wa-wa
+0
+      A B C←pack A B C      ⍝ Sharing subarrays _among_ variables,
+      ⎕wa-wa                ⍝ ... releases some workspace.
+144
+      nested←⍳¨∘⍳¨∘⍳¨∘⍳¨∘⍳3 3                   ⍝ complex nested array:
+
+      wa←⎕wa ⋄ nested←pack nested ⋄ ⎕wa-wa      ⍝ significant saving.
+17936
+
+See also: nspack Data_compression
+
+Index:compression|sharing, array

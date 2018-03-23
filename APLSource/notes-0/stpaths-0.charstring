@@ -1,0 +1,33 @@
+pvec ← ##.stpaths tree                      ⍝ Spanning tree paths.
+
+Returns  vector [pvec] of the paths from the root to each vertex of the spanning
+[tree].
+
+It  is  quicker  to extract single paths using →stpath← but if all paths are re-
+quired, [stpaths] is quicker than {⍵∘stpath¨⍳⍴⍵}.
+
+Examples:
+
+⍝
+⍝      Graph "a".
+⍝    ┌─────1←────┐   5 vertices: 1 2 3 4 5
+⍝    │     │     │
+⍝    ↓     ↓     │   8 edges:    1→2  1→3
+⍝    2←───→3────→4               2→3
+⍝          ↑     │               3→2  3→4
+⍝          │     ↓               4→1  4→5
+⍝          └─────5               5→3
+
+      a←(2 3)(3)(2 4)(1 5)(3)       ⍝ simple origin-1 graph.
+
+      a span 1
+¯1 1 1 3 4
+
+      stpaths a span 1              ⍝ paths from vertex 1.
+┌─┬───┬───┬─────┬───────┐
+│1│1 2│1 3│1 3 4│1 3 4 5│
+└─┴───┴───┴─────┴───────┘
+
+See also: stpath stdists span Graphs
+
+Index:graph|spanning tree|path

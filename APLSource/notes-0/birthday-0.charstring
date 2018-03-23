@@ -1,0 +1,24 @@
+p ← s ##.birthday n                         ⍝ Probability of same birthday.
+
+"In  a  group  of 23 people there is a better than 50-50 chance that two of them
+ share a birthday".
+
+This function from Nicolas Delcros and Roger Hui  generalises  this assertion to
+find the probability of a pair of coincident results  occuring  from  n  trials,
+each with probability ÷s.
+
+See: http://www.jsoftware.com/jwiki/Essays/Birthday_Problem
+
+Examples:
+
+    365 birthday 23       ⍝ probability that 2 people out of 23 share a birthday
+0.5072972343
+
+    6 birthday 2          ⍝ probability of a pair in dice-throwing.
+0.1666666667
+
+    (2*32) birthday 1e4   ⍝ probability of BuildID collision for 10.000 builds
+0.01157288999
+
+Index:birthday|probability
+Index;Delcros N.|Hui R.K.W.

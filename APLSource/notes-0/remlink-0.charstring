@@ -1,0 +1,19 @@
+graph ← graph ##.remlink (from to)          ⍝ Remove edge ⍵ from graph ⍺.
+
+Returns a new graph with the target edge removed.
+
+Examples:
+
+    a                       ⍝ graph "a".
+┌───┬─┬───┬───┬─┐
+│2 3│3│2 4│1 5│3│
+└───┴─┴───┴───┴─┘
+
+    a remlink 2 3           ⍝ ... with link 2→3 removed.
+┌───┬┬───┬───┬─┐
+│2 3││2 4│1 5│3│
+└───┴┴───┴───┴─┘
+
+See also: Graphs inslink remnode
+
+Index:graph, unweighted

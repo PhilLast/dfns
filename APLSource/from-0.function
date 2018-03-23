@@ -1,0 +1,13 @@
+ from←{⎕ML←1                     ⍝ Select (1↓⍴⍵)-cells from array ⍵.
+     ~(≢⍺)≡≢⍴⍵:⎕SIGNAL 4         ⍝ check index length.
+     indx←⍺-⎕IO ⋄ ⎕IO←0          ⍝ easier in origin 0.
+     axes←+\0,¯1↓{⊃⍴⍴⍵}¨⍺        ⍝ cumulative selection axes.
+     ↑{                          ⍝ selection using simple index.
+         indx axis←⍺             ⍝ index and axis for selection.
+         indx≡,⊂⍬:⍵              ⍝ skip: select all items.
+         vec←⊂[(⍳⍴⍴⍵)~axis]⍵     ⍝ vector along given axis.
+         sel←↑indx⊃¨⊂vec         ⍝ selection from vector.
+         pos←axis+⍳⍴⍴indx        ⍝ selection axis positions.
+         (pos,(⍳⍴⍴sel)~pos)⍉sel  ⍝ simple selection.
+     }/⌽(⊂⍵),↓⍉↑indx axes        ⍝ select along leading axes.
+ }

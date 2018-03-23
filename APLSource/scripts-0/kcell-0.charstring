@@ -1,0 +1,49 @@
+⍝ Relationship between point and k-cell:
+
+    ⎕io ⎕ml←0 3                             ⍝ Environment for tests.
+
+    3 ×kcell 1 2 3 4 5                      ⍝ Single Point Boundary (scalar).
+¯1 ¯1 0 1 1
+
+    ×kcell .5                               ⍝ Is point in the unit interval?
+¯1
+
+    2 4 ×kcell 1 2 3 4 5                    ⍝ Upper and Lower Bounds (2-vector).
+1 0 ¯1 0 1
+                                            ⍝ Differentiate between regions
+    +kcell 1 5⍴.5 0 1 ¯1.5 2                ⍝ Multiple points in unit interval
+0 ¯1 1 ¯2 2
+
+    2 4 +kcell 1 2 3 4 5                    ⍝ (signum sum).
+¯2 ¯1 0 1 2
+                                            ⍝ Upper left and lower right hand
+     b←⊃(3 2)(5 6)                          ⍝ corners of a rectangle.
+
+                                            ⍝ Various points in the plane
+    p←⍉⊃(6 8)(5 2)(4 4)(7 6)(3 5)(2 3)      ⍝ (2-space).
+
+                                            ⍝ Positions: outside, boundary, int-
+    b ×kcell p                              ⍝ erior, outside, boundary, outside.
+1 0 ¯1 1 0 1
+                                            ⍝ Positions: Below right, corner,
+    b +kcell p                              ⍝ interior, below, edge, above.
+12 4 0 11 ¯5 ¯10
+
+    +kcell 1 0                              ⍝ Unit square
+4
+    b3←2 3⍴0 0 0 10 10 10                   ⍝ Coordinates of a cube.
+
+    b3 ×kcell ⍉⊃(5 5 5)(11 15 20)(3 8 10)   ⍝ Inside, outside, boundary of cube.
+¯1 1 0
+
+    ×kcell .1×⍉⊃(5 5 5)(11 15 20)(3 8 10)   ⍝ Unit cube.
+¯1 1 0
+
+    b3 +kcell 0 10 10                       ⍝ Top left rear corner of the cube.
+¯19
+    b3 +kcell 5 0 0                         ⍝ Bottom Front Edge of the cube.
+¯6
+    b3 +kcell 5 5 10                        ⍝ Top Face of the cube.
+1
+    b3 +kcell ⍉⊃(0 5 5)(2 3 4)              ⍝ Left Face, Interior of cube.
+¯25 0

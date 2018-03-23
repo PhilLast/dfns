@@ -1,0 +1,56 @@
+⍝ Depth-first spanning tree for graph ⍺ from vertex ⍵:
+
+    show←{↑(⍳⍴⍵),¨'→',¨⍵}   ⍝ show graph
+
+    g← {↓⍉↑1 ¯1⌽¨⊂⍵}⍳10     ⍝ "polygon" graph.
+
+    show g
+ 1 →  2 10
+ 2 →  3  1
+ 3 →  4  2
+ 4 →  5  3
+ 5 →  6  4
+ 6 →  7  5
+ 7 →  8  6
+ 8 →  9  7
+ 9 → 10  8
+10 →  1  9
+
+    g dfspan 1              ⍝ depth-first search.
+¯1 1 2 3 4 5 6 7 8 9
+
+    g span 1                ⍝ compare with breadth-first search.
+¯1 1 2 3 4 7 8 9 10 1
+
+    g← {⍵∘~¨⍵}⍳8            ⍝ order 8 complete graph.
+
+    show g
+1 → 2 3 4 5 6 7 8
+2 → 1 3 4 5 6 7 8
+3 → 1 2 4 5 6 7 8
+4 → 1 2 3 5 6 7 8
+5 → 1 2 3 4 6 7 8
+6 → 1 2 3 4 5 7 8
+7 → 1 2 3 4 5 6 8
+8 → 1 2 3 4 5 6 7
+
+    g dfspan 1              ⍝ depth-first search,
+¯1 1 2 3 4 5 6 7
+
+    g span 1                ⍝ compare with breadth-first search.
+¯1 1 1 1 1 1 1 1
+
+    ⎕io←0                   ⍝ origin 0,
+    (g-1)dfspan 0           ⍝   depth-first search.
+¯1 0 1 2 3 4 5 6
+    ⎕io←1
+
+    gx←(2 5)(1 3 6)(2 4 7)(3 8)(1 6 9)(2 5)(3 8)(4 7 12)(5 10 13)(9 14)(12 15)(8 11 16)(9 14)(10 13 15)(11 14 16)(12 15)
+
+    gx dfspan 1
+¯1 1 2 3 9 5 8 4 10 14 12 8 9 15 11 15
+
+    ↑⍬ ⍬ ⍬∘dfspan ¨⍳3           ⍝ null 3-graph
+¯1 ¯2 ¯2
+¯2 ¯1 ¯2
+¯2 ¯2 ¯1

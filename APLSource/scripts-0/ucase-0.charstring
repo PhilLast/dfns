@@ -1,0 +1,28 @@
+⍝ Upper-casification:
+
+    ucase 2 8⍴'please, speak up'
+PLEASE, 
+SPEAK UP
+
+    ucase 4↓⎕av
+ 	⌶ɫ%'⍺⍵_ABCDEFGHIJKLMNOPQRSTUVWXYZ¯.⍬0123456789⊢¥$£¢∆ABCDEFGHIJKLMNOPQRSTUVWXYZý·⍙ÁÂÃÇÈÊËÌÍÎÏÐÒÓÔÕÙÚÛÝþãìðòõ{€}⊣⌷¨ÀÄÅÆ⍨ÉÑÖØÜßÀáâÄÅÆçèÉêëíîïÑ[/⌿\⍀<≤=≥>≠∨∧-+÷×?∊⍴~↑↓⍳○*⌈⌊∇∘(⊂⊃∩∪⊥⊤|;,⍱⍲⍒⍋⍉⌽⊖⍟⌹!⍕⍎⍫⍪≡≢óôÖØ"#&´┘┐┌└┼─├┤┴┬│@ùúû^Ü`∣¶:⍷¿¡⋄←→⍝)] §⎕⍞⍣
+
+    ⎕ucs ucase ⎕ucs 97 9056 98          ⍝ [8692] 'a<variant>b' → 'A<variant>B'
+65 9056 66
+
+⍝ Alternative codings:
+
+    lc←'abcdefghijklmnopqrstuvwxyzåäöàæéñøü'    ⍝ (lower case alphabet)
+    uc←'ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖÀÆÉÑØÜ'    ⍝ (upper case alphabet)
+
+    ucase ← ⌷∘(uc,⎕av)∘⊂∘((lc,⎕av)∘⍳)           ⍝ upper-casification.
+
+    ucase 2 8⍴'please, speak up'
+PLEASE, 
+SPEAK UP
+
+    ucase ← (lc,⎕av)∘⍳{⍵⍵[⍺⍺ ⍵]}(uc,⎕av)        ⍝ upper-casification.
+
+    ucase 2 8⍴'please, speak up'
+PLEASE, 
+SPEAK UP

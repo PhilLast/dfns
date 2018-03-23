@@ -1,0 +1,24 @@
+⍝ Monitor D function:
+
+      osc mdf 27
+112 osc←{               ⍝ Oscillate - probably returns 1.
+112     1=⍵:1                                            
+111     2|⍵:∇ 1+3×⍵                                      
+ 70         ∇ ⍵÷2                                        
+  0 }                                                    
+
+      105 gcd mdf 330
+4 gcd←{       ⍝ Greatest common divisor.
+4     ⍵=0:|⍺                            
+3     ⍵ ∇ ⍵|⍺                           
+0 }                                     
+
+      sieve mdf 2 to 100
+5 sieve←{             ⍝ Sieve of Eratosthenes.       
+5     ⍺←⍬             ⍝ Default no primes yet.       
+5     nxt←1↑⍵         ⍝ Next prime, and              
+5     msk←0≠nxt|⍵     ⍝ ... mask of non-multiples.   
+5     ∧/1↓msk:⍺,⍵     ⍝ All non multiples - finished.
+4     (⍺,nxt)∇ msk/⍵  ⍝ Sieve remainder.             
+0 }                                                  
+

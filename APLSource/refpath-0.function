@@ -1,0 +1,5 @@
+ refpath←{⍺←⍵            ⍝ Refs path from root to ⍵.
+     parent←⍵.##         ⍝ parent of current space.
+     parent=⍵:,⍺         ⍝ ⍵ must be # or ⎕SE.
+     (parent,⍺)∇ parent  ⍝ accumulated path.
+ }

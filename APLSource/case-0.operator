@@ -1,0 +1,6 @@
+ case←{              ⍝ Select statement
+     ~∨/b←<\⍺:⍵      ⍝ none
+     ¯1↑b:⍵⍵ ⍵       ⍝ last one
+     1 0≡b:⍺⍺ ⍵      ⍝ first of two
+     (¯1↓b)⍺⍺ ⍵      ⍝ penultimate?
+ }

@@ -1,0 +1,132 @@
+rvec ← {exclude←⍬} ##.refs ref              ⍝ Vector of sub-space references.
+
+Produces  a  vector  of namespace references to [ref] and each of its subspaces.
+The optional left argument is a list of sub-spaces to be excluded from the trav-
+ersal.
+
+Technical notes:
+
+The  coding is complicated by having to cater for "cyclic" namespace references.
+As  a  space  may contain a reference to one if its ancestors, the code must not
+blindly  follow  all  subspace  references,  otherwise  unbounded recursion will
+result  in a WS FULL. The trick is to avoid re-visiting any space by maintaining
+a list of those already visited.
+
+    refs←{                              ⍝ Vector of sub-space references for ⍵.
+        ⍺←⍬ ⋄ (⍴,⍺)↓⍺{                  ⍝ default exclusion list.
+            ⍺∊⍵:⍺                       ⍝ already been here: quit.
+            ⍵.(↑∇∘⍎⍨/⌽(⊂⍺,⍵),↓⎕NL 9)    ⍝ recursively traverse any sub-spaces.
+        }⍵                              ⍝ for given starting ref.
+    }
+
+The  outer  code defaults the exclusion list to null (no exclusions) and removes
+the list from the final result:
+
+        ⍺←⍬ ⋄ (⍴,⍺)↓⍺{                  ⍝ default exclusion list.
+            ···
+        }⍵                              ⍝ for given starting ref.
+
+The first line of the inner function stops if the space is in the list:
+
+        ⍺∊⍵:⍺                           ⍝ already been here: quit.
+
+The test could be omitted by set-subtracting the list of visited refs  from  the
+list of subspace refs. However, the code would have to accomodate the execute of
+each of a null vector of sub-space names:
+
+    (1↓⍎¨'0',↓⎕NL 9)~⍺
+
+Perhaps a little daunting at first sight, the second line is interpreted thus:
+
+⍵.(····················)  ⍝ Within the subject space,
+·················↓⎕NL 9·  ⍝ take a vector of sub-space names,
+··········(⊂⍺,⍵),·······  ⍝ prefixed with extended visited-list.
+···↑···⍨/⌽··············  ⍝ left-to-right reduction with operand:
+····∇···················  ⍝ recursive call between visited-list
+·····∘··················  ⍝ and
+······⍎·················  ⍝ ref from sub-space name.
+
+Notably absent from the code is any explicit test to quit when there are no more
+sub-spaces. In this case, ↓⎕NL 9 is a null vector, so ⌽(⊂⍺,⍵),↓⎕NL 9 is a 1-item
+vector, which  is  just  passed  along as the result of the reduction without an
+application of its recursive operand function.  The  technique  is abstracted in
+operator →trav←.
+
+An alternative, suggested by Paul Mansour, which returns just GUI refs is:
+
+    guirefs←{                       ⍝ Vector of GUI references for ⍵.
+        ⍬{                          ⍝ starting with null result accumulator.
+            ⍵.(↑∇∘⍎⍨/⌽(⊂⍺,⍵),⎕WN'') ⍝ recursively traverse any sub-spaces.
+        }⍵                          ⍝ for given starting ref.
+    }
+
+or the equivalent:
+
+    guirefs←{                   ⍝ Vector of GUI references for ⍵.
+        ⍺←⍬                     ⍝ starting with null result accumulator.
+        ⍵.(↑∇∘⍎⍨/⌽(⊂⍺,⍵),⎕WN'') ⍝ recursively traverse any sub-spaces.
+    }
+
+This code needs no check for circularity as ⎕WN acknowledges only the strict GUI
+parent-child  hierarchy.  Again,  what is perhaps remarkable, is the lack of any
+explicit test for termination: guirefs can safely navigate an arbitrarily compl-
+ex GUI-tree even though it has "no moving parts".
+
+Phil Last  observes that a ref from a space inside the subject space to one out-
+side it, will include _all_ subspaces of the outer space. For example:
+
+    'x'⎕ns''
+    x.cuckoo←#
+    refs x
+ #.x  #  #.notes  #.scripts
+
+To  report only those refs _within_ the subject space (x), Phil suggests replac-
+ing the recursive line:
+
+        ⍵.(↑∇∘⍎⍨/⌽(⊂⍺,⍵),↓⎕NL 9)    ⍝ recursively traverse any sub-spaces.
+with:
+        ⍵.(↑∇⍨/⌽(⊂⍺,⍵),⍵{(0 0,1↓⍺=⍵.##)/0,⍵}⍎'⍵',,' ',⎕NL 9)
+                                ¯¯¯¯¯¯
+The  crucial part of the above is ⍺=⍵.##, which produces a mask to extract those
+subspaces  whose parent is the current space. This removes outward pointing refs
+(such as "cuckoo" above) from the result as its parent is not the current space.
+
+The  elegance  of the expression is marred a little by having to avoid errors if
+there are no true subspaces.
+
+Firstly,  if ⎕NL 9 were to return an empty matrix, then ⍎,' ',⎕NL 9 would gener-
+ate  a  VALUE ERROR.  To  avoid this, we preface the possibly empty list of refs
+with known ref '⍵' (which will be removed later).
+
+            ⍎'⍵',,' ',⎕NL 9
+
+Secondly, because the interpreter does not currently provide a prototypical ref,
+we  must  avoid  the NONCE ERROR that would occur if (···⍺=⍵.##)/⍵ resulted in a
+null (if ⍺=⍵.## produced all zeros). This is achieved by prefixing 0 to the vec-
+tor of refs: 0,⍵ and removing it with a corresponding 0 as the first item of the
+replicate:
+
+        ⍵.(↑∇⍨/⌽(⊂⍺,⍵),⍵{(0 0,1↓⍺=⍵.##)/0,⍵}⍎'⍵',,' ',⎕NL 9)
+                          ¯             ¯¯
+Finally,  the  extra prefixed '⍵' from the first step is removed by substituting
+a 0 for the second item in the replication mask:
+
+        ⍵.(↑∇⍨/⌽(⊂⍺,⍵),⍵{(0 0,1↓⍺=⍵.##)/0,⍵}⍎'⍵',,' ',⎕NL 9)
+                            ¯¯¯¯             ¯¯¯¯
+Examples:
+
+    refs ⎕se                        ⍝ Vector of space refs for ⎕SE.
+    (refs #).(⎕WX←1)                ⍝ Set value of ⎕WX in all spaces in ws.
+    ⌈/(refs #).⎕ml                  ⍝ Max ⎕ML in workspace.
+    ⌈/{+/'.'=⍕⍵}¨refs #             ⍝ Max namespace depth.
+    ⊃+⌿↑⍴¨(refs #).⎕nl 2            ⍝ Total number of global variables.
+    ↑⍪/{⍵ find'⍴⍴'}¨refs #          ⍝ Search for rank.
+    ∧/0=(refs #).⎕nc⊂'foo'          ⍝ Is this a foo-free workspace?
+    (refs #).⎕ex⊂'foo'              ⍝ Defoobarise the workspace.
+    (refs #)fnrepl¨⊂'foo' 'bar'     ⍝ In all the fns in all the spaces ...
+    ⎕se.(cbtop cbbot) refs ⎕se      ⍝ ⎕SE refs, excluding CoolBands.
+
+See also: trav tree up Namespaces xrefs pow
+
+Index:refs|namespace references|⎕WX
+Index;Last P.|Mansour P.

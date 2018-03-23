@@ -1,0 +1,22 @@
+ packB←{(⎕CT ⎕IO)←0          ⍝ Pack a simple array.
+
+     cmp←{
+         u←∪,⍵               ⍝ unique elements
+         i←u⍳,⍵ ⋄ w←⌈2⍟⍴u    ⍝ indices, max. bit width
+         b←1,2≠/i            ⍝ repeats (rle coding)
+         j←0∨,(w⍴2)⊤b/i      ⍝ binarise to max width
+         ((⍴⍴⍵),(⍴⍵),u)b j   ⍝ (rank, shape, uniques)(rle)(coded indices)
+     }
+
+     exp←{
+         q←0⊃⍵ ⋄ s←0⊃q               ⍝ get rank,
+         r←s⍴1↓q ⋄ u←(s+1)↓q         ⍝  shape and unique elements
+         w←⌈2⍟⍴u                     ⍝ the bit width
+
+         e←{¯2-/⍵/⍳⍴⍵}(1⊃⍵),1        ⍝ expander
+         i←2⊥w{(⍺,⌊(⍴⍵)÷⍺)⍴⍵}2⊃⍵     ⍝ decode indices
+         r⍴u[e/i]                    ⍝ here we go!
+     }
+
+     ⍺←1 ⋄ ⍺:cmp ⍵ ⋄ exp ⍵           ⍝ compress or expand.
+ }

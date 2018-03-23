@@ -1,0 +1,198 @@
+cmp ← {cmp←12} ##.packZ exp         ⍝ Abraham Lempel, Jacob Ziv, Terry Welch.
+
+The  LZW  algorithm  relies on recurrence of sequences (strings) of items in its
+input  vector.  The  items  are  typically characters, but may be drawn from any
+"alphabet"  of distinct values, including for example the boolean alphabet: 0 1,
+or the unique items of a nested vector (see the example using →tokens←, below).
+
+The  algorithm  maintains a "dictionary", which maps strings in the input vector
+to  their  associated  output  codes. The dictionary initially contains mappings
+for  all  possible  strings  of length one. Input is taken one item at a time to
+find  the longest initial string already present in the dictionary. The code for
+that  string is output and the string, extended with the following item (i) from
+the input vector, is added to the dictionary with the next unused code (obtained
+by incrementing a counter). The process repeats, with the input string beginning
+with (i).
+
+The number of bits in an output code, and hence the maximum number of entries in
+the dictionary, is usually fixed and once this limit is reached, no more entries
+are  added.  A code width of 12 bits has been recommended. The absolute value of
+left  argument [cmp] specifies this limit. If [cmp] is negative, the dictionary,
+rather than the compression structure is returned. See example below.
+
+Technical notes:
+
+Output  from  the  function  is a 3-vector: (shape codes alphabet). [codes] is a
+vector  of  non-negative indices into the dictionary, encoded as a w-row boolean
+matrix,  where  w  is the number of bits (default maximum 12) allocated for each
+value. The integer vector for codes is easily reconstituted with 2⊥⍵. [alphabet]
+is the set of unique items in the input vector.
+
+Each  new "string" inserted into the dictionary is identical to an existing one,
+but with one extra "character" appended. In light of this, the dictionary may be
+represented  as a tree. For an alphabet of ⍺ unique items, each node in the tree
+has  ⍺ sub-nodes: an "⍺-ary tree". For example, a boolean vector (with alphabet:
+0, 1) will produce a binary tree and a string that uses all values from ⎕AV will
+give  rise  to a 256-ary tree. Extracting the code associated with a string from
+the  dictionary  amounts to using a character at a time to navigate through each
+of  the  tree's  nodes.  Encountering a null node signals that the string is not
+currently  in  the  dictionary,  which can be extended by adding a new node with
+a  codeword representing the new string. This type of tree is known in the trade
+as a "suffix trie" (Aho et al 1983).
+
+Historical note:
+
+The 20-year patent on this beautiful algorithm finally expired world-wide on 7th
+July,  2004.  Prior  to this date, incorporating any coding of LZW in commercial
+software incurred a royalty.
+
+(muse:
+    This  raises  the question of whether algorithms are invented or discovered.
+    The following thought-experiment suggests they are _discovered_:
+
+    If it turns out that life on Mars has advanced sufficiently to produce math-
+    ematicians,  their  set  of  prime  numbers must coincide with ours (even if
+    their anatomy has lead them to a counting base other than decimal).
+
+    Neither  civilisation invented the sequence of prime numbers; it was already
+    "out there", when we became aware of, or discovered it.
+
+    Same goes for algorithms. If the Martians are aware of prime numbers, in all
+    probability,  they will also be aware of the sieving algorithm that extracts
+    them  (perhaps  they call it "The Sieve of Zork"). Similarly, it is unlikely
+    that  they  are  unaware  of  the subtract-&-swap method for finding highest
+    common factors, which was discovered on our planet by Euclid. And so on;
+
+    Thus,  algorithms exist independently of the cultures that discover them (an
+    idea proposed by the Greek philosopher and mathematician Plato ¯427-¯347).
+
+    Viewed  in  this  light,  useful algorithms could be seen as diamonds in the
+    otherwise  dark  coal-face  that is the set of all expression transformation
+    sequences.
+
+    (
+        However,  it's hard (for JMS) to see why the same argument doesn't apply
+        to  artefacts  generally  accepted to be inventions: the baby sling, the
+        wheel/axle,  the  stirrup, the beer-can ring-pull, and so forth. Perhaps
+        it's  a question of the degree of complexity of the construction or per-
+        haps it depends upon whether the components are discrete or continuous.
+    )
+
+    Of course, both inventions and discoveries may be patented.
+)
+
+Examples:
+
+    packZ'mississippi'                      ⍝ compress char vector.
+ 11  0 0 0 0 1 1 0 0 0  misp
+     0 0 1 1 0 1 1 1 0
+     0 1 0 0 1 1 1 1 1
+
+    {⍵≡0 packZ packZ ⍵}'mississippi'        ⍝ expand recovers original.
+1
+
+    2⊥2⊃packZ'mississippi'                  ⍝ ... bool matrix decoded.
+0 1 2 2 5 7 3 3 1
+
+    ¯8 packZ'mississippi'                   ⍝ final compression dictionary.
+┌─┬─┬─┬─┬──┬──┬──┬──┬───┬───┬──┬──┐
+│m│i│s│p│mi│is│ss│si│iss│sip│pp│pi│
+└─┴─┴─┴─┴──┴──┴──┴──┴───┴───┴──┴──┘
+
+    segs←{(¯12 packZ ⍵)[⎕io+2⊥2⊃packZ ⍵]}   ⍝ dictionary entry per code word.
+
+    segs'mississippi'                       ⍝ segments for string.
+┌─┬─┬─┬─┬──┬──┬─┬─┬─┐
+│m│i│s│s│is│si│p│p│i│
+└─┴─┴─┴─┴──┴──┴─┴─┴─┘
+
+    {⍵≡↑,/segs ⍵}'mississippi'              ⍝ enlist of segs recovers original.
+1
+    segs 40⍴'a'                             ⍝ segs for highly repetitive string.
+┌─┬──┬───┬────┬─────┬──────┬───────┬────────┬────┐
+│a│aa│aaa│aaaa│aaaaa│aaaaaa│aaaaaaa│aaaaaaaa│aaaa│
+└─┴──┴───┴────┴─────┴──────┴───────┴────────┴────┘
+
+    segs 40⍴'abcd'                          ⍝ segs for less repetitive string.
+┌─┬─┬─┬─┬──┬──┬───┬──┬──┬───┬───┬───┬────┬─────┬────┬───┐
+│a│b│c│d│ab│cd│abc│da│bc│dab│cda│bcd│abcd│abcda│bcda│bcd│
+└─┴─┴─┴─┴──┴──┴───┴──┴──┴───┴───┴───┴────┴─────┴────┴───┘
+
+    packZ'hello world'                      ⍝ compressed char vector.
+┌──┬─────────────────────┬────────┐
+│11│0 0 0 0 0 1 1 0 1 0 1│helo wrd│
+│  │0 0 1 1 1 0 0 1 1 1 1│        │
+│  │0 1 0 0 1 0 1 1 0 0 1│        │
+└──┴─────────────────────┴────────┘
+
+    packZ 11 ⎕dr'hello world'               ⍝ compressed bool vector.
+┌──┬───────────────────────────────────────────────────────────────┬───┐
+│88│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 0 1 0│0 1│
+│  │0 0 0 0 0 0 0 0 0 0 0 1 0 1 1 0 1 0 1 1 0 1 1 0 0 1 0 0 1 1 1 0│   │
+│  │0 0 0 0 0 1 0 1 1 1 0 0 1 1 1 1 1 0 0 0 1 0 0 0 1 0 1 0 0 1 1 0│   │
+│  │0 0 0 1 0 1 1 0 0 0 1 0 1 0 0 1 1 1 0 0 1 0 1 1 1 0 0 0 0 1 0 0│   │
+│  │0 1 1 0 0 0 0 0 1 0 1 0 1 0 0 0 1 1 1 1 1 0 1 0 1 0 0 1 0 0 0 0│   │
+└──┴───────────────────────────────────────────────────────────────┴───┘
+
+    packZ 83 ⎕DR'hello world'               ⍝ compressed integer vector.
+┌──┬─────────────────────┬──────────────────────────────┐
+│11│0 0 0 0 0 1 1 0 1 0 1│104 101 108 111 32 119 114 100│
+│  │0 0 1 1 1 0 0 1 1 1 1│                              │
+│  │0 1 0 0 1 0 1 1 0 0 1│                              │
+└──┴─────────────────────┴──────────────────────────────┘
+
+    size←{⍬⍴⎕size'⍵'}                       ⍝ function for size in bytes.
+
+    size notes.packZ                        ⍝ size of notes.
+7200
+    size packZ notes.packZ                  ⍝ size of compressed notes.
+3948
+    size 8 packZ notes.packZ                ⍝ ... with 8-bit code words.
+5388
+
+    size 100 100⍴⍳7                         ⍝ size of numeric matrix.
+10020
+    size packZ 100 100⍴⍳7                   ⍝ compressed size.
+512
+
+    mat                                     ⍝ nested matrix.
+┌────────┬─────┬────────┐
+│Scissors│Stone│Paper   │
+├────────┼─────┼────────┤
+│Stone   │Paper│Scissors│
+└────────┴─────┴────────┘
+
+    size mat                                ⍝ matrix size.
+188
+    size packZ ⍉mat                         ⍝ compressed size.
+172
+    packZ mat                               ⍝ compressed matrix.
+┌───┬─────────┬──────────────────────┐
+│2 3│0 0 0 1 0│┌────────┬─────┬─────┐│
+│   │0 0 1 0 0││Scissors│Stone│Paper││
+│   │0 1 0 0 0│└────────┴─────┴─────┘│
+└───┴─────────┴──────────────────────┘
+
+    tokens ⊃⎕nr'packZ'                      ⍝ tokens in first line of packZ.
+┌─────┬─┬─┬───┬─┬───┬─┬─┬─┬─┬──────────────────────────┬───────────────────────────────┐
+│packZ│←│{│⎕IO│ │⎕ML│←│0│ │1│                          │⍝ Lempel-Ziv-Welch compression.│
+└─────┴─┴─┴───┴─┴───┴─┴─┴─┴─┴──────────────────────────┴───────────────────────────────┘
+
+    toks←↑,/tokens¨⎕nr'packZ'               ⍝ nested vector of packZ's tokens.
+
+    size toks                               ⍝ size of packZ's tokens.
+11508
+    size packZ toks                         ⍝ size of compressed tokens.
+4672
+    {⍵≡0 packZ packZ ⍵}toks                 ⍝ nested pack: full circle.
+1
+    {⍵≡0 packZ packZ ⍵}'hello world'        ⍝ char pack: full circle.
+1
+    {⍵≡0 packZ packZ ⍵}11 ⎕dr'hello world'  ⍝ bool pack: full circle.
+1
+
+See also: Data_compression tokens
+
+Index:packing|compression|suffix trie|Lempel-Ziv-Welch
+Index:mathematicians
+Index;Lempel A.|Ziv J.|Welch T.|Euclid

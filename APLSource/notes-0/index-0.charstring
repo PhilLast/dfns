@@ -1,0 +1,79 @@
+indx ← notespace ##.index class             ⍝ ⍵-index of notes in space ⍺.
+
+[index]  extracts  lines starting 'Index',[class] from character arrays in space
+[notespace]  and  returns a vector of (entry refs) pairs:
+
+    entry:  index entry (character vector)
+    refs:   names of variables referencing entry (vector of character vectors).
+
+Multiple entries on the same line are separated by character '|'.
+
+The  notes  in this workspace use the convention ':' to add entries to a ≤topic≥
+index,  ';'  to  add  entries  to a ≤person≥ index, and '≡' to add entries to an
+alias list.
+
+    Index:  topic_entry|topic_entry|...
+    Index;  person_entry|...
+    Index≡  alias, for example "network, see: graph", as follows:
+
+Aliases:
+
+Index≡BFS→breadth-first search|network→graph|recursion→recursion|Phi→golden mean
+Index≡balanced tree→binary search tree|IDN→International Day Number
+Index≡AGM→arithmetic-geometric mean|BST→binary search tree
+Index≡DFS→depth-first search|MST→minimum spanning tree|RLE→run-length encoding
+Index≡line list→line vector|FRE→Function Results Edition|LZW→Lempel-Ziv-Welch
+Index≡spaces→blanks|GCD→greatest common divisor|LCM→least common multiple
+Index≡JITS→Just-In-Time-Subtraction|HCF→greatest common divisor
+Index≡AST→abstract syntax tree|CPS→continuation-passing style|Ø→golden mean
+Index≡imaginary numbers→complex numbers|HHKB→Happy Hacking Keyboard
+Index≡line-drawing characters→box-drawing characters|FFT→Fast Fourier Transform
+Index≡data compression→compression|TAO→Total array ordering
+Index≡read-eval-print loop→repl|nested array→array, nested|EIS→enclose-if-simple
+
+Example:
+
+    ↑ 5↑ notes index ':'                ⍝ first 5 _topic_ index entries.
+ ⍺th root      root
+ ⍺←            root
+ accumulator   factorial  fibonacci  list
+ adjacent 1s   xtabs
+ AGM           limit
+
+    ↑ 5↑ notes index ';'                ⍝ first 5 _person_ index entries.
+ Adelson-Velskii G.M.   avl
+ Baas M.                pred
+ Baronet D.             dtb
+ Beckham D.             mayan
+ Bopp Y.                enlist
+
+    ↑ 5↑ notes index ':;'               ⍝ first 5 _combined_ index entries.
+ ⍺th root               root
+ ⍺←                     root
+ accumulator            factorial  fibonacci  list
+ Adelson-Velskii G.M.   avl
+ adjacent 1s            xtabs
+
+    {'see ',⍵}\↑{1↓¨('→'=⍵)⊂⍵}∘{'→',⊃⍵}¨notes index'≡'      ⍝ alias entries
+ AGM            see arithmetic-geometric mean
+ AST            see abstract syntax tree
+ balanced tree  see binary search tree
+ BFS            see breadth-first search
+ BST            see binary search tree
+ DFS            see depth-first search
+ FRE            see Function Results Edition
+ GCD            see greatest common divisor
+ HCF            see greatest common divisor
+ IDN            see International Day Number
+ JITS           see Just-In-Time-Subtraction
+ LCM            see least common multiple
+ line list      see line vector
+ LZW            see Lempel-Ziv-Welch
+ MST            see minimum spanning tree
+ network        see graph
+ Phi            see golden mean
+ recursion      see recursion
+ RLE            see run-length encoding
+ spaces         see blanks
+
+See also: xhtml

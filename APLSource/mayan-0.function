@@ -1,0 +1,24 @@
+ mayan←{                             ⍝ Mayan numbers.
+                                    ⍝ ⍺=0: regular base  ... 20 20 20.
+     ⍺←1                             ⍝ ⍺=1: calendar base ... 20 18 20.
+
+     snail dot bar←'_@/' '⍟' '⌹'     ⍝ graphics for digits.
+
+     n←1+⌈18⍟1⌈⍵                     ⍝ generous number of digits.
+     base←20-2⌽n↑2×⍺                 ⍝  ... 20 20 (18 or 20) 20
+
+     ⍪' '⍪∘{                         ⍝ column of blank-separated digits:
+         ⍵=0:1 5⍴' ',snail,' '       ⍝ 0: snail.
+         comp part←0 5⊤⍵             ⍝ complete and partial rows.
+         top←dot{                    ⍝ dots spread mayan-style.
+             ⍵=0:0 5⍴''              ⍝ multiple of 5: no dots.
+             ⍵=1:0 0 1 0 0\⍺         ⍝ centred dot,
+             ⍵=2:0 1 0 1 0\⍺         ⍝ split pair,
+             ⍵=3:0 1 1 1 0\⍺         ⍝ centred triple,
+             ⍵=4:1 1 1 1 0\⍺         ⍝ uncentred quadruple :-(
+         }part                       ⍝ dots in top row, followed by
+         top⍪comp 5⍴bar              ⍝ complete lines below.
+     }¨{                             ⍝ for each digit.
+         (-1⌈+/∨\⍵≠0)↑⍵              ⍝ without surplus leading zeros.
+     }base⊤⍵                         ⍝ encoded number.
+ }

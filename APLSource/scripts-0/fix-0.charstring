@@ -1,0 +1,29 @@
+⍝ Fix function/operator rep:
+
+    ⎕io←1
+
+    ⎕fx'z←tfn n' 'z←⍳n'             ⍝ trad fn.
+tfn
+    dfn←{3↑⍵}                       ⍝ dfn.
+    drv←×/                          ⍝ derived fn.
+
+    vec←rep¨'tfn' 'dfn' 'drv'
+
+      disp vec                      ⍝ vector of function reps.
+┌──────┬──────┬──────────┐
+│ ∇tfn │ ∇dfn │┌───┬────┐│
+│      │      ││drv│ ×/ ││
+│      │      │└───┴────┘│
+└──────┴──────┴──────────┘
+
+      ⊢fix¨vec                      ⍝ fix functions.
+ tfn  dfn  drv 
+
+      disp ⎕cr¨'drv' 'dfn' 'tfn'    ⍝ function 'source'.
+┌──┬─────────┬───────┐
+│×/│dfn←{3↑⍵}│z←tfn n│
+│  │         │z←⍳n   │
+└──┴─────────┴───────┘
+
+      drv dfn tfn 6                 ⍝ test functions.
+6

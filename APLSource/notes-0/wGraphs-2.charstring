@@ -1,0 +1,124 @@
+───────────────
+Weighted Graphs
+───────────────
+A  weighted  graph has a traversal cost associated with each edge. An example of
+an application might be in modelling a transportation system such as a road net-
+work.  An  edge  of  the graph would correspond to a stretch of road between two
+intersections,  and  its  weight with the length of the section or expected time
+taken to drive along it. Choosing an optimal path through such a network amounts
+to finding a set of graph edges connecting the start and end points, which has a
+minimal total cost.
+
+The  following  diagram  represents a simple example, whose weights are shown to
+the right of, or below, the direction arrow for each edge.
+
+  Weighted Graph "aa".
+    ┌─────A←────┐
+    │     │1    │   5 vertices: A B C D E
+    ↓1    ↓3    │
+    B←───→C────→D   8 edges:    A→B  A→C  B→C  C→B  C→D  D→A  D→E  E→C
+     4   1↑1   1│   weights:     1    3    1    4    1    1    1    1
+          │     ↓1
+          └─────E   Notice that there is an edge C→B, as well as B→C.
+
+The  graph  is  implemented as a 2-row  matrix, whose first row is an unweighted
+graph and whose second row is a vector of weights for each edge.
+
+Functions →wpath← and →wspan← do the same job as →path← and →span← respectively,
+and →wcost← returns the cost for each edge of a path through the graph.
+
+Mike Day suggests a class of problem in which we navigate between adjacent cells
+of  a  matrix  and where there is a cost of visiting each cell. There may be re-
+strictions  on  which  directions  we can take (for example: only rightwards and
+downwards).
+
+Mike  provides  a  function  to  convert from such a matrix to a weighted graph,
+suitable for wpath, wspan, etc:
+
+    mattographa←{⎕ML←0
+        i←{⍵⍴⍳×/⍵}⍴⍵
+        max←1+⌈/,i
+        ⍺←1 1 1 1           ⍝ if up left right down
+        addlink←{
+            1 1↓¯1 ¯1↓⍺{
+                ⍺=0:⍵
+                ⍺=1:¯1⊖⍵
+                ⍺=2:¯1⌽⍵
+                ⍺=3:1⌽⍵
+                ⍺=4:1⊖⍵
+            }⍵
+        }
+        op←⍺/⍳4
+        w←max,max,⍨max⍪max⍪⍨i
+        links←,{⍵/⍨⍵<max}¨↓[⎕IO]↑op addlink¨⊂w
+        costs←links{⍺⊃¨⊂⍵}¨⊂,⍵
+        links←(⊂⊂¨,i)⍳¨⊂¨¨links
+        ↑links costs
+    }
+
+    cell_costs          ⍝ cost of visiting each cell.
+131 673 234 103  18
+201  96 342 965 150
+630 803 746 422 111
+537 699 497 121 956
+805 732 524  37 331
+
+    1 25 wpath⍨ 0 0 1 1 mattographa cell_costs      ⍝ minimal path: down, right.
+1 6 7 8 13 14 19 24 25
+
+    1 25 wpath⍨ 1 1 1 1 mattographa cell_costs      ⍝ minimal path: any dirn.
+1 6 7 8 3 4 5 10 15 14 19 24 25
+
+    costs←{⍵ wcost ⍵ wpath ⍺}                       ⍝ cost function.
+
+    1 25 costs 0 0 1 1 mattographa cell_costs       ⍝ cost of each link in path.
+201 96 342 746 422 121 37 331
+
+Note that the cost of _entering_ the first cell is missing from the cost vector.
+
+This nested version of mattographa is smaller but runs a lot slower than Mike's:
+
+    m2g←{⎕ML←0                          ⍝ Graph from weightings matrix.
+        ⍺←1 1 1 1                       ⍝ up left right down.
+        dirns←⍺/(¯1 0)(0 ¯1)(0 1)(1 0)  ⍝ directions.
+        xvecs←dirns∘+∘⊂¨⍳⍴⍵             ⍝ index vectors per link.
+        links←,{⍵⍳¨⍵∩¨xvecs}⊂,⍳⍴⍵       ⍝ unweighted graph.
+        costs←,links{⍺⊃¨⊂⍵}¨⊂,⍵         ⍝ costs per link.
+        ↑links costs                    ⍝ weighted graph.
+    }
+
+Examples:
+
+      aa←↑((2 3)3(2 4)(1 5)3) ((1 3)1(4 1)(1 1)1)
+
+      aa                            ⍝ simple weighted graph "aa".
+┌───┬─┬───┬───┬─┐
+│2 3│3│2 4│1 5│3│
+├───┼─┼───┼───┼─┤
+│1 3│1│4 1│1 1│1│
+└───┴─┴───┴───┴─┘
+
+      show←{↑{⍺,'→',⍵}/⎕a[⍵]}       ⍝ translate path vertices to: A B C ···
+
+      show aa wpath 3 2             ⍝ lowest cost path C→B.
+C→D→A→B
+
+      show aa[1;] path 3 2          ⍝ compare: best path C→B _ignoring_ weights.
+C→B
+
+      aa wspan 5                    ⍝ spanning tree for aa from vertex 3.
+4 1 5 3 ¯1
+
+      disp(aa wspan 5)∘stpath¨⍳5    ⍝ paths to each vertex from spanning tree 5.
+┌→──────┬─────────┬───┬─────┬─┐
+│5 3 4 1│5 3 4 1 2│5 3│5 3 4│5│
+└~─────→┴~───────→┴~─→┴~───→┴→┘
+
+      aa wcost 1 3 4 5 3 2 3 2      ⍝ cost of path through graph "aa".
+3 1 1 1 4 1 4
+
+See also: Graphs wpath wspan wcost wmst stpath
+See also: path span
+
+Index:graph, weighted
+Index;Day M.

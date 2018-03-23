@@ -1,0 +1,8 @@
+ vof←{                           ⍝ Vector of functions.
+     ⍺←⊂                         ⍝ ⍺ elided: ⊂⍵.
+     (al ar)(wl wr)←{            ⍝ distribute arg(s).
+         ((-1<≢⍵)↓,⍵)(⎕IO⊃⌽,⍵)   ⍝ permissive scalar extension,
+     }¨⍺ ⍵                       ⍝ of each arg.
+     1≡⍺ 1:(⍺⍺ wl),⊂⍵⍵ wr        ⍝ mondadic
+     (al ⍺⍺ wl),⊂ar ⍵⍵ wr        ⍝ dyadic
+ }

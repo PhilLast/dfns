@@ -1,0 +1,132 @@
+num ← num ##.gcd num                        ⍝ Greatest Common Divisor.
+                                            ⍝ Euclid ¯330-¯275.
+An illustration of tail recursion.
+
+    gcd←{       ⍝ Greatest common divisor.
+        ⍵=0:|⍺
+        ⍵ ∇ ⍵|⍺
+    }
+
+NB: This function is for illustrative purposes only;  GCD and LCM are  primitive
+    functions ∨ and ∧.
+
+Wikipedia says: "The  original  algorithm as described by Euclid treated it as a
+geometric  problem,  and  hence  used repeated subtraction of the smaller number
+from  the  larger  number rather than integer division ... which is considerably
+less efficient than ... (using residue)."
+
+Ref: http://en.wikipedia.org/wiki/Euclidean_algorithm
+
+Euclid  might  have coded something like the following, which works for positive
+arguments:
+
+    gcd←{               ⍝ Euclid's algorithm.
+        ⍺<⍵: ⍺ ∇ ⍵-⍺    ⍝ ... using repeated
+        ⍺>⍵: ⍵ ∇ ⍺-⍵    ⍝ ... subtraction.
+        ⍺=⍵: ⍺
+    }
+
+Binary GCD
+----------
+This  algorithm,  which  takes  a  pair of non-negative whole (unsigned integer)
+numbers as argument, is suitable for implementing GCD in a low-level compiled or
+assembly language. In such languages, 2|⍵ and ⍺÷2 are fast operations.
+
+    bgcd←{                  ⍝ Binary gcd.
+        0∊⍵:+/⍵             ⍝ either is 0:      m ? m : n
+        0 0≡2|⍵:2×∇ ⍵÷2     ⍝ even even:       (∇ (m >> 1) (n >> 1)) << 1
+        0 1≡2|⍵:∇ ⍵÷2 1     ⍝ even odd:         ∇ (m >> 1) n
+        1 0≡2|⍵:∇ ⍵÷1 2     ⍝ odd  even:        ∇ m (n >> 1)
+        ≤/⍵:∇(-\⍵)÷1 ¯2     ⍝ odd  odd: m≤n:    ∇ m (n-m >> 1)
+        ∇(⌽-\⌽⍵)÷¯2 1       ⍝ odd  odd: m>n:    ∇ (m-n >> 1) n
+    }
+
+        bgcd 105 330        ⍝ takes a pair of non-negative whole numbers.
+    15
+
+Ref: http://en.wikipedia.org/wiki/Binary_gcd
+
+Array GCD
+---------
+We  can  modify  the  coding  slightly to find the GCDs of conformable (possibly
+nested) arrays in parallel:
+
+    gcds←{                          ⍝ Array-GCD.
+        ⍺≡⍺+⍺:|⍵                    ⍝ all 0s: done.
+        (⍺⌊⍵)∇(⍺⌊⍵)|⍺⌈⍵             ⍝ min ∇ min | max.
+    }
+
+    ⎕←pvec←sieve 2 to 80            ⍝ primes 2..80
+2 3 5 7 11 13 17 19 23 29 31 37 41 43 47 53 59 61 67 71 73 79
+
+    ⎕←tvec←×/¨3,/pvec               ⍝ products of consecutive triples.
+30 105 385 1001 2431 4199 7429 12673 20677 33263 47027 65231 82861 107113 146969 190747 241133 290177 347261 409457
+
+    ⎕←ll rr←4 5∘⍴¨0 ¯1⌽¨⊂tvec       ⍝ matrices of adjacent triple products.
+     30    105    385   1001   2431  409457     30    105    385   1001
+   4199   7429  12673  20677  33263    2431   4199   7429  12673  20677
+  47027  65231  82861 107113 146969   33263  47027  65231  82861 107113
+ 190747 241133 290177 347261 409457  146969 190747 241133 290177 347261
+
+    ll gcd¨rr                       ⍝ GCDs using each.
+   1   15   35   77  143
+ 221  323  437  667  899
+1147 1517 1763 2021 2491
+3127 3599 4087 4757 5183
+
+    ll gcds rr                      ⍝ parallel GCDs.
+   1   15   35   77  143
+ 221  323  437  667  899
+1147 1517 1763 2021 2491
+3127 3599 4087 4757 5183
+
+    cmpx'll gcd¨rr' 'll gcds rr'    ⍝ timing comparison: parallel is faster.
+  ll gcd¨rr  1.2E¯4   0% ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+  ll gcds rr 5.2E¯5 -56% ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+
+    (↓ll) gcds ↓rr                  ⍝ nested GCDs.
+┌──────────────┬───────────────────┬────────────────────────┬────────────────────────┐
+│1 15 35 77 143│221 323 437 667 899│1147 1517 1763 2021 2491│3127 3599 4087 4757 5183│
+└──────────────┴───────────────────┴────────────────────────┴────────────────────────┘
+
+A better version for non-integral arguments
+-------------------------------------------
+Euclid's  algorithm works well for whole-number arguments but gives poor results
+for floating-point numbers.  We can generalise Euclid to →rational← arguments by
+noting that:
+
+    (A÷B) gcd (C÷D)  ≡≡  (A gcd C) ÷ (B lcm D)
+
+where lcm is least-common-multiple. The following code does the trick:
+
+    ggcd←{                          ⍝ General gcd.
+        (a b)(c d)←rational¨⍺ ⍵     ⍝ rational approximations.
+        lcm←{⍺×⍵÷⍺ gcd ⍵}           ⍝ least common multiple.
+        (a gcd c)÷b lcm d           ⍝ (see notes.rats).
+    }
+
+then:
+
+    (1 to 11) ggcd¨ 0.111           ⍝ Gianluigi Quario's example.
+0.001 0.001 0.003 0.001 0.001 0.003 0.001 0.001 0.003 0.001 0.001
+
+Examples:
+
+      105 gcd 330
+15
+      factors (3×5×7) gcd 5×7×11
+5 7
+      lcm←{⍺×⍵÷⍺ gcd ⍵}                     ⍝ least common multiple
+
+      factors (3×5×7) lcm 5×7×11
+3 5 7 11
+
+      simple←{⍵÷gcd/⍵}                      ⍝ simplest fraction.
+
+      simple 24 36                          ⍝ simplify:  24/36 → 2/3.
+2 3
+
+See also: sieve factors nats rats rational
+
+Index:greatest common divisor|least common multiple|tail recursion
+Index;Euclid|Quario G.

@@ -1,0 +1,52 @@
+⍝ ⍵ days later than 1899-12-31 00:00:00:
+
+    date 12791                              ⍝ Whole number of days.
+1935 1 8 0 0 0 0
+
+    date 12791.51388889                     ⍝ Part way through day.
+1935 1 8 12 20 0 0
+
+    show←timestamp∘''                       ⍝ Format ⎕TS vector.
+
+    show date 1e5÷3                         ⍝ Fractional number of days.
+1991-04-06 08:00:00 
+
+    show date ¯7596.520833                  ⍝ Negative days before 1899 12 31.
+1879-03-14 11:30:00 
+
+    date 2 2⍴14892 15509 15761 14798        ⍝ (⍴date ⍵) ≡ (⍴⍵),7.
+1940 10  9 0 0 0 0
+1942  6 18 0 0 0 0
+                  
+1943  2 25 0 0 0 0
+1940  7  7 0 0 0 0
+
+    date ¯53799 + 0 1                       ⍝ 1752 calendar reform
+1752 9  2 0 0 0 0
+1752 9 14 0 0 0 0
+
+    ⍝ Peter Michael's neat one-liners:
+
+    n_days←{{¯693896+(⍵>730500)+⌊36524×⍵÷36525}¯60++/⍵[2]↑(⌈365.25⊥⍵[1 3]),31,(29-×4|1⊃⍵),9⍴5⍴31 30}
+    n_date←{y,m,1+d-(m←m+.≤d)⊃m←+\0 31,(29-×4|1⊃y d←⌊0 365.25⊤694035+⌊(36525×⍵-60.5+0.5××⍵-36584)÷36524),9⍴5⍴31 30}
+    
+    {⍵≡n_date n_days ⍵} 3↑⎕ts               ⍝ full circle.
+1
+    dvec←182680 182681                      ⍝ dates around leap-year 2400.
+
+    date dvec
+2400 2 28 0 0 0 0
+2400 2 29 0 0 0 0
+
+    ↑n_date¨ dvec
+2400 2 28
+2400 3  1
+
+    eudate←¯115860∘date                     ⍝ European calendar reform:
+
+    eudate ¯115860+0 1                      ⍝ 1582: Oct 4th and 15th contiguous.
+1582 10  4 0 0 0 0
+1582 10 15 0 0 0 0
+
+    Alpha test'Dates'                       ⍝ test for both days and dates.
+1

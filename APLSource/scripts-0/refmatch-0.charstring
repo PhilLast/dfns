@@ -1,0 +1,30 @@
+⍝ Space reference match:
+
+    _←'xy'⎕ns¨⊂''                   ⍝ make spaces x and y.
+
+    x refmatch x                    ⍝ space matches self.
+1
+    x refmatch y                    ⍝ spaces match.
+1
+                                    ⍝ populate with:
+    (x y).(⎕io ⎕ml num)←⊂1 2 3      ⍝   vars,
+    _←(x y).(⎕fx'z←sum v' 'z←+/v')  ⍝   function,
+    (x y).(z←⎕ns'')                 ⍝   space.
+    (x y).z.(⎕io ⎕ml num)←⊂0 1 3    ⍝ populate subspace.
+
+    x refmatch y                    ⍝ spaces match.
+1
+    x.z.num←3                       ⍝ replace with same value.
+    x refmatch y                    ⍝ still match.
+1
+    x.z.num←4                       ⍝ replace with distinct value.
+    x refmatch y                    ⍝ mismatch.
+0
+    x y←⎕ns¨'' ''⊣x y←0             ⍝ new spaces.
+    (x y).z ← x                     ⍝ matching cycles.
+    x refmatch y                    ⍝ ... don't hang.
+1
+    x y←⎕ns¨'' ''⊣x y←0             ⍝ new spaces.
+    (x y).(y x)←x y                 ⍝ non-matching cycles.
+    x refmatch y                    ⍝ ... don't hang.
+0

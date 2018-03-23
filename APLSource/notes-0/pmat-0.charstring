@@ -1,0 +1,114 @@
+mat ← ##.pmat n                             ⍝ Permutation matrix of ⍳⍵.
+
+[pmat]  takes an integer scalar [n] and returns a !n row matrix of the permutat-
+ions of ⍳n.
+
+Technical notes:
+
+The  method  used  here  is  to take each item of ⍳n in turn and append all sub-
+permutations of the remaining (n-1) items. This produces result items in ascend-
+ing order. Thus, for any ⍵: {⍵≡⍳⍴⍵}⍋pmat ⍵.
+
+The code looks like this:
+
+    pmat←{⎕ML←0             ⍝ Permutation matrix of ⍳⍵.
+        {                   ⍝ perms of ⍳⍵:
+            1≥⍴⍵:↑,↓⍵       ⍝ short vector: done.
+            ↑⍪/⍵,∘∇¨⍵∘~¨⍵   ⍝ items prefix sub-perms of remainder.
+        }⍳⍵                 ⍝ permutations of identity perm.
+    }
+
+Perttu  Pakarinen suggests the following _much faster_ version. It produces rows
+in non-ascending order but could easily be modified: {⍵[⍋⍵;]}.
+
+    prm←{
+        (⎕IO ⎕ML)←1 3
+        (×\⍳⍵){0∊⍴⍺:⍵ ⋄ (r c)←⍴⍵
+            (1↓⍺)∇(r/0,⍳c)⌽(⍺[1],c+1)⍴(↑⍴⍺),⍵}1 0⍴0
+    }
+
+For  large values of ⍵, the resulting permutation matrix takes a large amount of
+workspace.  In  this  case, it might be better to apply an auxiliary function to
+each permutation as it is generated. The following operator does the trick:
+
+    perms←{                 ⍝ Apply ⍺⍺ to each perm of ⍳⍵
+        ⍬ ⍺⍺{               ⍝ null accumulator
+            1≥⍴⍵:⍺⍺ ⍺,⍵     ⍝ short tail: apply operand to perm
+            (⍺∘,¨⍵)∇¨⍵∘~¨⍵  ⍝ transfer each tail item to head
+        }⍳⍵                 ⍝ for initial vector.
+    }
+
+Roger Hui provides this even faster version:
+
+    pmat2←{{,[⍳2]↑(⊂⊂⎕io,1+⍵)⌷¨⍒¨↓∘.=⍨⍳1+1↓⍴⍵}⍣⍵⍉⍪⍬}
+
+translated from perm2 in http://www.jsoftware.com/jwiki/Essays/Permutations
+itself a translation from APL.
+
+Examples:
+
+      pmat 3                            ⍝ 3-perms.
+1 2 3
+1 3 2
+2 1 3
+2 3 1
+3 1 2
+3 2 1
+
+      {⍵[pmat⍴⍵]}'tic' 'tac' 'toe'      ⍝ Perms of nested vector.
+ tic  tac  toe
+ tic  toe  tac
+ tac  tic  toe
+ tac  toe  tic
+ toe  tic  tac
+ toe  tac  tic
+
+      4 3 2⍴↓{⍵[pmat⍴⍵]}'abcd'          ⍝ Folded perms of simple 4-vector.
+ abcd  abdc
+ acbd  acdb
+ adbc  adcb
+
+ bacd  badc
+ bcad  bcda
+ bdac  bdca
+
+ cabd  cadb
+ cbad  cbda
+ cdab  cdba
+
+ dabc  dacb
+ dbac  dbca
+ dcab  dcba
+
+      ⍴pmat 10                          ⍝ !⍵ rows.
+3628800 10
+
+      display∘pmat¨2 1 0                ⍝ Limiting cases
+ ┌→──┐  ┌→┐  ┌⊖┐
+ ↓1 2│  ↓1│  ↓0│
+ │2 1│  └~┘  └~┘
+ └~──┘
+
+      (!0 to 5) ≡ ⊃∘⍴∘pmat¨0 to 5       ⍝ Result lengths.
+1
+                                        ⍝ Rows of the permutation matrix form
+      {⍵⍳⍵∘.{⍺⊃¨⊂⍵}⍵}↓pmat 3            ⍝ a group under ⊃¨∘⊂ with identity ⍳⍵.
+1 2 3 4 5 6
+2 1 4 3 6 5
+3 5 1 6 2 4
+4 6 2 5 1 3
+5 3 6 1 4 2
+6 4 5 2 3 1
+
+    ⎕∘← perms 3                         ⍝ show each permutation.
+1 2 3
+1 3 2
+2 1 3
+2 3 1
+3 1 2
+3 2 1
+
+See also: cmat
+
+Index:permutation matrix
+Index;Pakarinen P.|Hui R.K.W.

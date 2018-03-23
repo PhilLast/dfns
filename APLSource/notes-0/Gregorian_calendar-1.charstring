@@ -1,0 +1,69 @@
+Gregorian and Julian Calendars
+------------------------------
+The  time taken for the Earth to orbit the sun is approximately 365.242198 days.
+This  means that in order to avoid drifting from the solar year, a calendar must
+correct for the extra 0.242198 day (05:48:45.9072) each year.
+
+The  Romans  attempted  to accommodate this extra time with the Julian calendar,
+established  by  Julius Caesar in 45 BCE. The Julian calendar added an extra day
+to each fourth (leap) year, producing an approximation of 365.25 days.
+
+By the sixteenth century, it became apparent that the Julian calendar was out of
+synch with the solar year by well over a week.
+
+The  Gregorian  calendar,  proposed by Neapolitan physician Aloysius Lilius, was
+introduced  to  correct  for this error. In accordance with recommendations from
+the  Council  of Trent (1545-1563), it was decreed by Pope Gregory XIII in papal
+bull "Inter Gravissimas" on Feb 24, 1582.
+
+In most of continental Europe, the new calendar came into effect on October 4th,
+1582,  with  the  removal of the following 10 days. This meant that, in Rome for
+example, the day following October 4th was October 15th. France followed shortly
+after, on December 9th of the same year.
+
+In  Great  Britain  (UK)  however,  the  new  calendar was not adopted until the
+→British_Calendar_Act_1751←, which removed 11 days September 3-13 in 1752. Diff-
+erent  states  in  the US adopted the changes at different times, depending upon
+their allegiance to Rome, Paris or London. See →gcr←.
+
+All of this means that when converting historical dates in the Julian, as oppos-
+ed  to  the  modern  Gregorian  calendar, we must be careful to specify when the
+change took place. For example, specific dates in the seventeenth century do not
+refer to the same day when quoted in French or British sources. The problem even
+occurs in adjacent states in the US! See →gcr←.
+
+Both  →days←  and  →date←  take the date of the Julian to Gregorian change as an
+optional left argument. →gcr← lists arguments for various locations.
+
+The Gregorian calendar approximates the solar year as 365+97÷400 = 365.2425 days
+which means that it takes approximately 3,300 years to shift one day relative to
+the true solar year.
+
+The approximation 356+97÷400 is achieved by an injecting an extra 97 "leap" days
+every 400 years, using the rule:
+                                          Extra days / 400 years
+    Each year in 400 has 365 days,  ·   ·   ·   ·   ·   ·      0
+    ·   except that every 4 years is a leap year,   ·   ·   +100
+    ·   ·   except that every 100 years isn't,  ·   ·   ·     -4
+    ·   ·   ·   except that every 400 years is. ·   ·   ·     +1
+                                                            ----
+                                                              97
+                                                            ¯¯¯¯
+The rule could be extended to give ever-closer approximations to the true (corr-
+ect  to  9  sig.  figs)  solar year of 365.242198 days. Astronomer John Herschel
+(1792-1871), and others, proposed a closer approximation of:
+
+     365 + 969 ÷ 4000 → 365.24225  days.
+
+This  correction would require that every 4,000 year period include only 969 ex-
+tra  days, compared with the Gregorian calendar's 970, suggesting the additional
+rule:
+    ·   ·   ·   ·   except that every 4,000 years isn't.
+
+To date, no-one has implemented Herschel's suggestion.
+
+See also: mayan date days gcr
+See also: British_Calendar_Act_1751
+
+Index:date|Gregorian calendar|calendar|Julian calendar
+Index;Herschel J.|Lilius A.|Boncompagni U.|Gregory XIII, Pope

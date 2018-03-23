@@ -1,0 +1,17 @@
+ wsmerge←{                                   ⍝ {protected} merge from saved ws.
+     ⍺←0 ⋄ ⍺{                                ⍝ default: unprotected merge.
+         ⍺⍎'⎕nl ',⍕⍵                         ⍝ local-name-free (clean) namelist.
+     }{                                      ⍝ operand passed to operator:
+         ⍺ ⍺⍺{                               ⍝ protection and clean namelist.
+             name←(1+⍴⍕⎕NS'')↓⍕⍵             ⍝ relative space name.
+             home←name ⎕NS''                 ⍝ ensure space exists.
+             sink←⍵.⎕EX home ⍺⍺ 0,⍺/2 3 4    ⍝ prevent overwrites if protected.
+             home ⍵.{⍺ ⎕NS ⎕NL ⍵}2 3 4       ⍝ copy to home space.
+         }¨(⎕NS''){                          ⍝ temporary space for copy.
+             ⍬{                              ⍝ vector of sub-space refs.
+                 1∊⍵=⍺:⍺                     ⍝ already been here: quit.
+                 ⍵.(↑∇∘⍎⍨/⌽(⊂⍺,⍵),↓⎕NL 9)    ⍝ recursively traverse sub-spaces.
+             }⍎'⍺.⎕CY ⍵ ⋄ ⍺'                 ⍝ ref to import space.
+         }⍵
+     }⍵
+ }

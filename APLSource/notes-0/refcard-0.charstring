@@ -1,0 +1,31 @@
+Here is a handy aide-mémoire for the D-programmer.
+
+Print it on a piece of green card, folding as indicated:
+
+ ┌──────────────────┬──────────────────┬──────────────────┬──────────────────┐
+ │                  │ {⍺ Function ⍵}   │ {⍺⍺ Operator ⍵⍵} │  : Guard         │
+ │                  ├──────────────────┼──────────────────┼──────────────────┤
+ │  D-programming   │ ⍺ Left argument  │ ⍺⍺ Left operand  │ :: Error-guard   │
+ │    reference     ├──────────────────┼──────────────────┼──────────────────┤
+ │      card        │ ⍵ Right argument │ ⍵⍵ Right operand │ ⍺← Default larg  │
+ │                  ├──────────────────┼──────────────────┼──────────────────┤
+ │                  │ ∇ Self reference │ ∇∇ Self reference│ 1:s← Shy result  │
+ └──────────────────┴──────────────────┴──────────────────┴──────────────────┘
+                    ↑                  ↑                  ↑
+                    │                  │                  │
+                    └──fold──here──and─┴─here──and──here──┘
+    .             .             .
+    |\           /|\           /|
+    | \         //| \         //|   <- thus
+    |  \       ///|  \       ///|
+    |   \     ////|   \     ////|
+    |    \   /////|    \   /////|
+    |     \ //////|     \ //////|
+     \     |////// \     |//////
+      \    |/////   \    |/////
+       \   |////     \   |////
+        \  |///       \  |///
+         \ |//         \ |//
+          \|/           \|/
+           '             '
+Index:reference card|aide-mémoire

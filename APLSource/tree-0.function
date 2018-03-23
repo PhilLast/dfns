@@ -1,0 +1,59 @@
+ tree←{⎕IO ⎕ML←0 1                           ⍝ Display of namespace tree.
+
+     ⍺←⎕PW ⋄ ⍺{                              ⍝ default print width,
+         ⍺⍎⍵                                 ⍝ external execute.
+     }{
+         exec←⍺⍺                             ⍝ external execute.
+
+         trav←{                              ⍝ traversal of namespace tree.
+             here←⍺ tab ⍵,type ⍺             ⍝ current space name.
+             this←here lf∊⍺∘disp¨2 3 4       ⍝ content: vars, fns, ops.
+             subs←cvex ⍺ xnl 9               ⍝ sub-spaces of this space.
+             0=⍴subs:this                    ⍝ no sub-spaces: finished.
+             refs←⍺∘exec¨subs                ⍝ sub-space refs.
+             this,∊refs(⍺ dosub ∇)¨subs      ⍝ process sub-spaces.
+         }                                   ⍝ :: ref ∇ name → [-]
+
+         disp←{                              ⍝ Space namelist per class.
+             names←' ',¨cvex ⍺ xnl ⍵         ⍝ namelist for this class.
+             tag←⍵⊃'··~∇∘'                   ⍝ class identifier.
+             (⍺ xtab tag)wrap names          ⍝ wrapped output of namelist.
+         }
+
+         wrap←⍺{                             ⍝ ⎕pw-wrapping:
+             0=⍴⍵:''                         ⍝ nothing to output: finished.
+             split←+/(1+⍺⍺-⍴⍺)>+\∊⍴¨⍵        ⍝ names that fit this time.
+             here←⍺,∊split↑⍵                 ⍝ tabbed first line, and
+             here lf ⍺ ∇ split↓⍵             ⍝ tabbed remaining ones.
+         }
+
+         type←{                              ⍝ Namespace tag:
+             id←⍵                            ⍝ name for following ⎕WG:
+             tag←'id'⎕WG'Type'               ⍝ type of namespace.
+             set←↑'Name' 'Root' 'Sess'       ⍝ ignore Self-Evident Type.
+             (~∨/set∧.=4↑tag)/' [',tag,']'   ⍝ [type].¯    ¯       ¯
+         }
+
+         dosub←{                             ⍝ Check ref immediate child.
+             (⍺≠⍺⍺)∧⍺⍺=⍺.##:⍺ ⍵⍵ ⍵           ⍝ ⍺ is child of ⍺⍺: proceed.
+             fmt←⍕⍺                          ⍝ system display form.
+             df←(1=⍴⍴fmt)⊃'[Namespace]'fmt   ⍝ display form.
+             (⍺⍺ xtab ⍵,' → ',df)lf''        ⍝ show ref to remote space.
+         }
+
+         depth←{                             ⍝ space depth.
+             df←⍵.⎕DF ⎕NULL                  ⍝ reset display form to default.
+             dots←+/'.'=⍕⍵                   ⍝ dots in fmt => depth of space.
+             dots⊣⍵.⎕DF df                   ⍝ reset display form.
+         }
+
+         tab←(depth ⍵){(∊⍺⍺↓tabs ⍺),⍵}       ⍝ ⍺ space indented ⍵.
+         tabs←{(depth ⍵)⍴⊂4↑'·'}             ⍝ tabs: ·   ·   ·
+         xtab←{(⍺.⎕NS'')tab ⍵}               ⍝ extra tab.
+         lf←{⍺,(2⊃⎕TC),⍵}                    ⍝ separated with <LF> char.
+         xnl←{⍺ exec'⎕NL ',⍕⍵}               ⍝ external namelist.
+         cvex←~∘' '¨∘↓                       ⍝ char vectors from matrix.
+
+         ¯1↓⍵ trav⍕⍵                         ⍝ traversal of space graph.
+     }⍵
+ }

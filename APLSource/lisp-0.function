@@ -1,0 +1,88 @@
+ lisp←{⎕IO←0             ⍝ Evaluator for a subset of Scheme.
+
+    ⍝ Parser functions take as arguments:
+    ⍝   ⍺ ⍝ the input string
+    ⍝   ⍵ ⍝ the current parse position in ⍺
+    ⍝ and return a triplet of:
+    ⍝   0 position AST      ⍝ on success
+    ⍝   1 position message  ⍝ on failure
+
+     parse←{
+         ⍵≥≢⍺:1 ⍵'unexpected eof'
+         ⍺[⍵]≡' ':⍺ ∇ ⍵+1
+         ⍺[⍵]≡'(':⍺ parseList ⍵+1
+         ⍺[⍵]∊⎕D:⍺ parseNum ⍵
+         ⍺[⍵]≡'''':⍺ parseQuote ⍵
+         ⍺ parseAtom ⍵
+     }
+
+     parseList←{ ⍝ parse the inside of a list and consume the ')'
+         ⍵≥≢⍺:1 ⍵'unexpected eof'
+         ⍺[⍵]≡')':0(⍵+1)⍬
+         (e p h)←⍺ parse ⍵
+         e≠0:e p h
+         (e p t)←⍺ ∇ p
+         e≠0:e p t
+         0 p((⊂h),t)
+     }
+
+     parseNum←{
+         l←20 ⍝ 1 + the maximum length of a numeric literal
+         n←+/∧\⎕D∊⍨l↑⍵↓⍺ ⍝ actual length of the literal
+         n≡l:1 ⍵'numeric literal too long'
+         0(⍵+n)(⍎n↑⍵↓⍺)
+     }
+
+     parseAtom←{
+         la←20 ⍝ 1 + the maximum length of an atom
+         na←⎕D,'() ''' ⍝ non-atom characters
+         l←+/∧\~na∊⍨la↑⍵↓⍺
+         l≡la:1 ⍵'atom too long'
+         0(⍵+l)(l↑⍵↓⍺)
+     }
+
+     parseQuote←{
+         (e p r)←⍺ parse ⍵+1
+         e≠0:e p r
+         e p('quote'r)
+     }
+
+    ⍝ Evaluator
+
+     isAtom←{(' '≡⊃0⍴⍵)∧1=⍴⍴⍵}
+     isNum←{(0≡⊃0⍴⍵)∧0=⍴⍴⍵}
+
+     eval←{ ⍝ ⍺: environment, ⍵: expression
+         isNum ⍵:⍵
+         isAtom ⍵:⊃⍺[⍺[;0]⍳⊂⍵;1]
+         0≡≢⍵:⍬
+         'quote'≡⊃⍵:⊃⍵[1]
+         (1↑⍵)∊,¨'\' 'lambda':('closure'⍺),1↓⍵
+         'cond'≡⊃⍵:⍺ evcond 1↓⍵
+         (⍺ ∇⊃⍵)apply(⊂⍺)∇¨1↓⍵
+     }
+
+     apply←{ ⍝ ⍺: procedure, ⍵: arguments
+         'closure'≡⊃⍺:(((⊃⍺[2]),[0.5]⍵)⍪⊃⍺[1])eval⊃⍺[3]
+         ⍎(⊃⍺),'⍵'
+     }
+
+     evcond←{ ⍝ ⍺: environment, ⍵: clauses
+         0≡≢⍵:⍬
+         'else'≡⊃⊃⍵:⍺ eval⊃1↓⊃⍵
+         0≡⍺ eval⊃⊃⍵:⍺ ∇ 1↓⍵
+         ⍺ eval⊃1↓⊃⍵
+     }
+
+    ⍝ Initial environment
+     env0←⍉⍪(,'+')(,⊂'+/')
+     env0⍪←(,'-')(,⊂'-/')
+     env0⍪←(,'*')(,⊂'×/')
+     env0⍪←(,'=')(,⊂'=/')
+     env0⍪←'write'(,⊂'⎕←')
+
+     (e p x)←⍵ parse 0   ⍝ e: error code, p: position, x: AST
+     e≠0:x
+     ⍺←1 ⋄ ⍺=0:x         ⍝ ⍺=0: parse only
+     env0 eval x
+ }

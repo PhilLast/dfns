@@ -1,0 +1,31 @@
+{fns} ← {space←⎕this} ##.fnrepl (from to)       ⍝ Function string replacement.
+
+[fnrepl]  replaces  occurrences of string [from] with string [to] in all defined
+functions  and operators in [space] (default current space). The shy result is a
+list of the names of functions that have been changed.
+
+Example:
+
+      fnrepl '⎕TCNL' '⍙TCNL'        ⍝ change all ⎕TCNL → ⍙TCNL in current space.
+
+      (refs #)fnrepl¨⊂'foo' 'bar'   ⍝ change 'foo' to 'bar' everwhere.
+
+      find'⍺∘,¨'                    ⍝ find fns containing '⍺∘,¨'.
+ #.packH[16]  ↑,/(⍺∘,¨0 1)∇¨⍵             ⍝ extended codes for sub-trees.
+ #.packH[39]  ↑,/(⍺∘,¨0 1)∇¨⍵             ⍝ visit each branch,
+ #.queens[6]  next←⍺∘,¨hd                 ⍝ possible next steps.
+
+      fnrepl'⍺∘,¨' '(⊂⍺),¨'         ⍝ show changed functions.
+┌─────┬──────┐
+│packH│queens│
+└─────┴──────┘
+
+      find'(⊂⍺),¨'                  ⍝ find fns containing '(⊂⍺),¨'.
+ #.packH[16]  ↑,/((⊂⍺),¨0 1)∇¨⍵             ⍝ extended codes for sub-trees.
+ #.packH[39]  ↑,/((⊂⍺),¨0 1)∇¨⍵             ⍝ visit each branch,
+ #.packS[6]   1=⍴,⍵:2,⍺ ⋄ a←(⊂⍺),¨0 1
+ #.queens[6]  next←(⊂⍺),¨hd                 ⍝ possible next steps.
+
+See also: refs
+
+Index:string replacement

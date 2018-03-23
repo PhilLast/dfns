@@ -1,0 +1,117 @@
+Classic Breadth-First Search
+----------------------------
+Dijkstra's classic breadth-first search algorithm  maintains a _queue_ of yet-to
+-be-visited vertices. Items are taken one at a time from the front of the queue,
+and unvisited vertices  reachable from the head item are added to the back.  The
+algorithm terminates when the queue is empty.
+
+An APL coding of the classic algorithm might look like this:
+
+    search←{                        ⍝ Classical breadth-first search.
+        graph←⍺                     ⍝ ⍺ is graph vector.
+        ⍬{                          ⍝ no vertices visited.
+            ⍵≡⍬:⍺                   ⍝ no vertices left: done.
+            head←1↑⍵ ⋄ tail←1↓⍵     ⍝ next and remaining vertices in queue.
+            next←head⊃graph         ⍝ vertices adjacent to head.
+            (⍺,head)∇(tail∪next)~⍺  ⍝ accumulate visited vertices.
+        }⍵                          ⍝ from starting vertex.
+    }
+
+The  inner tail-recursive function uses ⍺ as an accumulator for vertices already
+visited,  and ⍵ as a queue for those still to be visited. By appending new vert-
+ices  to  the back of the queue and removing them from the front, we are assured
+of visiting nearer vertices before more remote ones.
+
+Using the following graph as an example:
+
+    graph←(2 5)(1 3 6)(2 4 7)(3 8)(1 6 9)(2 5)(3 8)(4 7 12)(5 10 13)(9 14)(12 15)(8 11 16)(9 14)(10 13 15)(11 14 16)(12 15)
+
+    1───────2───────3───────4       Graph Vertex numbers:
+    │       │       │       │
+    │       │       │       │
+    │       │       │       │
+    5───────6       7───────8
+    │                       │
+    │                       │
+    │                       │
+    9──────10      11──────12
+    │       │       │       │
+    │       │       │       │
+    │       │       │       │
+   13──────14──────15──────16
+
+Breadth-first search from vertex 1 visits vertices in the following order:
+
+   [1]─────[2]─────[4]─────[7]      BREADTH-first order of visits:
+    │       │       │       │
+    │       │       │       │
+    │       │       │       │
+   [3]─────[5]     [8]─────[11]
+    │                       │
+    │                       │
+    │                       │
+   [6]─────[9]     [15]────[13]
+    │       │       │       │
+    │       │       │       │
+    │       │       │       │
+   [10]────[12]────[14]────[16]
+
+The  function may be changed to produce a depth-first search, by _prefixing_ new
+vertices to the queue, which then operates as a stack. See →dfspan←.
+
+   [1]─────[2]─────[3]─────[4]      DEPTH-first order of visits:
+    │       │       │       │
+    │       │       │       │
+    │       │       │       │
+   [13]────[14]    [6]─────[5]
+    │                       │
+    │                       │
+    │                       │
+   [12]────[11]    [8]─────[7]
+    │       │       │       │
+    │       │       │       │
+    │       │       │       │
+   [15]────[10]────[9]─────[16]
+
+Ref: Dijkstra, E.W. (1959), "A note on two problems in connection with graphs."
+     Numerische Mathematik, (1), pp. 269-271.
+
+Parallel Breath-First Search
+----------------------------
+In APL we can process ALL vertices at the same distance from the starting vertex
+in parallel. For non-trivial graphs, this leads to a significant performance im-
+provement.  Conceptually, starting from the originating vertext ⍵, the algorithm
+generates  a  "fringe" or "wave", which ripples outwards in all possible direct-
+ions through the graph. At each pass of the algorithm, the wave front is advanc-
+ed one step further from the starting vertex.
+
+    search←{                    ⍝ Parallel breadth-first search.
+        graph←⍺                 ⍝ ⍺ is graph vector.
+        ⍵{                      ⍝ from starting vertex.
+            ⍵≡⍬:⍺               ⍝ no unvisited vertices: done.
+            adjv←graph[⍵]       ⍝ nested vector of ALL adjacent vertices.
+            next←∪(↑,/adjv)~⍺   ⍝ simple vector of next unvisited vertices.
+            (⍺,next)∇ next      ⍝ advance wave of visited vertices.
+        }⍵                      ⍝ from starting vertex.
+    }
+
+Using graph as above:
+
+   [1]─────[2]─────[3]─────[4]      PARALLEL BREADTH-first order of visits:
+    │       │       │       │
+    │       │       │       │
+    │       │       │       │
+   [2]─────[3]     [4]─────[5]
+    │                       │
+    │                       │
+    │                       │
+   [3]─────[4]     [7]─────[6]
+    │       │       │       │
+    │       │       │       │
+    │       │       │       │
+   [4]─────[5]─────[6]─────[7]
+
+See also: dfspan Graphs wGraphs
+
+Index:breadth-first search|queue|graph
+Index;Dijkstra E.W.

@@ -1,0 +1,3 @@
+ alext←{         ⍝ Association list ⍺ extended with pair ⍵.
+     ⍺,⍨∘⊂¨⍵     ⍝ list ⍺ with new name and value _prefixed_.
+ }

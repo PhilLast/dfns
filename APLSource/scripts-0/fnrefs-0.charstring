@@ -1,0 +1,18 @@
+⍝ External refs from function ⍵:
+
+    fnrefs'ssword'
+ words 
+
+    ⍴fnrefs'fnrefs'
+0
+
+⍝    fnrefs ⎕fx'foo arg;loc' ':If glob' '→end' 'foo' ':End' 'end:arg'   ⍝ tradfn
+⍝glob 
+
+    chk←{fnrefs ⎕fx'foo←{' ⍵ '}'}       ⍝ check some function lines.
+
+    chk'aa bb.cc #.dd ##.ee'            ⍝ ns-refs.
+ aa  bb.cc  #.dd  ##.ee 
+
+    chk'+.× 0.3 ¯4 .2 bb.3'            ⍝ numbers and dots.
+ bb 

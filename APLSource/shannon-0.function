@@ -1,0 +1,3 @@
+ shannon←{                       ⍝ Shannon entropy of message ⍵.
+     -+/(2∘⍟×⊣)¨({≢⍵}⌸÷≢)⍵
+ }

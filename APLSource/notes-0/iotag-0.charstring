@@ -1,0 +1,90 @@
+rslt ← {array} ##.iotag array               ⍝ Generalized iota.
+
+Supplied by Steve Mansour:
+
+Monadic form produces generalized Index Generator function.
+Dyadic form with simple scalar left argument produces interval function.
+Dyadic form with rank 1 or higher left argument produces generalized Index Of
+function.
+
+The following table describes the function in detail:
+
+┌──────────────────┬──────────────────┬────────────────────────────────────────┐
+│ Left Argument    │ Right Argument   │  Function/Result                       │
+├──────────────────┼──────────────────┼────────────────────────────────────────┤
+│                  │ Scalar integer   │  Index Generator:   iotag ⍵ ←→ (×⍵)×⍳|⍵│
+│                  │ ⎕IO←0, ⍵≥0       │  0 1 2 ... ⍵-1                         │
+│                  │ ⎕IO←0, ⍵<0       │  0 ¯1 ¯2 ... ⍵+1                       │
+│ None (monadic)   │ ⎕IO←1, ⍵≥0       │  1 2 3 ... ⍵                           │
+│                  │ ⎕IO←1, ⍵<0       │  ¯1 ¯2 ¯3 ... ⍵                        │
+│                  ├──────────────────┼────────────────────────────────────────┤
+│                  │ Character scalar │  Alphabetic Index (⎕IO independent)    │
+│                  │ ⍵∊'ABC...Z'      │  'ABC...⍵'    iotag 'Z' ←→ ⎕A          │
+│                  │ ⍵∊'abc...z'      │  'abc...⍵'    iotag 'd' ←→ 'abcd'      │
+│                  │ ⍵∊'012345789'    │  '012...⍵'    iotag '9' ←→ ⎕D          │
+│                  │ ⍵=' '            │  ''                                    │
+├──────────────────┼──────────────────┼────────────────────────────────────────┤
+│ Scalar Integer   │ Scalar integer   │ Interval (⎕IO independent)             │
+│ (0=⍴⍴⍺)          │ ⍺≤⍵              │ ⍺ (⍺+1) (⍺+2) ... ⍵                    │
+│                  │ ⍺>⍵              │ ⍺ (⍺-1) (⍺-2) ... ⍵                    │
+│                  ├──────────────────┼────────────────────────────────────────┤
+│                  │ 2-Item vector    │ Step Interval (⎕IO independent)        │
+│                  │ (z s)←⍵          │ Endpoint, [Stepsize]                   │
+│                  │ ⍺≤z              │ ⍺ (⍺+s) (⍺+s×2) ... (z⌊⍺+s×n)          │
+│                  │ ⍺>z              │ ⍺ (⍺-s) (⍺-s×2) ... (z⌈⍺-s×n)          │
+├──────────────────┼──────────────────┼────────────────────────────────────────┤
+│ Character scalar │ Character scalar │ Character Interval (⎕IO independent)   │
+│ (0=⍴⍴⍺)          │                  │ ⍺ iotag ⍵ ←→ ⎕AV[↑iotag/⎕AV⍳⍺ ⍵]       │
+│                  │                  │ 'B' iotag 'F' ←→  'BCDEF'              │
+│                  │                  │ 'z' iotag 'w' ←→  'zyxw'               │
+├──────────────────┼──────────────────┼────────────────────────────────────────┤
+│ Vector (1=⍴⍴⍺)   │ Any array        │ Index of (traditional dyadic ⍳)        │
+├──────────────────┼──────────────────┼────────────────────────────────────────┤
+│ Matrix (2=⍴⍴⍺)   │ Vector           │ Generalized Index of                   │
+│                  │ (1=⍴⍴⍵)          │ Index of row (ignore trailing blanks)  │
+│                  ├──────────────────┼────────────────────────────────────────┤
+│                  │ Matrix (2=⍴⍴⍵)   │ Index of each row                      │
+│                  ├──────────────────┼────────────────────────────────────────┤
+│                  │ Array (3≤⍴⍴⍵)    │ Index of each row                      │
+├──────────────────┼──────────────────┼────────────────────────────────────────┤
+│ Array  (3≤⍴⍴⍺)   │ Matrix (2=⍴⍴⍵)   │ Index of (hyper)plane                  │
+│                  ├──────────────────┼────────────────────────────────────────┤
+│                  │ Array  (3≤⍴⍴⍵)   │ Index of each (hyper)plane             │
+└──────────────────┴──────────────────┴────────────────────────────────────────┘
+
+Note that inner function "ischar" accepts Unicode characters from Dyalog 11.1.
+
+Examples:
+
+    Beatles APLers Names
+┌──────┬─────┬──────┐
+│JOHN  │STEVE│PAUL  │
+│PAUL  │PAUL │STEVE │
+│GEORGE│JOHN │BILL  │
+│RINGO │PETE │GEORGE│
+└──────┴─────┴──────┘
+
+    APLers iotag 'STEVE'        ⍝ Find row of matrix
+0
+    ⍴APLers iotag 1 5⍴'STEVE'   ⍝ One-row matrix results in 1-item vector result
+1
+    Beatles iotag 'GEORGE    '  ⍝ Ignores trailing blanks (and trailing 0's)
+2
+    APLers iotag Beatles        ⍝ Find multiple rows of matrix
+2 1 4 4
+    ⍴Rank3←⊃APLers Beatles      ⍝ Rank 3 array
+2 4 6
+    Rank3 iotag Beatles         ⍝ Find matrix in Rank-3 array
+1
+    Beatles iotag Rank3         ⍝ Find Vectors in matrix
+4 1 0 4
+0 1 2 3
+
+    3 iotag 5 .5                ⍝ Step of 0.5
+3 3.5 4 4.5 5
+
+    12 iotag 3 3                ⍝ Step of 3
+12 9 6 3
+
+Index:iota, generialised|⍳, generalised|Unicode
+Index;Mansour S.M.

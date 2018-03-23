@@ -1,0 +1,15 @@
+ wmst←{                                  ⍝ Minimum Spanning Tree for wu-graph ⍺.
+     graph costs←↓⍺                      ⍝ weighted, undirected graph.
+     tree←¯1⊣¨graph                      ⍝ initial tree.
+     xvec←⍳⍴graph                        ⍝ index vector for graph.
+     ⍵{                                  ⍝ vertices inside tree: T.
+         ⍵≡⍬:tree                        ⍝ all vertices connected: finished.
+         edges←(graph∊¨⊂⍵)∧xvec∊⍺        ⍝ edges from T to G~T.
+         min←⌊/⌊/¨edges/¨costs           ⍝ minimum edge cost.
+         masks←edges∧min=costs           ⍝ lowest cost edge masks.
+         fm to←{↑,/masks/¨⍵}¨xvec graph  ⍝ lowest cost edges from T to G~T.
+         fm≡⍬:tree                       ⍝ disjoint graph: quit.
+         tree[to]←fm                     ⍝ update tree.                      <V>@
+         (⍺,to)∇ ⍵~to                    ⍝ move vertices to T from G~T.
+     }xvec~⍵                             ⍝ vertices outside tree: G~T.
+ }

@@ -1,0 +1,9 @@
+ subs←{⎕ML←1                             ⍝ Vector substitution.
+     fs ts←⍴∘,¨fm to←⍺                   ⍝ old and new vectors and sizes.
+     0=⍴⍴⍵:⊃(⍵≡fm)⌽⍵(⊂to)                ⍝ special case scalar argt.
+     lead←fs↑1                           ⍝ leading mask.
+     (fm⍷⍵){                             ⍝ hits mask.
+         ~1∊⍺:⍵                          ⍝ early out if no match.
+         ts↓↑,/{to,fs↓⍵}¨(lead,⍺)⊂fm,⍵   ⍝ cut and pasted new for old.
+     }⍤1⊢⍵                               ⍝ apply to vectors
+ }

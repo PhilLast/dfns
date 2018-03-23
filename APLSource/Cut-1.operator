@@ -1,0 +1,40 @@
+ Cut←{
+ ⍝ Model of cut.  Works in either index-origin.
+ ⍝ Iverson, K.E., Rationalized APL, 1983, Section K. http://www.jsoftware.com/papers/RationalizedAPL.htm
+ ⍝ Hui, R.K.W., Some Uses of { and }, 1987, Section 3.2. http://www.jsoftware.com/papers/from.htm
+ ⍝ Iverson, K.E., A Dictionary of APL, 1987, m⍤v. http://www.jsoftware.com/papers/APLDictionary.htm
+ ⍝ Hui, R.K.W., and K.E. Iverson, J Introduction and Dictionary, 2011, Cut (;.). http://www.jsoftware.com/help/dictionary/d331.htm
+
+     ⍺←(|⍵⍵){                          ⍝ default left argument
+         0=⍺:⍉⎕IO,⍪-⍴⍵
+         1=⍺:⎕IO=(1↑⍵)⍳⍵
+         2=⍺:⎕IO=(¯1↑⍵)⍳⍵
+         3=⍺:(⍴⍴⍵)⍴⌊/⍴⍵
+     }⍵
+
+     ⍺ ⍺⍺{⍺⍺ ⍵}{
+         ⎕ML←1                           ⍝ needed by ⊂
+
+         Under←{⍵⍵⍣¯1⊢(⍵⍵ ⍺)⍺⍺(⍵⍵ ⍵)}    ⍝ dyadic case of "under" operator
+         p2←{(¯1⌽k↓⍺)⊂[⎕IO+⍺⍺]((⍺⍺⍴0),k←⎕IO-(⌽⍺)⍳1)↓⍵}
+         Blk1←{0=≢⍺:⍵ ⋄ 0=≢⊃⍺:(1↓⍺)((1+⍺⍺)∇∇)⍵ ⋄ (1↓⍺)((1+⍺⍺)∇∇)↑(⊂⊃⍺)⊂[⎕IO+⍺⍺]¨⍵}
+         Blk2←{0=≢⍺:⍵ ⋄ 0=≢⊃⍺:(1↓⍺)((1+⍺⍺)∇∇)⍵ ⋄ (1↓⍺)((1+⍺⍺)∇∇)↑(⊂⊃⍺)(⍺⍺ p2)¨⍵}
+         ifv←{(⍉⍺,⍪)⍣(2>≢⍴⍵)⊢⍵}          ⍝ laminate ⍺ if ⍵ is vector or scalar
+         ci←{⎕IO+(0>s){⌽⍣⍺⊢⍵}¨(⎕IO-⍨⍳¨|s)+(((⍴i)↑⍴⍵)|i-⎕IO×0≤i)-(0>i)×¯1+|s⊣i s←↓⎕IO ifv ⍺}
+         ti←{↑{↑(⍵+⎕IO)((×s)×(|s)⌊r-⍵)}¨m∘×¨⎕IO-⍨⍳⌈r÷m+(0=m)×r←(⍴m)⍴⍴⍵⊣m s←↓1 ifv ⍺}
+         tj←{↑{↑(⍵+⎕IO)s}¨m∘×¨⎕IO-⍨⍳⌈(1+r-|s)÷m+(0=m)×r←(⍴m)⍴⍴⍵⊣m s←↓1 ifv ⍺}
+
+         (1=|⍵⍵)∧(⍬≡⍺)∨1≠≡⍺:↑⍺⍺¨(⊂(0>⍵⍵)××≢¨⍺)↓¨⍺(0 Blk1)⊂⍵
+         (2=|⍵⍵)∧(⍬≡⍺)∨1≠≡⍺:↑⍺⍺¨(⊂(0>⍵⍵)×-×≢¨⍺)↓¨⍺(0 Blk2)⊂⍵
+
+         0=⍵⍵:⍺(⍺⍺ ci⌷⊢)⍵
+         1=⍵⍵:↑⍺(⍺⍺¨⊂[⎕IO])⍵
+         ¯1=⍵⍵:↑⍺(⍺⍺∘(1∘↓)¨⊂[⎕IO])⍵
+         2=⍵⍵:⍺ ⍺⍺∘⊖∇∇ 1 Under⊖⍵
+         ¯2=⍵⍵:⍺ ⍺⍺∘(¯1∘↓)∇∇ 2⊢⍵
+         3=⍵⍵:(⍺ ti ⍵)⍺⍺ ∇∇ 0⍤2 15⊢⍵
+         ¯3=⍵⍵:(⍺ tj ⍵)⍺⍺ ∇∇ 0⍤2 15⊢⍵
+
+         *'domain error'
+     }⍵⍵⊢⍵
+ }

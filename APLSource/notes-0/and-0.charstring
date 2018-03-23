@@ -1,0 +1,65 @@
+rslt ← (f ##.and g) arg                     ⍝ Sequential test.
+rslt ← (f ##.or  g) arg
+
+Sometimes, we must test conditions in sequence.  For example, if we want to know
+whether ⍵ is a scalar number, greater than zero, we need to check in order:
+
+        that ⍵ is a simple scalar
+    and that ⍵ is numeric
+    and that ⍵ is greater than zero.
+
+In other words:
+
+        0=≡⍵        ⍝ simple scalar
+    and ⍬≡0/⍵       ⍝ numeric
+    and 0<⍵         ⍝ greater than 0
+
+Unfortunately,  we  can't  code this test using APL's primitive function "∧" be-
+cause it unconditionally evaluates both of its arguments (APL's primitive dyadic
+functions are said to be "strict in both arguments").
+
+    gt0 ← {                                             ⍝ DON'T TRY THIS!
+        (0=≡⍵) ∧ (⍬≡0/⍵) ∧ (0<⍵): 'YEP' ⋄ 'NOPE'        ⍝ IT WON'T WORK!
+    }
+
+... and, in general, changing the order of these tests won't help.
+
+We have to resort to complex guards, along the lines of:
+
+    gt0 ← {
+        {
+            0≠≡⍵:0          ⍝ not a simple scalar
+            ~⍬≡0/⍵:0        ⍝ not numeric
+            ⍵>0             ⍝ > 0
+        }⍵:'YEP' ⋄ 'NOPE'
+    }
+
+Phil Last's [and] and [or] operators encapsulate this sequential testing, allow-
+ing us to use the simpler:
+
+    gt0 ← {
+        {0=≡⍵} and {⍬≡0/⍵} and (0∘<) ⍵: 'YEP' ⋄ 'NOPE'  ⍝ sequential testing.
+    }
+
+Similarly, using "or":
+
+    gt0 ← {
+        {0≠≡⍵} or {⍬≢0/⍵} or (<∘0) ⍵: 'NOPE' ⋄ 'YEP'    ⍝ ditto, using "or".
+    }
+
+Technical note:
+
+Notice that  [and]  and [or]  share much of the semantics of the C-language's &&
+and ||.
+
+Examples:
+
+    gt0←{ {0=≡⍵} and {⍬≡0/⍵} and (0∘<) ⍵: 'YEP' ⋄ 'NOPE'}
+
+    gt0¨ 3 ¯1 '7' ('ding' 'bat')
+ YEP  NOPE  NOPE  NOPE
+
+See also: else cond
+
+Index:lazy evaluation|sequential test
+Index;Last P.

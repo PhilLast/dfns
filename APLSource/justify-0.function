@@ -1,0 +1,13 @@
+ justify←{⎕IO ⎕ML←0 1                ⍝ Justify line-vector to width ⍺.
+     segs←{¯1+⍵{(⍵,⍴⍺)-¯1,⍵}⍵/⍳⍴⍵}   ⍝ 1-separated segment sizes.
+     split←{((⍵|⍺)>⍳⍵)+⌊⍺÷1⌈⍵}       ⍝ ⍺ split up ⍵ ways.
+     lf sp←(3↓5↑⎕AV)=⊂⍵              ⍝ <LF> and <SP> chars in line-vector.
+     sizes←segs lf                   ⍝ line sizes.
+     ⍺←⌈/sizes                       ⍝ default width is longest line.
+     blanks←segs~(lf∨sp)/sp          ⍝ original number of blanks per line.
+     required←blanks+⍺-sizes         ⍝ required      ..      ..      ..
+     breps←required split¨blanks     ⍝ blank replication vectors.
+     last←1⌈¯1+⍴sizes                ⍝ last line split point.
+     brep←∊(last↑breps),×last↓breps  ⍝ blank replication vector.
+     ((~sp)+sp\∊brep)\⍵              ⍝ ⍺-justified line-vector.
+ }

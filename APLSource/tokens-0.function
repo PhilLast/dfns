@@ -1,0 +1,37 @@
+ tokens←{⎕ML←1                           ⍝ Lex of APL src line.
+     ⍺←0 ⋄ nv←⍺                          ⍝ numeric vectors as single token.
+     alph←{(0≤⎕NC⍪⍵)/⍵}⎕AV~'⍺⍵∇'         ⍝ alphabet for names.
+     all←{+/∧\⍺∊⍵}                       ⍝ No. of leading ⍺∊⍵.
+     acc←{(⍺,↑/⍵)lex⊃↓/⍵}                ⍝ accumulated tokens.
+     lex←{
+         0=⍴⍵:⍺ ⋄ hd←⊃⍵                  ⍝ Next char else finished.
+         hd=' ':⍺{                       ⍝ White Space.
+             size←⍵ all' '
+             ⍺ acc size ⍵
+         }⍵
+         hd∊alph:⍺{                      ⍝ Name
+             size←⍵ all alph,⎕D
+             ⍺ acc size ⍵
+         }⍵
+         hd∊'⎕':⍺{                       ⍝ System Name
+             size←1+(1↓⍵)all alph
+             ⍺ acc size ⍵
+         }⍵
+         hd='''':⍺{                      ⍝ Char literal
+             size←+/∧\{⍵∨¯1⌽⍵}≠\hd=⍵
+             ⍺ acc size ⍵
+         }⍵
+         hd∊⎕D,'¯':⍺{                    ⍝ Numeric literal
+             max←⍵ all ⎕D,'.¯EJ',nv/' '  ⍝ numbers with trailing blanks.
+             size←max-+/∧\' '=⌽max↑⍵     ⍝  ..  without trailing blanks.
+             ⍺ acc size ⍵
+         }⍵
+         hd∊'⍺⍵∇:':⍺{                    ⍝ ⍺⍺ or ⍵⍵ or ∇∇ or ::
+             size←⍵ all hd
+             ⍺ acc size ⍵
+         }⍵
+         hd='⍝':⍺ acc(⍴⍵)⍵               ⍝ Comment
+         ⍺ acc 1 ⍵                       ⍝ Single char token.
+     }
+     (0⍴⊂'')lex,⍵
+ }

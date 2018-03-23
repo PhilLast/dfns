@@ -1,0 +1,38 @@
+refs ← ##.xrefs array                       ⍝ Extract refs vector from array ⍵.
+
+Returns a vector of unique namespace references extracted from the  array  argu-
+ment.
+
+Examples:
+
+    )ns x
+    )ns y
+
+    ⊢aa←y((1 2)x)y              ⍝ nested array containing refs.
+┌───┬─────────┬───┐
+│#.y│┌───┬───┐│#.y│
+│   ││1 2│#.x││   │
+│   │└───┴───┘│   │
+└───┴─────────┴───┘
+
+    xrefs aa                    ⍝ unique refs.
+ #.y  #.x
+
+⍝ The  following expression returns a vector of references to all of the name-
+⍝ spaces in the workspace. It includes those enclosed in any variables and any
+⍝ bound by a derived function, such as: kwd←notes∘find.
+⍝
+⍝     ┌───────────────────────────────────────────────── Unique values of ...
+⍝     │   ┌───────────────────────────────────────────── all refs together with
+⍝     │   │ ┌─────────────────────────────────────────── extracted refs from
+⍝     │   │ │         ┌───────────────────────────────── values of
+⍝     │   │ │         │      ┌────────────────────────── all variables and
+⍝     │   │ │         │      │       ┌────────────────── all functions in
+⍝     │   │ │         │      │       │           ┌────── all spaces.
+⍝     │   │ │         │      │       │           │
+      nub{⍵,xrefs ⍵.((⍎¨'0',↓⎕NL 2))(⎕cr¨↓⎕nl 3)}refs #
+ #  #.notes
+
+See also: refs vwise
+
+Index:namespace references

@@ -1,0 +1,77 @@
+⍝ Truth tables:
+
+    bfns←{''}
+
+    bfns ← bfns lof  {⍺∧0^⍵}        ⍝ boolean functions (pervasive).
+    bfns ← bfns lof   ^
+    bfns ← bfns lof   >
+    bfns ← bfns lof  {⍺∨0∧⍵}
+    bfns ← bfns lof   <
+    bfns ← bfns lof  {⍵∨0∧⍺}
+    bfns ← bfns lof   ≠
+    bfns ← bfns lof   ∨
+    bfns ← bfns lof   ⍱
+    bfns ← bfns lof   =
+    bfns ← bfns lof  {⍵⍲1∨⍺}
+    bfns ← bfns lof   ≥
+    bfns ← bfns lof  {⍺⍲1∨⍵}
+    bfns ← bfns lof   ≤
+    bfns ← bfns lof   ⍲
+    bfns ← bfns lof  {⍺∨1∨⍵}
+
+    ↑ 0 1 bfns ⊂0 1                 ⍝ check pervasive boolean functions.
+ 0 0  0 0 
+ 0 0  0 1 
+ 0 0  1 0 
+ 0 0  1 1 
+ 0 1  0 0 
+ 0 1  0 1 
+ 0 1  1 0 
+ 0 1  1 1 
+ 1 0  0 0 
+ 1 0  0 1 
+ 1 0  1 0 
+ 1 0  1 1 
+ 1 1  0 0 
+ 1 1  0 1 
+ 1 1  1 0 
+ 1 1  1 1 
+
+    lopf←{⍺ ⍺⍺ lof (⍵⍵ perv) ⍵}     ⍝ vector of pervasive functions.
+
+    bfns←{''}
+
+    bfns ← bfns lopf  {0}           ⍝ boolean functions (non-pervasive):
+    bfns ← bfns lopf   ^
+    bfns ← bfns lopf   >
+    bfns ← bfns lopf   ⊣
+    bfns ← bfns lopf   <
+    bfns ← bfns lopf   ⊢
+    bfns ← bfns lopf   ≠
+    bfns ← bfns lopf   ∨
+    bfns ← bfns lopf   ⍱
+    bfns ← bfns lopf   =
+    bfns ← bfns lopf  {~⍵}
+    bfns ← bfns lopf   ≥
+    bfns ← bfns lopf  {~⍺}
+    bfns ← bfns lopf   ≤
+    bfns ← bfns lopf   ⍲
+    bfns ← bfns lopf  {1}
+
+    ↑ 0 1 bfns ⊂0 1                 ⍝ check non-pervasive boolean functions.
+ 0 0  0 0 
+ 0 0  0 1 
+ 0 0  1 0 
+ 0 0  1 1 
+ 0 1  0 0 
+ 0 1  0 1 
+ 0 1  1 0 
+ 0 1  1 1 
+ 1 0  0 0 
+ 1 0  0 1 
+ 1 0  1 0 
+ 1 0  1 1 
+ 1 1  0 0 
+ 1 1  0 1 
+ 1 1  1 0 
+ 1 1  1 1 

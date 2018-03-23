@@ -1,0 +1,11 @@
+ adic←{⎕IO←0         ⍝ Bijective base-⍺ numeration.
+
+     b←⍬⍴⍴a←,⍺       ⍝ base and alphabet
+
+     1=⍴⍴⍵:b⊥1+a⍳⍵   ⍝ vector: decode digs → number
+                    ⍝ scalar: encode number → digs
+     1=b:⍵/⍺         ⍝ unary: special case
+     n←⌊b⍟1+⍵×b-1    ⍝ number of digits
+     z←(¯1+b*n)÷b-1  ⍝ smallest integer with length n
+     a[(n/b)⊤⍵-z]    ⍝ digits from alphabet ⍺.
+ }

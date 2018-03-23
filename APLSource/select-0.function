@@ -1,0 +1,3 @@
+ select←{                ⍝ ⍺-selection of items of vector ⍵.
+     ⍺⊃¨↑,¨/⊂¨¨⍵
+ }

@@ -1,0 +1,25 @@
+      ⍝ Sample Script
+
+      cvec ← 1↓'
+mult-line
+character
+vector'                 ⍝ Temp variable.
+
+      dup←{             ⍝ Temp function.
+          ⍵ ⍵
+      }
+
+      disp dup cvec     ⍝ disp available to script.
+┌─────────┬─────────┐
+│mult-line│mult-line│
+│character│character│
+│vector   │vector   │
+└─────────┴─────────┘
+
+:If 'v'∊Alpha       ⍝ verbose mode:
+        'Sqrt ¯1:',¯1*÷2
+    Sqrt ¯1: 0J1
+:Else
+        ¯1*÷2
+    0J1
+:EndIf

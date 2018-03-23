@@ -1,0 +1,4 @@
+ rational←{⎕ML←1         ⍝ Rational approximation to real ⍵.
+     ⍺←⎕CT ⋄ ⎕CT←⍺       ⍝ default comparison tolerance.
+     ↑⍵ 1÷⊂1∨⍵           ⍝ rational pair: ⍵≡÷⌿rational ⍵.
+ }

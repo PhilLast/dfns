@@ -1,0 +1,99 @@
+─────────────
+Blank Removal       rslt ← {blank} d?b argt         ⍝  Remove blanks.
+─────────────
+Each  of these functions, provided by Veli-Matti Jantunen, removes "blanks" from
+its argument "character" array. The functions are general in the sense that they
+accommodate  arrays  of any shape or depth. The optional left argument (default:
+' '),  is a simple array of items to be removed from the argument array, accord-
+ing to the semantics of the particular removal function.
+
+dlb - drop leading blanks.
+dtb - drop trailing blanks.
+deb - drop ending blanks (both leading and trailing).
+dmb - drop multiple blanks (multiple blanks replaced by a single one).
+dxb - drop extraneous blanks (leading, trailing and multiple).
+dab - drop all blanks.
+
+Technical notes:
+
+All of these functions follow the same architecture:
+
+- Nested arrays are handled recursively.
+
+- Matrices are handled column-wise (eg. dlb drops leading blank columns).
+
+- Arrays  of higher rank are treated the same way (they are temporarily reshaped
+  as matrices)
+
+- Vectors are treated character-wise (sort of one-row matrices).
+
+- Default  special  character  is blank, but the functions can be used for other
+  characters  or  character  sets,  too  - sometimes this can lead to unexpected
+  results).
+
+- The core idiom(s) can easily be changed if more efficient ones are found.
+
+Examples:
+
+      show←' ·'∘subs                ⍝ show '·'s for blanks.
+
+      show cvec                     ⍝ character vector.
+··twas··ever··thus··
+
+      show dlb cvec                 ⍝ drop leading blanks.
+twas··ever··thus··
+
+      show dtb cvec                 ⍝ drop trailing blanks.
+··twas··ever··thus
+
+      show deb cvec                 ⍝ drop ending blanks.
+twas··ever··thus
+
+      show dmb cvec                 ⍝ drop multiple blanks.
+·twas·ever·thus·
+
+      show dxb cvec                 ⍝ drop extraneous blanks.
+twas·ever·thus
+
+      show dab cvec                 ⍝ drop all blanks.
+twaseverthus
+
+      show cmat                     ⍝ character matrix.
+··twas··ever··thus··
+··heart·with··clay··
+
+      show dlb cmat                 ⍝ drop leading blank columns.
+twas··ever··thus··
+heart·with··clay··
+
+      show deb cmat                 ⍝ drop ending blank columns.
+twas··ever··thus
+heart·with··clay
+
+      show dxb cmat                 ⍝ drop extraneous blank columns.
+twas··ever·thus
+heart·with·clay
+
+      show¨ dxb↓cmat                ⍝ drop extraneous blanks in depth 2 array.
+ twas·ever·thus  heart·with·clay
+
+      show ↑dxb↓cmat                ⍝ drop extraneous blanks from each row.
+twas·ever·thus·
+heart·with·clay
+
+      's'dmb'Mississippi'           ⍝ drop multiple 's's.
+Misisippi
+
+      'sp'dmb'Mississippi'          ⍝ ... and 'p's.
+Misisipi
+
+      'is'dxb'Mississippi'          ⍝ drop extra 'i's and 's's.
+Mipp
+
+      1 dmb 8 1 1 1 2 5             ⍝ drop multiple 1s.
+8 1 2 5
+
+See also: dab deb dlb dmb dtb dxb
+
+Index:blanks|text
+Index;Jantunen V-M.

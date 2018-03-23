@@ -1,0 +1,44 @@
+⍝ Pack the (simple) array in one binary vector:
+
+    packD'mississippi'
+0 0 0 1 0 0 1 0 0 1 0 1 1 0 0 0 0 0 0 1 1 0 0 0 1 1 0 0 1 0 0 1 0 0 0 1 1 0 0 1 0 0 0 0 0 0 0 0 1 1 1 0 1 1 0 0 0 1 0 1 0 0 1 0 0 1 0 1 0 0 1 0 0 1 0 1 1 0 1 1 0 1 0
+
+    {⍵≡0 packD 1 packD ⍵}'Full Circle'
+1
+    crypt←{
+    ⍝| ⍺:   character set (64 elements!)
+    ⍝| ⍺⍺:  0 = decrypt, 1 = crypt
+    ⍝| ⍵⍵:  key (positive integer)
+    ⍝| ⍵:   text
+
+         ⍺←⎕D,⎕A,'+-',lcase ⎕A               ⍝ default character set.
+         ⎕IO←0 ⋄ set←⍺                       ⍝ works nicer in zero origin.
+         key←{((⌊2⍟⍵+1)⍴2)⊤⍵}⍵⍵              ⍝ binarise key.
+
+         cry←{                               ⍝ encryption:
+             b←{(6×⌈(⍴⍵)÷6)↑⍵,6⍴1}packD ⍵    ⍝  pack, pad with 1's if needed.
+             c←b≠(⍴b)⍴key                    ⍝  poor man's xor encryption.
+             set[2⊥(6,(⍴c)÷6)⍴c]             ⍝ result is gibberish.
+         }
+
+         yrc←{                               ⍝ decryption:
+             c←,(6⍴2)⊤set⍳⍵                  ⍝  encode indices.
+             0 packD{(-+/∧\⌽⍵)↓⍵}c≠(⍴c)⍴key  ⍝  de-xor, unpack (n.b. remove last 1's)
+         }
+
+         0::⍵ ⋄ ⍺⍺=1:cry ⍵ ⋄ yrc ⍵
+     }
+
+    crypted←(1 crypt 313)'mississippi'
+    crypted
+5Na1n4ia1qmLJK
+
+    'mississippi'≡(0 crypt 313)crypted
+1
+    chk←{
+        ⍵≡0 ⍺⍺ ⍺⍺ ⍵:'ok'
+        ' Error: compression round-trip fails'
+    }
+
+    packD chk ⎕fmt notes.Marilyn        ⍝ simple text matrix
+ok

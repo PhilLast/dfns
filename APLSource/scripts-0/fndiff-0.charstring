@@ -1,0 +1,34 @@
+⍝ Defined function differences:
+
+    pw ⎕pw←⎕pw 80                           ⍝ save and set ⎕pw.
+
+    (0,⎕pw-1)≡⍴fndiff'fndiff' 'fndiff'      ⍝ no diffs: 0-row result.
+1
+
+    this←{
+        aa←⍵
+        bb←⍵  ⍝ comment
+    }
+
+    that←{
+         aa←⍵
+        bb←⍵
+    }
+    
+    fndiff'this' 'that'
+this←{  ·   ·   ·   ·   ·   ·   ·   ·  │that←{  ·   ·   ·   ·   ·   ·   ·   ·  
+·   ·   aa←⍵·   ·   ·   ·   ·   ·   ·  │·   ·   ·aa←⍵   ·   ·   ·   ·   ·   ·  
+·   ·   bb←⍵· ⍝ comment ·   ·   ·   ·  │·   ·   bb←⍵·   ·   ·   ·   ·   ·   ·  
+
+    ' 'fndiff'this' 'that'
+this←{  ·   ·   ·   ·   ·   ·   ·   ·  │that←{  ·   ·   ·   ·   ·   ·   ·   ·  
+bb←⍵⍝ comment   ·   ·   ·   ·   ·   ·  │bb←⍵·   ·   ·   ·   ·   ·   ·   ·   ·  
+
+    '⍝'fndiff'this' 'that'
+this←{  ·   ·   ·   ·   ·   ·   ·   ·  │that←{  ·   ·   ·   ·   ·   ·   ·   ·  
+·   ·   aa←⍵·   ·   ·   ·   ·   ·   ·  │·   ·   ·aa←⍵   ·   ·   ·   ·   ·   ·  
+
+    ' ⍝'fndiff'this' 'that'
+this←{  ·   ·   ·   ·   ·   ·   ·   ·  │that←{  ·   ·   ·   ·   ·   ·   ·   ·  
+
+    ⎕pw←pw                                  ⍝ restore ⎕pw

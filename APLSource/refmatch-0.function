@@ -1,0 +1,13 @@
+ refmatch←{⎕ML←1                             ⍝ Space reference match.
+     ⍬{                                      ⍝ ⍬: vector of visited refs.
+         =/⍵:1                               ⍝ identical refs: yes.
+         ≢/⍵.(⎕NL 2 3 4 9):0                 ⍝ content lists differ: no.
+         ≢/⍵.(⍎¨'0',↓⎕NL 2):0                ⍝ variables differ: no.
+         ≢/⍵.⍎⊂'⎕ct⎕div⎕io⎕ml⎕pp⎕rl⎕rtl':0   ⍝ sys vars differ: no.
+         ≢/⍵.(⎕CR¨↓⎕NL 3 4):0                ⍝ function source differs: no.
+         refs←⍵.(1↓⍎¨'0',↓⎕NL 9)             ⍝ subspaces.
+         0=⍴⊃refs:1                          ⍝ no subspaces: yes.
+         1∊⍺⍺∊∊refs:≡/refs                   ⍝ not following cycles.
+         ∧/(⍺⍺∪∊refs)∇∇¨↓⍉↑refs              ⍝ compare subspaces.
+     }⍺ ⍵
+ }

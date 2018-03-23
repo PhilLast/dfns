@@ -1,0 +1,4 @@
+ rows←{⎕ML←1         ⍝ Operand function applied to argument rows.
+     1<|≡⍵:∇¨⍵       ⍝ nested: item-wise application
+     ⍺⍺⍤1⊢⍵          ⍝ simple: vector-wise application
+ }

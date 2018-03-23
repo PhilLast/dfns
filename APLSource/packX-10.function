@@ -1,0 +1,28 @@
+ packX←{                           ⍝ TeXt packer.
+
+     (⎕ML ⎕IO)←2 0                 ⍝ environment
+
+     cmp←{                         ⍝ packer
+         u←∪,⍵                     ⍝ unique items, odd or even
+         p←↓{((⌈0.5×⍴⍵),2)⍴⍵},⍵    ⍝ divide into pairs
+         j←,u∘.,u                  ⍝ unique couples
+         b←j∊p ⋄ g←b/j             ⍝ take only the needed pairs
+         i←g⍳p                     ⍝ indices
+         w←⌈2⍟⍴g                   ⍝ bit width
+         q←0∨b,,(w⍴2)⊤i            ⍝ bits to bitvec
+         u((⍴⍴⍵),⍴⍵)q              ⍝ return uniques, shape, bits
+     }
+
+     unc←{                         ⍝ unpack
+         (u d a)←⍵                 ⍝ handle arg
+         s←0⊃d ⋄ r←s⍴1↓d           ⍝ shape
+         j←,u∘.,u                  ⍝ unique pairs..
+         p←((⍴j)↑a)/j              ⍝ ..used couples
+         q←(⍴j)↓a                  ⍝ indices
+         w←⌈2⍟⍴p                   ⍝ bitwidth
+         i←2⊥w{(⍺,⌊(⍴⍵)÷⍺)⍴⍵}q     ⍝ calc indices
+         r⍴∊p[i]                   ⍝ return array
+     }
+
+     ⍺←1 ⋄ ⍺=1:cmp ⍵ ⋄ unc ⍵       ⍝ pack/unpack
+ }

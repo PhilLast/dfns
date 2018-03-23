@@ -1,0 +1,20 @@
+ pack←{⎕IO ⎕ML ⎕CT←0 1 0             ⍝ Save WS by sharing sub-arrays.
+     ↑{                              ⍝ start and stop depth.
+         6≠10|⎕DR ⍵:⍵                ⍝ simple: done.
+         atoms←∪⍺{                   ⍝ extract ⍺-atoms.
+             ⍺>|≡⍵:⍬                 ⍝ ignore (<⍺)-atoms.
+             ⍺=|≡⍵:⊂⍵                ⍝ ⍺-atom.
+             6≠10|⎕DR ⍵:⍬            ⍝ simple: ignore
+             ↑,/,⍺ ∇¨(1⌈⍴⍵)↑⍵        ⍝ nested: ⍺-atoms from subarrays.
+         }⍵                          ⍝ for each ⍺-atom in ⍵.
+         share←{                     ⍝ share atom.
+             (atoms⍳⊂⍵)⊃atoms,⊂⍵     ⍝ share with atoms vector
+         }                           ⍝   if possible.
+         ⍺{                          ⍝ array with shared ⍺-atoms.
+             ⍺>|≡⍵:⍵                 ⍝ (<⍺)-atom: copy
+             ⍺=|≡⍵:share ⍵           ⍝ ⍺-atom: share with atoms vector.
+             6≠10|⎕DR ⍵:⍵            ⍝ simple: copy (will share later).
+             ⍺ ∇∘share¨⍵             ⍝ nested: ⍺-atoms from subarrays.
+         }⍵                          ⍝ for each ⍺-atom in ⍵.
+     }/(⌽⍳|≡⍵),⊂⍵                    ⍝ collect at depths 0, 1, ...
+ }

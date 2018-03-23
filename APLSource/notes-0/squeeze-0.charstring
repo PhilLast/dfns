@@ -1,0 +1,12 @@
+cvec ← ##.squeeze cvec                      ⍝ Compress multiple blanks.
+
+Multiple blank characters in [cvec] are replaced with a single blank.
+
+Examples see: →Line_vectors←
+
+      squeeze '   oranges    and     lemons'
+ oranges and lemons
+
+See also: justify wrap unwrap dmb Line_vectors
+
+Index:compression|line vector

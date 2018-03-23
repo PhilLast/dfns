@@ -1,0 +1,108 @@
+rslt ← b (f ##.kcell) p         ⍝ Relationship between point and k-cell.
+
+Supplied  by  Steve Mansour, this operator determines the relationship between a
+point and a k-cell. For background, see Steve's paper Arithmetic Boundary Check-
+ing →abc←.
+
+For k=1, this is a line segment, (useful for input checking)
+    k=2, this is a rectangle, (useful for checking cursor position in a window).
+    k=3, this is a rectangular parallelepiped (brick) or cube,
+    k=4, this is a hyperbrick or hypercube, etc.
+
+b:  Left  argument (bounds) is a numeric scalar, 2-vector or 2×k matrix; If b is
+    a  matrix,  the  rows  represent the extreme points, (e.g. if k=2, the upper
+    left  and  lower right hand corners; the columns represent the lower / upper
+    bounds in each dimension. Extreme points are indicated in the diagrams below
+    by  '⍟'.
+
+p:  Right  argument (points) is any simple numeric array. If the left argument b
+    is a scalar or 2-vector, each element of p is compared individually. If b is
+    a  matrix, the shape of the first axis of p must equal k--the number of col-
+    umns  in  b; each subvector in p represents the coordinates of a point in k-
+    space.
+
+┌───────────┬──────────────────────────────┬───────────────────────────────────┐
+│f: Operand │    × :  signum product       │    + : signum sum                 │
+├───────────┼──────────────────────────────┼───────────────────────────────────┤
+│Result:    │       ¯1=Interior            │ Unique -ive or +ive integer       │
+│           │        0=Boundary            │ representing a particular region  │
+│           │        1=Outside             │ in k-space. 0 always represents   │
+│           │                              │ the interior.                     │
+├───────────┼──────────────────────────────┼───────────────────────────────────┤
+│b=scalar   │      ¯1   0   1              │                                   │
+│k=1        │   <-------⍟------->          │       Same as (×)                 │
+│Ray        │                              │                                   │
+├───────────┼──────────────────────────────┼───────────────────────────────────┤
+│b=vector   │                              │                                   │
+│k=1        │     1   0  -1   0   1        │      ¯2  ¯1   0   1   2           │
+│Line       │ <-------⍟-------⍟------->    │   <-------⍟-------⍟------->       │
+│Segment    │                              │                                   │
+├───────────┼──────────────────────────────┼───────────────────────────────────┤
+│           │                              │   ¯12  ¯11  ¯10   ¯9   ¯8         │
+│b=2×2      │                              │                                   │
+│matrix     │      0→⍟-----------.      1  │    ¯7  ¯6⍟---¯5----¯4  ¯3         │
+│k=2        │        |           |         │          |         |              │
+│Rectangle  │        |     -1    |←0       │    ¯2   ¯1    0    1    2         │
+│           │        |           |         │          |         |              │
+│           │  1     '-----------⍟         │     3    4----5----⍟6   7         │
+│           │                              │                                   │
+│           │                              │     8    9   10   11   12         │
+├───────────┼──────────────────────────────┼───────────────────────────────────┤
+│b=2×3      │                              │                                62 │
+│matrix     │                              │                6                  │
+│k=3        │          __0_________⍟       │       ¯19______↓___1____ ⍟31      │
+│Brick      │        /|  ↓        /|       │        /|          ↓    /|        │
+│(or cube)  │       /_|__________/ |       │       /_|______________/ |        │
+│           │ 1     | |    -1    | |    1  │     ¯25→|     0        | |        │
+│           │       | |__________|_|       │       | |______________|_|←29     │
+│           │     0→| /          | /       │       | /              | /        │
+│           │       ⍟/___________|/        │    ¯31⍟/___________↑___|/         │
+│           │                ↑             │              ↑    ¯1              │
+│           │1               0             │             ¯6                    │
+│           │                              │ ¯62                               │
+└───────────┴──────────────────────────────┴───────────────────────────────────┘
+
+Examples:
+
+    3 ×kcell 1 2 3 4 5                      ⍝ Single Point Boundary (scalar).
+¯1 ¯1 0 1 1
+
+    2 4 ×kcell 1 2 3 4 5                    ⍝ Upper and Lower Bounds (2-vector).
+1 0 ¯1 0 1
+                                            ⍝ Differentiate between regions
+    2 4 +kcell 1 2 3 4 5                    ⍝ (signum sum).
+¯2 ¯1 0 1 2
+                                            ⍝ Upper left and lower right hand
+    b←↑(3 2)(5 6)                           ⍝ corners of a rectangle.
+
+                                            ⍝ Various points in the plane
+    p←⍉↑(6 8)(5 2)(4 4)(7 6)(3 5)(2 3)      ⍝  (2-space).
+
+                                            ⍝ Positions: outside, boundary, int-
+    b ×kcell p                              ⍝ erior, outside, boundary, outside.
+1 0 ¯1 1 0 1
+                                            ⍝ Positions: Below right, corner,
+    b +kcell p                              ⍝ interior, below, edge, above.
+12 4 0 11 ¯5 ¯10
+
+    b3←2 3⍴0 0 0 10 10 10                   ⍝ Coordinates of a cube.
+
+    b3 ×kcell ⍉↑(5 5 5)(11 15 20)(3 8 10)   ⍝ Inside, outside, boundary of cube.
+¯1 1 0
+
+    b3 +kcell 0 10 10                       ⍝ Top left rear corner of the cube.
+¯19
+
+    b3 +kcell 5 0 0                         ⍝ Bottom Front Edge of the cube.
+¯6
+
+    b3 +kcell 5 5 10                        ⍝ Top Face of the cube.
+1
+
+    b3 +kcell ⍉↑(0 5 5)(2 3 4)              ⍝ Left Face, Interior of cube.
+¯25 0
+
+See also: abc kball
+
+Index:K-cell|boundary|hypercube
+Index;Mansour S.M.

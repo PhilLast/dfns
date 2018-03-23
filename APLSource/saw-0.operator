@@ -1,0 +1,7 @@
+ saw←{                   ⍝ Function operand applied Simple-Array-Wise.
+     ⍺←⊢                 ⍝ default left arg.
+     2≥|≡⍺ ⍵ ⍵:⍺ ⍺⍺ ⍵    ⍝ Both simple: apply operand.
+     1≥|≡⍵:⍺ ∇¨⊂⍵        ⍝ ⍵ simple: traverse ⍺.
+     2≥|≡⍺ 1:⍺∘∇¨⍵       ⍝ ⍺ simple: traverse ⍵.
+     ⍺ ∇¨⍵               ⍝ Both nested: traverse both.
+ }

@@ -1,0 +1,105 @@
+ cxdraw←{⎕IO ⎕ML←0 1                         ⍝ Complex function drawing.
+
+     draw←{                                  ⍝ MouseMove callback.
+         _ _ y x _ _←⍵                       ⍝ mouse coords.
+         ⍺←y x                               ⍝ previous coords (default here).
+         a.onMouseMove←'draw'(y x)           ⍝ starting coords for next segment.
+         from←↑⍺(y x)                        ⍝ domain endpoints.
+         _←from poly blue                    ⍝ blue domain line.
+         into←range from                     ⍝ draw range line in segments.
+         coords↑(y x)into                    ⍝ update coords in form Caption.
+     }
+
+     marks←{                                 ⍝ double click: mark domain & range.
+         _ _ y x _ _←⍵                       ⍝ mouse pointer coords.
+         _←y x mark 1 blue                   ⍝ domain marker
+         into←⊃↓app under zg 3 2⍴y x         ⍝ maps_to (range) point.
+         _←into mark 1 red                   ⍝ range marker.
+         coords↑(y x)into                    ⍝ update coords in form Caption.
+     }
+
+     range←{                                 ⍝ draw range line in segments.
+         dom←⍵[0;]-[1](0.01×⍳101)∘.×-⌿⍵      ⍝ 100 domain line segments.
+         rng←app under zg dom                ⍝ corresponding range points.
+         into←,¯1 2↑rng                      ⍝ final points for coords fn.
+         ~1∊(⌊rng)∊⍳101:into                 ⍝ no range points visible: quit.
+         cut←100<÷⌿+/|2-/[1]↑rng dom         ⍝ cut where red/blue slope > 100.
+         ~1∊cut:into⊣rng poly red            ⍝ no discontinuity: draw red line.
+         eps←{⊖2 2↑¯1⊖⍵}                     ⍝ endpoints of range.
+         1↑cut:∇ eps 1 0↓dom                 ⍝ first point is cut: ignore it
+         ¯1↑cut:∇ eps ¯1 0↓dom               ⍝ last point is cut: ignore it.
+         ⊃⌽∇∘eps¨(1,cut)⊂[0]dom              ⍝ draw both halves of line.
+     }
+
+     app←⍺⍺{                                 ⍝ complex function application
+         11::zg ¯1 ¯1                        ⍝ overflow: map to off-screen.
+         5::∇¨under(↓∘⍉)⍵                    ⍝ ⍺⍺ refuses array: try each point.
+         cx←1 0J1∘(+.×)                      ⍝ complex from coords
+         cd←9 11∘(∘.○)                       ⍝ coords from complex
+         0=⎕NC'⍺':cd ⍺⍺ cx ⍵                 ⍝ monadic application
+         cd(cx ⍺)⍺⍺ cx ⍵                     ⍝ dyadic application
+     }                                       ⍝ :: [C] → [C]
+
+     plane←{                                 ⍝ complex plane.
+         f←⎕NEW⊂'Form'                       ⍝ containing form
+         f.(Posn Size)←(3 0)(60 45)          ⍝ top(ish) left.
+         f.Caption←⍵                         ⍝ ref to new form.
+         f.onKeyPress←'keyp'                 ⍝ esc to quit.
+
+         coo←f.Coord                         ⍝ store current prop.
+         f.Coord←'Pixel'                     ⍝ change prop.
+         f.(Size←2⍴⌊/Size)                   ⍝ make form square.
+         f.Coord←coo                         ⍝ reset  prop.
+
+         a←f.⎕NEW⊂'Static'                   ⍝ white backdrop.
+         a.(Posn Size)←(0 0)(100 100)        ⍝ occupies whole form.
+
+         line←{⍺.⎕NEW'Poly'⍵}                ⍝ new line.
+
+         fmto←{'Points'(↓⍉↑⍵)}               ⍝ points property for gui.
+         a.re←a line⊂fmto 50,¨0 100          ⍝ real axis.
+         a.im←a line⊂fmto 100 0,¨50          ⍝ imaginary axis.
+
+         posn←'Points'(50-50÷⍺ ⍺)            ⍝ bounding
+         size←'Size'(100÷⍺ ⍺)                ⍝   square of
+         a⊣a.uc←a.⎕NEW'Ellipse'(posn size)   ⍝     unit "circle".
+     }
+
+     down←{                                  ⍝ MouseDown:
+         1≡4⊃⍵:a.onMouseMove←'draw'          ⍝ lft: start drawing.
+         2≡4⊃⍵:(a a).Visible←0 1             ⍝ rgt: clear screen.
+     }
+     stop←{a.onMouseMove←0}                  ⍝ MouseUp: stop drawing.
+     keyp←{'EP'≡2⊃⍵:2 ⎕NQ a.##'Close'}       ⍝ Esc key: quit.
+
+     coords←{                                ⍝ domain and range coords.
+         nums←~∘' '¨8 2∘⍕¨⍉zg ⍵              ⍝ format of coords to 2 dec places.
+         glue←{↑,∘(⍺∘,)/⍵}                   ⍝ ⍺-join vector ⍵.
+         text←' -> 'glue↓'j'glue nums        ⍝ 'fm -> to'
+         a.##.Caption←'cxdraw ',text         ⍝ display in Caption of Form.
+     }
+
+     mbrot←{                                 ⍝ poor man's Mandelbrot.
+         _ _ y x _ _←⍵                       ⍝ mouse pointer coords.
+         to←,app⍣10⍨zg↑,↓y x                 ⍝ after 10 iterations.
+         2∧.≥|to:y x mark 0                  ⍝ in-bounds: mark point.
+     }
+
+     zg←↑∘((⍵÷100÷2 ¯2)∘×)∘↓∘(-∘50)∘⊖∘⍉      ⍝ scale: complex from gui coords.
+     under←{⍵⍵⍣¯1 ⍺⍺ ⍵⍵ ⍵}                   ⍝ aka "dual".
+
+     red blue←{'FCol'(⍵↑255)}¨3 ¯3           ⍝ red and blue line colours.
+     mark←{'a.'⎕WC'Marker'⍺,⍵}               ⍝ unnamed marker object.
+     poly←{'a.'⎕WC'Poly'⍺ ⍵}                 ⍝ unnamed poly object.
+
+     a←⍵ plane⊃⎕SI                           ⍝ complex plane.
+
+     ⍺←0 ⋄ _←⍺{                              ⍝ regular drawing or mandelbrot?
+         ⍺:a.onMouseMove←'mbrot'             ⍝ mandelbrot: set callback.
+         a.onMouseDown←'down'                ⍝ otherwise: regular drawing.
+         a.onMouseDblClick←'marks'           ⍝ double-click to mark.
+         1:a.onMouseUp←'stop'                ⍝ release to stop drawing.
+     }⍵
+
+     ⎕DQ a.##                                ⍝ await events.
+ }

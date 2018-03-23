@@ -1,0 +1,6 @@
+ each←{                  ⍝ Fast each for pure operand function.
+     vec←,⍵              ⍝ vector of
+     nub←∪vec            ⍝   unique items.
+     res←⍺⍺¨nub          ⍝ vector of unique results.
+     (⍴⍵)⍴res[nub⍳vec]   ⍝ resulting array.
+ }

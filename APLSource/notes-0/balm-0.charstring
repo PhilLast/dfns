@@ -1,0 +1,454 @@
+Brainbalm: An easier-to-program interface to Brainfuck
+------------------------------------------------------
+Here are some →mac←ros for a simple interface to Brainfuck. The macros expand to
+regular "pure" BF code, which uses only tokens: [ ] + - < > , .
+
+The Balm machine extends BF with:
+
+    * If-else-fi constructions, which may be nested.
+    * A push-down stack (for non-negative values).
+    * Directly addressable (random-access) memory.
+    * Instructions ; and : for input/output of numeric digits.
+
+This little function "∆" will help us to collect sample source lines into a new-
+line-separated line-vector in buffer ⍙:
+
+    ∆←{{}⍙,←⍵,¯1↑4↑⎕av}     ⍝ accumulate into ⍙ buffer.
+    ⍙←''                    ⍝ null accumulation buffer.
+
+First, we implement directly-addressable (random-access)  memory in BF, with the
+home (current) cell used as an accumulator "A". In addition, internal, invisible
+"registers" b and c will be used for some copy operations and will be assumed to
+be zero between instructions.
+
+     ┌─┬─┬─────────── Accumulator A and registers b and c.
+    ┬─┬─┼A┬─┬─┬─┬─┬─┬─
+    │c b│ │ │ │ │ │ │ ∘∘∘
+    ┴─┴─┼0┴1┴2┴3┴4┴5┴─
+         └─┴─┴─┴─┴─┴── "memory addresses" 0 1 2 3 4 5 ...
+
+Macros ≡, ← and → implement directly-addressable or random-access BF memory:
+
+    ∆'≡=(           '   ⍝ ≡ copy <n> to A.  eg: n≡
+    ∆'  />          '   ⍝   go to <n>
+    ∆'  [-/<+<+>/>] '   ⍝   move <n> to A and b.
+    ∆'  /<          '   ⍝   go to A.
+    ∆'  <           '   ⍝   go to b.
+    ∆'  [->/>+/<<]  '   ⍝   move b to <n>
+    ∆'  >           '   ⍝   go to A.
+    ∆')             '
+
+    ∆'→=(           '   ⍝ → move <n> to A.  eg: n→
+    ∆'  />          '   ⍝   go to <n>
+    ∆'  [-/<+/>]    '   ⍝   move <n> to A.
+    ∆'  /<          '   ⍝   go to A.
+    ∆')             '
+
+    ∆'←=(           '   ⍝ ← move A to <n>   eg: n←
+    ∆'  />[-]/<     '   ⍝   clear <n>
+    ∆'  [-/>+/<]    '   ⍝   move A to <n>
+    ∆')             '
+
+    ram ⍙←⍙ ''          ⍝ directly-addressable memory macros ≡, ← and →.
+
+Here are macros ↓ and ↑ for pushing (down) and popping (up)  stack items.  As we
+rely on the presence of a value in the v field when searching leftwards for top-
+of-stack, we can't push a value of 0.  No problem; we just add 1 before stacking
+a value and subtract 1 after popping it.
+
+             ┌────────────────────── top of stack
+             │             ┌──────── stack base
+       ─┬─┬─┬T┬─   ─┬─┬─┬─┬S┬─┬─┼A┬
+   <-  0 0│t v│ ... │t v│t v│c b│ │
+       ─┴─┴─┴─┴─   ─┴─┴─┴─┴─┴─┴─┼0┴
+
+The  stack  is  to  the _left_ of the "home" cell A. If your BF system is fitted
+with only a right-infinite  memory  tape,  you should use the ! macro to preface
+your code with a ">>···>" sequence  long  enough  to  reserve  sufficient  stack
+space.
+
+    ∆'↓=(           '   ⍝ push:                     S←A,S ⋄ A←0
+    ∆'  ←=[-/<+/>]  '   ⍝   ← move ⍺ cells left (local macro defn).
+    ∆'  →=[-/>+/<]  '   ⍝   → move ⍺ cells right    ..  ..  ..
+    ∆'  +           '   ⍝ increment value to be pushed
+    ∆'  4←          '   ⍝ copy A to t in stack base (S.t)
+    ∆'  <<<         '   ⍝ go (move BF's memory pointer) to S
+    ∆'  [< 2← <]    '   ⍝ move S.t to (T+1).t, where (T+1) is left of T
+    ∆'  < 1→ >      '   ⍝ move (T+1).t to (T+1).v
+    ∆'  [>>]        '   ⍝ skip back to (S-1).v (aka b)
+    ∆'  >           '   ⍝ go to A
+    ∆')             '
+
+    ∆'↑=(           '   ⍝ pop:                      A+←↑S ⋄ S←1↓A
+    ∆'  →=[-/>+/<]  '   ⍝   → move ⍺ cells right
+    ∆'  <<<         '   ⍝ go to S
+    ∆'  [<<] >>     '   ⍝ go to T
+    ∆'  1→          '   ⍝ move T.v to (T-1).t
+    ∆'  >>          '   ⍝ go to T-1
+    ∆'  [< 2→ > >>] '   ⍝ move value down stack to (S-1).t (aka c)
+    ∆'  <           '   ⍝ go to c
+    ∆'  2→          '   ⍝ move c to A
+    ∆'  >>          '   ⍝ go to A
+    ∆'  -           '   ⍝ decrement popped value.
+    ∆')             '
+
+    ∆'!=>>/>/>>>    '   ⍝ reserve space for ⍺-stack and regs b and c. Eg: 1000!
+
+    stk ⍙←⍙ ''          ⍝ stack macros ↓ ↑ and !.
+
+Macros ; and : code  the  standard  BF  sequences that convert between character
+digits '0'-'9' and their numeric equivalents, by adding or subtracting '0':
+
+    ∆';=(           '   ⍝ ; input digit   A←⎕
+    ∆'  ,           '   ⍝   input char '0'-'9'.
+    ∆'  ∆=/-        '   ⍝   minus.
+    ∆'  <6∆[+>8∆<]> '   ⍝   subtract '0'=48.
+    ∆')'
+
+    ∆':=(           '   ⍝ : output digit  ⎕←A
+    ∆'  ∆=/+        '   ⍝   plus.
+    ∆'  <6∆[->8∆<]> '   ⍝   add '0'=48.
+    ∆'  .           '   ⍝   output char '0'-'9'.
+    ∆')             '
+
+    io ⍙←⍙ ''           ⍝ numeric I/O macros ; and :.
+
+and finally, here are {, ⋄ and }, which give us an if-else-fi control struct:
+
+    ∆'  {=<+>[<->   '   ⍝ {  if A≠0
+    ∆'  ⋄=<]<[->    '   ⍝ ⋄  else
+    ∆'  }=<<]>>     '   ⍝ }  fi
+
+    if ⍙←⍙ ''           ⍝ if-else-fi macros { ⋄ }.
+
+Examples:
+
+    dark ← ∩∘'[]<>+-,.'                         ⍝ without white space.
+
+    opt ← {↑{({⍵⍱¯1⌽⍵}⍺⍷⍵)/⍵}⍣≡/'><' '<>'⍵}     ⍝ cancelling >< pairs removed.
+
+    dark mac ram,io, 'm=1 n=2 ;m← ;n←' ⍝ BF: store input digits at [1] and [2].
+,<------[+>--------<]>>[-]<[->+<],<------[+>--------<]>>>[-]<<[->>+<<]
+
+    bf mac io,stk, '1! ;↓;↑:'   ⍝ sum of two input digits.
+2
+3
+5
+
+Here is a (very inefficient, compared with →bfack←) coding of Ackermann's funct-
+ion. The function is usually written in →declarative← style as three cases:
+
+    ack 0 n = n+1
+    ack m 0 = ack (m-1) 1
+    ack m n = ack (m-1) (ack m (n-1))
+
+The  recursion  can  be  recast  using iteration if we provide an explicit stack
+whose  top two items are the arguments for the next call. Compare the above with
+the following pseudo-code:
+
+    ack m n
+    ·   push ¯1             ⍝ end of stacked-items marker.
+    ·   repeat              ⍝ loop
+    ·   ·   if m=0          ⍝ ack(0, n)
+    ·   ·   ·   push n+1    ⍝   = n+1
+    ·   ·   else if n=0     ⍝ ack(m, 0)
+    ·   ·   ·   push m-1    ⍝   = ack(m-1, ─────────┐
+    ·   ·   ·   push 1      ⍝         1)            │ "recursive"
+    ·   ·   else            ⍝ ack(m, n)             │   calls.
+    ·   ·   ·   push m-1    ⍝   = ack(m-1, ─────────┤
+    ·   ·   ·   push m      ⍝         ack(m, ───────┘
+    ·   ·   ·   push n-1    ⍝             n-1))
+    ·   ·   fi              ⍝
+    ·   ·   n ← pop         ⍝ ──┐ "recursive"
+    ·   ·   m ← pop         ⍝ ──┘   return.
+    ·   while m≠¯1          ⍝ while items on stack.
+    ·   return n
+
+It  will  simplify our task if we replace the "else if" construct in favour of a
+simpler, though more deeply-nested, "if else fi".
+
+    ack m n
+    ·   push ¯1
+    ·   repeat
+    ·   ·   if m=0
+    ·   ·   ·   push n+1
+    ·   ·   else                ⍝ "else if" → "else" with an
+    ·   ·   ·   if n=0          ⍝   indented "if"
+    ·   ·   ·   ·   push m-1    ⍝
+    ·   ·   ·   ·   push 1      ⍝
+    ·   ·   ·   else            ⍝
+    ·   ·   ·   ·   push m-1    ⍝
+    ·   ·   ·   ·   push m      ⍝
+    ·   ·   ·   ·   push n-1    ⍝
+    ·   ·   ·   fi              ⍝ together with an additional "fi".
+    ·   ·   fi
+    ·   ·   n ← pop
+    ·   ·   m ← pop
+    ·   while m≠¯1
+    ·   return n
+
+Now we can factor the "push m-1" from both clauses of the "if n=0" case:
+
+    ack m n
+    ·   push ¯1
+    ·   repeat
+    ·   ·   if m=0
+    ·   ·   ·   push n+1
+    ·   ·   else
+·   ·   ·   ·   push m-1        ⍝ factored-out push.
+    ·   ·   ·   if n=0
+    ·   ·   ·   ·   push 1
+    ·   ·   ·   else
+    ·   ·   ·   ·   push m
+    ·   ·   ·   ·   push n-1
+    ·   ·   ·   fi
+    ·   ·   fi
+    ·   ·   n ← pop
+    ·   ·   m ← pop
+    ·   while m≠¯1
+    ·   return n
+
+and reverse the sense of the tests from =0 to ≠0 by exchanging the corresponding
+clauses.
+
+    ack m n
+    ·   push ¯1
+    ·   repeat
+    ·   ·   if m≠0              ⍝ test for non-0
+·   ·   ·   ·   push m-1
+    ·   ·   ·   if n≠0          ⍝ test for non-0
+    ·   ·   ·   ·   push m
+    ·   ·   ·   ·   push n-1
+    ·   ·   ·   else
+    ·   ·   ·   ·   push 1
+    ·   ·   ·   fi
+    ·   ·   else
+    ·   ·   ·   push n+1
+    ·   ·   fi
+    ·   ·   n ← pop
+    ·   ·   m ← pop
+    ·   while m≠¯1
+    ·   return n
+
+Finally,  as  copying negative values would add significant complexity to the BF
+coding, we add 1 to m and n throughout  and subtract one  from the final result.
+This allows our end-of-stacked-items marker to be 0, rather than ¯1.
+
+Here is the version of Ackermann's fuction that we will code in Brainfuck:
+
+    ┌─Iterative Ackermann───────────┐
+    │                               │
+    │   ack m n                     │
+    │   ·   m n +← 1                │
+    │   ·   push 0                  │
+    │   ·   repeat                  │
+    │   ·   ·   if 0≠m-1            │
+    │   ·   ·   ·   push m-1        │
+    │   ·   ·   ·   if 0≠n-1        │
+    │   ·   ·   ·   ·   push m      │
+    │   ·   ·   ·   ·   push n-1    │
+    │   ·   ·   ·   else            │
+    │   ·   ·   ·   ·   push 1+1    │
+    │   ·   ·   ·   fi              │
+    │   ·   ·   else                │
+    │   ·   ·   ·   push n+1        │
+    │   ·   ·   fi                  │
+    │   ·   ·   n ← pop             │
+    │   ·   ·   m ← pop             │
+    │   ·   while m≠0               │
+    │   ·   return n-1              │
+    │                               │
+    └───────────────────────────────┘
+
+    ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+    ⍝                                                       ⍝
+    ⍝                           ⍝ Ackermann's function.     ⍝
+    ∆'  m=1 n=2             '   ⍝   declare local vars.     ⍝
+    ∆'  ;+m← ;+n←           '   ⍝   input and incr m and n  ⍝
+    ∆'  ↓                   '   ⍝   push 0                  ⍝
+    ∆'  m≡[                 '   ⍝   repeat                  ⍝
+    ∆'  ·   -{              '   ⍝   ·   if 0≠m-1            ⍝
+    ∆'  ·   ·   ↓           '   ⍝   ·   ·   push m-1        ⍝
+    ∆'  ·   ·   n≡-{[-]     '   ⍝   ·   ·   if 0≠n-1        ⍝
+    ∆'  ·   ·   ·   m→ ↓    '   ⍝   ·   ·   ·   push m      ⍝
+    ∆'  ·   ·   ·   n→-↓    '   ⍝   ·   ·   ·   push n-1    ⍝
+    ∆'  ·   ·   ⋄           '   ⍝   ·   ·   else            ⍝
+    ∆'  ·   ·   ·    ++↓    '   ⍝   ·   ·   ·   push 1+1    ⍝
+    ∆'  ·   ·   }           '   ⍝   ·   ·   fi              ⍝
+    ∆'  ·   ⋄               '   ⍝   ·   else                ⍝
+    ∆'  ·   ·   n→+↓        '   ⍝   ·   ·   push n+1        ⍝
+    ∆'  ·   }               '   ⍝   ·   fi                  ⍝
+    ∆'  ·   ↑n←             '   ⍝   ·   pop n               ⍝
+    ∆'  ·   ↑m←             '   ⍝   ·   pop m               ⍝
+    ∆'  m≡]                 '   ⍝   while stacked items     ⍝
+    ∆'  n→-:                '   ⍝   output n-1              ⍝
+        ack ⍙←⍙ ''                                          ⍝
+    ⍝                                                       ⍝
+    ⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+    bf opt dark mac if,io,ram,stk, '10!',ack    ⍝ ack 2 3 → 9
+2
+3
+9
+    ⍴opt dark mac if,io,ram,stk,ack             ⍝ Size of BF code for Ackermann.
+601
+
+⍝ Using this coding, ack(3,3) takes around half an hour on a 2GHz machine.
+⍝ Compare this with around 15 seconds for the coding in →bfack←.
+
+This function wraps and indents BF loops for easier reading:
+
+    pretty←{⎕ML←1
+        nl←⊃⌽⎕TC
+        dents←{∊¨(0⌈⍵+1 ¯1)⍴¨⊂⊂4↑'·'}
+        0{
+            nice(next nasty)←⍵
+            '∘'=next:∊nice
+            more less←dents ⍺
+            '['=next:(⍺+1)∇(nice,next,nl,more)nasty
+            ']'=next:(⍺-1)∇(nice,nl,less,next)nasty
+            ⍺ ∇(nice next)nasty
+        }↑{⍺ ⍵}/⍵,'∘'
+    }
+
+    pretty opt dark mac if,io,ram,stk,ack   ⍝ Ackermann's function from Balm.
+,<------[
+·   +>--------<
+]>+>[
+·   -
+]<[
+·   ->+<
+],<------[
+·   +>--------<
+]>+>>[
+·   -
+]<<[
+·   ->>+<<
+]+[
+·   -<<<<+>>>>
+]<<<[
+·   <[
+·   ·   -<<+>>
+·   ]<
+]<[
+·   ->+<
+]>[
+·   >>
+]>>[
+·   -<+<+>>
+]<<[
+·   ->>+<<
+]>[
+·   -<+>[
+·   ·   <->+[
+·   ·   ·   -<<<<+>>>>
+·   ·   ]<<<[
+·   ·   ·   <[
+·   ·   ·   ·   -<<+>>
+·   ·   ·   ]<
+·   ·   ]<[
+·   ·   ·   ->+<
+·   ·   ]>[
+·   ·   ·   >>
+·   ·   ]>>>[
+·   ·   ·   -<<+<+>>>
+·   ·   ]<<<[
+·   ·   ·   ->>>+<<<
+·   ·   ]>-<+>[
+·   ·   ·   <->[
+·   ·   ·   ·   -
+·   ·   ·   ]>[
+·   ·   ·   ·   -<+>
+·   ·   ·   ]<+[
+·   ·   ·   ·   -<<<<+>>>>
+·   ·   ·   ]<<<[
+·   ·   ·   ·   <[
+·   ·   ·   ·   ·   -<<+>>
+·   ·   ·   ·   ]<
+·   ·   ·   ]<[
+·   ·   ·   ·   ->+<
+·   ·   ·   ]>[
+·   ·   ·   ·   >>
+·   ·   ·   ]>>>[
+·   ·   ·   ·   -<<+>>
+·   ·   ·   ]<<-+[
+·   ·   ·   ·   -<<<<+>>>>
+·   ·   ·   ]<<<[
+·   ·   ·   ·   <[
+·   ·   ·   ·   ·   -<<+>>
+·   ·   ·   ·   ]<
+·   ·   ·   ]<[
+·   ·   ·   ·   ->+<
+·   ·   ·   ]>[
+·   ·   ·   ·   >>
+·   ·   ·   ]
+·   ·   ]<[
+·   ·   ·   ->+++[
+·   ·   ·   ·   -<<<<+>>>>
+·   ·   ·   ]<<<[
+·   ·   ·   ·   <[
+·   ·   ·   ·   ·   -<<+>>
+·   ·   ·   ·   ]<
+·   ·   ·   ]<[
+·   ·   ·   ·   ->+<
+·   ·   ·   ]>[
+·   ·   ·   ·   >>
+·   ·   ·   ]<
+·   ·   ]>
+·   ]<[
+·   ·   ->>>[
+·   ·   ·   -<<+>>
+·   ·   ]<<++[
+·   ·   ·   -<<<<+>>>>
+·   ·   ]<<<[
+·   ·   ·   <[
+·   ·   ·   ·   -<<+>>
+·   ·   ·   ]<
+·   ·   ]<[
+·   ·   ·   ->+<
+·   ·   ]>[
+·   ·   ·   >>
+·   ·   ]<
+·   ]<[
+·   ·   <<
+·   ]>>[
+·   ·   ->+<
+·   ]>>[
+·   ·   <[
+·   ·   ·   ->>+<<
+·   ·   ]>>>
+·   ]<[
+·   ·   ->>+<<
+·   ]>>->>[
+·   ·   -
+·   ]<<[
+·   ·   ->>+<<
+·   ]<<<[
+·   ·   <<
+·   ]>>[
+·   ·   ->+<
+·   ]>>[
+·   ·   <[
+·   ·   ·   ->>+<<
+·   ·   ]>>>
+·   ]<[
+·   ·   ->>+<<
+·   ]>>->[
+·   ·   -
+·   ]<[
+·   ·   ->+<
+·   ]>[
+·   ·   -<+<+>>
+·   ]<<[
+·   ·   ->>+<<
+·   ]>
+]>>[
+·   -<<+>>
+]<<-<++++++[
+·   ->++++++++<
+]>.
+
+See also: bfack bf mac
+
+Index:Ackermann's function|macro|Turing tape
+Index;Ackermann W.

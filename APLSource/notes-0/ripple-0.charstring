@@ -1,0 +1,84 @@
+nvec ← ##.ripple nvec           ⍝ Perfect Ripple Shuffle.
+
+Items from the second and first halves of the argument vector are interleaved in
+the result.
+
+More properly called a "riffle" shuffle:
+http://en.wikipedia.org/wiki/Shuffling#Riffle
+
+Technical note:
+
+The code shows an innovative use of the grade-up and grade-down primitive funct-
+ions:
+
+    ripple←{            ⍝ Perfect Ripple Shuffle.
+        ⍵[⍋⍒(⍴⍵)⍴0 1]
+    }
+
+(muse:
+
+    Cumulatively  re-applying  ripple  eventually yields the original argument.
+    In the case of a 52-vector, ripple must be re-applied 52 times to complete
+    the cycle but for other length vectors, the cycle is shorter. Here are the
+    repeat counts for vectors of length 0-99.
+
+            10 10⍴ {1⍳⍨(⍳⍵){(⍳⍵)≡⍺ ripple pow ⍳⍵}¨⍵}¨0 to 99
+         1  1  2  2  4  4  3  3  6  6
+        10 10 12 12  4  4  8  8 18 18
+         6  6 11 11 20 20 18 18 28 28
+         5  5 10 10 12 12 36 36 12 12
+        20 20 14 14 12 12 23 23 21 21
+         8  8 52 52 20 20 18 18 58 58
+        60 60  6  6 12 12 66 66 22 22
+        35 35  9  9 20 20 30 30 39 39
+        54 54 82 82  8  8 28 28 11 11
+        12 12 10 10 36 36 48 48 30 30
+
+    There may be a simple expression for these numbers.
+
+    See: Vector 21.3 "Jottings 43: A Rippling Good Yarn!" Norman Thomson.
+    http://www.vector.org.uk/archive/v213/jot213.htm
+
+    See also: http://www.mathscarves.org
+)
+
+Examples:
+
+    ripple ⍳16                                          ⍝ 9-16 meshed with 1-8.
+9 1 10 2 11 3 12 4 13 5 14 6 15 7 16 8
+
+    show←⊃¨∘⊂∘(,'HCDS'∘.,'A23456789XJQK')               ⍝ show card(s) no. ⍵.
+
+    ⍝ Hearts, Clubs, Diamonds, Spades.
+    ⍝ ¯       ¯      ¯         ¯
+    ⍝ Ace 2-9 X(10) Jack Queen King.
+    ⍝ ¯       ¯     ¯    ¯     ¯
+
+    show 4 13⍴⍳52                                       ⍝ show deck in order.
+ HA  H2  H3  H4  H5  H6  H7  H8  H9  HX  HJ  HQ  HK
+ CA  C2  C3  C4  C5  C6  C7  C8  C9  CX  CJ  CQ  CK
+ DA  D2  D3  D4  D5  D6  D7  D8  D9  DX  DJ  DQ  DK
+ SA  S2  S3  S4  S5  S6  S7  S8  S9  SX  SJ  SQ  SK
+
+    show 4 13⍴ ripple ⍳52                               ⍝ shuffled deck.
+ DA  HA  D2  H2  D3  H3  D4  H4  D5  H5  D6  H6  D7
+ H7  D8  H8  D9  H9  DX  HX  DJ  HJ  DQ  HQ  DK  HK
+ SA  CA  S2  C2  S3  C3  S4  C4  S5  C5  S6  C6  S7
+ C7  S8  C8  S9  C9  SX  CX  SJ  CJ  SQ  CQ  SK  CK
+
+    ripple ripple ⍳16                               ⍝ double ripple.
+13 9 5 1 14 10 6 2 15 11 7 3 16 12 8 4
+
+    3 ripple pow ⍳16                                ⍝ triple ripple.
+15 13 11 9 7 5 3 1 16 14 12 10 8 6 4 2
+
+    4 ripple pow ⍳16                                ⍝ quadruple ripple reverses.
+16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1
+
+    8 ripple pow ⍳16                                ⍝ octuple ripple restores.
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
+
+See also: pow to
+
+Index:shuffle|grade|card deck|diversions|riffle shuffle
+Index;Thomson N.

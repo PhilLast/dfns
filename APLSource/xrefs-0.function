@@ -1,0 +1,6 @@
+ xrefs←{⎕ML←1                ⍝ Extract refs vector from array ⍵.
+     9=⎕NC'⍵':,⍵             ⍝ scalar ref: ravel.
+     ∪{                      ⍝ otherwise,
+         ({⊃9=⎕NC'⍵'}¨⍵)/⍵   ⍝ extract refs from,
+     }∊⍵                     ⍝ enlisted array.
+ }

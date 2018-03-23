@@ -1,0 +1,100 @@
+table ← {opts←⍬} ##.cmpx exprs              ⍝ Approx expression timings.
+
+[exprs] is a vector of character vectors, each representing  a  result-returning
+expression.  Each  expression  is compiled into a loop, and its evaluation timed
+for  1, 2, 4, 8, 16, ···  iterations.  The  iteration count is doubled until the
+mean time to execute is more than [secs]. Finally, an empty loop is compiled and
+its execution time for the final number of iterations subtracted  to  give  nett
+execution time in seconds for each expression.
+
+Optional left argument [opts] specifies a vector of 0-4 items.  Defaults are as-
+sumed if fewer than 4 items are supplied. The options are:
+
+raw:    0:graphical display as below (default); 1:raw numeric vector of seconds.
+cpu:    0:elapsed ⎕AI[3] time (default); 1:cpu ⎕AI[2] time.
+cols:   Maximum column-width for histogram. 0 implies the default width of 40.
+secs:   Test period in seconds (default 1).
+
+By default, [cmpx] returns a character matrix representing a 5-column table:
+
+      cmpx'⎕io⊃⎕a' '⎕a[⎕io]' '⍬⍴⎕a' '1↑⎕a'            ⍝ CoMPare eXpressions.
+  ⎕io⊃⎕a  → 1.1E¯6 |   0% ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+  ⎕a[⎕io] → 1.7E¯6 | +51% ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+  ⍬⍴⎕a    → 1.0E¯6 |  -8% ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+* 1↑⎕a    → 1.3E¯6 | +16% ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+│ │         │         │   │
+│ │         │         │   └─ Histogram for at-a-glance comparison.
+│ │         │         └───── Percentage difference relative to first expression.
+│ │         └─────────────── Approx time in seconds for a single iteration.
+│ └───────────────────────── Subject expression.
+└─────────────────────────── Warning for results not identical to the first one.
+                             (The first three expressions return a scalar result
+                             and the fourth, a 1-item vector).
+
+Given a  _single_ expression, [cmpx] returns only the number of seconds taken to
+execute it:
+
+        cmpx'⎕io⊃⎕a'        ⍝ Time single expression.
+    1.3E¯6
+
+NB: expressions must not contain diamonds:
+
+        cmpx't+t←2+3'       ⍝ this will work
+but
+        cmpx't←2+3 ⋄ t+t'   ⍝ this will hang :-(
+
+Technical notes:
+
+Notice in the coding of this function, that name conflicts are avoided by having
+the  subject  expression  timings execute lexically _outside_ the main operator.
+Further,  the  small amount of code visible at execution (⍎) time has been care-
+fully chosen to be both ⎕IO and ⎕ML independent:
+
+    cmpx←{
+        ···
+        1{
+            (⍎⍵)-⎕AI        ⍝ Execute expression outside
+        }{⎕IO ⎕ML←0         ⍝ main operator so that no system variable
+            times←⍺ ⍺⍺{     ⍝ or name conflicts occur.
+
+Differences  in  the  expression results are detected by a final re-execution of
+each expression in the _right_ operand of the main operator, which is again out-
+side the main operator body and so ⎕IO and ⎕ML independent.
+          ···
+            diff←{⍵⊃' *'}¨×{⍵⍳⍵},⍵⍵¨⍵   ⍝ result differences.
+            ···
+        }{                              ⍝ right operand:
+            ⍎⍵                          ⍝ execute expr in its native envt.
+        }⍵                              ⍝ vector of subject expressions.
+
+Examples:
+
+      cmpx'100⍴2' '100/2'               ⍝ / is slower (though easier to spell.
+  100⍴2 → 9.5E¯7 |    0% ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+  100/2 → 2.6E¯6 | +175% ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+
+      cmpx'⊃ ⊂⍬' '↑ ⊂⍬'                 ⍝ first quicker than mix for disclose.
+  ⊃ ⊂⍬ → 4.2E¯7 |    0% ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+  ↑ ⊂⍬ → 1.1E¯6 | +153% ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+
+⍝ Stranding (⍬ ⍬ ... ⍬) appears to be an O(n*2) operation:
+
+      cmpx    11/'⍬'    ⍝    10 strandings.
+6.4E¯6
+      cmpx   101/'⍬'    ⍝   100 strandings.
+1.9E¯4
+      cmpx  1001/'⍬'    ⍝  1000 strandings.
+1.5E¯2
+      cmpx 10001/'⍬'    ⍝ 10000 strandings
+1.5E0
+
+      1 cmpx'⎕io⊃⎕a' '⎕a[⎕io]' '⍬⍴⎕a' '1↑⎕a'    ⍝ option: raw exprssion times.
+4.472732544E¯7 5.502700806E¯7 4.024505615E¯7 5.06401062E¯7
+
+      (1 0)(1 1) cmpx¨ ⊂'osc¨⍳1e3'              ⍝ elapsed vs cpu ⎕AI times.
+0.0673125 0.06725
+
+See also: time mdf ticks cf
+
+Index:performance|timing|expression comparison|histogram
+Index:⎕ML

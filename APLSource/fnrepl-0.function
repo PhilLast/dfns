@@ -1,0 +1,15 @@
+ fnrepl←{                                    ⍝ Function string replacement.
+     ⍺←⎕THIS                                 ⍝ default current space.
+     1:shy←{⍵~⊂''}⍺.{⎕ML←3                   ⍝ shy rslt: changed function list.
+         (↓⎕NL 3 4){                         ⍝ target space, names of fns (and ops).
+             (⎕NR ⍺){                        ⍝ function source lines.
+                 ⍺≡⍵:''                      ⍝ no change: ignore.
+                 ⊢⎕FX ⍵                      ⍝ name of changed fn.
+             }(⎕NR ⍺){                       ⍝ function lines.
+                 fm to←⍵                     ⍝ target and replacement strings.
+                 cvex←{(+\fm⍷⍵)⊂⍵}fm,⍺       ⍝ partitioned at find points.
+                 (⍴to)↓∊{to,(⍴fm)↓⍵}¨cvex    ⍝ collected with replacements.
+             }¨⊂⍵                            ⍝ each line of,
+         }¨⊂⍵                                ⍝ each function.
+     },¨⍵                                    ⍝ find and replace vectors.
+ }

@@ -1,0 +1,47 @@
+⍝ Remove vertex ⍵ from graph ⍺:
+
+      ⎕io←1
+
+      a←(2 3)(3)(2 4)(1 5)(3)           ⍝ graph "a".
+
+      disp a
+┌───┬─┬───┬───┬─┐
+│2 3│3│2 4│1 5│3│
+└───┴─┴───┴───┴─┘
+
+      disp a remnode 3                  ⍝ ... with vertex 3 removed.
+┌─┬┬───┬┐
+│2││1 4││
+└─┴┴───┴┘
+
+      disp a remnode foldl 1            ⍝ remove first vertex from "a".
+┌─┬───┬─┬─┐
+│2│1 3│4│2│
+└─┴───┴─┴─┘
+
+      disp a remnode foldl 1 1          ⍝ remove first two vertices from "a".
+┌─┬─┬─┐
+│2│3│1│
+└─┴─┴─┘
+
+      disp a remnode foldl 5 4          ⍝ remove last two vertices from "a".
+┌───┬─┬─┐
+│2 3│3│2│
+└───┴─┴─┘
+
+      drop←{⍺ remnode foldl ⍵/⍳1}       ⍝ vertex dropping function.
+
+      disp a drop 1                     ⍝ drop 1 vertex from "a".
+┌─┬───┬─┬─┐
+│2│1 3│4│2│
+└─┴───┴─┴─┘
+
+      disp a drop 2                     ⍝ drop 2 vertices from "a".
+┌─┬─┬─┐
+│2│3│1│
+└─┴─┴─┘
+
+    1 disp a drop 5                     ⍝ drop 5 vertices from "a".
+┌⊖┐
+│0│
+└⊖┘

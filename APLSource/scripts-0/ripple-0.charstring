@@ -1,0 +1,35 @@
+⍝ Perfect Ripple Shuffle:
+
+    show←⊃¨∘⊂∘(,'HCDS'∘.,'A23456789XJQK')               ⍝ show card(s) no. ⍵.
+
+    ⍝ Hearts, Clubs, Diamonds, Spades.
+    ⍝ ¯       ¯      ¯         ¯
+    ⍝ Ace 2-9 X(10) Jack Queen King.
+    ⍝ ¯       ¯     ¯    ¯     ¯
+
+    show 4 13⍴⍳52                                       ⍝ show deck in order.
+ HA  H2  H3  H4  H5  H6  H7  H8  H9  HX  HJ  HQ  HK 
+ CA  C2  C3  C4  C5  C6  C7  C8  C9  CX  CJ  CQ  CK 
+ DA  D2  D3  D4  D5  D6  D7  D8  D9  DX  DJ  DQ  DK 
+ SA  S2  S3  S4  S5  S6  S7  S8  S9  SX  SJ  SQ  SK 
+
+    show 4 13⍴ ripple ⍳52                               ⍝ shuffled deck.
+ DA  HA  D2  H2  D3  H3  D4  H4  D5  H5  D6  H6  D7 
+ H7  D8  H8  D9  H9  DX  HX  DJ  HJ  DQ  HQ  DK  HK 
+ SA  CA  S2  C2  S3  C3  S4  C4  S5  C5  S6  C6  S7 
+ C7  S8  C8  S9  C9  SX  CX  SJ  CJ  SQ  CQ  SK  CK 
+
+    ripple ⍳16                              ⍝ 1-8 interleaved with 9-16
+9 1 10 2 11 3 12 4 13 5 14 6 15 7 16 8
+
+    ripple ripple ⍳16                       ⍝ double shuffle.
+13 9 5 1 14 10 6 2 15 11 7 3 16 12 8 4
+
+    3 ripple pow ⍳16                        ⍝ triple shuffle.
+15 13 11 9 7 5 3 1 16 14 12 10 8 6 4 2
+
+    4 ripple pow ⍳16                        ⍝ (÷∘4⍴⍵)-shuffle reverses.
+16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1
+
+    8 ripple pow ⍳16                        ⍝ (÷∘2⍴⍵)-shuffle restores.
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16

@@ -1,0 +1,13 @@
+ packU←{⎕IO←0     ⍝ Unique packer.
+
+     cmp←{
+         u←∪,⍵
+         (⍴⍵)u(u⍳,⍵)
+     }
+
+     exp←{
+         (0⊃⍵)⍴(1⊃⍵)[2⊃⍵]
+     }
+
+     ⍺←1 ⋄ ⍺:cmp ⍵ ⋄ exp ⍵
+ }

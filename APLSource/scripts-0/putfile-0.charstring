@@ -1,0 +1,21 @@
+⍝ Put rows to text-file:
+
+    fid←'Dfns Test Temp File'       ⍝ temp file for testing.
+
+    vals←1↓,\15↓⎕av                 ⍝ vector of char vectors.
+
+    ctype←⎕dr 15↓⎕av                ⍝ character type.
+
+    size ← putfile fid vals         ⍝ put to temp file.
+
+    vals≡0 ctype getfile fid        ⍝ get from temp file.
+1
+    size ← 1 putfile fid vals       ⍝ nl-terminated lines.
+
+    vals≡0 ctype getfile fid        ⍝ get from temp file.
+1
+    size ← 0 putfile fid vals       ⍝ non-terminated lines.
+
+    (↑,/vals)≡⊃0 ctype getfile fid  ⍝ get from temp file.
+1
+    {}fid ⎕nerase fid ⎕ntie 0       ⍝ remove temp file.

@@ -1,0 +1,53 @@
+seq ← ##.k6174 nnnn                         ⍝ Kaprekar's operation.
+
+Take any 4-digit number in which not all of the digits are the  same. Re-arrange
+the digits into descending and ascending order and subtract. Repeat.
+
+In 1949  D.R.Kaprekar pointed out that this sequence always results in an infin-
+ite repetition of the number 6174.
+
+For example:
+
+    1223 → 3221 - 1223
+→   1998 → 9981 - 1899
+→   8082 → 8820 - 0288
+→   8532 → 8532 - 2358
+→   6174 → 7641 - 1467
+→   6174 → ...
+
+Ref: http://en.wikipedia.org/wiki/Kaprekar
+
+Examples:
+
+    ↑{1↓⍕1e4+⍵}¨∘k6174¨ ⍳20                 ⍝ First 20 Kaprekar sequences.
+ 0001  0999  8991  8082  8532  6174
+ 0002  1998  8082  8532  6174
+ 0003  2997  7173  6354  3087  8352  6174
+ 0004  3996  6264  4176  6174
+ 0005  4995  5355  1998  8082  8532  6174
+ 0006  5994  5355  1998  8082  8532  6174
+ 0007  6993  6264  4176  6174
+ 0008  7992  7173  6354  3087  8352  6174
+ 0009  8991  8082  8532  6174
+ 0010  0999  8991  8082  8532  6174
+ 0011  1089  9621  8352  6174
+ 0012  2088  8532  6174
+ 0013  3087  8352  6174
+ 0014  4086  8172  7443  3996  6264  4176  6174
+ 0015  5085  7992  7173  6354  3087  8352  6174
+ 0016  6084  8172  7443  3996  6264  4176  6174
+ 0017  7083  8352  6174
+ 0018  8082  8532  6174
+ 0019  9081  9621  8352  6174
+ 0020  1998  8082  8532  6174
+
+⍝ The following expression shows, of all 9990 possibilities, the number of
+⍝ sequences of lengths 1 2 .. 8:
+
+    {+⌿⍵∘.=⍳⌈/⍵} ⊃∘⍴∘k6174¨ (⍳9999)~1111×⍳9         ⍝ histogram.
+1 383 576 2400 1272 1518 1656 2184
+
+See also: osc m91
+
+Index:sequence
+Index;Kaprekar D.R

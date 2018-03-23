@@ -1,0 +1,45 @@
+⍝ number of lines of output:
+
+    nlines 2 3 4⍴⍳24
+7
+    nlines 2 2 2 2⍴2
+12
+    nlines 2 0 3⍴4              ⍝ null array.
+1
+    nlines 2 3 0 0⍴0            ⍝ null array.
+6
+    nlines 1 2 3 4 5 6 7 8⍴9    ⍝ rank-8 array.
+5907
+
+    nlines 2
+1
+    nlines 2⍴3
+1
+    nlines 2 3⍴4
+2
+    nlines 2 3 4⍴5
+7
+    nlines 2 3 4 5⍴6
+30
+    nlines 2 3 4 5 6⍴7
+149
+
+    nlines 0 1 1⍴0          ⍝ null case
+0
+    nlines 1 1 1⍴0
+1
+    nlines 2 1 1⍴0
+3
+    nlines 3 1 1⍴0
+5
+    nlines 4 1 1⍴0
+7
+    nlines 2 0 1 1⍴0        ⍝ null case
+2
+
+    cfmt ← ≡∘⊃∘⍴∘⎕fmt⍨∘nlines⍨      ⍝ compare with output from monadic ⎕fmt.
+
+    shapes←0 1 2 3∘adic¨0 to 1000   ⍝ selection of shapes
+
+    ∧/ cfmt¨ shapes ⍴¨ 0            ⍝ compare selection of arrays
+1

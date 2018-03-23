@@ -1,0 +1,91 @@
+{protected←0} ##.wsmerge wsid          ⍝ Merge saved ws into current active ws.
+
+[wsmerge]  merges  the saved workspace [wsid] into the current active workspace.
+The  optional  left argument (default 0) determines whether incoming objects are
+prevented  from  overwriting  existing  ones of the same name. [wsmerge] differs
+from  )COPY  and )PCOPY in that it merges, rather than replaces, namespaces with
+incoming ones of the same name.
+
+Technical note:
+
+To  deliver a vector of namespace references, [wsmerge] incorporates rather than
+calls,  subfunction  →refs←.  This  means that it can be copied as a stand-alone
+utility, into an active workspace. See →refs← for details.
+
+Examples:
+
+⍝───────────────────────────────────────────────────────────────────────────────
+
+      )load aaa                     ⍝ load WS "aaa".
+··· saved ···
+
+      tree #                        ⍝ show aaa's content.
+#
+·   ~ aaa ccc
+·   notes
+·   ·   ~ aaa
+
+      ccc                           ⍝ show aaa's variable "ccc".
+aaa's ccc
+
+⍝───────────────────────────────────────────────────────────────────────────────
+
+      )load bbb                     ⍝ load WS "bbb".
+··· saved ···
+
+      tree #                        ⍝ show bbb's content.
+#
+·   ~ bbb ccc
+·   notes
+·   ·   ~ bbb
+
+      ccc                           ⍝ show bbb's variable "ccc".
+bbb's ccc
+
+⍝───────────────────────────────────────────────────────────────────────────────
+
+      )load aaa                     ⍝ load WS "aaa".
+··· saved ···
+
+      )copy dfns wsmerge            ⍝ copy wsmerge into "aaa".
+··· saved ···
+
+      1 wsmerge 'bbb'               ⍝ PROTECTED merge "bbb".
+
+⍝ Note how content of aaa's and bbb's namespace "notes" has been merged.
+
+      tree #                        ⍝ show merged content.
+#
+·   ~ aaa bbb ccc
+·   ∇ wsmerge
+·   notes
+·   ·   ~ aaa bbb
+
+      ccc                           ⍝ aaa's variable was protected.
+aaa's ccc
+
+⍝───────────────────────────────────────────────────────────────────────────────
+
+      )load aaa                     ⍝ reload WS "aaa".
+··· saved ···
+
+      )copy dfns wsmerge            ⍝ copy wsmerge into "aaa".
+··· saved ···
+
+      0 wsmerge 'bbb'               ⍝ UNPROTECTED merge "bbb".
+
+      tree #                        ⍝ show merged content.
+#
+·   ~ aaa bbb ccc
+·   ∇ wsmerge
+·   notes
+·   ·   ~ aaa bbb
+
+      ccc                           ⍝ aaa's variable was overwritten.
+bbb's ccc
+
+⍝───────────────────────────────────────────────────────────────────────────────
+
+See also: refs tree wsdiff
+
+Index:workspace|merge, workspace

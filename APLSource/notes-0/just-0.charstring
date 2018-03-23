@@ -1,0 +1,83 @@
+rslt ← {dirn←¯1} ##.just chars              ⍝ Justify text array.
+
+From  Veli-Matti Jantunen, this function aligns text rows to the left, centre or
+right, according to the left argument:
+
+    -1 left (default)
+     0 centre
+     1 right
+
+Examples:
+
+      display ¯1 just '  text  '
+┌→───────┐
+│text    │
+└────────┘
+
+      display 0 just '  text  '
+┌→───────┐
+│  text  │
+└────────┘
+
+      display 1 just '  text  '
+┌→───────┐
+│    text│
+└────────┘
+
+    display mat
+┌→───────┐
+↓do      │
+│ re     │
+│  mi    │
+│   fa   │
+│    sol │
+│     la │
+│      ti│
+└────────┘
+
+    display just mat
+┌→───────┐
+↓do      │
+│re      │
+│mi      │
+│fa      │
+│sol     │
+│la      │
+│ti      │
+└────────┘
+
+    display ¯1 just mat
+┌→───────┐
+↓do      │
+│re      │
+│mi      │
+│fa      │
+│sol     │
+│la      │
+│ti      │
+└────────┘
+
+    display 0 just mat
+┌→───────┐
+↓   do   │
+│   re   │
+│   mi   │
+│   fa   │
+│  sol   │
+│   la   │
+│   ti   │
+└────────┘
+
+    display 1 just mat
+┌→───────┐
+↓      do│
+│      re│
+│      mi│
+│      fa│
+│     sol│
+│      la│
+│      ti│
+└────────┘
+
+Index:justify text|align text
+Index;Jantunen V-M.

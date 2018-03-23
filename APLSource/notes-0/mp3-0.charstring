@@ -1,0 +1,75 @@
+{files} ← {type←''} ##.mp3 dirs     ⍝ Create playlist(s) for music directories.
+
+Supplied by Veli-Matti Jantunen, who says:
+
+Creates  simple  playlists  in  each  directory (and each sub-directory thereof)
+specified  by  the  right  argument.  Currently, five  playlist file formats are
+supported  and it should be pretty simple to add new formats if needed (or fine-
+tune the specific formatter for the user's own needs).
+
+The left argument specifies:
+
+    lower case letters 'abmpw' for different playlist file types,
+    upper case letters 'MOW4'  for different music file types and
+    upper case letters 'DFPS'  for extra switches.
+
+The following file types may be created:
+
+    a → .asx file (Media Player should detect this),
+    b → .b4s file (WinAmp's XML format, not supported by the version 5.*),
+    m → .m3u file (the old WinAmp playlist, this is the default),
+    p → .pls file (WinAmp),
+    w → .wpl file (Media Player).
+
+Several  files  may be created in one run.  The playlist file is created only if
+corresponding  music  files  are  present in the directory. By default, the file
+list  doesn't  contain  the  path (i.e. the file "d:\mp3\Album\song.mp3" will be
+shown in the list only as "song.mp3").
+
+The switches are:
+
+    D → Delete the playlists (from directories specified in the right argument),
+    F → make the Folder name as the playlist name (instead of the default play-
+        list.extension)
+    P → use the full file Path name in the list,
+    S → do not visit the Sub-directories.
+
+The shy result has all the created playlist names.
+
+For example,
+
+To create new m3u and wpl playlists for all the mp3 albums found in d:\mp3,
+C:\My Music and their sub-directories:
+
+  'mw' mp3 'd:\mp3' 'C:\My Music'
+
+To delete all asx and b4s playlists found in d:\mp3 and its children:
+
+  'abD' mp3 'd:\mp3'
+
+The function uses ⎕NA for directory reading.
+
+N.B.  I cannot guarantee that the playlist files will work in every machine con-
+figuration   -  I  have just sort of reverse engineered the minimum file formats
+that seem to work adequately in my machines.
+
+Examples:
+
+        mp3 'd:\mp3'  ⍝ create m3u playlist files (if there are any mp3 files)
+                      ⍝ in the directory d:\mp3 and its sub-directories.
+
+        mp3 'd:' 'c:' ⍝ create m3u files in every C: and D: directory where
+                      ⍝ there are mp3 files..
+
+  'apw' mp3 'd:\mp3'  ⍝ create the asx, pls and wpl playlist files.
+
+ 'apwO' mp3 'd:\mp3'  ⍝ as the previous example, but create only for .ogg files.
+
+'apwOP' mp3 'd:\mp3'  ⍝ ditto, now the file lists contain paths.
+
+ 'apwD' mp3 'd:\mp3'  ⍝ delete all asx, pls and wpl playlists.
+
+'apwDS' mp3 'd:\mp3'  ⍝ ditto, but only from the d:\mp3 directory.
+
+Index:MP3 (media player)|playlist|music|media player (MP3)|diversions
+Index;Jantunen V-M.

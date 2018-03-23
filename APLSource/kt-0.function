@@ -1,0 +1,15 @@
+ kt←{⎕ML←1                       ⍝ Knight's Tour Chess Problem.
+     ⍺←1 ⋄ sreq←⍺ ⋄ nsqs←×/⍵     ⍝ no. of solutions required, default: 1.
+     kdef←,0 1∘.⌽1 ¯1∘.,2 ¯2     ⍝ vector of relative knight's moves.
+     net←(⊂,⍳⍵)∩¨↓(⍳⍵)∘.+kdef    ⍝ absolute moves from each square.
+     ⍳∘(⍳⍵)¨↑⍬{                  ⍝ initially empty placement vector.
+         sreq=⍴⍵:⍵               ⍝ found required no. of solutions: stop.
+         path←⍺⍺,⊂⍺              ⍝ extended placement vector.
+         nsqs=⍴path:⍵,⊂path      ⍝ solution: accumulate.
+         nxt←(⊂⍺)⊃⍵⍵             ⍝ moves from current square.
+         0=⍴nxt:⍵                ⍝ stitched: back out.
+         net←⍵⍵~¨⊂⊂⍺             ⍝ compressed net.
+         ord←nxt[⍒↑⍴¨net[nxt]]   ⍝ tightest-rightmost order.
+         ↑path ∇∇ net/ord,⊂⍵     ⍝ pursue remaining possibilities.
+     }net/(⌽,⍳⍵),⊂0⍴⊂⍬           ⍝ from each starting position.
+ }

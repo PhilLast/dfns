@@ -1,0 +1,297 @@
+tree ← {slant←1}(fn ##.dft) spread          ⍝ Display of function tree.
+
+Operator [dft] returns a character matrix representation of its function operand
+[fn].
+
+Right argument [spread] determines the horizontal width of tree branches:
+
+      '<'∘,∘(,∘'>') dft¨ 1 3    ⍝ narrow and wide tree display.
+    ∘           ∘
+  ┌─┴─┐     ┌───┴───┐
+  ∘   ∘     ∘       ∘
+ ┌┴┐ ┌┴┐  ┌─┴─┐   ┌─┴─┐
+ < , , >  <   ,   ,   >
+
+Optional left argument {slant←1} determines whether a  monadic  operator  should
+suspend its left operand by a vertical (0) or slanted (1) line:
+
+    1 0 +¨¨¨.× dft¨ 3       ⍝ compare slanted vs vertical left operand.
+         .      .
+       ┌─┴─┐  ┌─┴─┐
+       ¨   ×  ¨   ×
+     ┌─┘      │
+     ¨        ¨
+   ┌─┘        │
+   ¨          ¨
+ ┌─┘          │
+ +            +
+
+[dft] subsumes and replaces operator "ddft" and is extended to be function-train
+ready:
+
+    (+/÷⍴) dft 1        ⍝ display of fork.
+ ┌─┼─┐
+ / ÷ ⍴
+┌┘
++
+    ulam dft 1          ⍝ display of longer train:
+ ┌───┼────────┐
+┌┴┐  ∘     ┌──┼─────────────┐
+2 ⍴ ┌┴─┐   ⍨  ↑ ┌───────────┼─────┐
+    ⍴ ┌┴┐ ┌┘ ┌──┼─────┐     , ┌───┼──────┐
+      ⍒ \ × ┌┴┐ + ┌───┼───┐   /   ∘   ┌──┼───┐
+       ┌┘   2 |  ┌┴┐  ∘   ∘  ┌┴┐ ┌┴┐ ┌┴┐ ⍴ ┌─┼───┐
+       +         1 + ┌┴┐ ┌┴┐ 2 ⍳ / ⊢ 2 ×   1 , ┌─┼──┐
+                     × ⌊ ÷ 2                   - , ┌┴─┐
+                                                   ¯1 ,
+Technical notes:
+
+For large trees, much space can be saved in the output by  meshing  subtrees  to
+overlap vertically.
+
+    Without vertical overlap                With vertical overlap
+    ------------------------                ---------------------
+                 ∘                                      ∘
+              ┌──┴──────────┐                       ┌───┴───┐
+              ∘             ∘                       ∘       ∘
+           ┌──┴─┐        ┌──┴─┐                   ┌─┴─┐   ┌─┴─┐
+           ∘    +        ∘    +                   ∘   +   ∘   +
+        ┌──┴─┐        ┌──┴─┐                    ┌─┴─┐   ┌─┴─┐
+        ∘    +        ∘    +                    ∘   +   ∘   +
+      ┌─┴─┐         ┌─┴─┐                     ┌─┴─┐   ┌─┴─┐
+      ∘   +         ∘   +                     ∘   +   ∘   +
+    ┌─┴─┐         ┌─┴─┐                     ┌─┴─┐   ┌─┴─┐
+    +   +         +   +                     +   +   +   +
+
+This is achieved by inner function "mesh" using steps:
+
+1. Extend the shallower subtree so that both have the same number of rows.
+2. Determine the minimum horizontal gap between the subtrees.
+3. Distribute the number of characters to be dropped between the subtrees.
+4. Drop separating blanks; join corresponding rows; mix rows to a matrix.
+
+Examples:
+
+    deco← +.×⍨∘(÷∘⌽∘(+\)∘⌽⍨)⍨               ⍝ derived function. See →derive←
+
+    ⎕cr'deco'                               ⍝ nested canonical representation.
+┌────────────────────────────────┬─┐
+│┌───────┬─┬────────────────────┐│⍨│
+││┌───┬─┐│∘│┌────────────────┬─┐││ │
+│││+.×│⍨││ ││┌──────────┬─┬─┐│⍨│││ │
+││└───┴─┘│ │││┌───┬─┬──┐│∘│⌽││ │││ │
+││       │ ││││÷∘⌽│∘│+\││ │ ││ │││ │
+││       │ │││└───┴─┴──┘│ │ ││ │││ │
+││       │ ││└──────────┴─┴─┘│ │││ │
+││       │ │└────────────────┴─┘││ │
+│└───────┴─┴────────────────────┘│ │
+└────────────────────────────────┴─┘
+
+    deco dft 3                                  ⍝ 3-spread tree.
+          ⍨
+        ┌─┘
+        ∘
+    ┌───┴───┐
+    ⍨       ⍨
+  ┌─┘     ┌─┘
+  .       ∘
+┌─┴─┐   ┌─┴─┐
++   ×   ∘   ⌽
+    ┌───┴───┐
+    ∘       \
+  ┌─┴─┐   ┌─┘
+  ÷   ⌽   +
+
+    +{⍺⍺ ⍵}{⍺⍺ ⍵} dft 3                         ⍝ non-primitive operator.
+    {⍺⍺·⍵}
+  ┌─┘
+  {⍺⍺·⍵}
+┌─┘
++
+
+    ∧¨¨¨¨¨¨{⍺⍺∘⍺⍺{⍺⍺∘⍺⍺{⍺⍺∘⍺⍺ dft ⍵}⍵}⍵}3       ⍝ scary sea monster.
+                                 ∘
+                     ┌───────────┴───────────┐
+                     ∘                       ∘
+               ┌─────┴─────┐           ┌─────┴─────┐
+               ∘           ∘           ∘           ∘
+            ┌──┴──┐     ┌──┴──┐     ┌──┴──┐     ┌──┴──┐
+            ¨     ¨     ¨     ¨     ¨     ¨     ¨     ¨
+          ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘
+          ¨     ¨     ¨     ¨     ¨     ¨     ¨     ¨
+        ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘
+        ¨     ¨     ¨     ¨     ¨     ¨     ¨     ¨
+      ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘
+      ¨     ¨     ¨     ¨     ¨     ¨     ¨     ¨
+    ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘
+    ¨     ¨     ¨     ¨     ¨     ¨     ¨     ¨
+  ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘
+  ¨     ¨     ¨     ¨     ¨     ¨     ¨     ¨
+┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘   ┌─┘
+∧     ∧     ∧     ∧     ∧     ∧     ∧     ∧
+
+⍝ In the absence of a more general mechansism in Dyalog,  we need to augment our
+⍝ operator set in order to be able to translate expressions of ⍺ and ⍵ into der-
+⍝ ived functions.  Combinators [in] and [on],  together with primitive operators
+⍝ compose ∘ and commute ⍨ allow us to build long function-operator trains:
+⍝                                                                           <V>
+    in←{⊃⍺⍺/⍵}              ⍝ in (between):         f in x y → x f y
+    on←{⍺⍺ ⍺ ⍵}             ⍝ and its counterpart:  x f on y → f x y
+
+⍝ J language's hook and fork constructs may be translated into such
+⍝ trains using:  ┌──────────┬──────────────────┬─────────────────────┐
+⍝                │ J Syntax │ Equivalent D     │ Equivalent Train    │
+⍝  ┌─────────────┼──────────┼──────────────────┼─────────────────────┤
+⍝  │Monadic Hook │ (g h)    │ {⍵ g h ⍵}        │ g∘h⍨                │
+⍝  ├─────────────┼──────────┼──────────────────┼─────────────────────┤
+⍝  │Dyadic  Hook │ (g h)    │ {⍺ g h ⍵}        │ g∘h                 │
+⍝  ├─────────────┼──────────┼──────────────────┼─────────────────────┤
+⍝  │Monadic Fork │ (f g h)  │ {(f ⍵)g h ⍵}     │ g∘h⍨∘f⍨             │
+⍝  ├─────────────┼──────────┼──────────────────┼─────────────────────┤
+⍝  │Dyadic  Fork │ (f g h)  │ {(⍺ f ⍵)g ⍺ h ⍵} │ g∘(h in)⍨∘(f in)⍨on │
+⍝  └─────────────┴──────────┴──────────────────┴─────────────────────┘
+
+⍝ NB: Dyalog V14 introduces the fork as a primitive construct and so many of the
+⍝ following examples may be simplified.                                     <V>
+
+⍝ For example:
+
+    avg ← ÷∘⍴⍨∘(+/)⍨                    ⍝ equivalent of monadic fork (+/ ÷ ⍴)
+
+    avg 1 2 3 4                         ⍝ test function.
+1 2 3 4
+
+    avg dft 3                           ⍝ display of function tree.
+         ⍨
+       ┌─┘
+       ∘
+    ┌──┴──┐
+    ⍨     /
+  ┌─┘   ┌─┘
+  ∘     +
+┌─┴─┐
+÷   ⍴
+
+    leq ← ∨∘(=in)⍨∘(<in)⍨on             ⍝ equivalent of dyadic fork (< ∨ =)
+
+    0 0 1 1 leq 0 1 0 1                 ⍝ test function.
+1 1 0 1
+
+    leq dft 3                           ⍝ display of function tree.
+           on←{⍺⍺·⍺·⍵}
+         ┌─┘
+         ⍨
+       ┌─┘
+       ∘
+    ┌──┴──┐
+    ⍨     in←{⊃⍺⍺/⍵}
+  ┌─┘   ┌─┘
+  ∘     <
+┌─┴─┐
+∨   in←{⊃⍺⍺/⍵}
+  ┌─┘
+  =
+
+⍝ Historical note: Mechanisms for distributing arguments through trees of
+⍝ functions originated in the field of combinatorial logic in the 1920s
+⍝ and 30s. See min.dws/Background for more on combinators.
+
+⍝ More examples of function-operator trains:
+
+    fib ← +/∘(!∘⌽⍨)∘(-∘⎕io)∘⍳           ⍝ ⍵th fibonacci number.
+
+    fib¨⍳10
+1 1 2 3 5 8 13 21 34 55
+
+    fib dft 3
+           ∘
+         ┌─┴─┐
+         ∘   ⍳
+     ┌───┴────┐
+     ∘        ∘
+  ┌──┴──┐   ┌─┴─┐
+  /     ⍨   -   1
+┌─┘   ┌─┘
++     ∘
+    ┌─┴─┐
+    !   ⌽
+
+        dinv ← ↑⍨∘-⍨∘⊃⍨∘(+⍨∘⊃⍨∘(×∘⍴⍨∘×⍨in)⍨on⍨in)⍨on⍨   ⍝ inverse for ⍺∘↓.
+
+    2 3 dinv 3 2⍴⍳6
+0 0 0 0 0
+0 0 0 0 0
+0 0 0 1 2
+0 0 0 3 4
+0 0 0 5 6
+
+    dinv dft 3                          ⍝ display of function tree.
+                    ⍨
+                  ┌─┘
+                  on←{⍺⍺·⍺·⍵}
+                ┌─┘
+                ⍨
+              ┌─┘
+              ∘
+          ┌───┴───┐
+          ⍨       in←{⊃⍺⍺/⍵}
+        ┌─┘     ┌─┘
+        ∘       ⍨
+      ┌─┴─┐   ┌─┘
+      ⍨   ⊃   on←{⍺⍺·⍺·⍵}
+    ┌─┘     ┌─┘
+    ∘       ⍨
+  ┌─┴─┐   ┌─┘
+  ⍨   -   ∘
+┌─┘   ┌───┴───┐
+↑     ⍨       in←{⊃⍺⍺/⍵}
+    ┌─┘     ┌─┘
+    ∘       ⍨
+  ┌─┴─┐   ┌─┘
+  ⍨   ⊃   ∘
+┌─┘     ┌─┴─┐
++       ⍨   ×
+      ┌─┘
+      ∘
+    ┌─┴─┐
+    ×   ⍴
+
+    rinv ← ⌈/¨∘(-∘⊂∘⍳∘(⊃∘⌽)∘⍴∘⊃⍨)∘(⍳¨in)∘(↓¨)on     ⍝ inverse for ⌽∘⍵.
+
+    'Mississippi' rinv 'issippiMiss'
+4
+    rinv dft 3                          ⍝ display of function tree.
+                            on←{⍺⍺·⍺·⍵}
+                          ┌─┘
+                          ∘
+                ┌─────────┴──────────┐
+                ∘                    ¨
+           ┌────┴─────┐            ┌─┘
+           ∘          in←{⊃⍺⍺/⍵}   ↓
+        ┌──┴──┐     ┌─┘
+        ¨     ⍨     ¨
+      ┌─┘   ┌─┘   ┌─┘
+      /     ∘     ⍳
+    ┌─┘   ┌─┴─┐
+    ⌈     ∘   ⊃
+        ┌─┴─┐
+        ∘   ⍴
+    ┌───┴───┐
+    ∘       ∘
+  ┌─┴─┐   ┌─┴─┐
+  ∘   ⍳   ⊃   ⌽
+┌─┴─┐
+-   ⊂
+
+⍝ Functions for 1st and 2nd items of a pair, used in these examples, might also
+⍝ be considered combinators.  In the examples above, they have been implemented
+⍝ (assuming ⎕ml<2) as ⊃ and ⊃∘⌽, respectively. A more satisfying, though slower,
+⍝ alternative might be:
+
+    fst ← ⊣in     ⍝ 1st item of pair.
+    snd ← ⊢in     ⍝ 2nd item of pair.
+
+See also: tfmt fork derive parse
+
+Index:tree|derived function|combinator|hook|fork|box-drawing characters
+Index:fibonacci number|sea monster, scary|trains|function trains

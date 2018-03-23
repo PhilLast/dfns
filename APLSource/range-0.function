@@ -1,0 +1,3 @@
+ range←{                         ⍝ Numeric range classification.
+     (⍴⍵)⍴((⍴⍺)↓⍋⍋⍺,,⍵)-⍋⍋,⍵
+ }

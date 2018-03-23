@@ -1,0 +1,137 @@
+ avl←{⎕IO ⎕ML←0 1                        ⍝ Adelson-Velskii, Landis trees.
+
+     get←{                               ⍝ value for key ⍵ from AVL tree ⍺.
+         ⍺≡0:                            ⍝ key not in tree: no value.
+         (k v)_ subs←⍺                   ⍝ next key, value and subtrees.
+         k≡⍵:v                           ⍝ match: value from tree.
+         dir←-/⍋↑⍵ k                     ⍝ natch: search direction.
+         sub sib←dir wise subs           ⍝ subtree to search and its sibling.
+         sub ∇ ⍵                         ⍝ value from subtree.
+     }                                   ⍝ :: t ∇ k → v
+
+     put←{                               ⍝ tree ⍺ with key=value ⍵.
+         ⍺≡0:(⍵ 0(0 0))1                 ⍝ null tree: new leaf, height incr.
+         (kv obal subs)(key val)←⍺ ⍵     ⍝ next node and key=val pair.
+         key≡⊃kv:(⍵ obal subs)0          ⍝ match: just replace value.
+         dir obv←1 ¯1×-/⍋↑key(⊃kv)       ⍝ natch: search direction and obverse.
+         sub sib←dir wise subs           ⍝ subtree to search and its sibling.
+         nsub inc←sub ∇ ⍵                ⍝ new subtree and height increment.
+         new←obv proj kv obal(nsub sib)  ⍝ tree with new node.
+         inc=0:new 0                     ⍝ no height increment: done.
+         (dir balance new)(obal=0)       ⍝ height increment if OLD balance is 0.
+     }                                   ⍝ :: t ∇ k v → t i
+
+     rem←{                               ⍝ tree ⍺ without key ⍵.
+         ⍺≡0:0 0                         ⍝ key not in tree: done.
+         ⍵≡⊃⊃⍺:rmnode ⍺                  ⍝ match: remove node.
+         dir obv←1 ¯1×-/⍋↑⍵(⊃⊃⍺)         ⍝ natch: search direction and obverse.
+         kv obal(sub sib)←obv proj ⍺     ⍝ subtree to search and its sibling.
+         nsub inc←sub ∇ ⍵                ⍝ new subtree and height increment.
+         new←obv proj kv obal(nsub sib)  ⍝ tree with node removed.
+         inc=0:new 0                     ⍝ no height decrement: done.
+         nkv nbal nsubs←obv balance new  ⍝ balanced tree.
+         (nkv nbal nsubs)(-nbal=0)       ⍝ height decrement if NEW balance is 0.
+     }                                   ⍝ :: t ∇ k → t i
+
+     rmnode←{                            ⍝ node ⍵ removed.
+         kv obal subs←⍵                  ⍝ subnodes.
+         0∊subs:((subs⍳0)⊃⌽subs)¯1       ⍝ either sub null: the other.
+         lft rgt←subs                    ⍝ left and right non-null subtrees.
+         (sk sv)_ _←rgt limt ¯1          ⍝ successor key=val.
+         rem inc←rgt rem sk              ⍝ right subtree with successor removed.
+         new←(sk sv)obal(lft rem)        ⍝ target node replaced with successor.
+         inc=0:new 0                     ⍝ no height decrement: done.
+         nkv nbal nsubs←¯1 balance new   ⍝ new balanced node.
+         (nkv nbal nsubs)(-nbal=0)       ⍝ height decrement if NEW balance is 0.
+     }                                   ⍝ :: ∇ t → t i
+
+     limt←{                              ⍝ ⍵-most node of (sub)tree ⍺.
+         sub←⊃⍵ wise⊃⌽⍺                  ⍝ ⍵-sub.
+         sub≡0:⍺                         ⍝ null: this.
+         sub ∇ ⍵                         ⍝ else: ⍵-most of sub.
+     }                                   ⍝ :: t ∇ d → t
+
+     balance←{                           ⍝ tree ⍵ with balancing moment ⍺.
+         kv obal subs←⍵                  ⍝ original tree.
+         new←⍺+obal                      ⍝ new balance.
+         0∊obal new:kv new subs          ⍝ balance bits absorb moment: done.
+         (_ Bbal _)_←obal wise subs      ⍝ otherwise:
+         Bbal≠-obal:(-obal)rot1 ⍵        ⍝   single or
+         (-obal)rot2 ⍵        ⍝     double rotation.
+     }                                   ⍝ :: m ∇ t → t
+
+     rot1←{                              ⍝ single ⍺-rotation of tree ⍵.
+         Akv Abal(B r)←⍺ proj ⍵          ⍝    <<A         yB>
+         Bkv Bbal(p q)←⍺ proj B          ⍝     / \        / \      where x y z
+         AAbal←-⍺×Bbal=0                 ⍝   <Bx  r  =>  p  <Az    are such that:
+         BBbal←+⍺×Bbal=0                 ⍝   / \            / \    <B> →  B> <A
+         AA←⍺ proj Akv AAbal(q r)        ⍝  p   q          q   r   <B  → <B> <A>
+         ⍺ proj Bkv BBbal(p AA)          ⍝
+     }                                   ⍝ :: d ∇ t → t
+
+     rot2←{                              ⍝ double ⍺-rotation of tree ⍵.
+         Akv Abal(B s)←⍺ proj ⍵          ⍝    <<A         <<A          <C>
+         Bkv Bbal(p C)←⍺ proj B          ⍝     / \         ⌿ \         / \
+         Ckv Cbal(q r)←⍺ proj C          ⍝    B>  s  =>  <C.  s  =>  <By xA>
+         AAbal←⍺×Cbal=-⍺                 ⍝   / ⍀         / \         / \ / \
+         BBbal←-⍺×Cbal=⍺                 ⍝  p  xCy     <B.  r       p  q r  s
+         BB←⍺ proj Bkv BBbal(p q)        ⍝     / \     / \
+         AA←⍺ proj Akv AAbal(r s)        ⍝    q   r   p   q
+         ⍺ proj Ckv 0(BB AA)             ⍝                   where:
+     }                                   ⍝ :: d ∇ t → t      x y∊'<>' '< ' ' >'
+
+     vec←{                               ⍝ enlist of tree ⍵.
+         0≡⍵:⍬                           ⍝ null tree: null vector.
+         key_val bal(lft rgt)←⍵          ⍝ node info and subtrees.
+         (∇ lft),(⊂key_val),∇ rgt        ⍝ left_vec, key=val, right_vec.
+     }                                   ⍝ :: ∇ t → [k v]
+
+     chk←{                               ⍝ tree stats / integrity check.
+         0=≡⍵:(⍵≡0)0 0 0 ⍬               ⍝ null: ok maxbal=0 height=0 key-range.
+         (key _)bal subs←⍵               ⍝ key, balance and subtrees.
+         stats←(⍺+1)∇¨subs               ⍝ subtrees stats.
+         oks szs dps hts krs←↓⍉↑stats    ⍝ oks sizes depths heights key-ranges.
+         keys←↑key{⍺,(⊂⍺⍺),⍵}/krs        ⍝ subtree key ranges.
+         okkey←{⍵≡⍳⍴⍵}⍋↑keys             ⍝ left keys << key >> right keys.
+         okhgt←bal=--/hts                ⍝ balance is height difference.
+         okbal←bal∊¯1 0 1                ⍝ balance is in range.
+         ok←okkey∧okbal∧okhgt∧∧/oks      ⍝ subtree is good.
+         sz←1++/szs                      ⍝ subtree size.
+         dp←⍺++/dps                      ⍝ total node depth.
+         ht←1+⌈/hts                      ⍝ subtree height.
+         kr←⌽2⍴¯1⌽keys                   ⍝ key range for subtree.
+         ⍺>0:ok sz dp ht kr              ⍝ subtree: ok size tot_dep height range.
+         ok sz(⌊0.5+dp÷sz)ht             ⍝ root: ok size mean_depth height.
+     }                                   ⍝ :: ∇ t → y s d h {r}
+
+     fmt←{                               ⍝ formatted tree ⍵.
+         null←0 0⍴''                     ⍝ format of null tree.
+         ⍵≡0:null                        ⍝ null tree: null format.
+         (key val)bal subs←⍵             ⍝ node info.
+         key_val←⍺,↑,/⍕¨key'='val        ⍝ formatted >>key=value
+         deco←(1+bal)⊃'><' '─' '<>'      ⍝ balance decorators.
+         fmts←{⊖⍵}\'┌└'{                 ⍝ hang subtrees by ┌─ ─┐ branches.
+             0 0≡⍴⍵:⍵                    ⍝ null: done.
+             mask←∧\' '=⊃↓⌽⍉⍵            ⍝ mask of leading blanks.
+             ⍉⌽↑(⊂⌽⍺,mask/'│'),↓⌽⍉⍵      ⍝ subtree suspended by branch.
+         }¨{⊖⍵}\deco ∇¨subs              ⍝ formatted subtrees.
+         case←~null null≡¨fmts           ⍝ non-null subtree cases.
+         join←(2⊥case)⊃'∘┐┘┤'            ⍝ subtree joining char.
+         join≡'∘':↑,↓key_val             ⍝ leaf: done.
+         dent←' '⊣¨key_val               ⍝ subtree padding.
+         pads←{↓↑,/dent,⊂⍵}¨fmts         ⍝ left-padded subtrees.
+         ↑↑{⍺,(↓key_val,join),⍵}/pads    ⍝ formatted tree.
+     }                                   ⍝ :: ∇ t → [-;]
+
+     proj←{(⍺=0 0 ¯1)⌽¨⍵}                ⍝ ⍺-projection of node ⍵.
+     wise←{(⍺=1)⌽⍵}                      ⍝ subtrees ⍵ in -⍺, +⍺ order.
+
+     op←⍺⍺{f←⍺⍺ ⋄ ⊃⎕CR'f'}0              ⍝ operand label.
+
+     '∪'≡op:⊃⍺ put ⍵                     ⍝ tree ⍺ with key=value pair ⍵.
+     '⍎'≡op:⍺ get ⍵                      ⍝ value for key ⍺ in tree ⍵.
+     '~'≡op:⊃⍺ rem ⍵                     ⍝ tree ⍺ without key ⍵.
+     '⍕'≡op:''fmt ⍵                      ⍝ formatted tree ⍵.
+     '∊'≡op:vec ⍵                        ⍝ vector of key=value pairs for tree ⍵.
+     '?'≡op:4↑0 chk ⍵                    ⍝ stats for tree ⍵: ok size dpth height.
+ }

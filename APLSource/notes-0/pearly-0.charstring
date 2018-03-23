@@ -1,0 +1,73 @@
+On Arriving at the Pearly Gates
+-------------------------------
+On  arriving  at the Pearly Gates, if you have been thinking and coding in a de-
+clarative style, be sure to mention this to an official, who will fast-track you
+through.
+
+In  days-gone-by,  this would have made little difference.  The old wrought-iron
+Gates were at the end of a winding path; atop a grassy hill; betwixt high, white
+walls; 'neath a clear, blue sky.  You would just chip up; press  the  bell;  and
+wait for Saint Peter to show you in.
+
+However, with the steady year-on-year increase in traffic, the Gate Area now re-
+sembles the  immigration  hall  at  JFK;  the lines zig-zag out of sight and you
+can't quite hear the announcements. You'll be glad of any little advantage.
+
+(
+    One test They use  is to see whether your end-of-line comments are predomin-
+    antly noun-phrases, rather than imperatives.
+
+        ⌽⍺      ⍝ reverse ⍺         (imperative indicates procedural thinking)
+        ⌽⍵      ⍝ the reverse of ⍵  (noun phrase suggests declarative thinking)
+                  ¯¯¯         ¯¯
+        n←+/v   ⍝ add up v and assign it to n       (procedural)
+        n←+/v   ⍝ n is the sum of the items of v    (declarative)
+                    ¯¯     ¯¯¯
+    Of course, you could rip through and edit your comments  but They have other
+    ways ...
+
+    They might ask you to read "m←0" aloud:
+
+        "m gets zero"               (procedural)
+        "m becomes zero"            (procedural)
+        "zero m"                    (procedural)
+
+        "m is zero"                 (declarative)
+        "m names zero"              (declarative)
+        "m indicates zero"          (declarative)
+        "m is specified as zero"    (declarative - KEI)
+        "m denotes zero"            (declarative - SJT)
+
+    They might ask what happens when the interpreter evaluates m←0:
+
+        "It assigns the value zero to m"            (procedural)
+        "It assigns the name m to zero"             (declarative)
+
+    For a declarative view of the world, it may be helpful to visualise "←" as a
+    right-pointing finger, rather than as a left-pointing arrow (in the same way
+    that ⊢ is a right-pointing tack).
+
+    Regarding assignment: at a baby-naming ceremony we (with  the  possible  ex-
+    ception of some folk in the pop music  industry)  usually think of assigning
+    the name to the baby, rather than the baby to the name.
+
+    And finally:
+
+        "APL evaluates right-to-left"                           (procedural)
+        "APL functions apply to everything to their right"      (declarative)
+
+        12÷1+2  ⍝ two added to one then divided into twelve     (procedural)
+        12÷1+2  ⍝ twelve divided by: one plus two               (declarative)
+
+    and for a pop at a place at Top Table, you might suggest that J←2+I be verb-
+    alised:
+
+        J←2+I   ⍝ J denotes the second successor of the referent of I
+
+    See: http://dfns.dyalog.com/downloads/howcomp.pdf
+)
+
+See also: declarative
+
+Index:Gates, Pearly|Heaven|declarative programming|JFK Airport
+Index;Iverson K.E.|Taylor S.J.

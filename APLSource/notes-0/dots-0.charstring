@@ -1,0 +1,166 @@
+crep ← {dot←'·'} ##.dots crep               ⍝ Show dfn with "white dots".
+
+Returns  canonical  representation  of  function [crep] with (by default) "white
+dots" issuing vertically from the closing brace of each multi-line D function or
+from  the  ':'  of each closing control structure keyword. This format makes the
+code  of complex and deeply nested functions (arguably) more pleasant to read on
+the printed page.
+
+The left argument, which defaults to '·', may be any single character.
+
+Examples:
+
+⍝ Using default "white dots":
+
+      dots ⎕cr'dots'
+dots←{                          ⍝ Show dfn with "white dots".
+·   ⍺←'·'                       ⍝ white dot.
+·   cmat←⎕CR ⍵                  ⍝ char rep of function.
+·   kwds←':E' ':C' ':U'⍷¨⊂cmat  ⍝ end of ctrl paragraph keywords.
+·   ends←↑∨/kwds,⊂cmat='}'      ⍝ end of cstructs and dfns.
+·   spcs←∧\' '=cmat             ⍝ leading spaces.
+·   xdents←ends∧1,0 ¯1↓spcs     ⍝ leading exdents.
+·   flood←(⍪1 2){               ⍝ flood upwards into blanks.
+·   ·   hits←⍺⍷⍵                ⍝ 1s above 2s
+·   ·   ~1∊hits:⍵               ⍝ none: done.
+·   ·   ⍺ ∇ hits+⍵              ⍝ try again with 1 2 → 2 2.
+·   }spcs+2×xdents              ⍝ spaces 'n braces.
+·   dmask←,2=flood-xdents       ⍝ mask vector for white dots.
+·   cmat[dmask/,⍳⍴cmat]←⍺       ⍝ place dots in char matrix,
+·   cmat                        ⍝ and return.
+}
+
+⍝ A more deeply nested function:
+
+      dots ⎕cr'fnrepl'
+fnrepl←{                                 ⍝ Function string replacement.
+·   ⍺←⎕this                              ⍝ default current space.
+·   1:shy←{⍵~⊂''}⍺.{⎕ML←3                ⍝ shy rslt: changed function list.
+·   ·   (↓⎕NL 3 4){                      ⍝ target space, names of fns (and ops).
+·   ·   ·   (⎕NR ⍺){                     ⍝ function source lines.
+·   ·   ·   ·   ⍺≡⍵:''                   ⍝ no change: ignore.
+·   ·   ·   ·   ⊢⎕FX ⍵                   ⍝ name of changed fn.
+·   ·   ·   }(⎕NR ⍺){                    ⍝ function lines.
+·   ·   ·   ·   fm to←⍵                  ⍝ target and replacement strings.
+·   ·   ·   ·   cvex←{(+\fm⍷⍵)⊂⍵}fm,⍺    ⍝ partitioned at find points.
+·   ·   ·   ·   (⍴to)↓∊{to,(⍴fm)↓⍵}¨cvex ⍝ collected with replacements.
+·   ·   ·   }¨⊂⍵                         ⍝ each line of,
+·   ·   }¨⊂⍵                             ⍝ each function.
+·   },¨⍵                                 ⍝ find and replace vectors.
+}
+
+⍝ Using heavier dots:
+
+      '.'dots ⎕cr'fnrepl'
+fnrepl←{                                 ⍝ Function string replacement.
+.   ⍺←⎕this                              ⍝ default current space.
+.   1:shy←{⍵~⊂''}⍺.{⎕ML←3                ⍝ shy rslt: changed function list.
+.   .   (↓⎕NL 3 4){                      ⍝ target space, names of fns (and ops).
+.   .   .   (⎕NR ⍺){                     ⍝ function source lines.
+.   .   .   .   ⍺≡⍵:''                   ⍝ no change: ignore.
+.   .   .   .   ⊢⎕FX ⍵                   ⍝ name of changed fn.
+.   .   .   }(⎕NR ⍺){                    ⍝ function lines.
+.   .   .   .   fm to←⍵                  ⍝ target and replacement strings.
+.   .   .   .   cvex←{(+\fm⍷⍵)⊂⍵}fm,⍺    ⍝ partitioned at find points.
+.   .   .   .   (⍴to)↓∊{to,(⍴fm)↓⍵}¨cvex ⍝ collected with replacements.
+.   .   .   }¨⊂⍵                         ⍝ each line of,
+.   .   }¨⊂⍵                             ⍝ each function.
+.   },¨⍵                                 ⍝ find and replace vectors.
+}
+
+⍝ Using solid lines:
+
+      '│'dots ⎕cr'fnrepl'
+fnrepl←{                                 ⍝ Function string replacement.
+│   ⍺←⎕this                              ⍝ default current space.
+│   1:shy←{⍵~⊂''}⍺.{⎕ML←3                ⍝ shy rslt: changed function list.
+│   │   (↓⎕NL 3 4){                      ⍝ target space, names of fns (and ops).
+│   │   │   (⎕NR ⍺){                     ⍝ function source lines.
+│   │   │   │   ⍺≡⍵:''                   ⍝ no change: ignore.
+│   │   │   │   ⊢⎕FX ⍵                   ⍝ name of changed fn.
+│   │   │   }(⎕NR ⍺){                    ⍝ function lines.
+│   │   │   │   fm to←⍵                  ⍝ target and replacement strings.
+│   │   │   │   cvex←{(+\fm⍷⍵)⊂⍵}fm,⍺    ⍝ partitioned at find points.
+│   │   │   │   (⍴to)↓∊{to,(⍴fm)↓⍵}¨cvex ⍝ collected with replacements.
+│   │   │   }¨⊂⍵                         ⍝ each line of,
+│   │   }¨⊂⍵                             ⍝ each function.
+│   },¨⍵                                 ⍝ find and replace vectors.
+}
+
+⍝ Traditional function with control structures:
+
+      )copy util FIND
+
+      dots ⎕cr'FIND'
+{RSLT}←{DIRS}FIND NAMES;⎕IO;⎕ML                 ⍝ NAMES in workspaces in DIRS.
+⎕IO ⎕ML←0                                       ⍝ {DIRS} defaults to WSPATH.
+·
+:With ⎕NS''                                     ⍝ Temp space avoids ⎕CY clash.
+·
+·   names←(↓⎕FMT↑(⎕EX'NAMES')/NAMES)~¨' '       ⍝ Copy names to avoid ⎕CY clash.
+·
+·   findstr←'{I4 {I4 I4} {I4 I4} {I4 I4} {I4 I4} {I4 I4} T[260] T[14]}'
+·   'first'⎕NA'I4 kernel32|FindFirstFileA <0T >',findstr
+·   'fnext'⎕NA'U4 kernel32|FindNextFileA I4 >',findstr
+·   'close'⎕NA'kernel32|FindClose I4'
+·   sepr patn←{                                 ⍝ WSPATH separator and file pattern.
+·   ·   wind←';' '\*.dws'                       ⍝ windows style.
+·   ·   unix←':' '/*'                           ⍝ unix style
+·   ·   ⍵⊃wind unix                             ⍝ select appropriate style.
+·   }'M'=2⊃'.'⎕WG'APLVersion'                   ⍝ Windows / Unix.
+·
+·   found←0⍴⊂''                                 ⍝ Accumulator for found list.
+·
+·   :Trap 1000                                  ⍝ Interrupt: result so far.
+·   ·
+·   ·   :For dir :In (⎕EX'DIRS')/{              ⍝ For each directory in list.
+·   ·   ·   2=⎕NC ⍵:(↓⎕FMT↑⍎⍵)~¨' '             ⍝ use supplied directory list.
+·   ·   ·   sepr{⎕ML←3                          ⍝ partition WSPATH,
+·   ·   ·   ·   (((1+⍵=⍺)⊂⍵)~¨⍺)~⊂''            ⍝   at ';'.
+·   ·   ·   }2 ⎕NQ'.' 'GetEnvironment' 'WSPATH' ⍝ directory list from WSPATH.
+·   ·   }'DIRS'
+·   ·   ·
+·   ·   ·   :For wsid :In {                     ⍝ For each ws in directory.
+·   ·   ·   ·   handle stuff←first(⍵,patn)0     ⍝ first '.dws' file.
+·   ·   ·   ·   handle≤0:0⍴⊂''                  ⍝ bad handle: quit.
+·   ·   ·   ·   trim←{(∧\⍵≠⊃⎕AV)/⍵}             ⍝ Trim name at null byte.
+·   ·   ·   ·   handle{                         ⍝ Subsequent workspaces.
+·   ·   ·   ·   ·   ok stuff←fnext ⍺ 0          ⍝ Next file.
+·   ·   ·   ·   ·   ok≠1:⍵⊣close ⍺              ⍝ Bad status, quit.
+·   ·   ·   ·   ·   name←trim 6⊃stuff           ⍝ File name.
+·   ·   ·   ·   ·   '.dse'≡¯4↑name:⍵⊣close ⍺    ⍝ .dse files cause a ⎕cy prob.
+·   ·   ·   ·   ·   ⍺ ∇ ⍵,⊂name                 ⍝ OK: next wsid.
+·   ·   ·   ·   }⊂trim 6⊃stuff                  ⍝ first wsid.
+·   ·   ·   }dir                                ⍝ current directory.
+·   ·   ·   ·
+·   ·   ·   ·   slash←⊃(dir,'\')∩'\/'           ⍝ user's / or \ preference.
+·   ·   ·   ·   path←dir,slash,wsid             ⍝ full directory name.
+·   ·   ·   ·
+·   ·   ·   ·   'tmp'⎕NS''                      ⍝ temp ns for copy.
+·   ·   ·   ·   :Trap 11                        ⍝ trap ws version probs.
+·   ·   ·   ·   ·   tmp.⎕CY path                ⍝ copy ws.
+·   ·   ·   ·   ·   drop←1+⍴tmp.⎕CS''           ⍝ size of temp ns name.
+·   ·   ·   ·   ·   tmp∘{                       ⍝ traverse sub spaces.
+·   ·   ·   ·   ·   ·   found,←⍺{               ⍝ found list extended by:
+·   ·   ·   ·   ·   ·   ·   0≥⍺.⎕NC ⍵:⍬         ⍝ object not found: null.
+·   ·   ·   ·   ·   ·   ·   name←drop↓(⍕⍺),'.',⍵    ⍝ found object name.
+·   ·   ·   ·   ·   ·   ·   ⎕←path,' ',name     ⍝ display find.
+·   ·   ·   ·   ·   ·   ·   ⊂path name          ⍝ new found list item.
+·   ·   ·   ·   ·   ·   }⍵                      ⍝ for this namespace.
+·   ·   ·   ·   ·   ·   0=⊃⍴⍺.⎕NL 9:            ⍝ no subspaces: done.
+·   ·   ·   ·   ·   ·   ⍺.(⍎¨↓⎕NL 9)∇¨⊂⍵        ⍝ traverse each subspace.
+·   ·   ·   ·   ·   }¨names                     ⍝ for each name.
+·   ·   ·   ·   :EndTrap
+·   ·   ·   ·   ⎕EX'tmp'                        ⍝ discard copied ws.
+·   ·   ·   :EndFor
+·   ·   :EndFor
+·   :Else
+·   ·   ⎕←'...'                                 ⍝ Acknowledge interruption.
+·   :EndTrap
+·                                               ⍝ 'RSLT' may be ⎕CY'd fn:
+·   RSLT←(⎕EX'RSLT')/found                      ⍝ install result variable.
+:EndWith
+
+See also: refmt
+
+Index:white dots|formatting, functions|name-clash problem|stuff

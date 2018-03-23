@@ -1,0 +1,85 @@
+ref ← ##.refws wsid                         ⍝ Ref to saved ws ⍵.
+
+Returns  a ref to a namespace containing a copy of workspace [wsid]. This may be
+used to simulate remote expression execution. Refws is similar to Unix's _mount_
+command, where a device (workspace) is mounted at a particular node (ref) in the
+name  tree.  Note however, that changes made via the resulting ref are not saved
+in  the  target  workspace.  In  this sense the mount is read-only (but gives no
+warning that updates are ignored - see example below).
+
+As a convenience (in common with →wsdiff←) an argument wsid of '' is interpreted
+as ⎕WSID, so that refws'' refers to the saved version of the active workspace.
+
+Examples:
+                                        ⍝ starting with a clear ws:
+      )clear
+clear ws
+
+      )copy dfns refws
+··saved··
+
+      dfns←refws'dfns.dws'              ⍝ ref to copy of dfns ws.
+
+      1 dfns.disp ⍳2 2                  ⍝ "remote" execute.
+┌→──┬───┐
+↓1 1│1 2│
+├~─→┼~─→┤
+│2 1│2 2│
+└~─→┴~─→┘
+
+⍝ Temporary ws-refs need not be named:
+
+      (refws'eval').⎕ed'tasman'         ⍝ open remote edit window.
+      (refws'tube').(⎕ed ⎕nl 3)         ⍝ view all fns in saved workspace.
+      (refws'').⎕ed'refws'              ⍝ look at saved version of function.
+
+      (refws'tube').(london trip 'Kings' 'Queens')      ⍝ remote execution.
+compiling graph ...
+Kingsbury
+    Kingsbury      Jubilee
+    Wembley Park   Jubilee
+Wembley Park
+    Wembley Park   Metropolitan
+    Finchley Road  Metropolitan
+    Baker Street   Metropolitan
+Baker Street
+    Baker Street   Jubilee
+    Bond Street    Jubilee
+Bond Street
+    Bond Street    Central
+    Marble Arch    Central
+    Lancaster Gate Central
+    Queensway      Central
+Queensway
+
+      (refws'util').⎕cr'DOIF'
+ R←DOIF TEST       ⍝ Return next line number,
+ R←TEST↓1+1↑1↓⎕LC  ⍝ ...  if TEST false
+
+⍝ Note that changes made using refws are not saved in the reffed workspace:
+
+      (refws'display').aa←99            ⍝ make var in copy of DISPLAY ws.
+
+      (refws'display').⎕nc'aa'          ⍝ var was not saved in ws.
+0
+
+⍝ We can create and append to ⎕PATH, a ref to a copy of a saved utility work
+⍝ space.  The advantage of this approach is that changes in the saved WS are
+⍝ immediately available to the next APL session.
+
+      )cs ⎕se
+
+      CreateRefs←{
+          refws←{}
+          sink←⍎'''refws''⎕CY''dfns'' ⋄ 0'
+          dfns∘←refws'dfns' ⋄ ⎕path,←' dfns'    ⍝ ⎕se.dfns.(...)
+          util∘←refws'util' ⋄ ⎕path,←' util'    ⍝ ⎕se.util.(...)
+      }
+
+      onCreate←'CreateRefs'
+
+      ⍝ ... now save the session [Session->Save]
+
+See also: wsdiff exit
+
+Index:references, workspace|external workspace|workspace|remote execution

@@ -1,0 +1,331 @@
+⍝ Simplified version of Dyalog's binding rules:
+
+    defs ← scripts._dyalog
+
+⍝ The rules are encoded as follows. See ##.notes.parse for details.
+
+    display defs
+┌→───────────────────────────────────────────────────────────────────────────┐
+│⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Categories:                               │
+│⍝   ┌──── sample tokens ────┐   ⍝ ┌ First-class (from V14) nameable items   │
+│A   1 2 3 4 5 6 # ⍺ ⍵ a b c d   ⍝ * Array                                   │
+│F   + - × ÷ ⌊ ↓ ⍳ ⍴ ⊂ ≢ , f g   ⍝ * Function                                │
+│H   / ⌿ \ ⍀                 ←   ⍝ * Hybrid function/operator                │
+│AF                              ⍝   bound left argument                     │
+│MOP  ¨ ⍨ &                      ⍝ * Monadic operator                        │
+│DOP  ⍣                          ⍝   Dyadic operator                         │
+│JOT  ∘                          ⍝   Jot: compose / null operand             │
+│DOT  .                          ⍝   Dot: ref / product                      │
+│REF                             ⍝   ref:dot                                 │
+│IDX                             ⍝   index/axis                              │
+│ERR                             ⍝   error                                   │
+│() [IDX]                        ⍝   brackets                                │
+│⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Macros:                                   │
+│func=F.H                        ⍝   function                                │
+│rand=A.func                     ⍝   operand                                 │
+│1st=rand.MOP                    ⍝   first-class item                        │
+│item=1st.DOP                    ⍝   dottable item                           │
+│⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Bindings:                                 │
+│                                ⍝ ┌ strength                                │
+│A:DOT→REF REF:item→item         ⍝ 7 ref to dot to item                      │
+│                                ⍝                                           │
+│A:A→A                           ⍝ 6 array to array: vector (strand)         │
+│DOT:A.DOP→ERR                   ⍝   prevents: #.a+b → #.(a+b)               │
+│                                ⍝                                           │
+│DOP.JOT:rand→MOP                ⍝ 5 dyadic operator (inc ∘) to right operand│
+│DOT:func→MOP                    ⍝   inner product (with dot as operator)    │
+│                                ⍝                                           │
+│rand.JOT:MOP→F                  ⍝ 4 left operand (inc ∘) to monadic operator│
+│func:H→F                        ⍝   hybrid as operator                      │
+│rand:IDX→rand                   ⍝   axis / index                            │
+│MOP:H→ERR                       ⍝   prevents: +¨/¨ → (+¨)(/¨)               │
+│                                ⍝                                           │
+│A:func→AF                       ⍝ 3 left argument to function (inc hybrid)  │
+│IDX:A.func→ERR                  ⍝   prevents: v[0]+1 → v[0](+1)             │
+│                                ⍝                                           │
+│AF.F:A→A                        ⍝ 2 function to its right argument          │
+│                                ⍝                                           │
+│AF.func:F→F                     ⍝ 1 function to function (train)            │
+│                                ⍝                                           │
+│⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝                                           │
+└────────────────────────────────────────────────────────────────────────────┘
+
+⍝ ... which generates this binding table:
+
+    defs parse ''
+    ┌─────┬─────┬─────┬─────┬─────┬─────┬───┐
+    │A    │F    │H    │MOP  │DOP  │DOT  │IDX│
+┌───┼─────┼─────┼─────┼─────┼─────┼─────┼───┤
+│A  │6 A  │3 AF │3 AF │4 F  │     │7 REF│4 A│
+├───┼─────┼─────┼─────┼─────┼─────┼─────┼───┤
+│F  │2 A  │1 F  │4 F  │4 F  │     │     │4 F│
+├───┼─────┼─────┼─────┼─────┼─────┼─────┼───┤
+│H  │     │1 F  │4 F  │4 F  │     │     │4 H│
+├───┼─────┼─────┼─────┼─────┼─────┼─────┼───┤
+│AF │2 A  │1 F  │     │     │     │     │   │
+├───┼─────┼─────┼─────┼─────┼─────┼─────┼───┤
+│MOP│     │     │4 ERR│     │     │     │   │
+├───┼─────┼─────┼─────┼─────┼─────┼─────┼───┤
+│DOP│5 MOP│5 MOP│5 MOP│     │     │     │   │
+├───┼─────┼─────┼─────┼─────┼─────┼─────┼───┤
+│JOT│5 MOP│5 MOP│5 MOP│4 F  │     │     │   │
+├───┼─────┼─────┼─────┼─────┼─────┼─────┼───┤
+│DOT│6 ERR│5 MOP│5 MOP│     │6 ERR│     │   │
+├───┼─────┼─────┼─────┼─────┼─────┼─────┼───┤
+│REF│7 A  │7 F  │7 H  │7 MOP│7 DOP│     │   │
+├───┼─────┼─────┼─────┼─────┼─────┼─────┼───┤
+│IDX│3 ERR│3 ERR│3 ERR│     │     │     │   │
+└───┴─────┴─────┴─────┴─────┴─────┴─────┴───┘
+
+⍝ ... which is used to parse the following expressions:
+
+    try ← defs∘parse        ⍝ Handy shortcut.
+
+    try '2×3-⌊4÷5+6'        ⍝ Function-Argument expressions associate right.
+    A              
+ ┌──┴──┐           
+┌┴┐  ┌─┴──┐        
+2 × ┌┴┐ ┌─┴──┐     
+    3 - ⌊  ┌─┴──┐  
+          ┌┴┐  ┌┴─┐
+          4 ÷ ┌┴┐ 6
+              5 +  
+
+    try '+.×/¨⍣2⍨⍀&'        ⍝ Operand-Operator expressions associate left.
+               F   
+             ┌─┴──┐
+           ┌─┴──┐ &
+        ┌──┴──┐ ⍀  
+     ┌──┴──┐  ⍨    
+   ┌─┴──┐ ┌┴┐      
+ ┌─┴──┐ ¨ ⍣ 2      
+┌┴─┐  /            
++ ┌┴┐              
+  . ×              
+
+    try '+⌿ ÷ ≢'            ⍝ Function-train: fork.
+    F  
+  ┌─┴─┐
+ ┌┴─┐ ≢
+┌┴┐ ÷  
++ ⌿    
+
+    try '⍺[2+⍳3]×4'         ⍝ Square-bracket indexing.
+          A    
+       ┌──┴───┐
+  ┌────┴────┐ 4
+┌─┴─┐       ×  
+⍺ ┌─┴──┐       
+  [  ┌─┴─┐     
+    ┌┴┐ ┌┴┐    
+    2 + ⍳ 3    
+
+    try '#.a #.b[2]'        ⍝ Dotting trumps stranding trumps bracketing.
+         A     
+     ┌───┴───┐ 
+  ┌──┴──┐   ┌┴┐
+ ┌┴─┐  ┌┴─┐ [ 2
+┌┴┐ a ┌┴┐ b    
+# .   # .      
+
+    try 'a[],[1]←2'         ⍝ Modified (with axis) indexed assignment.
+        A    
+    ┌───┴───┐
+ ┌──┴──┐    2
+┌┴┐  ┌─┴──┐  
+a [ ┌┴─┐  ←  
+    , ┌┴┐    
+      [ 1    
+
+    try '(a b)(c d)←⍵'      ⍝ Structured assignment.
+           A   
+        ┌──┴──┐
+    ┌───┴───┐ ⍵
+ ┌──┴──┐    ←  
+┌┴─┐  ┌┴─┐     
+( ┌┴┐ ( ┌┴┐    
+  a b   c d    
+
+    try 'a←(f←(g←+)/)b←⍵'   ⍝ Embedded name assignments.
+       A                 
+ ┌─────┴──────┐          
+┌┴┐    ┌──────┴───────┐  
+a ← ┌──┴───┐         ┌┴─┐
+    (  ┌───┴───┐    ┌┴┐ ⍵
+      ┌┴┐   ┌──┴──┐ b ←  
+      f ← ┌─┴─┐   /      
+          (  ┌┴─┐        
+            ┌┴┐ +        
+            g ←          
+
+    try¨ '1/¨⍵' '+/¨⍵'      ⍝ Hybrid '/' as function and operator.
+    A         A   
+  ┌─┴──┐    ┌─┴─┐ 
+ ┌┴─┐  ⍵   ┌┴─┐ ⍵ 
+ 1 ┌┴┐    ┌┴┐ ¨   
+   / ¨    + /     
+
+    try '∘.⍺.⍳∘+'           ⍝ Jots & dots in different guises.
+      F      
+  ┌───┴────┐ 
+┌─┴─┐     ┌┴┐
+∘ ┌─┴─┐   ∘ +
+  .  ┌┴─┐    
+    ┌┴┐ ⍳    
+    ⍺ .      
+
+    try¨ '⊂⍣2 a' '(⊂⍣2)a' '⊂⍣2,a'   ⍝ Separating array operand from argument.
+  F           A           A    
+ ┌┴─┐      ┌──┴───┐     ┌─┴──┐ 
+ ⊂ ┌┴─┐   ┌┴─┐    a   ┌─┴──┐ a 
+   ⍣ ┌┴┐  ( ┌┴─┐     ┌┴─┐  ,   
+     2 a    ⊂ ┌┴┐    ⊂ ┌┴┐     
+              ⍣ 2      ⍣ 2     
+
+    try '(↓(a↓¨b)[⍳c])←1'   ⍝ Selective assignment.
+                A      
+           ┌────┴─────┐
+   ┌───────┴────────┐ 1
+┌──┴──┐             ←  
+( ┌───┴───┐            
+  ↓   ┌───┴────┐       
+    ┌─┴──┐    ┌┴─┐     
+    (  ┌─┴──┐ [ ┌┴┐    
+      ┌┴─┐  b   ⍳ c    
+      a ┌┴┐            
+        ↓ ¨            
+
+⍝ We can extend this simple binding table with, for example:
+⍝ - Dfns, guards and diamonds,
+⍝ - Subscript lists x;y;... for indexing.
+
+    xdefs ← scripts._dyalogX
+
+    display xdefs           ⍝ Extended definitions: "⍝⍝" lines are new:
+┌→───────────────────────────────────────────────────────────────────────────┐
+│⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Categories:                               │
+│⍝   ┌──── sample tokens ────┐   ⍝ ┌ First-class (from V14) nameable items   │
+│A   0 1 2 3 4 5 6 ⍺ ⍵ a b c d   ⍝ * Array                                   │
+│F   + - × ÷ = ⍳ | ∇ e f g       ⍝ * Function                                │
+│H   / ⌿ \ ⍀                 ←   ⍝ * Hybrid function/operator                │
+│AF                              ⍝   bound left argument                     │
+│MOP  ¨ ⍨ &                      ⍝ * Monadic operator                        │
+│DOP  ⍣                          ⍝   Dyadic operator                         │
+│JOT  ∘                          ⍝   Jot: compose / null operand             │
+│DOT  .                          ⍝   Dot: ref / product                      │
+│REF                             ⍝   ref-dot ...                             │
+│IDX                             ⍝   index/axis                              │
+│ERR                             ⍝   error                                   │
+│LST  ;                         ⍝⍝   subscript list separator                │
+│XLS  ⋄                         ⍝⍝   expression list separator               │
+│CLN  :                         ⍝⍝   colon for guard                         │
+│GRD                            ⍝⍝   guard:                                  │
+│() [IDX] {F}                   ⍝⍝   brackets, note dfn: {F}                 │
+│⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Macros:                                   │
+│func=F.H                        ⍝   function                                │
+│rand=A.func                     ⍝   operand                                 │
+│1st=rand.MOP                    ⍝   first-class item                        │
+│item=1st.DOP                    ⍝   dottable item                           │
+│⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Bindings:                                 │
+│                                ⍝ ┌ strength                                │
+│A:DOT→REF REF:item→item         ⍝ 10 dotted expression                      │
+│                                ⍝                                           │
+│A:A→A                           ⍝ 9 array to array: vector (strand)         │
+│DOT:A.DOP→ERR                   ⍝   prevents: #.a+b → #.(a+b)               │
+│                                ⍝                                           │
+│DOP.JOT:rand→MOP                ⍝ 8 dyadic operator (inc ∘) to right operand│
+│DOT:func→MOP                    ⍝   inner product (with dot as operator)    │
+│                                ⍝                                           │
+│rand.JOT:MOP→F                  ⍝ 7 left operand (inc ∘) to monadic operator│
+│func:H→F                        ⍝   hybrid as operator                      │
+│rand:IDX→rand                   ⍝   axis / index                            │
+│MOP:H→ERR                       ⍝   prevents: +¨/¨ → (+¨)(/¨)               │
+│                                ⍝                                           │
+│A:func→AF                       ⍝ 6 left argument to function (inc hybrid)  │
+│IDX:A.func→ERR                  ⍝   prevents: v[0]+1 → v[0](+1)             │
+│                                ⍝                                           │
+│AF.F:A→A                        ⍝ 5 function to its right argument          │
+│                                ⍝                                           │
+│AF.func:F→F                     ⍝ 4 function to function (train)            │
+│                                ⍝                                           │
+│A.LST:LST→LST LST:A→LST        ⍝⍝ 3 subscript list: [2;] [2;;]              │
+│                               ⍝⍝                                           │
+│A:CLN→GRD GRD:A→A              ⍝⍝ 2 guard returns an Array.                 │
+│CLN:A→ERR                      ⍝⍝   to prevent: 1:2⋄ → 1:(2⋄)               │
+│                               ⍝⍝                                           │
+│1st.XLS:XLS→XLS XLS:1st→1st    ⍝⍝ 1 expression list .. ⋄ .. ⋄ ..            │
+│                               ⍝⍝                                           │
+│⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝                                           │
+└────────────────────────────────────────────────────────────────────────────┘
+
+⍝ ... which generates this binding table with 4 more rows and 3 more columns:
+
+    xdefs parse ''
+    ┌─────┬─────┬─────┬──────┬──────┬──────┬───┬─────┬─────┬─────┐
+    │A    │F    │H    │MOP   │DOP   │DOT   │IDX│LST  │XLS  │CLN  │
+┌───┼─────┼─────┼─────┼──────┼──────┼──────┼───┼─────┼─────┼─────┤
+│A  │9 A  │6 AF │6 AF │7 F   │      │10 REF│7 A│3 LST│1 XLS│2 GRD│
+├───┼─────┼─────┼─────┼──────┼──────┼──────┼───┼─────┼─────┼─────┤
+│F  │5 A  │4 F  │7 F  │7 F   │      │      │7 F│     │1 XLS│     │
+├───┼─────┼─────┼─────┼──────┼──────┼──────┼───┼─────┼─────┼─────┤
+│H  │     │4 F  │7 F  │7 F   │      │      │7 H│     │1 XLS│     │
+├───┼─────┼─────┼─────┼──────┼──────┼──────┼───┼─────┼─────┼─────┤
+│AF │5 A  │4 F  │     │      │      │      │   │     │     │     │
+├───┼─────┼─────┼─────┼──────┼──────┼──────┼───┼─────┼─────┼─────┤
+│MOP│     │     │7 ERR│      │      │      │   │     │1 XLS│     │
+├───┼─────┼─────┼─────┼──────┼──────┼──────┼───┼─────┼─────┼─────┤
+│DOP│8 MOP│8 MOP│8 MOP│      │      │      │   │     │     │     │
+├───┼─────┼─────┼─────┼──────┼──────┼──────┼───┼─────┼─────┼─────┤
+│JOT│8 MOP│8 MOP│8 MOP│7 F   │      │      │   │     │     │     │
+├───┼─────┼─────┼─────┼──────┼──────┼──────┼───┼─────┼─────┼─────┤
+│DOT│9 ERR│8 MOP│8 MOP│      │9 ERR │      │   │     │     │     │
+├───┼─────┼─────┼─────┼──────┼──────┼──────┼───┼─────┼─────┼─────┤
+│REF│10 A │10 F │10 H │10 MOP│10 DOP│      │   │     │     │     │
+├───┼─────┼─────┼─────┼──────┼──────┼──────┼───┼─────┼─────┼─────┤
+│IDX│6 ERR│6 ERR│6 ERR│      │      │      │   │     │     │     │
+├───┼─────┼─────┼─────┼──────┼──────┼──────┼───┼─────┼─────┼─────┤
+│LST│3 LST│     │     │      │      │      │   │3 LST│     │     │
+├───┼─────┼─────┼─────┼──────┼──────┼──────┼───┼─────┼─────┼─────┤
+│XLS│1 A  │1 F  │1 H  │1 MOP │      │      │   │     │1 XLS│     │
+├───┼─────┼─────┼─────┼──────┼──────┼──────┼───┼─────┼─────┼─────┤
+│CLN│2 ERR│     │     │      │      │      │   │     │     │     │
+├───┼─────┼─────┼─────┼──────┼──────┼──────┼───┼─────┼─────┼─────┤
+│GRD│2 A  │     │     │      │      │      │   │     │     │     │
+└───┴─────┴─────┴─────┴──────┴──────┴──────┴───┴─────┴─────┴─────┘
+
+⍝ ... which is used to parse the following expressions:
+
+    try ← xdefs∘parse           ⍝ Handy shortcut.
+
+    try 'a[2+⍳3;;4+⍳5]'         ⍝ Indexing with subscript list
+    A                  
+┌───┴───┐              
+a ┌─────┴──────┐       
+  [        ┌───┴───┐   
+         ┌─┴──┐  ┌─┴─┐ 
+       ┌─┴──┐ ; ┌┴┐ ┌┴┐
+     ┌─┴─┐  ;   4 + ⍳ 5
+    ┌┴┐ ┌┴┐            
+    2 + ⍳ 3            
+
+    try 'f←+ ⋄ g←f/ ⋄ g'        ⍝ Expression list returning function
+              F    
+           ┌──┴───┐
+       ┌───┴────┐ g
+    ┌──┴───┐    ⋄  
+  ┌─┴─┐  ┌─┴─┐     
+ ┌┴─┐ ⋄ ┌┴┐ ┌┴┐    
+┌┴┐ +   g ← f /    
+f ←                
+
+    try 'e←{⍺=0:|⍵ ⋄ ⍵ ∇ |⍺-⍵}'     ⍝ Euclid's GCD as a named dfn
+      F                        
+ ┌────┴────┐                   
+┌┴┐ ┌──────┴───────┐           
+e ← {          ┌───┴───┐       
+            ┌──┴──┐  ┌─┴──┐    
+          ┌─┴──┐  ⋄ ┌┴┐ ┌─┴─┐  
+        ┌─┴─┐ ┌┴┐   ⍵ ∇ |  ┌┴─┐
+       ┌┴─┐ : | ⍵         ┌┴┐ ⍵
+      ┌┴┐ 0               ⍺ -  
+      ⍺ =                      

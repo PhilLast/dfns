@@ -1,0 +1,11 @@
+ words←{⎕IO ⎕ML←0 3              ⍝ Split vector into words.
+     alph←⎕AV[∊17 65 97+⊂⍳26]    ⍝ primary alphabet: a-z, A-Z, Á-õ.
+     supp←⎕D                     ⍝ supplementary: 0-9.
+     ⍺←alph supp                 ⍝ default left argument.
+     1=≡,⍺:⍺''∇ ⍵                ⍝ supplied argument simple: append null.
+     alph supp←⍺                 ⍝ supplied left argument overrides default.
+     fm←0 1⍷0,⍵∊alph             ⍝ Start of words
+     nw←1 0⍷0,⍵∊alph,supp        ⍝ Start of non-words
+     to←∊<\¨(1++\fm)⊂nw          ⍝ End of words.
+     (1++\¯1↓fm∨to)⊂⍵            ⍝ Split words.
+ }

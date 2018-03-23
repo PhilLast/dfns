@@ -1,0 +1,21 @@
+ filefind←{                          ⍝ Find 'string' ⍵ in component file ⍺.
+
+     (~(⊂⍺)∊⎕FNUMS):⍺ ∇{             ⍝ left arg not a tie number: try to tie.
+         emsg←⍕'Can''t open ',⍺      ⍝ bad file error message.
+         0::emsg ⎕SIGNAL ⎕EN         ⍝ tie failure:: complain.
+         tie←⍺ ⎕FSTIE 0              ⍝ shared tie number for file.
+         (⎕FUNTIE tie)⊢tie ⍺⍺ ⍵      ⍝ find & untie file.
+     }⍵                              ⍝ ... search 'string'.
+
+     read←⎕FREAD∘(⍺∘,)               ⍝ read file component.
+
+     ~∘0{                            ⍝ disregarding no-hit components.
+         ⍺=0:0                       ⍝ (null file).
+         ⍺×{⎕ML←2                    ⍝ comp no or 0.
+             (≡⍺)>≡,⍵:1∊∊⍺ ∇¨⊂⍵      ⍝ too nested: try each sub-array.
+             1∊⍵⍷⍺                   ⍝ string found in
+         }∘⍵ read ⍺                  ⍝ ... ⍺th component.
+     }∘⍵¨↑{                          ⍝ applied to each item of
+         (⍺-⎕IO)+⍳1+⍵-⍺              ⍝ vector of file comp nos.
+     }/0 ¯1+2↑⎕FSIZE ⍺               ⍝ first and last comp nos.
+ }

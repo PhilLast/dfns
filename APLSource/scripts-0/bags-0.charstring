@@ -1,0 +1,58 @@
+⍝ Multisets (bags):
+
+    1 2 3 3 1 2 3 ~bags 3 1 3           ⍝ multiset asymmetric difference (MAD).
+2 1 2 3
+
+    1 1 1 2 2 3 ('§'bags) 1 2 2 3 3 3   ⍝ multiset symmetric difference (MSD).
+1 1 3 3
+
+    1 2 3 3 1 2 3 ⍳bags 3 1 3           ⍝ progressive dyadic iota (PDI)
+3 1 4
+
+    3 1 3 ∊bags 3 1 1 2                 ⍝ progressive dyadic epsilon (PDE)
+1 1 0
+
+    (⊂1 2 2)≡bags¨(1 2)(2 2 1)(1 1 2)   ⍝ match
+0 1 0
+
+    (⊂1 2 2)≢bags¨(1 2)(2 2 1)(1 1 2)   ⍝ natch
+1 0 1
+
+    1 2 2 3 ∪bags 2 3 3                 ⍝ union
+1 2 2 3 3
+
+    ∪bags 1 1 2 2                       ⍝ unique is a no-op
+1 1 2 2
+
+    1 2 2 3 ∩bags 2  3 3 2              ⍝ intersection
+2 2 3
+
+    'tick' 'tock' ≡bags 'tock' 'tick'   ⍝ nested args.
+1
+    A←?10/5  ⋄  B←?10/5                 ⍝ vectors with repeated items.
+
+    (A ∪bags B) ≡bags B ∪bags A         ⍝ multiset-union is commutative.
+1
+    (A ∩bags B) ≡bags B ∩bags A         ⍝ multiset-intersection is commutative.
+1
+    (⍳⍴A) ≡ A ⍳bags A                   ⍝ progressive dyadic iota.
+1
+    (A ('§'bags) B) ≡bags B ('§'bags) A ⍝ MSD is commutative.
+1
+    disp(2≡bags 2)(2≢bags 2)(2~bags 2)(2('§'bags)2)(2∪bags 2)(2∩bags 2)(2∊bags 2)
+┌─┬─┬┬┬─┬─┬─┐
+│1│0│││2│2│1│
+└─┴─┴┴┴─┴─┴─┘
+
+⍝ Errors
+
+    ⍕bags 1 2 2 3
+16::NONCE ERROR
+    ~bags 1 2 2 3
+16::NONCE ERROR
+    {⍵ ⍵}bags 1 2 2 3
+16::NONCE ERROR
+    1 2 3 ,bags 3 2 1
+16::NONCE ERROR
+    2 ⍳bags 3 4
+4::RANK ERROR

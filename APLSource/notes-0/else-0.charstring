@@ -1,0 +1,99 @@
+rslt ← cond (⍺⍺ ##.else ⍵⍵) argt            ⍝ Condition f else g ...
+
+Conditional  application  of  left  or  right operand. Returns: if cond is true,
+⍺⍺ argt, otherwise ⍵⍵ argt.
+
+NB: This operator is largely superseded by the more general →cond←.  However, it
+is retained partly as an example of a simple operator  and partly for reasons of
+nostalgia, being the oldest piece of code in the dfns workspace:
+
+        'd t'attrib'else'   ⍝ oldest op in WS.
+    1998-03-05 16:41:54
+
+[else]  is more versatile than it might at first appear. In the following (⍺) is
+a  boolean  singleton; (⍵), (L) and (R) are arrays and (⍺⍺) and (⍵⍵) are monadic
+functions.
+
+case    calling syntax      if      then    else
+----    --------------      --      ----    ----
+[1]     ⍺ ⍺⍺ else ⍵⍵ ⍵      ⍺       ⍺⍺ ⍵    ⍵⍵ ⍵
+[2]     ⍺ ⍺⍺ else ⊢  ⍵      ⍺       ⍺⍺ ⍵    ⍵
+[3]     ⍺ ⍺⍺ else{R} ⍵      ⍺       ⍺⍺ ⍵    R
+[4]     ⍺  ⊢ else ⍵⍵ ⍵      ⍺       ⍵       ⍵⍵ ⍵
+[5]     ⍺  ⊢ else{R} ⍵      ⍺       ⍵       R
+[6]     ⍺ {L}else ⍵⍵ ⍵      ⍺       L       ⍵⍵ ⍵
+[7]     ⍺ {L}else ⊢  ⍵      ⍺       L       ⍵
+[8]     ⍺ {L}else{R} ⍵      ⍺       L       R
+
+Notice  that  (L) and (R) may be arbitrarily complex _expressions_, which return
+an array value but which are evaluated _only_ if (⍺) selects that case.
+
+Phil Last suggests an _ambivalent_ variant of the operator:
+
+    else←{              ⍝ {condition} f else g ...
+        ⍺←⊢
+        1≡⍺ 1:⍺⍺{       ⍝ valence test
+            ⍺⍺ ⍵:⍵      ⍝ monad: ⍺⍺ is test - nop if true
+            ⍵⍵ ⍵        ⍝                     else run ⍵⍵
+        }⍵⍵ ⍵
+        ⍺:⍺⍺ ⍵          ⍝ dyad:   ⍺ is test - run ⍺⍺ if true
+        ⍵⍵ ⍵            ⍝                     else run ⍵⍵
+    }
+
+Notice Phil's technique used in the first two lines of the code. More often than
+not,  all  that  is  needed  for  a missing left argument is to supply a default
+value.  In this case however, the code needs to know _explicitly_ whether a left
+argument  is  present.  The  first line ⍺←⊢, makes ⍺ the identity function if no
+left  argument  has been passed. The guard on the second line 1≡⍺ 1, will "fire"
+only  in this case, as _any_ array passed as left argument would strand with the
+rightmost 1 to form a 2-vector, which cannot possibly match 1.
+
+The  ambivalent  version  adds  the  following  cases  in which (T) is a boolean
+singleton and (tt) is a monadic function returning a boolean singleton:
+
+case    calling syntax      if      then    else
+----    --------------      --      ----    ----
+[9]     tt else ⍵⍵ ⍵        tt ⍵    ⍵       ⍵⍵ ⍵
+[10]    tt else{R} ⍵        tt ⍵    ⍵       R
+[11]    {T}else ⍵⍵ ⍵        T       ⍵       ⍵⍵ ⍵
+[12]    {T}else{R} ⍵        T       ⍵       R
+
+Notice  in  the  examples below,  that  ⍺←⊢ is used to _pass on_ a possibly non-
+existent  left  argument  to  a  called function. In the following, if [main] is
+called without a left argument, then so is [sub].
+
+    main←{
+        ⍺←⊢
+        ⍺ sub ⍵
+    }
+                                                                            case
+Examples:                                                                   ────
+
+      open←{⍺←0                           ⍝ File tie, optionally exclusive.
+          ⍺ (⍵∘⎕fstie) else (⍵∘⎕ftie) 0   ⍝ ⍺=1: shared else exclusive.      [1]
+      }
+
+      close←{⍺←0                          ⍝ File untie, optional resize.
+          ⎕funtie ⍺ ⎕fresize else ⊢ ⍵     ⍝ ⍺=1: squeeze file else don't.    [2]
+      }
+
+      openc←{⍺←⊢                          ⍝ open as above - unless tie number
+          (0∊∊⍵) ⊢ else (⍺∘open) ⍵        ⍝ tie←share openc file             [4]
+      }
+
+      closec←{⍺←⊢                         ⍝ close as above - if opened by openc
+          (⍺⍺≡⍵) ⊢ else (⍺∘close) ⍵       ⍝ squeeze(file closec)tie          [4]
+      }
+
+      openc←{⍺←⊢                          ⍝ open as above - unless tie number
+          (0∘∊∘∊) else (⍺∘open) ⍵         ⍝ tie←share openc file             [9]
+      }
+
+      closec←{⍺←⊢                         ⍝ close as above - if opened by openc
+          (⍺⍺∘≡) else (⍺∘close) ⍵         ⍝ squeeze(file closec)tie          [9]
+      }
+
+See also: cond pow and or
+
+Index:conditional operator
+Index;Last P.

@@ -1,0 +1,28 @@
+dvec ← ##.stdists tree                      ⍝ Spanning tree path lengths.
+
+Returns  vector [dvec] of distances from the root to each vertex in the spanning
+[tree].
+
+Examples:
+
+⍝
+⍝      Graph "a".
+⍝    ┌─────1←────┐   5 vertices: 1 2 3 4 5
+⍝    │     │     │
+⍝    ↓     ↓     │   8 edges:    1→2  1→3
+⍝    2←───→3────→4               2→3
+⍝          ↑     │               3→2  3→4
+⍝          │     ↓               4→1  4→5
+⍝          └─────5               5→3
+
+      a←(2 3)(3)(2 4)(1 5)(3)       ⍝ simple origin-1 graph.
+
+      a span 1
+¯1 1 1 3 4
+
+      stdists a span 1              ⍝ distances from vertex 1.
+0 1 1 2 3
+
+See also: span stpath stpaths Graphs
+
+Index:graph|spanning tree|path

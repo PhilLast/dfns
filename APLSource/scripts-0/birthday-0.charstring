@@ -1,0 +1,22 @@
+⍝ Probability of coincident birthdays:
+
+    ⎕pp←14
+
+    365 birthday 23
+0.50729723432399
+
+:If {2::0 ⋄ ×⎕fr}⍬          ⍝ decf supported
+
+        fr←⎕fr ⋄ ⎕FR←1287 ⋄ ⎕PP←34
+
+        365 birthday 23
+    0.5072972343239854072254172283370321
+
+    ⍝ probability of collision of 10,000 BuildIDs
+
+        (2*32)birthday 1e4
+    0.0115728899862167876602666530438722
+
+        ⎕fr←fr              ⍝ must restore as ⎕fr has session extent.
+
+:EndIf

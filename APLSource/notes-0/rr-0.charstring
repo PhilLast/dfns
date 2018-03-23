@@ -1,0 +1,89 @@
+rounds ← ##.rr players                      ⍝ Round-robin tournament.
+
+From Jay Foad:
+
+Given an even number of participants,  how do we arrange that each plays against
+(or dances with) everyone else, exactly once?
+
+See: http://en.wikipedia.org/wiki/Round-robin_tournament
+
+For example, with contestants, Maggie, Milly, Molly and May, there will be three
+rounds.  The  columns  of  matrices  along the first axis show the bouts: in the
+first round, Maggie plays May, while Milly plays Molly, and so on ...
+
+      'Maggie' 'Milly' 'Molly' 'May'[rr 4]
+ Maggie  Milly
+ May     Molly
+
+ Maggie  Molly
+ Milly   May
+
+ Maggie  May
+ Molly   Milly
+
+Technical note:
+
+Note the use of embedded assignments of local names m, v and n:
+
+    IO+(⍵÷2)↑[2]m,[0.5]⌽m←0,v⌽1+n n⍴v←⍳n←0⌈⍵-1
+                        ¯¯          ¯¯ ¯¯
+While embedded assignment has its detractors, there are some advantages. Taking
+a trivial (and contrived) example:
+
+    {1+x←1+⍵}0      ⍝ successor of successor of ...
+2
+
+Firstly, the code reads nicely from left to right: "One more than x where x is
+one more than omega".                                             ¯¯¯¯¯¯¯¯¯¯¯¯
+
+Secondly, local assignment is _currently_ marginally faster than,  for  example,
+employing an inner Dfn. Here is a timing comparison of some alternative codings:
+
+    cmpx'{1+x←⍵+1}0' '{{1+⍵}1+⍵}0' '(1∘+)∘(1∘+)0' '{1+⍵}∘(1∘+)0' '{1+⍵}∘{1+⍵}0'
+{1+x←⍵+1}0   → 2.1E¯6 |    0% ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+{{1+⍵}1+⍵}0  → 2.6E¯6 |  +22% ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+(1∘+)∘(1∘+)0 → 2.9E¯6 |  +36% ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+{1+⍵}∘(1∘+)0 → 4.1E¯6 |  +91% ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+{1+⍵}∘{1+⍵}0 → 4.6E¯6 | +116% ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+
+(muse:
+
+    The code-snippet: 0⌈... is present to allow the degenerate case of a 0-play-
+    er tournament, which returns  an  array  of shape 0 2 0, indicating 0 rounds
+    of 0 plays each. In general, an ⍵-player  tournament requires ¯1+⍵÷2 rounds,
+    so it could be argued that the length of the first axis in this case  should
+    be ¯1, which is impossible.  The maths says that if no-one shows up  to  The
+    Ball, the band should play ¯1 tunes before packing up and going home.
+)
+
+Examples:
+
+    display rr¨ 0 2 to 8                    ⍝ Tournaments for 0 2 .. 8 players.
+┌→─────────────────────────────────────┐
+│ ┌┌⊖┐ ┌┌→┐ ┌┌→──┐ ┌┌→────┐ ┌┌→──────┐ │
+│ ⌽↓0│ ↓↓1│ ↓↓1 2│ ↓↓1 2 3│ ↓↓1 2 3 4│ │
+│ ││0│ ││2│ ││4 3│ ││6 5 4│ ││8 7 6 5│ │
+│ └└~┘ └└~┘ ││   │ ││     │ ││       │ │
+│           ││1 3│ ││1 3 4│ ││1 3 4 5│ │
+│           ││2 4│ ││2 6 5│ ││2 8 7 6│ │
+│           ││   │ ││     │ ││       │ │
+│           ││1 4│ ││1 4 5│ ││1 4 5 6│ │
+│           ││3 2│ ││3 2 6│ ││3 2 8 7│ │
+│           └└~──┘ ││     │ ││       │ │
+│                  ││1 5 6│ ││1 5 6 7│ │
+│                  ││4 3 2│ ││4 3 2 8│ │
+│                  ││     │ ││       │ │
+│                  ││1 6 2│ ││1 6 7 8│ │
+│                  ││5 4 3│ ││5 4 3 2│ │
+│                  └└~────┘ ││       │ │
+│                           ││1 7 8 2│ │
+│                           ││6 5 4 3│ │
+│                           ││       │ │
+│                           ││1 8 2 3│ │
+│                           ││7 6 5 4│ │
+│                           └└~──────┘ │
+└∊─────────────────────────────────────┘
+
+See also: cmat cmpx
+
+Index:Round-robin tournament|combination

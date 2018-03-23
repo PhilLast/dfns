@@ -1,0 +1,74 @@
+cmat ← ##.display  array                    ⍝ Boxed display of array.
+cmat ← ##.displays array                    ⍝ .. with axis lengths.
+cmat ← ##.displayr array                    ⍝ ..    ..  and subarray depths.
+
+The argument array is  displayed  with boxes bordering each subarray. Characters
+embedded in the borders indicate subarray shape and type.
+
+Shape:  ↓ → Non-zero axis.
+        ⌽ ⊖ Zero axis.
+
+Type:     ∊ Nested array.
+          ~ Numeric.
+          - Character.
+          # Namespace reference.
+          ∇ ⎕OR object.
+          + Mixed type.
+
+Prototypical items of empty arrays (⌽ ⊖) are exposed.
+
+With  one  exception,  [display] perfectly distinguishes arrays. That is to say,
+distinct  arrays  have distinct display forms. The exception, signalled by a '+'
+character  in  its  left  lower border, is a depth-1 (sub) array containing both
+characters and numbers. For example: display 88,'99'.
+
+Variations
+----------
+Inspired  by  David  Rabenhorst's  1988  paper, Dick Bowman supplies two further
+versions of the display function
+
+    displays    ⍝ display with shape along top border.
+    displayr    ⍝ display with shape along axis borders and with depth.
+
+Compare the output from Dick's functions with the original:
+
+        display 1 'a' 'abc' (2 3⍴⍳6)    ⍝ "standard" display.
+    ┌→──────────────────┐
+    │     ┌→──┐ ┌→────┐ │
+    │ 1 a │abc│ ↓1 2 3│ │
+    │   - └───┘ │4 5 6│ │
+    │           └~────┘ │
+    └∊──────────────────┘
+
+        displays 1 'a' 'abc' (2 3⍴⍳6)   ⍝ with shape along top border.
+    ┌→─4────────────────┐
+    │     ┌→─3┐ ┌→─2 3┐ │
+    │ 1 a │abc│ ↓1 2 3│ │
+    │   - └───┘ │4 5 6│ │
+    │           └~────┘ │
+    └∊──────────────────┘
+
+        displayr 1 'a' 'abc' (2 3⍴⍳6)   ⍝ with shape per axis and depth.
+    ┌4────────────────────┐
+    │     ┌3───┐ ┌3─────┐ │
+    │ 1 a │ abc│ 2 1 2 3│ │
+    │   - └────┘ │ 4 5 6│ │
+    │            └~─────┘ │
+    └¯2───────────────────┘
+
+Ref: "The Compact Display of Arbitrary Nested Arrays" D. A. Rabenhorst (IBM),
+     APL88 Conference Proceedings, pp 272-277, ACM - 0-89791-253-5/88/0002/0272
+
+Examples:
+
+      display 'ABC'(1 4⍴1 2 3 4)(0 1 0⍴0)(⎕SE #)('88',99)
+┌→────────────────────────────────────────┐
+│ ┌→──┐ ┌→──────┐ ┌┌⊖┐ ┌→───────┐ ┌→────┐ │
+│ │ABC│ ↓1 2 3 4│ ⌽↓0│ │ ⎕SE  # │ │88 99│ │
+│ └───┘ └~──────┘ └└~┘ └#───────┘ └+────┘ │
+└∊────────────────────────────────────────┘
+
+See also: disp box dsp
+
+Index:display (of arrays)|box|boxing|box-drawing characters
+Index;Rabenhorst D.A.|Bowman D.

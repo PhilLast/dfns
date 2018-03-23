@@ -1,0 +1,15 @@
+cmp ← {cmp←1} ##.packS exp                  ⍝ Shannon-Fano packing.
+
+The  Shannon-Fano  algorithm is a variant of Huffman-coding, where the most fre-
+quent item is replaced with the shortest key.
+
+Suitable for text packing, but alas, unpacking is s-l-o-w in APL (unless someone
+invents a really good way to do that).
+
+Because  the  indices are of variable length, expansion is pretty slow (and bor-
+ing).
+
+See also: Data_compression
+
+Index:packing|compression|Shannon-Fano
+Index;Jantunen V-M.

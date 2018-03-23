@@ -1,0 +1,49 @@
+⍝ enclose-if-simple / link:
+
+    disp eis 'hello'                ⍝ simple array enclosed
+┌─────┐
+│hello│
+└─────┘
+    disp eis 'hello' 'world'        ⍝ nested array: no-op
+┌─────┬─────┐
+│hello│world│
+└─────┴─────┘
+    disp eis 'h'                    ⍝ simple scalar: raveled and enclosed !!
+┌─┐
+│h│
+└─┘
+    disp eis ↑'hello' 'world'       ⍝ simple matrix: enclosed
+┌─────┐
+│hello│
+│world│
+└─────┘
+    disp 'this' eis 'and' eis 'that'    ⍝ sequence of simple vectors
+┌────┬───┬────┐
+│this│and│that│
+└────┴───┴────┘
+    disp 'aa' 'bb' eis 'cc' 'dd' eis 'ee' 'ff'  ⍝ nested sequence
+┌──┬──┬──┬──┬──┬──┐
+│aa│bb│cc│dd│ee│ff│
+└──┴──┴──┴──┴──┴──┘
+
+    Beatles ← 'John' 'Paul' 'George' 'Ringo'
+
+    disp ⊃eis/ Beatles              ⍝    link-reduction
+┌────┬────┬──────┬─────┐
+│John│Paul│George│Ringo│
+└────┴────┴──────┴─────┘
+
+    disp ⊃,/ Beatles                ⍝ cf join-reduction
+JohnPaulGeorgeRingo
+
+    disp ⊃{⍺ ⍵}/ Beatles            ⍝ cf pair-reduction
+┌────┬─────────────────────┐
+│John│┌────┬──────────────┐│
+│    ││Paul│┌──────┬─────┐││
+│    ││    ││George│Ringo│││
+│    ││    │└──────┴─────┘││
+│    │└────┴──────────────┘│
+└────┴─────────────────────┘
+
+    ≢⊃eis/⎕ns¨5⍴⊂''                 ⍝ works with namespaces (JF)
+5

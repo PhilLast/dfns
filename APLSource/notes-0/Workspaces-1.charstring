@@ -1,0 +1,14 @@
+──────────
+Workspaces
+──────────
+Functions  that operate on saved workspaces typically copy them into a temporary
+namespace  for  examination. Currently, ⎕CY doesn't return a result; a behaviour
+which  is problematic for D-function coding. One way around this is to embed the
+copy in a "diamondised" execute string, the first segment of which does the copy
+and the second, a trivial expression that returns an ignored result.
+
+    _←⍎'tmp.⎕cy wsid ⋄ 0'
+
+See also: fndiff wsdiff refws do
+
+Index:workspace

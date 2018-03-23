@@ -1,0 +1,238 @@
+cmat ← {gap←1 {max←⎕pw}} ##.cols items      ⍝ Multi-column display.
+
+Sometimes it's easier to peruse an alphabetic list of items if they are arranged
+vertically in columns (where typically, the last  column  will  be  incomplete).
+[cols]  returns a multi-column character-matrix format of the items in its right
+argument.
+
+[items]  may  be a vector or a matrix. In the latter case, _rows_ of the matrix,
+with trailing blanks removed, are taken as the items of the list.
+
+Optional  left  arguments  [gap] (default 1) and [max] (default ⎕pw) specify the
+inter-column-gap and maximum "print width" of the display respectively.
+
+If  any  of  the items are wider than [max], the result is a single column, with
+longer items truncated to [max] characters.
+
+Cols is similar to the Unix shell commmand "c -v".
+
+        1 20 cols ⍳26           ⍝ width ≤ 20-column format of vector.
+    1 5  9 13 17 21 25
+    2 6 10 14 18 22 26
+    3 7 11 15 19 23
+    4 8 12 16 20 24
+
+        0 8 cols ⎕a             ⍝ width ≤ 8-column format of vector.
+    AEIMQUY
+    BFJNRVZ
+    CGKOSW
+    DHLPTX
+
+        cols ⎕nl 4              ⍝ width ≤ ⎕pw-column format of char matrix.
+    Cut      ascana  case   each    foldl logic  nats rats     rows  time  vwise
+    UndoRedo avl     cf     else    for   ltrav  of   ratsum   sam   trace while
+    _fk      bags    cond   file    invr  mdf    or   ravt     saw   traj
+    acc      big     cxdraw fk      kcell memo   perv redblack sbst  trav
+    and      bsearch dft    fk_     limit merge  pow  repl     splay until
+    ascan    bt      do     fnarray lof   merge2 pred roman    ticks vof
+
+Technical note:
+
+There  is  a circular problem in deciding the optimal number of columns in which
+to arrange our vector:  until the columns are arranged, we don't know which will
+be the widest item in each column and so how wide the column as a whole will be;
+and  until  we  know the width of each column, we don't know how many columns to
+use.
+
+Here  is  an example of a vector whose 2-column arrangement is wider than its 3-
+column arrangement:
+
+    vec ← 1 1 1000000 1000000 1 1
+
+    ⍉2 3⍴vec        ⍝ 2 cols → width 15.
+      1 1000000
+      1       1
+1000000       1
+
+    ⍉3 2⍴vec        ⍝ 3 cols → width 11.
+1 1000000 1
+1 1000000 1
+
+For  this  reason, it is not easy to "home in" on an optimal solution using, for
+example, a binary search (→bsearch←) technique. Instead, we search one column at
+a time. We could equally well search a row at a time, but for large lists, where
+performance  might  be a consideration, the number of rows would, typically, far
+exceed the maximum "print width".
+
+The  not-very-subtle solution adopted here is to start with the maximum possible
+number  of columns and to keep reducing this number until the gap-separated col-
+umns  would  fit within the required width. We don't need to use the items them-
+selves for this exploration; a vector of their lengths will suffice.
+
+Inner  function  "maxcols"  calculates the maximum number of columns. It employs
+a small optimisation, which allows us to avoid some of the calculation.  For ex-
+ample,  trying  to  arrange  9 items down 4 columns is infeasible because 2 rows
+would require 5 columns and 3 rows would need only 3.
+
+Given  "ni",  the  number  of  items and ⍵, the number of columns to attempt, we
+calculate the implied number of rows together with the "excess" number of unused
+rows in the final, right-most, column. Notice the use of APL's encode "⊤" funct-
+ion with a negative argument:
+
+    nr xs←|0 ⍵⊤-ni              ⍝ number of rows and excess.
+    xs≥nr:∇ ⍵-1                 ⍝ one or more empty columns: ignore.
+
+For example, to see if we can arrange 9 items along 4 rows, we might first think
+to code:
+
+    0 4⊤9       ⍝ 2 complete rows, remainder 1 item.
+2 1
+
+But this is not quite right; we need to know how many rows (complete or not) are
+occupied, together with how many rows would be left unoccupied in the final col-
+umn(s).  If  the  excess is equal to or greater than the number of rows, then we
+can  ignore  this  (⍵-columns)  case as it is identical to a smaller value of ⍵,
+which we will encounter later. Instead, we code:
+
+    |0 4⊤-9     ⍝ 3 used rows, with 3 free rows in the final column (no good).
+3 3
+
+... representing an infeasible arrangement, which may be ignored.
+
+Examples:
+
+    cols ⍳123               ⍝ default multi-column display of vector.
+1  6 11 16 21 26 31 36 41 46 51 56 61 66 71 76 81 86 91  96 101 106 111 116 121
+2  7 12 17 22 27 32 37 42 47 52 57 62 67 72 77 82 87 92  97 102 107 112 117 122
+3  8 13 18 23 28 33 38 43 48 53 58 63 68 73 78 83 88 93  98 103 108 113 118 123
+4  9 14 19 24 29 34 39 44 49 54 59 64 69 74 79 84 89 94  99 104 109 114 119
+5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 105 110 115 120
+
+    2 cols ⍳123             ⍝ ..    ..   with 2-blank inter-column gap.
+1   8  15  22  29  36  43  50  57  64  71  78  85  92   99  106  113  120
+2   9  16  23  30  37  44  51  58  65  72  79  86  93  100  107  114  121
+3  10  17  24  31  38  45  52  59  66  73  80  87  94  101  108  115  122
+4  11  18  25  32  39  46  53  60  67  74  81  88  95  102  109  116  123
+5  12  19  26  33  40  47  54  61  68  75  82  89  96  103  110  117
+6  13  20  27  34  41  48  55  62  69  76  83  90  97  104  111  118
+7  14  21  28  35  42  49  56  63  70  77  84  91  98  105  112  119
+
+    2 50 cols ⍳123          ⍝ ..    ..  restricted to 50 columns.
+ 1  12  23  34  45  56  67  78  89  100  111  122
+ 2  13  24  35  46  57  68  79  90  101  112  123
+ 3  14  25  36  47  58  69  80  91  102  113
+ 4  15  26  37  48  59  70  81  92  103  114
+ 5  16  27  38  49  60  71  82  93  104  115
+ 6  17  28  39  50  61  72  83  94  105  116
+ 7  18  29  40  51  62  73  84  95  106  117
+ 8  19  30  41  52  63  74  85  96  107  118
+ 9  20  31  42  53  64  75  86  97  108  119
+10  21  32  43  54  65  76  87  98  109  120
+11  22  33  44  55  66  77  88  99  110  121
+
+    cols ⎕nl 3 4            ⍝ multi-column display of character matrix.
+Cholesky  cal      dtb          index   memo    pco      sam       trav
+Cut       case     dxb          inslink merge   perv     saw       tree
+NormRand  cf       each         insnode merge2  phinary  sbst      tview
+UndoRedo  cfract   easter       int     mmind   pmat     scc       type
+X         chksum   efract       invr    mns     polar    search    ucase
+_fk       cmat     else         iotag   morse   pow      segs      unify
+acc       cmpx     enlist       isdfn   mp3     pred     select    uns
+adic      cols     esh          joy     mscan   putfile  shannon   until
+alext     colsum   exit         just    mtrim   queens   sieve     unwrap
+alrem     compidn  factorial    justify nats    quzzle   span      up
+alrems    cond     factors      k6174   nc      range    splay     utf8get
+alval     cxdraw   fibonacci    kball   ncpath  rank     squad     utf8put
+alvals    dab      file         kcell   nicediv rational squeeze   vof
+ambiv     date     filefind     key     nlines  rats     ss        von
+and       days     find         ksphere nspack  ratsum   ssmat     vtol
+apportion deb      fix          kt      of      ravt     ssword    vtrim
+ary       dec      fk           lcase   or      redblack stamps    vwise
+ascan     det      fk_          le      osc     refmatch stdists   wcost
+ascana    dfspan   fnarray      life    pack    refmt    stpath    while
+assign    dft      fndiff       limit   pack4   refpath  stpaths   wmst
+attrib    dice     fnrefs       lisp    packB   refs     subs      words
+avl       din      fnrepl       list    packD   refws    subvec    wpath
+baby      disp     foldl        lof     packH   remlink  sudoku    wrap
+bags      display  for          logic   packN   remnode  test      wrapnote
+base64    displayr from         ltov    packQ   rep      tfmt      wsdiff
+bayes     displays gauss_jordan ltrav   packR   repl     ticks     wsmerge
+bf        dist     gcd          m91     packS   ripple   time      wspan
+big       dlb      getfile      mac     packT   rmcm     timestamp wsreq
+birthday  dmb      gperm        match   packU   roman    tnest     xhtml
+box       do       hex          mayan   packX   root     to        xpower
+bsearch   dots     hexdump      maze    packZ   roots    tokens    xrefs
+bt        draw     hexf         mdf     parse   rows     trace     xtabs
+cache     dscan    htx          mean    path    rr       traj      xtimes
+
+    class←{' '~⍨⍵,'.',⍕⎕nc ⍵}   ⍝ name classification.
+
+    class¨ 'display' 'memo'     ⍝ fns.3 ops.4.
+ display.3  memo.4
+
+    cols class¨ ↓⎕nl 3 4        ⍝ classified names.
+Cholesky.3  cxdraw.4    for.4          merge2.4   ratsum.4   time.4
+Cut.4       dab.3       from.3         mmind.3    ravt.4     timestamp.3
+NormRand.3  date.3      gauss_jordan.3 mns.3      redblack.4 tnest.3
+UndoRedo.4  days.3      gcd.3          morse.3    refmatch.3 to.3
+X.3         deb.3       getfile.3      mp3.3      refmt.3    tokens.3
+_fk.4       dec.3       gperm.3        mscan.3    refpath.3  trace.4
+acc.4       det.3       hex.3          mtrim.3    refs.3     traj.4
+adic.3      dfspan.3    hexdump.3      nats.4     refws.3    trav.4
+alext.3     dft.4       hexf.3         nc.3       remlink.3  tree.3
+alrem.3     dice.3      htx.3          ncpath.3   remnode.3  tview.3
+alrems.3    din.3       index.3        nicediv.3  rep.3      type.3
+alval.3     disp.3      inslink.3      nlines.3   repl.4     ucase.3
+alvals.3    display.3   insnode.3      nspack.3   ripple.3   unify.3
+ambiv.3     displayr.3  int.3          of.4       rmcm.3     uns.3
+and.4       displays.3  invr.4         or.4       roman.4    until.4
+apportion.3 dist.3      iotag.3        osc.3      root.3     unwrap.3
+ary.3       dlb.3       isdfn.3        pack.3     roots.3    up.3
+ascan.4     dmb.3       joy.3          pack4.3    rows.4     utf8get.3
+ascana.4    do.4        just.3         packB.3    rr.3       utf8put.3
+assign.3    dots.3      justify.3      packD.3    sam.4      vof.4
+attrib.3    draw.3      k6174.3        packH.3    saw.4      von.3
+avl.4       dscan.3     kball.3        packN.3    sbst.4     vtol.3
+baby.3      dtb.3       kcell.4        packQ.3    scc.3      vtrim.3
+bags.4      dxb.3       key.4          packR.3    search.3   vwise.4
+base64.3    each.4      ksphere.3      packS.3    segs.3     wcost.3
+bayes.3     easter.3    kt.3           packT.3    select.3   while.4
+bf.3        efract.3    lcase.3        packU.3    shannon.3  wmst.3
+big.4       else.4      le.3           packX.3    sieve.3    words.3
+birthday.3  enlist.3    life.3         packZ.3    span.3     wpath.3
+box.3       esh.3       limit.4        parse.3    splay.4    wrap.3
+bsearch.4   exit.3      lisp.3         path.3     squad.4    wrapnote.3
+bt.4        factorial.3 list.3         pco.3      squeeze.3  wsdiff.3
+cache.3     factors.3   lof.4          perv.4     ss.3       wsmerge.3
+cal.3       fibonacci.3 logic.4        phinary.3  ssmat.3    wspan.3
+case.4      file.4      ltov.3         pmat.3     ssword.3   wsreq.3
+cf.4        filefind.3  ltrav.4        polar.3    stamps.3   xhtml.3
+cfract.3    find.3      m91.3          pow.4      stdists.3  xpower.3
+chksum.3    fix.3       mac.3          pred.4     stpath.3   xrefs.3
+class.3     fk.4        match.3        putfile.3  stpaths.3  xtabs.3
+cmat.3      fk_.4       mayan.3        queens.3   subs.3     xtimes.3
+cmpx.3      fnarray.4   maze.3         quzzle.3   subvec.3
+cols.3      fndiff.3    mdf.4          range.3    sudoku.3
+colsum.3    fnrefs.3    mean.3         rank.4     test.3
+compidn.3   fnrepl.3    memo.4         rational.3 tfmt.3
+cond.4      foldl.4     merge.4        rats.4     ticks.4
+
+    ∪{1 ⍵ cols ⍳10}¨0 to 20             ⍝ all possible wrappings of 1 .. 10.
+┌┬─┬──┬────┬──────┬────────┬──────────┬────────────────────┐
+││ │ 1│1  6│1 5  9│1 4 7 10│1 3 5 7  9│1 2 3 4 5 6 7 8 9 10│
+││ │ 2│2  7│2 6 10│2 5 8   │2 4 6 8 10│                    │
+││ │ 3│3  8│3 7   │3 6 9   │          │                    │
+││ │ 4│4  9│4 8   │        │          │                    │
+││ │ 5│5 10│      │        │          │                    │
+││ │ 6│    │      │        │          │                    │
+││ │ 7│    │      │        │          │                    │
+││ │ 8│    │      │        │          │                    │
+││ │ 9│    │      │        │          │                    │
+││1│10│    │      │        │          │                    │
+└┴─┴──┴────┴──────┴────────┴──────────┴────────────────────┘
+
+    1 12 cols 2/10*0 6 0        ⍝ tricky case.
+1 1000000 1
+1 1000000 1
+
+See also: wrap tree

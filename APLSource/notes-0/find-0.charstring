@@ -1,0 +1,91 @@
+cmat ← {space←⎕this} ##.find string         ⍝ Lines containing string(s) ⍵.
+
+Find returns a charater matrix,  one row for each occurrence of [string] in each
+variable, function or operator in [space].  If the left argument is omitted, the
+current space is assumed.
+
+If [string] is a nested vector, those lines containing each of the substrings in
+order  are  reported.  For example: (find '<<' '>>') would find lines containing
+sequences such as <<this>> but not those containing >>that<<.
+
+Each row of the result  starts with the full name of the object in which a match
+was found followed by the "line" containing the match.
+
+Notice  that  [find]  can be used in conjunction with →refs← to search an entire
+namespace tree.
+
+Variables  are searched row-wise, so line numbers on variables correspond to the
+display of the variable given by: {⎕←⍵}saw var.
+
+(A previous version of this function  returned a 2-column nested matrix but this
+became inconvenient with ]boxing on).
+
+Examples:
+
+      find'⍴⍴'
+ #.ambiv[8]     2>⍴⍴cr:shy←''                   ⍝ derived or primitive: quit.
+ #.disp[60]     0=opt×⍴⍴⍵:hz                ⍝ undecorated or scalar ⍕⍵: char,
+ #.disp[68]     0=opt×⍴⍴⍵:vt hz                 ⍝ scalar or no decoration.
+ #.disp[71]     rows←(¯1+3⌊⍴⍴⍵)⊃vt rsig'⍒'      ⍝ high rank decorator overrides.
+ #.display[17]  axes←{(-2⌈⍴⍴⍵)↑1+×⍴⍵}                   ⍝ Array axis types.
+ #.subs[2]      0=⍴⍴⍵:⊃(⍵≡fm)⌽⍵(⊂to)                ⍝ special case scalar argt.
+ #.subs[5]      1<⍴⍴⍵:↑(↓⍺)∇¨↓⍵                 ⍝ high rank: split.
+
+      ⎕se.NumEd find'⎕IO'
+ ⎕SE.NumEd.numed[0]    {name}numed msg;SPACE;NAME;OVAL;IO;⎕IO;⎕ML  ⍝ Numeric Editor
+ ⎕SE.NumEd.numed[5]    IO←SPACE⍎'⎕IO'
+ ⎕SE.NumEd.numed[6]    ⎕ML ⎕IO←0 1
+ ⎕SE.NumEd.SelIndx[2]  rslt←(fm-⎕IO)∘+¨⍳to-fm-1
+
+      ↑⍪/{⍵ find'⎕DQ'}¨refs ⎕se
+ ⎕SE.cbtop.TB_POPUP[7]  ⎕DQ'popup'
+ ⎕SE.tools.ftse[14]     'S0'⎕WC pps ⋄ ⎕DQ'S0'
+ ⎕SE.NumEd.mbox[6]      'Mbox'⎕WC prps ⋄ ⎕DQ'Mbox'
+ ⎕SE.NumEd.numed[10]    ⎕DQ''
+ ⎕SE.NumEd.SaveAs[4]    ⎕DQ obid
+
+    6↑ notes find' →' '← '    ⍝ lines with ' →' followed by '← '
+ #.notes.ambiv[8]      conjunction with →refs← to ambivalize all functions and operators in a namespace
+ #.notes.avl[9]        See →BST←
+ #.notes.avl[92]       follows the →fibonacci← sequence and for an AVL tree of height ⍵ is:
+ #.notes.avl[281]      [avl]  uses  the standard →BST← methods for search, insertion, and node removal.
+ #.notes.contents[10]  │ ··· related function →goo← is a ···
+ #.notes.date[6]       Optional  left argument {g} specifies the day number of the →Gregorian_calendar←
+
+Technical notes:
+
+Find  avoids  name clashes by having an operand function _outside_ the main body
+of code, from whence it executes ⎕NC, ⎕NL, ⎕CR, etc.
+
+    ⍺{                                  ⍝ Avoid name clashes by executing
+        2::(⎕NS'')⍎⍵                    ⍝ ref ⍺⍺ too weird: ignore.
+        ⍺⍺⍎⍵                            ⍝ expression in target space out-
+    }{                                  ⍝ side main code body.
+        exec←⍺⍺                         ⍝ External execute.
+        ···
+        exec'⎕NL 2 3 4'                 ⍝ Names of vars, fns and ops.
+
+The line in [find]:
+
+        tag←(exec'⍕⍺⍺'){⍺⍺,'.',⍵}       ⍝ Space-tagging function.
+
+defines  a  function by binding a left operand to an operator in the same way as
+sum←+/.  The operand expression is evaluated only once at definition time rather
+than each time the resulting function is called. This can have clear performance
+benefits for non-trivial expressions. In the above cases, binding the operand in
+this  way avoids having to name it or pass it as an additional argument to where
+the  function will be called. An alternative coding would be to "glue" the value
+to the left of the function using composition and reference it as '⍺':
+
+        tag←(exec'⍕⍺⍺')∘{⍺,'.',⍵}       ⍝ Space-tagging function.
+
+There  is  little  to choose between these alternatives,  except that the former
+defines an ambi-valent function allowing a future extension to pass a left argu-
+ment, whereas the latter defines a strictly monadic function.
+
+The  same  technique  is  employed with subfunction "match", where both left and
+right operands are bound.
+
+See also: refs saw filefind rows
+
+Index:name-clash problem|string search

@@ -1,0 +1,4 @@
+ mscan←{                   ⍝ Minus scan.
+     ⍺←⍬⍴⌽⍳⍴⍴⍵             ⍝ ⍺ is axis (default last).
+     +\[⍺]⍵×[⍺](⍺⊃⍴⍵)⍴1,-1
+ }

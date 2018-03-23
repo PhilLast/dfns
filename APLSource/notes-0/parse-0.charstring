@@ -1,0 +1,619 @@
+tree ←  {trace←0} defn ##.parse expr    ⍝ Bunda-Gerth parse of expression ⍵.
+matr ← {format←1} defn ##.parse ''      ⍝ Bunda-Gerth binding matrix.
+
+J.D.Bunda  and J.A.Gerth  describe an elegant parser for an infix notation, such
+as APL:
+
+    "APL Two by Two - Syntax Analysis by Pairwise Reduction"
+     J.D.Bunda, J.A.Gerth,
+     ACM Sigapl Apl Quote Quad, vol. 14, no. 4, pp. 85-94, 1984.
+
+Bunda-Gerth assigns binding-strength numbers between pairs of token  categories.
+For example,  an operator binds tighter to its operand,  than does a function to
+its argument.  Array-array binding (stranding) may bind tighter still, depending
+on the dialect of APL.
+
+These relative bindings can be expressed in  a  table  whose  entries  show  the
+strength and resulting category of each bond.  Notice that some categories  (for
+example operator with operator) do not bind:
+
+       ┌───┬────┬──┬───┬─┐
+       │A  │F   │AF│M  │D│  Categories:
+    ┌──┼───┼────┼──┼───┼─┤      A: Array
+    │A │4 A│2 AF│  │3 F│ │      F: Ambi-valent function
+    ├──┼───┼────┼──┼───┼─┤      M: Monadic operator
+    │F │1 A│    │  │3 F│ │      D: Dyadic operator
+    ├──┼───┼────┼──┼───┼─┤
+    │AF│1 A│    │  │   │ │  For example, in the table to the left:
+    ├──┼───┼────┼──┼───┼─┤      4 A: Array-Array binds with strength 4, to pro-
+    │M │   │    │  │   │ │           duce an Array (strand).
+    ├──┼───┼────┼──┼───┼─┤      3 F: Operand (array or function) binds with
+    │D │3 M│3 M │  │   │ │           strength 3 to a monadic operator to produce
+    └──┴───┴────┴──┴───┴─┘           a (derived) function.
+
+For the purposes of parsing, the table may need some categories that do not  ap-
+pear explicitly in the language.  In the above,  AF represents the  binding of a
+dyadic function to its left argument array, to form a monadic function:
+
+    2+3 → (2+)3     ⍝ A:F:A→AF:A    "left-argument currying".
+
+Similarly, a dyadic  operator  binds with a right operand  function or array  to
+produce a monadic operator:
+
+    +.× → +(.×)     ⍝ F:D:F→F:M      right-operand currying.
+
+(muse:
+
+    Whether such constructs appear explicitly is an  aesthetic  choice  for  the
+    language designer. The following would seem pretty handy:
+
+          limit ← ⍣≡        ⍝ D:F→M right-operand currying
+        inverse ← ⍣¯1       ⍝ D:F→M   ..      ..      ..
+
+    There is less pressure to provide explicit left-argument currying:
+
+        next ← 1+           ⍝ A:F→AF left-argument currying.
+
+    as we can already do this with the primitive compose operator:
+
+        next ← 1∘+          ⍝ though not quite as prettily.
+)
+
+Given a binding table and an expression to be parsed, Bunda-Gerth identifies the
+binding strengths between each pair of tokens.
+
+For example, using the above table and the expression (+.×/2⍴⊂4 5⍴6), the col-
+umns below represent the inter-token bindings.  Notice that some categories do
+not bind (for example F:F) and so have a notional binding strength of 0:
+
+                   ⎕        ┐
+       ⎕ ⎕         ⎕        │ token-to-token binding strengths.
+       ⎕ ⎕   ⎕     ⎕ ⎕      │
+       ⎕ ⎕   ⎕   ⎕ ⎕ ⎕ ⎕    ┘
+    ┌┴┬┴┬┴┬┴┬┴┬┴┬┴┬┴┬┴┬┴┐
+    F D F M A F F A A F A   ⍝ token categories
+    + . × / 2 ⍴ ⊂ 4 5 ⍴ 6   ⍝ subject expression
+
+Working right-to-left, the algorithm identifies  the  rightmost  "peak"  in  the
+above diagram.  The  tokens on either side of the peak are bound and the process
+repeated until either: a single token remains, the result of a successful parse;
+or no adjacent tokens bind, which indicates a syntax error. For a plateau of ad-
+jacent columns of equal height, the leftmost column is chosen.
+
+Here  is  a worked example in which the rightmost (next to be bound) peak is id-
+entified by a column of '⌹' characters.
+
+                   ⌹        ← rightmost peak (⌹)
+       ⎕ ⎕         ⌹
+       ⎕ ⎕   ⎕     ⌹ ⎕
+       ⎕ ⎕   ⎕   ⎕ ⌹ ⎕ ⎕
+    ┌┴┬┴┬┴┬┴┬┴┬┴┬┴┬┴┬┴┬┴┐
+    F D F M A F F A A F A   ← categories
+    + . × / 2 ⍴ ⊂ 4 5 ⍴ 6   ← expression tokens
+                  └┬┘       ← binding
+                  A:A→A     ← binding rule from table.
+       ⎕ ⎕
+       ⎕ ⎕   ⎕       ⌹
+       ⎕ ⎕   ⎕   ⎕   ⌹ ⎕
+    ┌┴┬┴┬┴┬┴┬┴┬┴┬┴─┬─┴┬┴┐
+    F D F M A F F  A  F A
+    + . × / 2 ⍴ ⊂ ┌┴┐ ⍴ 6   ← bound tokens
+                  4 5 │
+                   └┬─┘     ← next binding
+                   A:F→AF
+       ⎕ ⎕
+       ⎕ ⎕   ⎕
+       ⎕ ⎕   ⎕        ⌹
+    ┌┴┬┴┬┴┬┴┬┴┬┴┬─┴─┬─┴─┐
+    F D F M A F F   AF  A
+    + . × / 2 ⍴ ⊂  ┌┴─┐ 6
+                  ┌┴┐ ⍴ │
+                  4 5   │
+                    └─┬─┘
+                    AF:A→A
+       ⎕ ⎕
+       ⎕ ⎕   ⎕
+       ⎕ ⎕   ⎕     ⌹
+    ┌┴┬┴┬┴┬┴┬┴┬┴┬──┴──┐
+    F D F M A F F     A
+    + . × / 2 ⍴ ⊂   ┌─┴─┐
+                │  ┌┴─┐ 6
+                │ ┌┴┐ ⍴
+                │ 4 5
+                └──┬──┘
+                  F:A→A
+       ⎕ ⎕
+       ⎕ ⎕   ⌹
+       ⎕ ⎕   ⌹  ⎕
+    ┌┴┬┴┬┴┬┴┬┴┬─┴──┐
+    F D F M A F    A
+    + . × / 2 ⍴ ┌──┴──┐
+            └┬┘ ⊂   ┌─┴─┐
+            A:F→AF ┌┴─┐ 6
+                  ┌┴┐ ⍴
+                  4 5
+       ⎕ ⎕
+       ⎕ ⎕
+       ⎕ ⎕      ⌹
+    ┌┴┬┴┬┴┬┴─┬──┴──┐
+    F D F M  AF    A
+    + . × / ┌┴┐ ┌──┴──┐
+            2 ⍴ ⊂   ┌─┴─┐
+             │     ┌┴─┐ 6
+             │    ┌┴┐ ⍴
+             │    4 5
+             └──┬──┘
+              AF:A→A
+       ⌹ ⎕
+       ⌹ ⎕
+       ⌹ ⎕
+    ┌┴┬┴┬┴┬──┴──┐
+    F D F M     A
+    + . × /  ┌──┴──┐
+      └┬┘   ┌┴┐ ┌──┴──┐
+       │    2 ⍴ ⊂   ┌─┴─┐
+      D:F→M        ┌┴─┐ 6
+                  ┌┴┐ ⍴
+                  4 5
+     ⌹
+     ⌹
+     ⌹
+    ┌┴─┬┴─┬──┴──┐
+    F  M  M     A
+    + ┌┴┐ /  ┌──┴──┐
+    │ . ×   ┌┴┐ ┌──┴──┐
+    └┬─┘    2 ⍴ ⊂   ┌─┴─┐
+    F:M→F          ┌┴─┐ 6
+                  ┌┴┐ ⍴
+                  4 5
+        ⌹
+        ⌹
+        ⌹
+     ┌──┴─┬──┴──┐
+     F    M     A
+    ┌┴─┐  /  ┌──┴──┐
+    + ┌┴┐ │ ┌┴┐ ┌──┴──┐
+      . × │ 2 ⍴ ⊂   ┌─┴─┐
+     └─┬──┘        ┌┴─┐ 6
+      F:M→F       ┌┴┐ ⍴
+                  4 5
+            ⌹
+       ┌────┴───┐
+       F        A
+     ┌─┴──┐  ┌──┴──┐
+    ┌┴─┐  / ┌┴┐ ┌──┴──┐
+    + ┌┴┐   2 ⍴ ⊂   ┌─┴─┐
+      . -          ┌┴─┐ 6
+       │        │ ┌┴┐ ⍴
+       │        │ 4 5
+       └────┬───┘
+           F:A→A
+
+           A
+       ┌───┴────┐
+     ┌─┴──┐  ┌──┴──┐
+    ┌┴─┐  / ┌┴┐ ┌──┴──┐
+    + ┌┴┐   2 ⍴ ⊂   ┌─┴─┐
+      . ×          ┌┴─┐ 6
+                  ┌┴┐ ⍴
+                  4 5
+
+[parse] implements a general Bunda-Gerth parser, which takes its language defin-
+ition  as  left  argument  and  returns either a (formatted) binding matrix or a
+parse tree for right argument character vector [expr].
+
+Left argument [defn] defines the relative binding  strengths  of  categories  of
+tokens for an APL-like infix language. The definition may be a character matrix;
+vector (with embedded newlines); or a vector of character vectors.
+
+If right argument [expr] is null, [parse] returns the binding matrix.
+
+A two-item left argument [opt defn], where opt is 0 or 1, specifies whether:
+
+- The binding table should be formatted, in the case of a null [expr]
+- The parsing should be traced, in the case of a non-null [expr]
+
+Otherwise, if [expr] is non-null, it is assumed to be an expression  of  tokens,
+specified as representatives of each category, in the first section of the  def-
+inition.
+
+Note that an unformatted binding table  may  be  re-input  as a left argument to
+save the cost of compiling the definitions on subsequent calls.  See the example
+below.
+
+Binding Definition
+------------------
+The definition is split into blank-line-separated sections. The first section is
+special and defines token categories and representative tokens in each category.
+For example:
+
+A 1 2 3 4   ⍝ Category 'A' with representatives '1' '2' '3' and '4'.
+F + - × ÷   ⍝ Category 'F'  ..      ..      ..  '+' '-' '×' and '÷'.
+AF          ⍝ Category 'AF' with no explicit representatives.
+
+In addition, the first section may contain a line that defines any bracket-pairs
+used in an expression, over and above primitive parentheses (). This line is id-
+entified by a starting pair () and followed by any number of pairs of characters
+that are to be interpreted as expression-enclosing brackets. For example:
+
+() [INDX] {DFN}     ⍝ recognise square brackets and curly braces.
+
+Brackets are defined, rather than being hard-coded in the parser because:
+
+- In some infix notations, such as J, [, ], { and } do not constitute brackets.
+- It allows the introduction of additional bracket pairs such as: < > ┌ ┐ ...
+
+Each of the subsequent sections defines bonds between pairs  of  categories, to-
+gether with the category of the resulting bound pair:
+
+    A:B→C       ⍝ A binds with B to produce C.
+
+Within a section, the bonds all have the same binding-strength; bonds in earlier
+sections are stronger than those in later sections. For example:
+
+    A 1 2 3 4   ⍝ 0th section: category 'A'; reps '1' '2' '3' '4'
+    F + - × ÷   ⍝ 0th section: category 'F'; reps '+' '-' '×' '÷'
+    AF          ⍝ 0th section: category 'AF; no representatives.
+
+    A:F→AF      ⍝ 1st section:  A binds (strength 2) to F to produce AF
+
+    AF:A→A      ⍝ 2nd section: AF binds (strength 1) to A to produce A
+    F:A→A       ⍝ 2nd section:  F binds (strength 1) to A to produce A
+
+Distributions
+-------------
+Rows and columns in the binding table often contain repeated items. For example,
+the left operand of an operator could be an array or a function, so the definit-
+ion might contain the line:
+
+    A:MOP→F F:MOP→F
+
+In  such  cases,  categories may be grouped with a '.' character. and the common
+category "factored out":
+
+    A:MOP→F F:MOP→F  <=>  A.F:MOP→F
+
+In general:
+
+    A.B:Y→Z  <=>  A:Y→Z B:Y→Z
+    A:X.Y→Z  <=>  A:Z→Z A:Y→Z
+
+On expansion, the outer product of the items on the left is  matched against the
+list of items on the right. A single result item on the  right  is  extended  to
+conform:
+
+    A.B:C.D→Z  <=>  A:C→Z A:D→Z
+                    B:C→Z B:D→Z
+
+    A.B:C→X.Y  <=>  A:C→X B:C→Y
+
+    A:B.C→X.Y  <=>  A:B→X A.C→Y
+
+Macros
+------
+Lines starting: word=... define a macro, whose body  is  substituted  throughout
+the definition script. For example, using the previous example, we could code:
+
+    rand=A.F        ⍝ macro: operand can be function or array:
+
+    rand:MOP→F      ⍝ operand bound with monadic operator to derive function.
+
+which expands:
+
+    rand:MOP→F
+=>  A.F:MOP→F           ⍝ (macro expansion of "rand")
+=>  A:MOP→F F:MOP→F     ⍝ (distribution of MOP)
+
+Bugs:
+
+[0] Tokens (category representatives) may be only single characters.
+[1] There is no way to identify a D-operator, as opposed to a D-function.
+[2] Bunda-Gerth unconditionally left-associates adjacent tokens of the same cat-
+    egory.  This  is  fine for classic APL, where only array-sequences (strands)
+    occur but if we were to extend the language with, say, operator and function
+    "trains" we might want operator trains to associate left and function trains
+    to associate right.  A  solution might be to add associativity indication to
+    the category definitions and to right-accumulate  speculatively  instead  of
+    just skipping left along the token stream. This speculative right-associated
+    tree would then be emitted if a weaker binding is encountered,  or  consumed
+    piecewise by a stronger binding.
+
+Requires: →segs← →disp← →subs←
+
+(muse:
+
+    At first glance conventional "BIDMAS" (Brackets, Indexing (power), Division/
+    Multiplication, Addition/Subtraction) arithmetic appears ideally suited to a
+    two-by-two treatment. But there's a problem.  Monadic minus binds tightly to
+    the number on its right if there's a function to its left but  less  tightly
+    if there's a number to its left.
+
+        2+-3×4 → 2+((-3)×4)     ⍝ -:3 >> 3:×
+        2 -3×4 → 2-(3×4)        ⍝ -:3 << 3:×
+
+    In the presence of monadic minus, BIDMAS appears not to be two-by-two.
+)
+
+Technical note:
+
+[parse] uses a 3-window "Turing tape" to represent the token stream. See section
+"Turing's Tape" in: →bf←. For an approach closer to the Bunda-Gerth paper, which
+uses repeated pair-wise reduction  2{...}/  see sub-function "parse" within →kk←
+at http://dfns.dyalog.com/c_kk.htm.
+
+In particular:
+
+    ∆_ Aa Bb Cc _∆ ← ⍵      ⍝ exposes three adjacent tokens in mid-stream.
+
+    lft←{                   ⍝ move left one token in stream ⍵.
+        (∆_ L)A B C _∆ ← ⍵
+         ∆_ L A B(C _∆)
+    }
+
+    rgt←{                   ⍝ move right one token in stream ⍵.
+        ∆_ A B C(R _∆) ← ⍵
+       (∆_ A)B C R _∆
+    }
+
+    rewind ← rgt⍣{eos≡⊃⍺}   ⍝ >>| rewind to right end of tape.
+
+Notice that the token reducer itself is quite simple;  the bulk of [parse] being
+concerned with compiling and formatting the tables and trees:
+
+    reduce←{                                    ⍝ 2-by-2 parsing.
+        (∆_ L)Aa Bb Cc(R _∆)←⍵                  ⍝ 3-token window on stream.
+        Aa Cc∧.≡eos:Bb                          ⍝ single node: done.
+        Aa Bb∧.≡eos:⍵                           ⍝ error: partial parse.
+        (A a)(B b)(C c)←Aa Bb Cc                ⍝ cats and toks.
+        (⊂b c)∊1↓bkts:∇ rgt(∆_ L)Aa(ebk b)R _∆  ⍝ empty brackets [].
+        (⊂a c)∊bkts:∇ rgt ∆_ L(a bkt Bb)R _∆    ⍝ bracketed single value Bb.
+        (⊂a)∊rbs:∇ lft lft ⍵                    ⍝ right bracket: skip left.
+        bonds←xmat[(A B)(B C)+1]                ⍝ A:B B:C bonds.
+        ≥/bonds:∇ lft ⍵                         ⍝ A:B ≥ B:C → skip left.
+        BbCc←zmat[B;C],⊂b c                     ⍝ B bound with C.
+        ∇ show(∆_ L)Aa BbCc R _∆                ⍝ binds with token to the right?
+    }                                           ⍝ :: stream ← ∇ stream
+
+Examples:
+
+⍝ Simple definition with Arrays and (ambi-valent) Functions.
+⍝ Parentheses () need not be defined explicitly:
+
+    display af              ⍝ Arrays, Functions.
+┌→──────────────────────────────────────┐
+│A 1 2 3 4   ⍝ Arrays                   │
+│F + - × ÷   ⍝ Functions                │
+│AF          ⍝ bound left argument      │
+│                                       │
+│A:F→AF      ⍝ left argument to function│
+│                                       │
+│AF:A→A      ⍝ dyadic function          │
+│ F:A→A      ⍝ monadic function         │
+└───────────────────────────────────────┘
+
+    af parse''              ⍝ Bunda-Gerth binding matrix.
+   ┌───┬────┐
+   │A  │F   │
+┌──┼───┼────┤
+│A │   │2 AF│
+├──┼───┼────┤
+│F │1 A│    │
+├──┼───┼────┤
+│AF│1 A│    │
+└──┴───┴────┘
+
+    af parse'2×3+4'         ⍝ parse of simple expression.
+   A
+ ┌─┴──┐
+┌┴┐  ┌┴─┐
+2 × ┌┴┐ 4
+    3 +
+
+    af parse'(1+2)-3×÷4'    ⍝ parentheses are retained in the parse-tree.
+         A
+     ┌───┴───┐
+  ┌──┴──┐  ┌─┴─┐
+┌─┴─┐   - ┌┴┐ ┌┴┐
+(  ┌┴─┐   3 × ÷ 4
+  ┌┴┐ 2
+  1 +
+
+    af parse '(((2)))'      ⍝ redundant parentheses retained.
+ A
+┌┴─┐
+( ┌┴─┐
+  ( ┌┴┐
+    ( 2
+
+⍝ Definition extended with Array strands and operators.
+⍝ Notice the use of macro "rand" for Array or Function operand:
+
+    display afo             ⍝ Arrays, Functions, Operators.
+┌→─────────────────────────────────────────────────────┐
+│ A   0 1 2 3 4      ⍝ Arrays                          │
+│ F   + - × ÷        ⍝ Functions                       │
+│ AF                 ⍝ bound left argument             │
+│ MOP ¨              ⍝ Monadic operator                │
+│ DOP . ∘ ⍣          ⍝ Dyadic operators                │
+│                                                      │
+│ rand=A.F           ⍝ macro: operand is A or F        │
+│                                                      │
+│ A:A→A              ⍝ strand binding, tightest of all │
+│                                                      │
+│ DOP:rand→MOP       ⍝ dyadic and                      │
+│ rand:MOP→F         ⍝ ... monadic operators           │
+│                                                      │
+│ A:F→AF             ⍝ left argument to its function   │
+│                                                      │
+│ AF:A→A F:A→A       ⍝ function to its right argument. │
+└──────────────────────────────────────────────────────┘
+
+    afo parse''             ⍝ Bunda-Gerth binding matrix.
+    ┌─────┬─────┬───┐
+    │A    │F    │MOP│
+┌───┼─────┼─────┼───┤
+│A  │4 A  │2 AF │3 F│
+├───┼─────┼─────┼───┤
+│F  │1 A  │     │3 F│
+├───┼─────┼─────┼───┤
+│AF │1 A  │     │   │
+├───┼─────┼─────┼───┤
+│DOP│3 MOP│3 MOP│   │
+└───┴─────┴─────┴───┘
+
+    afo parse '0 1+.×¨3÷4'  ⍝ parse tree for operator-function-array binding.
+         A
+    ┌────┴────┐
+ ┌──┴──┐     ┌┴─┐
+┌┴┐  ┌─┴──┐ ┌┴┐ 4
+0 1 ┌┴─┐  ¨ 3 ÷
+    + ┌┴┐
+      . ×
+
+    afo parse '0+1-2×3÷4'   ⍝ array-function sequences associate right.
+    A
+ ┌──┴───┐
+┌┴┐  ┌──┴──┐
+0 + ┌┴┐  ┌─┴──┐
+    1 - ┌┴┐  ┌┴─┐
+        2 × ┌┴┐ 4
+            3 ÷
+
+    afo parse '+∘-∘×∘÷'     ⍝ operator-operand sequences associate left.
+       F
+    ┌──┴───┐
+ ┌──┴──┐  ┌┴┐
+┌┴─┐  ┌┴┐ ∘ ÷
++ ┌┴┐ ∘ ×
+  ∘ -
+
+    afo parse'+∘2 3'        ⍝ strand binds tighter than operator.
+ F
+┌┴─┐
++ ┌┴─┐
+  ∘ ┌┴┐
+    2 3
+
+⍝ Finally, the definition is extended with: Dfn braces {F} and "hybrid" tokens:
+⍝ / ⌿ \ ⍀ ←, each of which can act as either function or operator, depending on
+⍝ whether the token to its left is an array or function. Note the use of
+⍝ distributions.
+
+    display afho            ⍝ afo extended with hybrids: H / ⌿ \ ⍀ ←
+┌→───────────────────────────────────────────────────┐
+│A   0 1 2 3 4 a ⍺ ⍵     ⍝ Arrays                    │
+│F   + - × ÷             ⍝ Functions                 │
+│H   / ⌿ \ ⍀ ←           ⍝ Hybrid function/operators │
+│AF                      ⍝ bound left argument       │
+│MOP ¨ &                 ⍝ Monadic operators         │
+│DOP . ∘ ⍣               ⍝ Dyadic operators          │
+│() {F}                  ⍝ Dfn                       │
+│                                                    │
+│rand=A.F.H              ⍝ alias: operand            │
+│                                                    │
+│A:A→A                   ⍝ strand binding, tightest  │
+│                                                    │
+│DOP:rand→MOP            ⍝ dyadic and                │
+│rand:MOP→F              ⍝ ... monadic operators     │
+│F:H→F                   ⍝ hybrid as operator        │
+│                                                    │
+│A:F.H→AF                ⍝ left arg to its function  │
+│                                                    │
+│AF.F:A→A                ⍝ function to its right arg.│
+└────────────────────────────────────────────────────┘
+
+    afho parse''                    ⍝ Bunda-Gerth binding table.
+    ┌─────┬─────┬─────┬───┐
+    │A    │F    │H    │MOP│
+┌───┼─────┼─────┼─────┼───┤
+│A  │4 A  │2 AF │2 AF │3 F│
+├───┼─────┼─────┼─────┼───┤
+│F  │1 A  │     │3 F  │3 F│
+├───┼─────┼─────┼─────┼───┤
+│H  │     │     │     │3 F│
+├───┼─────┼─────┼─────┼───┤
+│AF │1 A  │     │     │   │
+├───┼─────┼─────┼─────┼───┤
+│DOP│3 MOP│3 MOP│3 MOP│   │
+└───┴─────┴─────┴─────┴───┘
+
+    afho∘parse¨ '+/¨0' '1/¨0'       ⍝ hybrids: defining example.
+     A       A
+   ┌─┴─┐   ┌─┴──┐
+  ┌┴─┐ 0  ┌┴─┐  0
+ ┌┴┐ ¨    1 ┌┴┐
+ + /        / ¨
+
+    afho∘parse¨ 'a←0' 'a+←1'        ⍝ regular vs. modified assignment.
+   A       A
+  ┌┴─┐   ┌─┴──┐
+ ┌┴┐ 0  ┌┴─┐  1
+ a ←    a ┌┴┐
+          + ←
+
+    afho parse'2{⍺+⍵}3'             ⍝ Dfn
+      A
+  ┌───┴───┐
+┌─┴─┐     3
+2 ┌─┴─┐
+  {  ┌┴─┐
+    ┌┴┐ ⍵
+    ⍺ +
+
+    1 afho parse'+.×/3/⍵'           ⍝ 1 defn ... => traced evaluation.
+┌─┬───┬─┬─┬─┬─┬─┐
+│F│DOT│F│H│A│H│A│
+│+│.  │×│/│3│/│⍵│
+└─┴───┴─┴─┴─┴─┴─┘
+┌─┬───┬─┬─┬───┬─┐
+│F│DOT│F│H│ MF│A│
+│+│.  │×│/│┌┴┐│⍵│
+│ │   │ │ │3 /│ │
+└─┴───┴─┴─┴───┴─┘
+┌─┬───┬─┬─┬─────┐
+│F│DOT│F│H│  A  │
+│+│.  │×│/│ ┌┴─┐│
+│ │   │ │ │┌┴┐ ⍵│
+│ │   │ │ │3 /  │
+└─┴───┴─┴─┴─────┘
+┌─┬────┬─┬─────┐
+│F│ MOP│H│  A  │
+│+│┌┴┐ │/│ ┌┴─┐│
+│ │. × │ │┌┴┐ ⍵│
+│ │    │ │3 /  │
+└─┴────┴─┴─────┘
+┌─────┬─┬─────┐
+│ F   │H│  A  │
+│┌┴─┐ │/│ ┌┴─┐│
+│+ ┌┴┐│ │┌┴┐ ⍵│
+│  . ×│ │3 /  │
+└─────┴─┴─────┘
+┌───────┬─────┐
+│   F   │  A  │
+│ ┌─┴──┐│ ┌┴─┐│
+│┌┴─┐  /│┌┴┐ ⍵│
+│+ ┌┴┐  │3 /  │
+│  . ×  │     │
+└───────┴─────┘
+┌─────────────┐
+│      A      │
+│   ┌──┴───┐  │
+│ ┌─┴──┐  ┌┴─┐│
+│┌┴─┐  / ┌┴┐ ⍵│
+│+ ┌┴┐   3 /  │
+│  . ×        │
+└─────────────┘
+      A
+   ┌──┴───┐
+ ┌─┴──┐  ┌┴─┐
+┌┴─┐  / ┌┴┐ ⍵
++ ┌┴┐   3 /
+  . ×
+
+    ⍝ For more examples, see ##.scripts.parse and ##.scripts.Binding
+
+See also: dft unify tokens bf repl lisp kk
+
+Index:parsing|expression|currying|Bunda-Gerth parser|binding strength|BIDMAS
+Index:Turing tape|tape
+Index;Bunda J.D.|Gerth J.A.

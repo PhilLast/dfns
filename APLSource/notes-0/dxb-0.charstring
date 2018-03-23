@@ -1,0 +1,13 @@
+rslt ← {blank} ##.dxb argt                  ⍝ Drop eXtraneous Blanks.
+
+Both  leading  and  trailing blanks are dropped and multiple sequences of blanks
+are replaced by a single one. If the argument is of higher rank, blank "columns"
+are removed.
+
+Technical note: dxb ≡ deb∘dmb
+
+Examples, See: Blank_removal
+
+See also: dab deb dlb dmb dtb
+
+Index:blanks|compression

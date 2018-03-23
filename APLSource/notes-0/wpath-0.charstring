@@ -1,0 +1,92 @@
+path ← wgraph ##.wpath (from to) ⍝ Quickest path from/to ⍵ in weighted graph ⍺.
+
+[wgraph] is a 2-row matrix representing a weighted graph. The result [path] is a
+vector  that  represents  a  lowest-cost path between the given vertices. Notice
+that the return path (to from) may not be the reverse of the forward path.
+
+NB:  All  of the weights in the 2nd row of [wgraph] must be non-negative, other-
+wise the result is unpredictable.
+
+Technical notes:
+
+Shortest  paths  through  _unweighted_  graphs, result immediately from a simple
+breadth-first  search:  the  target  vertex is discovered in the fewest possible
+steps, as the search radiates outwards from the starting vertex.
+
+However,  with  a _weighted_ graph, the search can't stop on finding the target,
+as  there may yet be lower-cost paths. The technique used here, is to maintain a
+cost-to-reach  value  (which  is initialised to: ⌊/⍳0), for each vertex. At each
+point  in  the  search,  vertices  are pursued only if the cost of reaching them
+would be less than their current cost-to-reach value. In this case, the cost-to-
+reach value for the vertices is adjusted accordingly and the search continued.
+
+As  the  "wave" front of visited vertices radiates from the starting vertex, the
+code uses a destructive partial assignment to update tree and cost vectors:
+
+        tree[wave]← ...         ⍝ link tree nodes to parent.
+        cost[wave]← ...         ⍝ update cost vector.
+
+A  problem arises if the wave converges on the same vertex from two or more dir-
+ections.  The  following  diagram  shows the wave propogating left-to-right from
+vertices A, B and C with cost-to-reach values of 8 9 and 7, respectively.
+
+        A[8]───4──→─┐
+                    │
+        B[9]───2──→─D[?]
+                    │
+        C[7]───6──→─┘
+
+The  edge  costs  A→D, B→D and C→D are 4 2 and 6, so the cost-to-reach D must be
+set to:
+            ⌊8 9 7+4 2 6
+        11
+
+The  partial  assignment can be made "just to work" if we assign links and costs
+in _decreasing_ cost order:
+
+        tree[··D··D··D··] ←  ··  C  A  B ·· ⍝ link tree nodes to parent.
+        cost[··D··D··D··] ←  ·· 13 12 11 ·· ⍝ update cost vector.
+
+APL's  indexed assignment is defined to process its subscripts left-to-right, so
+that the right-most assignment to D is the only effective one. Here is the code:
+
+        ...
+        cvec←↑,/mask/¨totl          ⍝ cost vector.
+        decr←⍒cvec                  ⍝ decreasing cost order.
+        wave←decr⊃¨⊂↑,/next         ⍝ vertex wave front.
+        tree[wave]←decr⊃¨⊂back      ⍝ link tree nodes to parent.
+        cost[wave]←decr⊃¨⊂cvec      ⍝ update cost vector.
+        ...
+(
+    ⍺⊃¨⊂⍵  is recognised as an idiom and is marginally quicker than the equival-
+    ent ⍵[⍺].
+)
+
+Thanks to Mike Day for suggesting a fix to the original coding.
+
+A small but important refinement, is to keep track of the cost-to-reach value of
+the _target_ node. Any path that would be more expensive than this is ignored:
+
+        best←(vals¨adjv)⌊to⊃cost    ⍝ costs to beat.
+
+See also →bfs← for notes on parallel breadth-first search.
+
+Examples:
+
+    aa                      ⍝ weighted graph "aa"
+┌───┬─┬───┬───┬─┐
+│2 3│3│2 4│1 5│3│
+├───┼─┼───┼───┼─┤
+│1 3│1│4 1│1 1│1│
+└───┴─┴───┴───┴─┘
+
+    aa wpath 3 2            ⍝ best path 3→2.
+3 4 1 2
+
+    aa[1;] path 3 2         ⍝ compare: best path 3→2 _ignoring_ weights.
+3 2
+
+See also: wGraphs Graphs bfs wspan wcost path
+
+Index:graph, weighted|path|assignment, destructive|assignment, indexed
+Index;Day M.

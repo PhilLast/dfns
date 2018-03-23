@@ -1,0 +1,78 @@
+segs ← tag ##.htx html                      ⍝ Extract html segments.
+
+Extracts [tag]-tagged segments from character array [html].
+
+NB: This function may be coded more simply using system function ⎕XML.
+
+Right argument [html] may be:
+
+    - a character vector, possibly containing linefeed characters, or
+    - a character matrix, or
+    - a vector of character vectors (as delivered by →getfile←).
+
+If [tag] starts with a '<' character, the <begin> and </end> tags are themselves
+included  in  the result, otherwise they are omitted. For aesthetic reasons, the
+closing '>' may also be included in [tag], but is ignored.
+
+Technical notes:
+
+The coding is an example of "programming with functions". Notice that nearly all
+of the local names refer to functions, rather than to data arrays.
+
+Examples:
+
+    bold←'<b>this</b> and <b>that</b>'
+
+      'b' htx bold                  ⍝ extract <bold> text.
+┌────┬────┐
+│this│that│
+└────┴────┘
+
+    '<b>' htx bold                  ⍝ .. including tags.
+┌───────────┬───────────┐
+│<b>this</b>│<b>that</b>│
+└───────────┴───────────┘
+
+    htm                             ⍝ character vector (with linefeeds).
+<html>
+  <body>
+    <table>
+      <tr><td>%</td><td>Eye Poke</td><td>Kumquat</td></tr>
+      <tr><td>Guys</td><td>60</td><td>40</td></tr>
+      <tr><td>Dolls</td><td>20</td><td>80</td></tr>
+    </table>
+  </body>
+</html>
+
+    'table'htx htm                  ⍝ extract table.
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ <tr><td>%</td><td>Eye Poke</td><td>Kumquat</td></tr> <tr><td>Guys</td><td>60</td><td>40</td></tr> <tr><td>Dolls</td><td>20</td><td>80</td></tr> │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    '<table>'htx htm                ⍝ extract table with tags.
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│<table> <tr><td>%</td><td>Eye Poke</td><td>Kumquat</td></tr> <tr><td>Guys</td><td>60</td><td>40</td></tr> <tr><td>Dolls</td><td>20</td><td>80</td></tr> </table>│
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    'tr'htx htm                     ⍝ extract table rows.
+┌───────────────────────────────────────────┬───────────────────────────────────┬────────────────────────────────────┐
+│<td>%</td><td>Eye Poke</td><td>Kumquat</td>│<td>Guys</td><td>60</td><td>40</td>│<td>Dolls</td><td>20</td><td>80</td>│
+└───────────────────────────────────────────┴───────────────────────────────────┴────────────────────────────────────┘
+
+    'td'htx htm                     ⍝ extract table data.
+┌─┬────────┬───────┬────┬──┬──┬─────┬──┬──┐
+│%│Eye Poke│Kumquat│Guys│60│40│Dolls│20│80│
+└─┴────────┴───────┴────┴──┴──┴─────┴──┴──┘
+
+    ↑'td'∘htx¨'tr'htx htm           ⍝ extract table data per row.
+┌─────┬────────┬───────┐
+│%    │Eye Poke│Kumquat│
+├─────┼────────┼───────┤
+│Guys │60      │40     │
+├─────┼────────┼───────┤
+│Dolls│20      │80     │
+└─────┴────────┴───────┘
+
+See also: Line_vectors html getfile
+
+Index:XML|tag, XML|Kumquat

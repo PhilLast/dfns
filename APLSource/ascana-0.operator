@@ -1,0 +1,4 @@
+ ascana←{⎕ML←1                   ⍝ Higher rank asscociative scan.
+     ⍺←⍬⍴⌽⍳⍴⍴⍵                   ⍝ default last axis.
+     ↑[⍺-0.1](⍺⍺ ascan)¨↓[⍺]⍵
+ }

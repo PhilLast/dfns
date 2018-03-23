@@ -1,0 +1,100 @@
+refs ← (fn ##.fnarray) fns              ⍝ Array of functions.
+
+Maria Wells suggests this operator to produce an array of functions. The operat-
+or accumulates a vector of namespace refs, each containing a single function f.
+
+The  functions  contained  in each space can be applied to or between scalars or
+similarly shaped arrays by using the "reference array" syntax: refs.f.
+
+Note that the resulting function vector may be reshaped to form a function array
+of any rank and depth; see examples below.
+
+Examples:
+
+    flist ← + fnarray - fnarray × fnarray ''        ⍝ 3-vector of fns: + - ×.
+
+    flist.f 1 2 3                                   ⍝ monadic application.
+1 ¯2 1
+
+    1 2 3 flist.f 4 5 6                             ⍝ dyadic application.
+5 ¯3 18
+
+    fns← ⌈fnarray  ⌊fnarray ⍬                       ⍝ 2-vector of fns ⌈ ⌊.
+
+    fns.f 3.5                                       ⍝ scalar ceiling and floor.
+4 3
+    fns.f 2.3 4.5                                   ⍝ vector ceiling and floor.
+3 4
+    5 10 fns.f 8 12                                 ⍝ dyadic max and min.
+8 10
+
+    fmat←2 2⍴+fnarray -fnarray ×fnarray ÷fnarray⍬   ⍝ 2×2 matrix of + - × ÷
+
+    fmat.⎕cr'f'                                     ⍝ show function matrix.
+┌─┬─┐
+│+│-│
+├─┼─┤
+│×│÷│
+└─┴─┘
+
+    10 fmat.f 2                                     ⍝ fn mat between scalars.
+12 8
+20 5
+
+    fmat.f ⍳2 2                                     ⍝ apply fmat to matrix arg.
+┌───┬───────┐
+│1 1│¯1 ¯2  │
+├───┼───────┤
+│1 1│0.5 0.5│
+└───┴───────┘
+
+    fvex←↓fmat                                      ⍝ nested array of functions.
+
+    fvex.⎕cr'f'                                     ⍝ display function array.
+┌─────┬─────┐
+│┌─┬─┐│┌─┬─┐│
+││+│-│││×│÷││
+│└─┴─┘│└─┴─┘│
+└─────┴─────┘
+
+    20 fvex.f ⊂⊂4 5 10                              ⍝ 3-way conformability.
+┌───────────────────┬──────────────────┐
+│┌────────┬────────┐│┌──────────┬─────┐│
+││24 25 30│16 15 10│││80 100 200│5 4 2││
+│└────────┴────────┘│└──────────┴─────┘│
+└───────────────────┴──────────────────┘
+
+    fnest←,∘⊂\,fmat                                 ⍝ nastily nested array.
+
+    fnest.⎕cr'f'                                    ⍝   ..      ..   functions.
+┌─┬─────┬─────────┬─────────────┐
+│+│┌─┬─┐│┌─┬─────┐│┌─┬─────────┐│
+│ ││+│-│││+│┌─┬─┐│││+│┌─┬─────┐││
+│ │└─┴─┘││ ││-│×││││ ││-│┌─┬─┐│││
+│ │     ││ │└─┴─┘│││ ││ ││×│÷││││
+│ │     │└─┴─────┘││ ││ │└─┴─┘│││
+│ │     │         ││ │└─┴─────┘││
+│ │     │         │└─┴─────────┘│
+└─┴─────┴─────────┴─────────────┘
+
+    12 fnest.f 3                                    ⍝ deep function application.
+┌──┬────┬─────────┬─────────────┐
+│15│15 9│┌──┬────┐│┌──┬────────┐│
+│  │    ││15│9 36│││15│┌─┬────┐││
+│  │    │└──┴────┘││  ││9│36 4│││
+│  │    │         ││  │└─┴────┘││
+│  │    │         │└──┴────────┘│
+└──┴────┴─────────┴─────────────┘
+
+⍝ Function arrays need not be named:
+
+      (+fnarray -fnarray ⍬).f 1 2                   ⍝ raw monadic application.
+1 ¯2
+
+      10 20(+fnarray -fnarray ⍬).f 1 2              ⍝ raw dyadic application.
+11 18
+
+See also: Function_arrays
+
+Index:function array|function array
+Index;Wells M.

@@ -1,0 +1,14 @@
+cvec ← {time←⎕ts} ##.timestamp cvec         ⍝ Time-stamped message.
+
+Character vector [cvec] is prefixed with an ISO-standard(ish) date and time. The
+optional  left  argument  (default ⎕TS) allows an override of the current system
+time.
+
+Example:
+
+      timestamp 'Starting ...'
+2000-11-06 13:15:02 Starting ...
+
+See also: Dates date days
+
+Index:time|date

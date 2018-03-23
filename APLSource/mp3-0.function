@@ -1,0 +1,91 @@
+ mp3←{
+⍝| Create playlist(s) for mp3 directories ⍵.
+⍝| ⍺: playlist types:    a = asx
+⍝|                       b = b4s
+⍝|                       m = m3u (default)
+⍝|                       p = pls
+⍝|                       w = wpl
+⍝|    switches:          D = delete the old ones
+⍝|                       F = playlist file name = the folder name
+⍝|                       P = files with full path name
+⍝|                       S = no sub directories
+⍝|    music file types:  M = .mp3 (default)
+⍝|                       O = .ogg
+⍝|                       W = .wma
+⍝|                       4 = .m4a
+⍝| shy result: created lists.
+
+     (⎕ML ⎕IO)←3 1 ⋄ ⍺←''                                      ⍝ APL2
+     (_dl _pl _pt _su)←'DFPS'∊⍺                                ⍝ switches
+     fit←({~∨/⍵:1 0 0 0 ⋄ ⍵}'MW4O'∊⍺)/'mp3' 'wma' 'm4a' 'ogg'  ⍝ included music files
+     typ←{0∊⍴⍵:'m' ⋄ ⍵}⍺∩'abmpw' ⋄ tab←10⊃⎕AV                  ⍝ playlist file types, indent
+
+     ∆dir←{                                                    ⍝ directory reader
+         ∆fi←∆nx←∆ex←+ ⋄ ⍺←0 ⋄ sw←⍺                            ⍝  ⍺=0: file names, ⍺=1: sub directories
+         q←'>{I4 {U4 U4} {U4 U4} {U4 U4} U4 U4 U4 U4 T[260] T[14]}'
+         _←'∆fi'⎕NA'I4 kernel32∣FindFirstFileA <0T ',q                   ⍝<V>⎕N...
+         _←'∆nx'⎕NA'U4 kernel32∣FindNextFileA I4 ',q
+         _←'∆ex'⎕NA'kernel32∣FindClose I4'
+
+         (hn p)←∆fi{(d m)←{2>≡⍵:⍵'*.*' ⋄ 2↑⍵}⍵ ⋄ (d,('\'~↑⌽d),m)0}⍵
+
+         ''{1≠↑⍵:⍺⊣∆ex hn ⋄ q←⊂{(¯1+⍵⍳↑⎕AV)↑⍵}9⊃↑⌽⍵
+             (⍺{⍵>q∊,¨,\'..':⍺,q ⋄ ⍺}sw=28⊃(32⍴2)⊤↑↑⌽⍵)∇ ∆nx hn 0
+         }(0<↑hn)p
+     }
+
+     ∆tag←{(⊂'<',⍺,'>'),⍵,⊂'</',((¯1+⍺⍳' ')↑⍺),'>'}            ⍝ tagger
+
+     ∆get←{nn←⎕NNUMS ⋄ 0::{⍬}⎕NUNTIE ⎕NNUMS~nn                 ⍝ playlist reader
+         {(⎕NUNTIE ⍵)⊢{(⍵≠2⊃⎕TC)⊂⍵}{⍵~3⊃⎕TC}(1↓⎕TC,231⊃⎕AV){(-+/∧\⌽⍵∊⍺)↓⍵}⎕NREAD ⍵ 82,⎕NSIZE ⍵
+         }⍵ ⎕NTIE 0}
+
+     ∆put←{                                                    ⍝ playlist writer: only if new or changed
+         ⍺≡∆get ⍵:z←'' ⋄ _←1 ∆del ⍵
+         tn←⍵ ⎕NCREATE 0 ⋄ ⍵{⊂⍺}⎕NUNTIE{tn}(∊⍺,¨⊂1↓⎕TC)⎕NAPPEND tn
+     }
+
+     ∆del←{~⍺:'' ⋄ 0::'' ⋄ ⍵ ⎕NERASE ⍵ ⎕NTIE 0}                ⍝ playlist eraser
+     ∆lst←{⍵∘{_pt:⍺,⍵ ⋄ ⍵}¨↑,/⍵∘{0 ∆dir ⍺('*.',⍵)}¨fit}        ⍝ list of music files
+     ∆nok←{(0∊⍴⍵)∨82≠⎕DR ⍵}
+
+     ∆fnm←{~⍺⍺∊typ:'' ⋄ fn←⍵,'.',⍺ ⋄ q←_dl ∆del fn ⋄ _dl:q ⋄ 0∊⍴⍵⍵:'' ⋄ fn}
+
+     ∆asx←{fn←'asx'('a'∆fnm ⍺)⍵ ⋄ ∆nok fn:fn                   ⍝ asx playlist creator
+         ti←,/'title'∆tag⊂' playlist '
+         ti,←⊂'<param Name = "AllowShuffle" Value = "yes"/>'
+         el←{'<entry> <Ref href="',⍵,'"/> </entry>'}¨⍺
+         ('asx version="3.0"'∆tag tab,¨ti,el)∆put fn}
+
+     ∆b4s←{fn←'b4s'('b'∆fnm ⍺)⍵ ⋄ ∆nok fn:fn                   ⍝ b4s playlist creator
+         ti←⊂'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+         ls←{b←⍵='&' ⋄ ~∨/b:⍵ ⋄ q←⍵ ⋄ (b/q)←⊂'&amp;' ⋄ ∊q}¨⍺
+         el←'<entry Playstring="file:'∘{(⍺,⍵,'">'),' </entry>'}¨ls
+         pl←('playlist num_entries="',(⍕⍴⍺),'" label="Playlist"')∆tag tab,¨el
+         (ti,'WinampXML'∆tag tab,¨pl)∆put fn}
+
+     ∆m3u←{fn←'m3u'('m'∆fnm ⍺)⍵ ⋄ ∆nok fn:fn ⋄ ⍺ ∆put fn}      ⍝ m3u playlist creator (default)
+
+     ∆pls←{fn←'pls'('p'∆fnm ⍺)⍵ ⋄ ∆nok fn:fn                   ⍝ pls playlist creator
+         oz←'[playlist]'('NumberOfEntries=',⍕⍴⍺)'Version=2'
+         (oz,(⍳⍴⍺){'File',(⍕⍺),'=',⍵}¨⍺)∆put fn}
+
+     ∆wpl←{fn←'wpl'('w'∆fnm ⍺)⍵ ⋄ ∆nok fn:fn                   ⍝ wpl playlist creator
+         ti←⊂'<?wpl version="1.0"?>'
+         hd←'head'∆tag tab,¨⊂'title'∆tag'Playlist'
+         ls←{b←⍵='&' ⋄ ~∨/b:⍵ ⋄ q←⍵ ⋄ (b/q)←⊂'&amp;' ⋄ ∊q}¨⍺
+         bd←'body'∆tag tab,¨'seq'∆tag tab,¨('<media src="')∘{⍺,⍵,'"/>'}¨ls
+         (ti,'smil'∆tag tab,¨hd,bd)∆put fn}
+
+     ''{0∊⍴⍵:z←⍺                                               ⍝ loop through all the directories
+         dr←{⍵,'\'~↑⌽⍵}↑⍵ ⋄ ls←∆lst dr                         ⍝  and create/delete the desired
+         dr,←_pl{⍺:⍵ ⋄ 'playlist'}{(↑⌽⍋⍵='\')↓⍵}¯1↓dr          ⍝  playlist files
+         dt←,ls ∆asx dr ⋄ dt,←ls ∆b4s dr ⋄ dt,←ls ∆m3u dr
+         dt,←ls ∆pls dr ⋄ dt,←ls ∆wpl dr ⋄ (⍺,dt)∇ 1↓⍵
+     }''{                                                      ⍝ which directories to visit?
+         _su:⍵ ⋄ 0∊⍴⍵:⍺ ⋄ 0∊⍴↑⍵:1↓⍵ ⋄ di←{⍵,'\'~↑⌽⍵}↑⍵
+         (⍺,⊂di)∇({0∊⍴⍵:'' ⋄ di∘,¨⍵}1 ∆dir di),1↓⍵
+     }{1<≡⍵:∪⍵ ⋄ ,⊂,⍵}⍵
+
+⍝| VMJ | 2.51
+ }

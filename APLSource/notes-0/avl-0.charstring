@@ -1,0 +1,521 @@
+rslt ← {larg)(op ##.avl) rarg           ⍝ Adelson-Velskii, Landis (AVL) trees.
+
+     T∆ ← T ∪ avl (key val)     ⍝ tree ⍺ with key=val ⍵.
+     T∆ ← T ~ avl key           ⍝ tree ⍺ without key ⍵.
+     T∆ ← T ⍎ avl key           ⍝ value for key ⍵ in tree ⍺.
+    fmt ←   ⍕ avl T             ⍝ format of tree ⍵.
+    vec ←   ∊ avl T             ⍝ enlist of tree ⍵.
+    chk ←   ? avl T             ⍝ stats for tree ⍵: ok size mean_depth height.
+
+See →BST←
+
+An  AVL  tree is a binary search tree in which subtree heights differ by no more
+than 1.
+
+AVL  trees  do not guarantee minimal height. In the following diagram, the nodes
+are  marked  with  their  height  (maximum distance to a leaf). For example, B↓2
+signifies  a node with search key 'B' and height 2. Notice that sibling subtrees
+differ in height by at most 1:
+
+    Height 4 AVL tree       Shallower reordering (also an AVL tree)
+
+           E↓4                      D↓3
+          /   \                    /   \
+         /     \                  /     \
+        C↓3     F↓2              B↓2     F↓2
+       /   \     \              /  \    /  \
+      B↓2   D↓1   G↓1        A↓1  C↓1  E↓1  G↓1
+     /
+    A↓1
+
+If we remove node G↓1 from the diagram above left, the resulting tree is said to
+"overbalance" as F↓1 differs in height by 2 from its sibling C↓3:
+
+           E↓4
+          /  \
+         /    \
+        C↓3     F↓1         overbalanced: C↓3 >> F↓1
+       /   \
+      B↓2   D↓1
+     /
+    A↓1
+
+We  can  maintain  the tree without keeping explicit track of the height of each
+node's subtrees.  Instead, we record only the _difference_ in the heights of its
+subtrees.
+
+By keeping only the difference in subtree heights, addition and removal of nodes
+requires adjustment to only local regions of the tree.
+
+Further, in a correctly balanced AVL tree, this difference must be one of ¯1 0 1
+which  means that only two bits per node are required to store balancing inform-
+ation.
+
+(
+    We  could reduce this to just one bit per node by devolving each node's bal-
+    ance bits to its left and right subtree. This works because leaf nodes, with
+    only  null  subtrees, are (clearly) balanced and so need no balance bits. We
+    can see this scheme in  operation by looking at  the output from ⍕avl, where
+    the balance bits are represented by arrows supporting the subtrees.
+)
+
+  < left subtree higher ·   ·  ¯1
+    subtrees of equal height·   0
+  > right subtree higher    ·   1
+
+           <E
+           / \
+          /   \
+        <C     F>
+        / \     \
+      <B   D     G
+      /
+     A
+
+Worst-case AVL trees
+--------------------
+Height:  0   1       2       3       4           5
+Size:    0   1       2       4       7          12
+         ·   ·       ·       ·       ·           ·
+         .   A       B       C       E           H
+                    /       / \     / \         / \
+                   A       B   D   C   F       /   \
+                          /       / \   \     /     \
+                         A       B   D   G   E       J
+                                /           / \     / \
+                               A           C   F   I   K
+                                          / \   \       \
+                                         B   D   G       L
+                                        /
+                                       A
+
+We  see  that successive worst cases consist of a new node with the previous two
+cases as subtrees. This means that the number of nodes in the worst case follows
+the →fibonacci← sequence and for an AVL tree of height ⍵ is:
+
+    {¯1+fibonacci ⍵+2}      ⍝ number of nodes in worst case tree of height ⍵.
+
+An approximation for the ⍵th Fibonacci number implies that the worst-case height
+for an ⍵-node AVL tree is 1.44×⍟⍵ (search the Internet for "AVL 1.44").
+
+See →avl_worst← for more.
+
+Balancing
+---------
+During  insertion or deletion, nodes may overbalance and need to be corrected by
+rotation. In the following examples node A overbalances to the left <<A. If node
+A were to overbalance right A>>, the mirror-image transformations would be used.
+To  avoid  coding  separate  mirror-image rotation functions, the implementation
+parameterises the direction of rotation, see Technical notes below.
+
+Depending  on  case, rebalancing decreases or leaves the height of the node as a
+whole  unaltered. A decrease in height may cause the node's parent to become un-
+balanced and so itself to require rebalancing, and so on.
+
+On  deletion of a node, a worst-case of ⌈2⍟⍵ rotations may be needed to preserve
+the tree's balance; on insertion of a new node, at most a single rotation is re-
+quired.
+
+To simplify the following diagrams, a little additional notation is used:
+
+    <<N     node N overbalances left
+     <N>    node N balances
+    /n n\   arbitrary left and right subtrees of node N
+     ⌿ ⍀    edge about to be rotated
+     |      edge to parent node (if any).
+     |=     height unchanged
+     |-     height decreased
+
+Case 1: <<A's left subtree <B hangs left:
+
+         |              |-                          rotation reduces height
+       <<A      =>     <B>
+        ⌿ \            / \                          Bal(A) = Bal(B)-r
+      <B   a\        /b  <A>
+      / \            /   / \
+    /b   b\        /bb  b\  a\
+    /
+  /bb
+
+Case 2: <<A's left subtree <B> balances:
+
+         |              |=                          height unaltered
+       <<A      =>      B>
+        ⌿ \            / \                          Bal(A) = Bal(B)-r
+      <B>  a\        /b  <A
+      / \                / \
+    /b   b\             b\  a\
+
+Case 3: <<A's left subtree B> hangs right:
+
+         |              |              |-           rotations reduce height
+       <<A      =>    <<A      =>     <C>
+        / \            ⌿ \            / \
+       B>  a\        <C?  a\         /   \          Bal(A) ← 0⌈-Bal(C)
+      / ⍀            / \           <B?   ?A>        Bal(B) ← 0⌊-Bal(C)
+    /b  ?C?        <B?  c\         / \   / \
+        / \        / \           /b  /c c\  a\
+      /c   c\    /b  /c
+
+Balancing  is  perhaps better understood by considering the effects of change on
+nodes and edges:
+
+   ┌────────────────────────────────────────────────────────────────────────┐
+   │A node  signals a height increment (i) of ¯1 0 1 to its supporting edge.│
+   │An edge signals a balancing moment (b) of ¯1 0 1 to its parent node.    │
+   └────────────────────────────────────────────────────────────────────────┘
+
+For  example,  inserting  a  new  leaf  imparts  a  height increment of 1 to its
+supporting  edge.  If  this  edge  is a right edge (say), it imparts a balancing
+moment  of  1 to its parent node. If this node is already balanced (0), then its
+balance  would be changed to 1 and it in turn would pass a height increment of 1
+to its supporting edge, and so on.
+
+Height Increments
+-----------------
+Case  analysis  yields  a  simple rule for determining the height increment of a
+node  following  insertion  or deletion in one of its subtrees. In the following
+diagrams,  without  loss  of generality, we can assume that the height increment
+(or decrement) is transmitted by the tree's right subtree:
+
+Insertion, 3 cases:
+
+    ┌───────────────┬───────────────┬───────────────┐
+    │   |       |=  │   |       |+  │  |        |=  │
+    │  <A  =>  <A>  │  <A>  =>  A>  │  A>  =>  <b>  │
+    │  / +     / \  │    +       \  │   \      / \  │
+    │               │               │    b    A     │
+    │               │       INCR    │     +         │
+    └───────────────┴───────────────┴───────────────┘
+
+leading to the rule:
+
+    ┌──────────────────────────────────────────────────────────────────────────┐
+    │ A height <increment> is transmitted iff the <initial> node was balanced. │
+    └──────────────────────────────────────────────────────────────────────────┘
+
+Deletion, 9 cases:
+
+    ┌───────────────────┬───────────────────┬───────────────────┐
+    │    |        |-    │    |        |=    │    |        |-    │
+    │   <A  =>   <B>    │   <A>  =>   A>    │    A>  =>  <A>    │
+    │   / ⍀      / \    │   / \      / \    │   / \      / \    │
+    │ <B            A   │ <B   c   <B   c   │ <B   c   <B   c   │
+    │ /                 │ /   ⌿    /        │ /   / \  /   / \  │
+    │                   │                   │    d        d     │
+    │           DECR    │                   │   ⌿       DECR    │
+    ├───────────────────┼───────────────────┼───────────────────┤
+    │    |        |=    │    |        |=    │    |        |-    │
+    │   <A   =>   B>    │   <A>  =>  <A     │    A>  =>  <A>    │
+    │   / ⍀      / \    │   / ⍀      /      │   / \      / \    │
+    │ <B>          <A   │ <B>      <B>      │ <B>  c   <B>  c   │
+    │ / \          /    │                   │     ⌿             │
+    │    c        c     │                   │                   │
+    │                   │                   │           DECR    │
+    ├───────────────────┼───────────────────┼───────────────────┤
+    │    |        |-    │    |         |=   │    |        |-    │
+    │   <A  =>   <c>    │   <A>  =>   <A    │    A>  =>  <A>    │
+    │   / ⍀      / \    │   / \       / \   │   / \      / \    │
+    │  B>       B   A   │  B>  c     B>  c  │  B>  c    B>  c   │
+    │   \               │   \ ⌿       \     │   \   \    \   \  │
+    │    c              │                   │        d        d │
+    │           DECR    │                   │       ⌿   DECR    │
+    └───────────────────┴───────────────────┴───────────────────┘
+
+leading to the rule:
+
+   ┌───────────────────────────────────────────────────────────────────────────┐
+   │ A height <decrement> is transmitted iff the <resulting> node is balanced. │
+   └───────────────────────────────────────────────────────────────────────────┘
+
+Operations on AVL trees
+-----------------------
+[avl]  uses  the standard →BST← methods for search, insertion, and node removal.
+In  the case of insertion a single rotation, and in the case of removal, several
+rotations, may be necessary to maintain the tree's balance.
+
+Statistics
+----------
+An invocation of [avl] with a left operand of ? reports a 4-vector of statistics
+(ok size depth height) for its tree right argument, where:
+
+        ok:  boolean -> balance = difference in subtree heights, for all nodes.
+      size:  number of (non-null) nodes.
+     depth:  mean distance from the root of all nodes.
+    height:  maximum distance from root to each leaf; a null tree has height 0.
+
+Technical notes
+---------------
+These  AVL  functions  are implemented using a recursive triple, with 0 standing
+for the null tree:
+
+    (key val) bal (lft rgt)
+
+where:
+
+    key : numeric scalar or character vector
+    val : any array value
+    bal : balance ¯1 0 1
+    lft : left subtree or 0
+    rgt : right subtree or 0
+
+The AVL tree functions: insert/replace, delete, search, ... are derived from the
+single  operator  [avl]  by binding an appropriate left operand. This is so that
+common auxiliary functions such as balancing and rotation, which have little use
+outside  the context of AVL trees, may be hidden within the capsule (encapsulat-
+ed). It is conceivable that an implementation of D: could retain a partial eval-
+uation of such bindings to speed up subsequent application of the derived funct-
+ions.
+
+Parameterising direction:
+
+In  order to avoid having to code mirror-image subfunctions for left/right trav-
+ersal and left/right rotation, the direction is parameterised using subfunction:
+
+     wise←{(⍺=1)⌽⍵}             ⍝ subtrees ⍵ in -⍺, +⍺ order.
+
+     1 wise 4 5
+5 4
+
+    ¯1 wise 4 5
+4 5
+
+Similarly, a complete tree may be presented in either +1 or -1 orientation:
+
+     proj←{(⍺=0 0 ¯1)⌽¨⍵}       ⍝ ⍺-projection of node ⍵.
+
+     1 proj 2 3(4 5)
+2 3  4 5
+
+    ¯1 proj 2 3(4 5)
+2 3  5 4
+
+(muse:
+    In  general,  parameterisation saves duplication at the expense of abstract-
+    ion.  In  other  words, it produces more concentrated code, which is smaller
+    but harder to understand.
+)
+
+Formatting
+----------
+Derived  function ⍕avl transposes the tree and pushes the balance indicators out
+to either end of the subtree  branches.  Unlike the diagrams above, sibling sub-
+trees of differing height are _each_ preceded by a '>' or '<' indicator. For ex-
+ample:
+
+    Notes Diagram               Equivalent ⍕avl
+
+           <E
+           / \          =>                   ┌>A=A
+          /   \                         ┌>B=B┘
+        <C     F>                  ┌>C=C┤
+        / \     \                  │    └<D=D
+      <B   D     G              E=E┤
+      /                            └<F=F┐
+     A                                  └>G=G
+
+References:
+
+[1] An algorithm for the organization of information,
+    G. M. Adelson-Velskii and E. M. Landis (1962).
+          ¯       ¯                 ¯
+[2] Knuth: The Art of Computer Programming, Vol 2, Ch. 6.2.3, "Balanced Trees".
+
+[3] The Internet: Search for "AVL trees".
+
+[4] http://en.wikipedia.org/wiki/AVL_trees
+
+Examples:
+
+⍝ derivation of AVL tree functions:
+
+    chk ← ? avl     ⍝ stats for tree ⍵              :: ∇ t → y s d h
+
+    tt ← 0                          ⍝ null tree
+
+    tt ← tt ∪avl 'one' 1            ⍝ single node tree: (key val) bal (lft rgt)
+
+    tt                              ⍝ nested structure of single tree node.
+┌───────┬─┬───┐
+│┌───┬─┐│0│0 0│
+││one│1││ │   │
+│└───┴─┘│ │   │
+└───────┴─┴───┘
+
+    ⊢ tt ← tt ∪avl 'two' 2          ⍝ insert of second
+┌───────┬─┬───────────────────┐
+│┌───┬─┐│1│┌─┬───────────────┐│
+││one│1││ ││0│┌───────┬─┬───┐││
+│└───┴─┘│ ││ ││┌───┬─┐│0│0 0│││
+│       │ ││ │││two│2││ │   │││
+│       │ ││ ││└───┴─┘│ │   │││
+│       │ ││ │└───────┴─┴───┘││
+│       │ │└─┴───────────────┘│
+└───────┴─┴───────────────────┘
+
+⍝ NB: In the following examples, the _values_ are numeric: 1 2 3 ...
+⍝     but the _keys_ are alphabetic: 'one' 'two' 'three' ...
+⍝     this means that 'one' precedes 'two' but that 'four' follows 'five'.
+
+    tt ← tt ∪avl 'three' 3          ⍝ insert third node.
+
+    disp tt
+┌─────────┬─┬─────────────────────────────────┐
+│┌─────┬─┐│0│┌───────────────┬───────────────┐│
+││three│3││ ││┌───────┬─┬───┐│┌───────┬─┬───┐││
+│└─────┴─┘│ │││┌───┬─┐│0│0 0│││┌───┬─┐│0│0 0│││
+│         │ ││││one│1││ │   ││││two│2││ │   │││
+│         │ │││└───┴─┘│ │   │││└───┴─┘│ │   │││
+│         │ ││└───────┴─┴───┘│└───────┴─┴───┘││
+│         │ │└───────────────┴───────────────┘│
+└─────────┴─┴─────────────────────────────────┘
+
+    ⍕avl tt                         ⍝ format of tree.
+       ┌─one=1
+three=3┤
+       └─two=2
+
+    tt ← tt ∪avl foldl ('four' 4) ('five' 5) ('six' 6) ('seven' 7)
+
+    ⍕avl tt                         ⍝ 7-node tree.
+             ┌>five=5
+     ┌<four=4┘
+one=1┤
+     │               ┌>seven=7
+     │        ┌>six=6┘
+     └>three=3┤
+              └<two=2
+
+    disp ∊avl tt                    ⍝ enlist of tree.
+┌────────┬────────┬───────┬─────────┬───────┬─────────┬───────┐
+│┌────┬─┐│┌────┬─┐│┌───┬─┐│┌─────┬─┐│┌───┬─┐│┌─────┬─┐│┌───┬─┐│
+││five│5│││four│4│││one│1│││seven│7│││six│6│││three│3│││two│2││
+│└────┴─┘│└────┴─┘│└───┴─┘│└─────┴─┘│└───┴─┘│└─────┴─┘│└───┴─┘│
+└────────┴────────┴───────┴─────────┴───────┴─────────┴───────┘
+
+    chk tt                          ⍝ tree stats: ok size mean_depth height.
+1 7 2 4
+
+    ⍕avl tt ∪avl 'six' 666          ⍝ tree with value of 'six' replaced.
+             ┌>five=5
+     ┌<four=4┘
+one=1┤
+     │                 ┌>seven=7
+     │        ┌>six=666┘
+     └>three=3┤
+              └<two=2
+
+    ⍕avl tt ~avl 'one'              ⍝ tree with key 'one' removed.
+             ┌─five=5
+     ┌─four=4┤
+     │       └─seven=7
+six=6┤
+     └─three=3┐
+              └>two=2
+
+    tt ~avl foldl ⊃¨∊avl tt         ⍝ tree with all keys removed.
+0
+
+⍝ Notice how insertion may require local rotation to maintain balance:
+
+    ⍪ ⍕avl∘(0∘(∪avl foldl))¨,\6↑⎕a  ⍝ insert of A B .. F
+┌─────────────┐
+│A=A          │
+├─────────────┤
+│A=A┐         │
+│   └>B=B     │
+├─────────────┤
+│   ┌─A=A     │
+│B=B┤         │
+│   └─C=C     │
+├─────────────┤
+│   ┌<A=A     │
+│B=B┤         │
+│   └>C=C┐    │
+│        └>D=D│
+├─────────────┤
+│   ┌<A=A     │
+│B=B┤         │
+│   │    ┌─C=C│
+│   └>D=D┤    │
+│        └─E=E│
+├─────────────┤
+│        ┌─A=A│
+│   ┌─B=B┤    │
+│   │    └─C=C│
+│D=D┤         │
+│   └─E=E┐    │
+│        └>F=F│
+└─────────────┘
+
+⍝ Removal may also need rotation to maintain balance:
+
+    A_F←0 ∪avl foldl 'ABCDEF'                   ⍝ tree A B .. F
+
+    ⍪ ⍕avl¨ A_F∘(~avl foldl)¨,\' ABCDEF'        ⍝ removal of A B .. F
+┌─────────────┐
+│        ┌─A=A│
+│   ┌─B=B┤    │
+│   │    └─C=C│
+│D=D┤         │
+│   └─E=E┐    │
+│        └>F=F│
+├─────────────┤
+│   ┌─B=B┐    │
+│   │    └>C=C│
+│D=D┤         │
+│   └─E=E┐    │
+│        └>F=F│
+├─────────────┤
+│   ┌<C=C     │
+│D=D┤         │
+│   └>E=E┐    │
+│        └>F=F│
+├─────────────┤
+│   ┌─D=D     │
+│E=E┤         │
+│   └─F=F     │
+├─────────────┤
+│E=E┐         │
+│   └>F=F     │
+├─────────────┤
+│F=F          │
+├─────────────┤
+└─────────────┘
+
+    ⍪ ⍕avl¨ A_F∘(~avl foldl)¨,\' DEBCFA'    ⍝ repeated removal of root node
+┌─────────────┐
+│        ┌─A=A│
+│   ┌─B=B┤    │
+│   │    └─C=C│
+│D=D┤         │
+│   └─E=E┐    │
+│        └>F=F│
+├─────────────┤
+│        ┌─A=A│
+│   ┌>B=B┤    │
+│   │    └─C=C│
+│E=E┤         │
+│   └<F=F     │
+├─────────────┤
+│   ┌<A=A     │
+│B=B┤         │
+│   │    ┌>C=C│
+│   └>F=F┘    │
+├─────────────┤
+│   ┌─A=A     │
+│C=C┤         │
+│   └─F=F     │
+├─────────────┤
+│   ┌>A=A     │
+│F=F┘         │
+├─────────────┤
+│A=A          │
+├─────────────┤
+└─────────────┘
+
+See also: BST alists sbst splay redblack foldl fibonacci avl_worst
+
+Index:tree|binary search tree|type notation|expression transformation
+Index:fibonacci number|enlist
+Index;Adelson-Velskii G.M.|Landis E.M.|Knuth D.E.

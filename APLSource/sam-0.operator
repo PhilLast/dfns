@@ -1,0 +1,6 @@
+ sam←{                           ⍝ Select and modify.
+     ⍺←⊢                         ⍝ id function for missing ⍺.
+     array←⍵                     ⍝ 'name' array argument.
+     (⍺ ⍺⍺ array)←⍵⍵ ⍺ ⍺⍺ array  ⍝ modify selected part of array.
+     array                       ⍝ return updated value.
+ }

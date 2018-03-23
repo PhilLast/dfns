@@ -1,0 +1,10 @@
+ utf8put←{                               ⍝ Char vector ⍺ to UTF-8 file ⍵.
+     tie←{                               ⍝ handle on null file.
+         0::⎕SIGNAL ⎕EN                  ⍝ signal error to caller.
+         22::⍵ ⎕NCREATE 0                ⍝ ~exists: create.
+         0 ⎕NRESIZE ⍵ ⎕NTIE 0            ⍝  exists: truncate.
+     }⍵                                  ⍝ file name ⍵.
+     ints←¯128+256|128+'UTF-8'⎕UCS ⍺     ⍝ signed UTF-8 bytes.
+     size←ints ⎕NAPPEND tie 83           ⍝ file size in bytes
+     1:rslt←size⊣⎕NUNTIE tie             ⍝   as shy result.
+ }

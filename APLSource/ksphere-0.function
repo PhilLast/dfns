@@ -1,0 +1,5 @@
+ ksphere←{               ⍝ Surface area of k-sphere.
+     n←⍺+1               ⍝ dimension of enclosed k-ball.
+     pi←(○1)*n÷2         ⍝ power of pi.
+     n×(⍵*⍺)×pi÷!n÷2     ⍝ k-sphere surface area.
+ }

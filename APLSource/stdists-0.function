@@ -1,0 +1,10 @@
+ stdists←{                       ⍝ Spanning tree path lengths.
+     tree←⍵                      ⍝ spanning tree.
+     dist←¯1+⍵×0                 ⍝ initial distance vector.
+     0{                          ⍝ distance from root.
+         dist[⍵]←⍺               ⍝ set vertex distance.                      <V>@
+         next←(tree∊⍵)/⍳⍴tree    ⍝ vertices once-removed.
+         next≡⍬:dist             ⍝ no vertices: finished.
+         (⍺+1)∇ next             ⍝ advance to next tree level.
+     }⍵⍳¯1                       ⍝ index of starting vertex.
+ }

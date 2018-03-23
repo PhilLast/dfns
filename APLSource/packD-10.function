@@ -1,0 +1,41 @@
+ packD←{                                 ⍝ Pack char array to boolean vector.
+
+     (⎕IO ⎕ML)←1 3                       ⍝ the environment
+     key←↑,/{↓(⍳⍵)∘.>⍳⍵}¨⍳23             ⍝ generate the keys (up to 276), they
+                                        ⍝ start with ones and end with zeros.
+     cmp←{                               ⍝ compress:
+         dt←,⍵ ⋄ k←1,¨key                ⍝ vectorise items, separators to keys
+         u←{⍵{⍺[⍒⍵]}{+/⍵=dt}¨⍵}∪dt       ⍝ sort uniques according to frequencies.
+         uq←,⍉(8⍴2)⊤¯1+(⍴u),⎕AV⍳u        ⍝ shape then uniques fit to eight bits.
+         rk←,(4⍴2)⊤⍴⍴⍵                   ⍝ rank fits in four bytes
+
+         sh←⍬{                           ⍝ shape is a trickier one
+             0∊⍴⍵:⍺                      ⍝ all done?
+             n←1+⌊2⍟1⌈↑⍵                 ⍝ how many bits are needed for representing the integer?
+             q←(,(5⍴2)⊤n),,(n⍴2)⊤↑⍵      ⍝ n should fit to five bits (2*2*5 -> 4GB dimensions supported ;) )
+             (⍺,q)∇ 1↓⍵                  ⍝ add binarised figure to the result
+         }⍴⍵
+
+         rk,sh,uq,∊k[u⍳dt]               ⍝ join the result with binarised data
+     }
+
+     unc←{                               ⍝ uncompress:
+         rk←2⊥4⍴⍵                        ⍝ rank's easy
+
+         (sh x)←⍬ 4 rk{                  ⍝ shape needs more treatment
+             (s n r)←⍺                   ⍝ deliver args
+             r=0:s n                     ⍝ all done: return shape and offset
+             q←2⊥5⍴⍵                     ⍝ how many bits?
+             d←2⊥q⍴5↓⍵                   ⍝ -> dimension length
+             (s,d)(n+q+5)(r-1)∇(q+5)↓⍵   ⍝ next
+         }4↓⍵
+
+         n←1+2⊥8⍴x↓⍵                     ⍝ how many uniques?
+         u←⎕AV[1+,2⊥⍉n 8⍴(n×8)↑(x+8)↓⍵]  ⍝  -> make the list
+         dt←(x+8×n+1)↓⍵                  ⍝ rip the data part
+         p←dt≤¯1↓0,dt                    ⍝ binary partitioner (first 1's)
+         sh⍴u[key⍳p⊂dt]                  ⍝ reconstruct
+     }
+
+     ⍺←1 ⋄ ⍺=1:cmp ⍵ ⋄ unc ⍵             ⍝ which way to go?
+ }

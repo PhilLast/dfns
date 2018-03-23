@@ -1,0 +1,1629 @@
+Author:         LeRoy N. Eide
+Created:        03-Apr-2008
+Modified:       12-Jul-2008
+Charset:        US-ASCII; Displays best with a mono-spaced font
+                        ; Lines no longer than 79 characters
+
+The following is a somewhat brief description of a representation scheme
+for rational numbers -- including some discussion about addition and
+subtraction of numbers so represented.  Most of this is derived from
+personal thoughts and notes developed over the past few years.
+
+===============================================================================
+
+Consider the bi-directionally infinite polynomial in b
+
+        ... + d[2]*b∧(2) + d[1]*b∧(1) + d[0]*b∧(0) + d[-1]*b∧(-1) + ...
+
+where:  + * ∧ mean respectively addition, multiplication, and exponentiation;
+        - is used conventionally as a negation sign (and also subtraction);
+        ... (ellipsis) is used conventionally for (possibly) omitted material
+                and where "x...y" means that "y differs from x";
+        .. (short ellipsis) is used for possibly omitted material
+                and where "x..y" means that "y may be identical to x";
+        d[i] means "d sub i for some integer i", i.e. the coefficient of b∧(i),
+                and each d[i] is a member of an ordered set of "digits" of
+                cardinality b, one of which is chosen to represent the value
+                zero, e.g. {..,0,..}, implying that b > 0 (a non-empty set)
+                but in practice it is assumed that b > 1.
+
+The polynomial above is generally given as the interpretation of a
+"number" as typically written, e.g.
+        123.95
+where b is assumed to be ten and d's are chosen from the ordered set
+        {0,1,2,3,4,5,6,7,8,9}, i.e. d[2]=1, d[1]=2, d[0]=3, d[-1]=9, d[-2]=5.
+
+The zero digit is conventionally represented by the character '0'; other
+digits in this ordered set are also assumed to represent integer values
+descending (to the left) or ascending (to the right) in steps of one.
+
+Also, the (radix) point is conventionally placed between the d[0] and d[-1]
+digits (although it should arguably be placed beneath the d[0] digit).  And
+zeros are conventionally thought of (but generally unwritten) as extending
+infinitely on both sides of the written number.
+
+So much for convention.
+
+===============================================================================
+
+Euler's Claim:
+-------------
+
+  S(x) = ... + x∧(3) + x∧(2) + x∧(1) + x∧(0) + x∧(-1) + x∧(-2) + x∧(-3) + ...
+or
+  SUM(x∧i) over all integers i
+is identically zero for all x.
+
+At first blush this seems preposterous, but there are some plausible
+reasons to suspect the (computational) truth to this claim.  Without
+expounding much, simply consider the implications of:
+
+  x*S(x) - S(x) = 0
+
+The Author accepts Leonhard Euler's claim in the discussion that follows.
+
+===============================================================================
+
+The Notation used herein is described below.  Be patient -- it starts out
+looking rather ugly but becomes increasingly beautiful (and useful) after
+a little development ...
+
+-------------------------------------------------------------------------------
+
+The Digits:
+----------
+
+An ordered set of digits (symbols) are separated by commas and enclosed in
+curly braces, e.g.
+
+        {0,1,2,3,4,5,6,7,8,9}   also {0,...,9}
+or
+        {-,0,+}
+
+but if all of the digits are single characters, the commas may be omitted,
+e.g.
+
+        {0123456789}            also {0...9}
+or
+        {-0+}
+
+An ellipsis is never used if the omitted content is not obvious from
+context.
+
+If it is unclear which digit represents zero, that digit is enclosed
+in parentheses (which may also act as digit separators if commas would
+otherwise be needed), e.g.
+
+        {M(Z)P} or {M,(Z),P}
+
+but the use of commas is encouraged if there are any multi-character digits
+since
+        {MINUS,(ZERO),PLUS}
+
+would be ambiguous without the commas.
+
+The primary consequence of designating some digit to be the zero is that
+the location of the zero digit entirely determines the characteristics of
+the addition and subtraction (and multiplication) tables.
+
+The set of digits, if specified, is always mentioned external to (and
+usually following) the number being represented, e.g.
+
+        123.95 {0123456789}
+
+If the set of digits is conventional or obvious from context, the set of
+digits won't be mentioned at all.
+
+Note that digits may be represented by "non-digit" symbols but the use of
+any of the following characters as digits should (and will) be avoided:
+
+        { } [ ] ( ) < > \ | / : , .
+
+All of these characters except ':' are used in the rational number
+representation described herein; ':' is used notationally in the
+computation apparatus (described below).  The characters
+
+        + - 0 = #
+
+are also used in the computation apparatus but in a manner that causes
+no conflict with their simultaneous use as digits.  Additionally, the
+character '~' is used to indicate a complement but, again, this usage
+causes no conflict with its use as a digit.
+
+The characters '+', '-', and '0' are used for additive and subtractive
+carries regardless of base; think of these as "positive one", "negative
+one", and "zero" respectively.
+
+Of special note is the use of '=' for double-minus and '#' for double-plus
+digits (except where pressed into service for "equality" and "inequality").
+
+The digits '0' through '9', the point '.', and also the characters
+
+        [ ] ( ) < > \ | / * ∧ + - =
+
+are used mathematically in conventional ways; these uses will be clear from
+context (or with an explanatory note if needed).
+
+An attempt is made to distinguish symbols from values by enclosing symbols
+in single quotes (e.g. '0') and spelling out values (e.g. zero).  But since
+everything is symbolic at some level, the reader will need to resolve many
+symbol vs. value conflicts from context.
+
+-------------------------------------------------------------------------------
+
+The Base:
+--------
+
+If needed, the base b may be noted in square brackets where the base
+itself (possibly signed) is written in conventional base ten, for example
+[10] or [3].  Otherwise, the base may be inferred from the cardinality of
+the specified set of digits (if present) or from context.
+
+The base, if specified, is always mentioned external to (and usually
+following) the number being represented, e.g.
+
+        123.95 [10]
+
+-------------------------------------------------------------------------------
+
+The Number and Its Infinite Extensions:
+--------------------------------------
+
+Two bars delimit what is generally considered the number proper.
+
+If powers of the base increase to the left,  \'s are used:  \123.95\
+If powers of the base increase to the right, /'s are used:  /59.321/
+The intended mnemonics are: \ rises to the left, / rises to the right.
+
+In either case, the infinite sequence of zeros to both the left and right
+are also always indicated with angle brackets as
+
+        <0\123.95\0>  or <0/59.321/0>
+
+where the point appears between the digits that are the coefficients of the
+b∧(0) and b∧(-1) terms of the representative polynomial in b.
+
+If the digits of the number are multi-character, commas are used to separate
+the digits one from another (the point, if present, as well as \ or / may
+also act as digit separators), e.g.
+
+        <_\I,II,III.IX,V\_> [10] {(_),I,II,III,IV,V,VI,VII,VIII,IX}
+
+-------------------------------------------------------------------------------
+
+The Point and Scale Factor:
+--------------------------
+
+Note that the (radix) point cannot appear outside of the enclosing bars!
+If the point is omitted, it is assumed to be nestled in the (inside) acute
+corner of one of the bars, e.g.
+
+        <0\42\0> means <0\42.\0>  and  <0/24/0> means <0/.24/0>
+
+both of which represent the answer to life, the universe, and everything!
+
+As previously mentioned, it would be preferable to designate the location
+of the point by, well, just "pointing" at the digit that is the
+coefficient of b∧(0) -- something like
+
+        <0\12395\0>
+             ∧
+
+possibly with an integer "scale factor" (in conventional base ten) placed
+below, e.g.
+
+        <0\12395\0>
+               ∧
+              -2
+
+All of which gets rather notationally messy.
+
+As a compromise (and to avoid multi-line notation), the point may be
+replaced by a (possibly signed) scale factor wrapped in round brackets
+(i.e. parentheses), e.g.
+
+        <0\123(0)95\0>  or  <0\12395(-2)\0>
+
+Note that '.' is simply shorthand for '(0)'.  Think of '()' as a "really
+big dot" with a (base ten) integer written inside of it.  This "dot" may
+be moved either right or left as needed, its contained integer increasing
+if moving "upward" (toward higher powers of the base) or decreasing if
+moving "downward" (toward lower powers of the base) -- just think of
+"upward" as "left" for \\ or "right" for //, else "downward".  All of this
+is, of course, nothing more than a sort of embedded scientific notation.
+
+In any case, the point (or the really big dot with enclosed scale factor)
+must always remain between the bars.
+
+-------------------------------------------------------------------------------
+
+The Bars:
+--------
+
+The \\ and // bar notations are themselves without much grace.
+
+If one conventionally (and always) writes numbers only in one direction or
+the other, then it's cleaner (and clearer) to use vertical bars instead.
+This usage will be adopted from here on, using || for \\ throughout unless
+some non-obvious distinction needs to be drawn.
+
+        <0|123.95|0> means <0\123.95\0> unless otherwise noted.
+
+Note that Arabic actually writes its numbers low-order digit first -- but
+since those numbers are written right-to-left, they appear to be the
+"same" as ours.  Historically, when the West adopted the Arabic way of
+writing numbers, it didn't correct for the direction in which they were
+written ... it seems to have been a sufficient accomplishment that the
+concept of zero was finally accepted (perhaps for no other purpose than as
+a placeholder for a "missing digit").  We have by now generally accepted
+zero as an actual digit, but a lot more acceptance is going to be needed
+in much of what follows!
+
+-------------------------------------------------------------------------------
+
+The Replication Units:
+---------------------
+
+The Right Replication (or Repetition) Unit (hereinafter the RRU) indicates
+the repeating sequence of digits that go ever onward for decreasing powers
+of the base.  Examples:
+
+        <0|0|0>  means 0.0000...        or more simply  |0>  means 0000...
+        <0|0|3>  means 0.3333...                        |3>  means 3333...
+        <0|0|14> means 0.1414...                        |14> means 1414...
+
+The following are allowed for an RRU:
+
+a) Internal replication -- |14> may be rewritten as |1414> or |141414> or ...
+b) Internal contraction -- |829829> may be rewritten as |829>
+c) External emission    -- |567> may be rewritten as 5|675> or 56|756> or ...
+d) External absorption  -- 12|312> may be rewritten as 1|231> or |123>
+
+In (c) and (d) above, care must be taken to explicitly fix the point
+preceding the bar before un-rolling and/or re-rolling the infinite spool
+of repeating digits across the bar; the point cannot simply be assumed to
+immediately precede the bar nor can the point be absorbed into the spool
+of digits.  If necessary, the point can always be converted into a scale
+factor and then moved as needed (while appropriately adjusting the scale
+factor, of course).
+
+In (d) above, a digit can be absorbed only if it could have been
+previously emitted.  Also note that both emission and absorption
+appropriately rotate the RRU contents (but do not otherwise permute it).
+All of this is, of course, obvious after some brief thought.
+
+The Left Replication (or Repetition) Unit (hereinafter the LRU) indicates
+the repeating sequence of digits that go ever onward for increasing powers
+of the base; items (a) through (d) apply to an LRU as well and with
+similar comments and caveats.
+
+But, you say, "Isn't just '<0|' the only LRU?"
+I say, "Well, no ... but wait until we cover a few other matters!"
+
+===============================================================================
+
+Complements:
+-----------
+
+The complement of a number is simply that number with each of its digits
+replaced by its complementary digit (the point is unaffected).  Each digit
+in the ordered set of digits has an index into that set (which is not
+necessarily the same as its value); its complement is the digit with the
+same index but counting from the other end of that same ordered set.  For
+an odd base, one of the digits (the central one) will be its own
+complement (self-complementary).
+
+Examples:       Base ten        {0123456789}
+                complements     {9876543210}    -- the so-called 9's complement
+
+                Base two            {01}
+                complements         {10}        -- the so-called 1's complement
+
+                Balanced ternary    {-0+}
+                complements         {+0-}
+
+                Skewed four         {=-0+}
+                complements         {+0-=}
+
+The symbol '~' is often used as a prefix (operator) to indicate a
+complement and may be so used here:
+
+        ~<0|123|45> [10]        just means <9|876|54> [10]
+
+The astute reader will notice that the complementation of a number
+involves all of its digits -- not merely the digits between the bars!
+
+Note that for any base the sum of a digit and its complement is a constant
+whose value can be represented by some single digit (i.e. this sum will
+never produce a non-zero carry).  It is this characteristic that
+ultimately permits us to identify the complement of a number with the
+negative of that number.
+
+Complements provide intrinsically-signed numbers.  Consider a number N of
+the form
+        <l|npm|r>
+where l is the LRU contents,
+      n is the so-called integer part of the number,
+      p is the point (or scale factor),
+      m is the so-called fractional part (mantissa) of the number,
+  and r is the RRU contents.
+
+If n is absorbed by l and m by r, then <l|p|r> may be written as <l|r>
+provided that the scale factor is zero, e.g.
+
+        <0|1> is simply a convenient shorthand for <0|.|1>
+
+In this compact notation a single bar separates the digits of the number
+into those that are coefficients of the negative powers of the base and
+those that are coefficients of the non-negative powers (which includes the
+so-called "units" digit).
+
+The determination as to whether N < 0 or N = 0 or N > 0 can be made
+without resorting to any extrinsic sign convention; signs are intrinsic
+for any base -- stay tuned!
+
+If N and its complement were added, the result would be
+
+        <k|kpk|k>
+
+for some constant k (where each k here may actually be a sequence of k's).
+We will see that numbers of this form are (computationally) merely
+variants of zero -- but first we must learn how to add and subtract!
+
+-------------------------------------------------------------------------------
+
+Negative Numbers:
+----------------
+
+Most people are unaccustomed to dealing with numbers in a base other than
+ten and with negative numbers in general.  Negative numbers are for most a
+concept without substance since nowhere in elementary or secondary schools
+are negative numbers written with intrinsic sign -- all numeric signs are
+presented as extrinsic and not as part of a number itself.  This requires
+a separate computational process to manipulate these extrinsic signs,
+leading to the notion that negative numbers are somehow less "real" than
+positive (or unsigned) numbers.  This is indeed unfortunate.
+
+For those who dabble with balanced ternary (or other balanced or skewed
+systems), the notion of an intrinsic sign is far more concrete and clear.
+But even many computer programmers cannot see the typical computer
+representation of integers as binary with intrinsic sign for what it is,
+preferring instead to think of a "sign bit" followed by an unsigned base
+two integer that is complemented for some magical and obscure reason.
+
+The computation apparatus described and used herein handles numbers with
+intrinsic sign for all bases.  Extrinsic signs are avoided wherever
+possible.
+
+===============================================================================
+
+A variety of operations are possible involving rational numbers
+represented as described above.  These operations can be performed almost
+entirely symbolically, requiring no more actual numerical computation than
+the ability to add or subtract (or multiply) single digits (with a
+possible single digit carried in and/or out).  Even these single-digit
+operations can be accomplished symbolically by the arithmetically impaired
+(or by a computer program) through the use of addition or subtraction (or
+multiplication) tables.
+
+It is interesting to note that during the European Middle Ages the
+expected mental computation abilities of the average householder or
+merchant was the addition or subtraction of single digits no greater than
+five with a possible single "memory location" (a free hand) to "hold" a
+single-digit intermediate result -- everything else was done symbolically
+by moving counters (often pebbles or small shells -- the "calculi") around
+a counting board (hence "calculation").  In most cases, the "calculator"
+had no sense (nor needed any) of the actual numbers being operated on nor
+of the final numerical result.  Counters were "added to" or "taken from"
+the board, the final collection of counters was normalized to a standard
+representation (again using simple but possibly opaque rules), and the
+result was the "answer".  Multiplication was essentially higher
+mathematics requiring two counting boards; division required an advanced
+mathematical education.  [Citation needed here]
+
+Similarly, in what follows, no more mental computation is required than
+the ability to add or subtract (or multiply) single digits in whatever
+number base is being considered (with a possible single digit carried in
+and/or out).  The computation apparatus is designed to keep track of
+carries (no free hand required!).  And referring to some prepared tables
+for sums or differences (or products) is not considered cheating.
+
+-------------------------------------------------------------------------------
+
+Addition:
+--------
+
+As we all learned in elementary school, adding two unsigned (decimal)
+numbers requires that
+
+        a) the (decimal) points "line up"
+        b) zeros are assumed to the right (but no further than needed)
+        c) zeros are assumed to the left (but no further than needed)
+
+and then addition proceeds, starting at the rightmost column of digits,
+by adding each column and propagating any carry (either zero or one) to
+the column immediately to the left; continue until done.  But we all had
+rather simplistic views of what "rightmost" and "done" actually meant.
+And subtraction had its own set of arcane rules and restrictions ...
+
+The more general procedure requires that
+
+        a) the points "line up" (meaning that the scale factors are equal
+           and are positioned one above the other) -- move the "dot"s as
+           needed to adjust the scale factors;
+        b) the bars "line up" -- emit from each RU as needed;
+        c) the angle brackets of the RUs "line up" (meaning that the LRUs
+           are of equal length and the RRUs are of equal length) --
+           replicate RUs to achieve least-common-multiple lengths
+
+and then addition proceeds, starting at the rightmost column of digits,
+by adding each column and propagating any carry (negative one, zero, or
+positive one) to the column immediately to the left; continue until done
+-- but with the caveat that what is carried into an RU must also be
+carried out (like the Wilderness Rule "Carry out what you carried in!").
+
+That the magnitude of each carry is either zero or one, regardless of base
+(balanced, skewed, or otherwise), is left as an exercise for the reader --
+but the proof is not difficult.
+
+Here's an example of a base ten addition problem:
+
+          <0|123.95|0>  rewrite <0|123.95|0>
+        + <0|4|3>             + <0|004.33|3>    by emission
+                                ------------
+                                =0   +   =0     -- carries
+                                <0|128.28|3>
+
+Note that '+' and '-' are used to indicate non-zero carries and that all
+zero carries are omitted here except for the carry-in for each RU sum.
+Additionally, if the carry-out for an RU differs from its carry-in, then a
+'#' is used to mark this difference (here meaning inequality); otherwise an
+'=' is used (both '#' and '=' here are notational devices and are only
+placed above non-digits).
+
+If the carry-out for the RRU sum is non-zero, then the initially assumed
+carry-in of zero was incorrect; in this case, the addition is aborted and
+then restarted assuming the correct initial carry-in for the RRU sum (or
+one might cheat and simply add the carry-out back into the RRU, thereby
+correcting the initial incorrect assumption -- but only if the initially
+assumed carry-in was zero!).
+
+But what if the carry-out of the LRU of the sum differs from its carry-in?
+We can't just "correct" the carry-in (that carry was computationally
+generated!) but we can extend the LRUs and have another go at it.  Here's
+an example:
+
+          <0|92|34>     rewrite <0|92.3|43>     by emission
+        + <0|8.6|1>           + <0|08.6|11>     by emission and replication
+                                -----------
+                              =0#+ +   = 0      -- carries
+                              <0:1:00.9|54>     rewrite <0|100.9|54>
+
+Here a broken bar ':' is used as a tentative bar for the LRU of the sum
+until the LRU carry-out equals its carry-in.  The leftmost broken bar is
+then retained as a full bar, the other broken bars being removed.
+
+The broken bar ':' may need to be used up to three times (that no more than
+three are ever required is left as an exercise for the reader -- ponder the
+possible carries).
+
+All summed LRUs should be computed in this manner.
+
+The requirement that the bars and angle brackets of the addend and augment
+all line up before the addition can proceed insures that the RUs of the
+sum are computed correctly and be the same length as the RUs above them.
+After the sum is computed, it might be possible to simplify its RUs by
+contraction.  Similar comments apply to the subtrahend, minuend, and the
+difference of subtraction.
+
+-------------------------------------------------------------------------------
+
+Subtraction:
+-----------
+
+Subtraction is similar to addition but with digit differences rather than
+sums and negative carries (or so-called borrows).  Recall that carries are
+always additive for both addition and subtraction.  Here's a base ten
+example:
+
+          <0|92|34>     rewrite <0|92.3|43>     by emission
+        - <0|8.6|1>           - <0|08.6|11>     by emission and replication
+                                -----------
+                                =0 --  = 0      -- carries
+                                <0:83.7|32>     rewrite <0|83.7|32>
+
+It is tempting to think of subtraction as merely the addition of a
+complement:
+
+          <0|92|34>     rewrite <0|92.3|43>     by emission
+        +~<0|8.6|1>           + <9|91.3|88>     by emission and replication
+                                -----------
+                                      +#+0      -- carries
+                                       |31>     -- abort (wrong carry-out)!
+
+                                =+    +=++      -- carries
+                                <0:83.7|32>     rewrite <0|83.7|32>
+
+Although the addition of a complement will always produce the correct
+subtractive result, the form of that result may be different from that
+which straight subtraction would yield.  Here is a standard base three
+example to illustrate this point:
+
+          <0|10|2>      rewrite <0|10|2>
+        -  <0|1|2>            - <0|01|2>        by emission
+                                --------
+                                =0 - =0         -- carries
+                                <0:02|0>        rewrite <0|2|0> by absorption
+
+But adding the complement of <0|1|2> yields:
+
+          <0|10|2>      rewrite <0|10|2>
+        + ~<0|1|2>            + <2|21|0>        by emission
+                                --------
+                                =1   =0         -- carries
+                                <0:01|2>        rewrite <0|1|2> by absorption
+
+Both results are correct but differ in form, namely both are equivalent
+eventual representations of two.
+
+===============================================================================
+
+Equivalent Eventual Representations:
+-----------------------------------
+
+Some numbers have more than one conventional form but they are
+computationally (and mathematically) equivalent.  For example:
+
+        1.000...        or      <0|1|0> [10]
+        0.999...        or      <0|0|9> [10]
+
+Such forms are characterized by the fact that their RRUs will accept more
+than one assumed initial carry-in which they will then generate as the
+carry-out.  This is equivalent to adding zero (<0|0|0>) to a number but
+assuming either '+' or '-' as the initial carry-in instead of '0'.
+
+        <0|1|0> will accept either '0' or '-' (the latter generating <0|0|9>)
+        <0|0|9> will accept either '0' or '+' (the latter generating <0|1|0>)
+
+The term "eventual" is usually applied only to a number represented with
+a non-zero RRU (and an LRU of either <0| or ~<0|) that is equivalent to
+another representation with an RRU of |0>, not to a number represented
+with an RRU of |0>.  Conventionally, an RRU of |0> is thought of as simply
+terminating the representation rather than repeating and leading to some
+"eventuality"; unconventionally, |0> is no less an RRU than, say, |9> and
+both are treated similarly herein.  In any case, there are equivalent (and
+eventual) representations having nothing to do with zero.
+
+Such equivalent eventual forms are not problematic.
+
+===============================================================================
+
+A Plethora of Zeros:
+--------------------
+
+It is obvious that <0|0|0> is computationally zero; it yields itself when
+added to itself.  But so does <9|9|9> [10] -- a simple exercise.  In fact
+any number consisting of a single digit throughout is computationally
+zero.
+
+Recall Euler's claim mentioned at the beginning -- this simply states that
+
+        <1|1|1> is zero for any base whatsoever!
+
+This is one of the consequences of the statement (also aforementioned) of
+
+        b*S(b) - S(b) = 0       for any base b.
+
+Since all numbers consisting solely of a single digit are merely some
+multiple of <1|1|1> then all of these must be computationally zero as
+well.  And so are numbers that consist solely of some repeating sequence
+of digits, such as <824|824|824> since
+
+        (b∧3)*S(b) - S(b) = 0   for any base b
+
+and similarly for
+
+        (b∧n)*S(b) - S(b) = 0   for any n.
+
+As a notational convenience, a number like
+        <0|0.0|0>
+which can be written as
+        <0|.|0>         by absorption
+may also be written as
+        <0|0>           by convention (as aforementioned)
+or even more compactly as just
+        <0>             by convention (established here).
+
+The same may be done for any zero, e.g. <824|824|824> written compactly as
+        <824>
+which may also be written as
+        <248>
+or even
+        <482>
+
+Due care must be taken when expanding a compact zero (such as <824>) into
+a full form with double bars which ultimately needs to represent a
+bi-directionally infinite repeating sequence of digits (such as ...824...).
+Note that "bi-directionally infinite" means that the number extends
+infinitely to both the left and right, not that the number is infinite!
+
+The following are possible and correct expansions of <824>:
+
+        <824|824>
+        <824|8|248>
+        <824|82|482>
+        <248|24|824>
+        <482|4824|824>
+
+The novice might wish to always expand a compact zero into a full form
+where each RU contains the compact zero and the digit sequence between the
+bars is some number of replications (possibly none) of the compact zero.
+The resulting representation can then be modified by various absorptions
+into or emissions out of the RUs as well as replication within either RU.
+
+Facility in writing appropriate zeros in full form comes with practice and
+a little bit of attention.  Consider the balanced ternary representation
+
+        <0|+-+|+0> {-0+} or seven and three eighths.
+
+Here are three full form zeros that match one of the components of this
+balanced ternary number (this skill will be useful in much of what
+follows):
+
+         <0|000|00>
+        <+-|+-+|-+>
+        <0+|0+0|+0>
+
+Since all of these representations are computationally zero, the point (or
+scale factor) may be placed arbitrarily anywhere between the bars.
+
+But how can there be so many zeros?  Isn't there really just one zero?
+This is something like the particle zoo of 20th-century physics which
+settled down only after the appropriate viewpoint was finally achieved.
+
+-------------------------------------------------------------------------------
+
+A Plethora of Numbers:
+---------------------
+
+Given any "simple" number like <0|1|0> (namely one), we can create a vast
+quantity of computationally equivalent forms by adding appropriate zeros
+to it, yielding things like
+        <1|2|1>
+        <8|9|8>
+        <423|424|423>   or <234|24|423> or <342|4|423> by absorption.
+
+Now wait a minute!  What's really going on here?
+
+===============================================================================
+
+The Background (or Philosophy):
+------------------------------
+
+First, think of what we really do when we write a (conventional) number.
+We assume a bi-directionally infinite blank slate (really filled with '0's)
+and a "point" (to indicate a known "units" position) upon which we will lay
+some "digits" in appropriate positions, making these digits differ from the
+blank background.  We compute the value of our work (our number) by
+measuring the difference each digit has from the original blank (or '0')
+background.  We are constrained in the amount of variation we can make at
+any position by the base of our number system -- the value at each position
+must be representable by one (and only one) of the digits from our ordered
+set of digits (this insures that the number that we want to write on our
+slate has a unique representation -- except for the possible eventual but
+equivalent representations described above).  This is what the Author
+believes was the true insight of those who long ago discovered that zero
+was as much a digit as any other -- perhaps a "place holder" but a digit
+nonetheless.
+
+But suppose that the background on our slate consists of '1's rather than
+'0's -- it's still flat but everything is elevated a bit.  In order to
+make a difference of one we need to write a '2', for a difference of two
+we write a '3', ..., for eight a '9' -- but (assuming base ten) how do we
+make a difference of nine?  We must write a '2' in the next digit
+position on the slate (making a difference of one there, that is to say a
+difference of ten here) and then write a '0' in the current position
+(making its value be one less than the background of '1'); combined, the
+resulting difference from the background is nine.
+
+All of this remains true for background terrain that is hilly rather than
+flat -- it's the variance from the expected background, not the actual
+elevation, that determines the value of the number represented.  The only
+real constraint is that the elevation (i.e. the value) at each location be
+representable (and represented) by one of the digits from our ordered set
+of digits.
+
+There are an infinite number of backgrounds -- that's why there are an
+infinite number of zeros (they each just follow and do not deviate from
+their respective backgrounds).  That's the view from the outside; from the
+inside, there is just one zero -- the current background.
+
+So what determines the background?  Well, it's just the contents of the
+LRU.  The LRU specifies the expected terrain (the local zero); the rest of
+the number specifies the deviations from the expectations.
+
+And it's the first deviation (going from left to right in our conventional
+representation) that determines the sign of the entire number -- if the
+elevation is higher than expected, the number is positive; if lower than
+expected, the number is negative.  This is the intrinsic sign.
+
+That's why <824|6|248> [10] represents negative two -- the expected digit
+is not '6' but '8'.
+
+If the function of being zero is assigned to the first digit in the
+ordered set of digits, it is not possible to represent a negative number
+with a background (LRU) entirely of zero digits since a descent from the
+background is necessary in order to form a negative number.  Similarly, if
+the function of being zero is assigned to the last digit in the ordered
+set of digits, it is not possible to represent a positive number with a
+background entirely of zero digits since an ascent from the background is
+necessary in order to form a positive number.  Such numbers can be
+represented, however, by choosing another background -- and there is an
+infinite collection of backgrounds to choose from.
+
+Assigning the function of being zero to an intermediate digit in the
+ordered set of digits permits the representation of both positive and
+negative numbers all with a background consisting entirely of zero digits
+(although another background could be chosen if desired).
+
+One way of thinking about a background in a number representation is by
+analogy to a carrier wave with amplitude modulation -- but with the
+restriction that the amplitude is constrained by both upper and lower
+bounds.
+
+===============================================================================
+
+Real Subtraction vs. the Addition of a Complement:
+-------------------------------------------------
+
+To say that subtraction is merely the addition of a complement is not
+strictly true.
+
+Complementing a number complements its background along with everything
+else; adding this number to another produces a sum with a "mixed"
+background which then conveniently more-or-less goes away in balanced
+systems as well as in systems where zero is an extremal (the first or
+last) digit in the ordered set of digits.  In balanced systems the
+addition of a complemented zero background by itself produces no carries
+during the addition of the two backgrounds (producing an unchanged
+background); in the others a carry is (or can) be produced which ripples
+from the far right of the RRU and carries all the way to the far left of
+the LRU (flipping the background back to zero).
+
+It is seductive to think of subtraction as being the same as the addition
+of a complement -- but it's not, as is well illustrated by considering
+skewed systems.  Subtraction differs from the addition of a complement in
+that the resulting backgrounds differ by <0> - ~<0>.
+
+Consider four and two thirds less two thirds in the skewed system {-0+#}:
+
+Doing "real" subtraction yields the following:
+
+          <0|+0|#>      rewrite <0|+0|#>
+        -    <0|#>            - <0|00|#>        by convention and emission
+                                --------
+                                =0   =0         -- carries
+                                <0:+0|0> rewrite <0|+0|0> or four.
+
+Adding the complement of two thirds:
+
+
+          <0|+0|#>      rewrite <0|+0|#>
+        +   ~<0|#>            + <+|++|->        by convention and emission
+                                --------
+                                =0   =0         -- carries
+                                <+:#+|+> rewrite <+|#+|+> which is still four
+                                         but with a background biased by <+>.
+
+===============================================================================
+
+Adjusting the LRU (or the Background):
+-------------------------------------
+
+Subtracting the background (the LRU) will clear the background if at all
+possible.  Here are two base ten examples:
+
+          <47|52|47> [10] or positive five
+        - <47|47|47> [10]
+          ----------
+          = 0 - = 0
+          <00:05|00>  or  <0|5|0> by contraction and absorption.
+
+          <42|00|42> [10] or negative forty-two
+        - <42|42|42> [10]
+          ----------
+          =-- - = 0
+          <99:58|00>  or  <9|58|0> by contraction
+                      or ~<0|41|9>
+                      or ~<0|42|0> (see "Adjusting the RRU" below).
+
+If the background cannot be cleared by this process, the LRU will become a
+single digit (the complement of '0') if '0' is either the first digit (and
+the number is negative) or the last digit (and the number is positive) in
+the ordered set of digits of the system being considered, e.g. {012} or
+{=-0} respectively.  This won't happen in a system where the '0' digit is
+not extremal, e.g. {-0+} -- in these systems the background can always be
+leveled to zero.
+
+That is, background clearing always works if the system's '0' digit is not
+extremal since in such a system it is always possible to represent both
+positive and negative numbers against a background (LRU) of zero.
+
+In balanced or skewed systems, background clearing by subtraction is
+always possible because there is wiggle room both up from zero (for
+positive numbers) and down from zero (for negative numbers).  But for
+extremal systems where zero is at one end of the ordered set of digits,
+there is wiggle room in only one direction.  If the the background cannot
+be cleared by subtracting it from the number, then the background will
+simply end up as a single digit, namely the complement of the zero digit.
+
+If the '0' digit is extremal there are two cases:
+a) Negative numbers cannot be represented against a background of zero
+   (as for {012} and the like);
+b) Positive numbers cannot be represented against a background of zero
+   (as for {=-0} and the like).
+In either of these cases, though, subtracting the background will cause it
+to become a single extremal digit.
+
+Here are two more examples using the system {=-0}:
+
+Can the background be removed from <-|0|-> or <=|-|=> (both are one)?
+
+          <-|0|-> {=-0} rewrite <-|0|->
+        - <->                 - <-|-|->
+                                -------
+                                =+  =0          -- carries
+                                <=|=|0> or equivalently <=|-|=>
+
+          <=|-|=> {=-0} rewrite <=|-|=>
+        - <=>                 - <=|=|=>
+                                -------
+                                =+  =0          -- carries
+                                <=|=|0> or equivalently <=|-|=>
+
+Since our number is positive but there's no wiggle room above zero,
+any attempt to clear the background simply yields the single-digit
+background <=> or ~<0>.
+
+The LRUs of numbers do not need to be adjusted before either adding or
+subtracting them; sums and differences of backgrounds simply result in
+other backgrounds that properly support the sum or difference.
+
+Here's an extended example of the addition of two numbers with different
+(and patently obscure) backgrounds.
+
+First, a bit of review of balanced ternary's, well, "bits":
+
+        -1/2:   <0|--> or <0|->
+        -3/8:   <0|-0>
+        -1/4:   <0|-+>
+        -1/8:   <0|0->
+           0:   <0|00> or <0|0> or <0>
+        +1/8:   <0|0+>
+        +1/4:   <0|+->
+        +3/8:   <0|+0>
+        +1/2:   <0|++> or <0|+>
+
+Now, consider the addition problem
+
+         2.625
+         1.25
+         -----
+         3.875
+
+but do it in balanced ternary {-0+} with weird backgrounds.  Here goes:
+
+         <0|2.625|0> [10]  or   <0|+0|-0> {-0+} three less three eighths
+                                                (or two and five eighths)
+                        rewrite <00|+0|-0>      by emission
+                              + <0-|0-|0->      add a background of <0->
+                                ----------
+                                = 0   = 0       -- carries
+                                <0-:+-|-->      rewrite <0-|+-|-->
+                                                or <0-|+-|-> by contraction
+                                                or <0-|0+|+> by equivalence
+                                                or  <-0|+|+> by absorption
+                                                or just two and five eighths.
+
+         <0|1.25|0> [10]   or   <0|+|+-> {-0+}  one and a fourth
+
+                        rewrite <00|0+|+->      by emission and replication
+                              + <+-|+-|+->      add a background of <+->
+                                ----------
+                                     +#+0       -- carries
+                                      |0+>      -- abort (wrong carry-out)!
+
+                                = 0  += +       -- carries
+                                <+-:++|-->      rewrite <+-|++|-->
+                                                or <-+|+|--> by absorption
+                                                or <-+|+|-> by contraction
+                                                or <-+|0|+> by equivalence
+                                                or just one and a fourth.
+
+Finally, the balanced ternary addition problem:
+
+          <-0|+|+> {-0+}        two and five eighths
+        + <-+|0|+> {-0+}        one and a fourth
+          --------
+              +#0       -- carries
+               |->      -- abort (wrong carry-out)!
+
+    = -# 0#++ +=+       -- carries
+    <+0:++:--:-|0>      rewrite <+0|++---|0> {-0+}
+                             or  <0+|+---|0> by absorption
+                             or three and seven eighths -- oh, really?
+
+Let's clear this new background:
+
+          <0+|+---|0>   rewrite <0+|+---|00>    by replication
+        - <0+>                - <0+|0+0+|0+>    by emission
+                                -----------
+                                = 0 --- = 0     -- carries
+                                <00:00++|0->    rewrite <00|00++|0->
+                                                or <0|00++|0-> by contraction
+                                                or   <0|++|0-> by absorption
+                                                or four less an eighth
+                        which is just three and seven eighths!
+
+-------------------------------------------------------------------------------
+
+Adjusting the RRU:
+-----------------
+
+For any given system, one (and only one) of the following applies
+(where 0 means the digit assigned the function of being zero
+and ~0 means the complement of that digit):
+
+a) 0 < ~0  as in {012} where '0' precedes '2' or {-0+#}  where '0' precedes '+'
+b) 0 = ~0  as in {-0+} where '0' equals   '0' or {=-0+#} where '0' equals   '0'
+c) 0 > ~0  as in {=-0} where '0' follows  '=' or {=-0+}  where '0' follows  '-'
+
+In case (a) if the RRU consists of a single digit that is the complement
+of '0' and that digit is extremal, then the RRU can be reduced to zero by
+adding <0> with an initial carry of '+'; this can occur for {012} but
+never for {-0+#}.
+
+In case (b) no single digit can be both the complement of '0' and extremal
+(well, maybe base one {0} but that's not very interesting!).
+
+In case (c) if the RRU consists of a single digit that is the complement
+of '0' and that digit is extremal, then the RRU can be reduced to zero by
+adding <0> with an initial carry of '-'; this can occur for {=-0} but
+never for {=-0+}.
+
+In order for a non-zero RRU to be part of an equivalent eventual
+representation, it must consist of a single extremal digit; in order for
+it to be convertible to an RRU of zero, then '0' must be the other
+extremal digit.
+
+There are, of course, other pairs of equivalent eventual representations
+that do not involve the '0' digit; they always do, however, involve the
+extremal digits of the system being considered:
+
+        <0|0|+> {-0+} or one half,
+        <0|+|-> {-0+} also one half.
+
+Converting a representation to an equivalent eventual representation might
+not set the RRU to zero but it does not affect the LRU; arbitrarily
+setting the RRU to zero, however, by subtracting the RRU from the number
+generally does alter the LRU.  Requiring that both the LRU and RRU be
+simultaneously zero is to live in a world of integers only; requiring that
+the LRU and RRU be the same is simply living in a different world of
+integers.
+
+===============================================================================
+
+[Material needed here]
+
+-------------------------------------------------------------------------------
+
+Base Zero:
+---------
+
+Here the ordered set of digits is empty, namely {} -- there's nothing to
+designate as the zero digit.  Forget I even mentioned it ...
+
+-------------------------------------------------------------------------------
+
+Base One:
+---------
+
+Again, uninteresting.  At least there is a digit in {0} to designate as
+the zero digit, namely '0' -- but there are no numbers that we can
+represent other than zero itself, namely <0> (i.e., there is no way to
+make a difference from the one-and-only background).
+
+-------------------------------------------------------------------------------
+
+Negative Bases:
+--------------
+
+If the base b is negative, then all even powers of the base are positive
+so we can consider this as a "normal" number in base b∧(2).
+
+Consider base negative two [-2] {01} as an example.  In this so-called
+nega-binary system, each even power of the base makes a positive (or zero)
+contribution to the value of the number while each odd power of the base
+makes a negative (or zero) contribution.  A brief examination will show
+that nega-binary numbers have unique (but allowing for eventual)
+representations.  The digits here can be considered in pairs as the skewed
+base four system [+4] {=-0+}:
+
+         [-2]   [+4]
+        -----   ----
+ 0:     00000   0000
+ 1:     00001   000+
+ 2:     00110   00+=
+ 3:     00111   00+-
+ 4:     00100   00+0
+ 5:     00101   00++
+ 6:     11010   0+==
+ 7:     11011   0+=-
+ 8:     11000   0+=0
+ 9:     11001   0+=+
+10:     11110   0+-=
+11:     11111   0+--
+12:     11100   0+-0
+13:     11101   0+-+
+14:     10010   0+0=
+15:     10011   0+0-
+16:     10000   0+00
+         ...     ...    and so on.
+
+Since a negative base b can be "normally" represented as base b∧(2), it is
+only required that |b| > 1.  Consequently, negative bases may be disposed
+of as a mere curiosity.
+
+-------------------------------------------------------------------------------
+
+Reciprocal Bases:
+----------------
+
+A number represented in a base that is a reciprocal of an integer b > 1
+seems only to be the base b number in the opposite direction (with due
+attention being paid to negating the scale factor and adding one since the
+directions of increasing/decreasing powers of the base are now swapped and
+the point needs to be moved to the other side of the digit to which it is
+adjacent).  Lacking this interpretation, it is difficult to make sense of
+the cardinality of any ordered set of digits as relating to the base.
+
+         <0\+(2)\-> [1/3] {-0+}         or <0\+--.\-> [1/3] {-0+}
+
+should likely be interpreted as
+
+         <0/+(-2)/-> [3] {-0+}          or <0/+--./-> [3] {-0+}
+
+or, reversing the directionality of the representation, as
+
+         <-\(-2)+\0> [3] {-0+}          or <-\.--+\0>  [3] {-0+}
+or just
+
+         <-|(-2)+|0> [3] {-0+}
+
+in the more conventional "upright bar" notation.
+
+If one could make some other coherent sense of reciprocal bases, it might
+then be possible to make coherent sense of fractional bases in general.
+Short of that, the Author is inclined to disregard all non-integral bases
+as lacking even a modicum of curiosity.
+
+On the other hand, just thinking about reciprocal bases makes clearer some
+things that might otherwise remain rather opaque.  In particular, ponder
+the power series generator:
+
+        1/(1-x) = P(x) = 1 + x∧(1) + x∧(2) + x∧(3) + x∧(4) + ...
+
+This is generally considered only when 0 < x < 1 for which P(x) converges,
+e.g.
+
+        P(1/3) = 1.5
+
+but, when squinted at in just the right way, one notices that
+
+        P(1/3) = <0/1/1> [1/3] {012} or <0/.1/1>   [1/3] by assumed point
+                                        <0/(0)1/1> [1/3] by definition of "dot"
+                                        <0\(+1)1\1> [3] by interpretation above
+                                        <0\1(0)\1>  [3] by moving the "dot"
+                                        <0\1.\1>    [3] by definition of "dot"
+                                        <0\1\1>     [3] by assuming the point
+             or  <0|1|1> [3] {012}  in conventional "upright bar" notation
+        which is one and a half.
+
+If x > 1 then P(x) diverges, say for x = 3 -- or does it?
+
+Clearly the generator has a well-defined (negative) value for P(3), so
+squinting again in just the right way, one can see that
+
+        P(3) = <0/1> [3] {012}       or <1\0> [3]       by reversal of the bars
+           or  <1|0> [3] {012}  in conventional "upright bar" notation
+        which is negative one half (as we have seen before) --
+        exactly what the generator evaluates to.
+
+It's an easy exercise to show that
+
+        P(b) + P(1/b) = <0|1|0> [b]
+
+for any base b > 0.
+
+===============================================================================
+
+There's Only One Base b (for any b):
+-----------------------------------
+
+For b zero, one, negative, or a unit fraction, these are all described
+(and dismissed) above.  For any integral base b > 1 there are b different
+systems (one for each choice of the digit to function as the zero), each
+with its own addition table.  Or are there?
+
+Consider the three possible base three systems:
+
+  {012} -- standard ternary (sometimes {0+#} if using plus and double-plus);
+  {-0+} -- balanced ternary; and
+  {=-0} -- inverted ternary (using double-minus and minus)
+
+and also a generic base three system:
+
+  {xyz} -- this could be any of the three systems above ...
+
+What can one say about a number represented in this generic {xyz} system?
+Consider:
+
+        <x|yzz|y> {xyz}
+
+First, the number is positive since the first digit to deviate from the
+background <x> is y, which is ordered after x in {xyz} and thus x < y, so
+we have intrinsic (positive) sign.
+
+Second, the value of the number is determined solely by the deviations of
+the digits from the expected background; let us compute:
+        up one in the 3∧(2) position -- counts for +9;
+        up two in the 3∧(1) position -- counts for +6;
+        up two in the 3∧(0) position -- counts for +2;
+        then up one all the way out from the implied point -- counts for +0.5;
+        for a total of +17.5 -- seventeen and a half.
+
+For reference, here are the addition tables for the three possible {xyz}
+systems (where the left-most character in each sum pair is the carry --
+always represented as one of '0', '+', or '-'):
+
+                {012}                   {-0+}                   {=-0}
+
+              0   1   2               -   0   +               =   -   0
+           ------------            ------------            ------------
+        0 |  00  01  02         - |  -+  0-  00         = |  --  -0  0=
+        1 |  01  02  +0         0 |  0-  00  0+         - |  -0  0=  0-
+        2 |  02  +0  +1         + |  00  0+  +-         0 |  0=  0-  00
+
+and the corresponding subtraction tables (where the left-most character in
+each difference pair is the carry):
+
+              0   1   2               -   0   +               =   -   0
+           ------------            ------------            ------------
+        0 |  00  -1  -2         - |  00  0-  -+         = |  00  0-  0=
+        1 |  01  00  -1         0 |  0+  00  0-         - |  +=  00  0-
+        2 |  02  01  00         + |  +-  0+  00         0 |  +-  +=  00
+
+
+If {xyz} is really {(x)yz}, meaning {012}, this is normally just written as:
+
+           <0|122|1>    or <0|+##|+> {0+#} if using plus and double-plus
+                        which is seventeen and a half in {012}.
+
+Now suppose that {xyz} is really {x(y)z}, meaning {-0+}.  Then we have:
+
+           <-|0++|0>
+        -  <-|---|->    adjust the background by subtracting <->
+         -----------
+         =0#+ ++ =0     -- carries
+         <0:+:-0-|+>    rewrite <0|+-0-|+> {-0+}
+                        which is recognizably seventeen and a half in {-0+}.
+
+           <-|0++|0>    Or with a different initial carry (+ rather than 0) ...
+        -  <-|---|->
+         -----------
+         =0#+ +++=+     -- carries
+         <0:+:-00|->    rewrite <0|+-00|-> {-0+}
+
+But suppose that {xyz} is really {xy(z)}, meaning {=-0}.  Then we have:
+
+           <=|-00|->
+        -  <=|===|=>    adjust background by subtracting <=>
+           ---------
+                +#0     -- carries
+                 |0>    -- abort (wrong carry-out)!
+
+           =+ +++=+     -- carries
+           <=:-00|->    rewrite <=|-00|-> ... no change -- but not surprising
+                                          since subtracting <=> is similar
+                                          to adding ~<=> which is just <0>.
+
+Perhaps one could try subtracting <-> instead ...
+
+           <=|-00|->
+        -  <-|---|->
+         -----------
+         =0#+ ++ =0     -- carries
+         <-:0:=-=|0>    rewrite <-|0=-=|0> {=-0}
+                        Compare this pattern with <0|+-0-|+> {-0+} from above.
+
+           <=|-00|->    Or with a different initial carry (+ rather than 0) ...
+        -  <-|---|->
+         -----------
+         =0#+ +++=+     -- carries
+         <-:0:=--|=>    rewrite <-|0=--|=> {=-0}
+                        Compare this pattern with <0|+-00|-> {-0+} from above.
+
+And certainly subtracting <0> won't help either ...
+
+           <=|-00|->
+        -  <0|000|0>
+           ---------
+           =0    =0     -- carries
+           <=:-00|->    rewrite <=|-00|-> ... no change (not surprising).
+                        We can't make the background <0> since in this system
+                        '0' is the topmost digit and there is no "up" from '0'
+                        to represent a positive number.
+                        Nonetheless, <=|-00|-> {=-0} is seventeen and a half.
+
+This behavior is not restricted to representations having a single-digit
+background.  Being somewhat more adventurous, consider the following:
+
+        <xy|zz|y> {xyz}
+
+If {xyz} is really {(x)yz}, meaning <01|22|1> {012}, then:
+
+           <01|22|11>   by replication
+        -  <01|01|01>   adjust background by subtracting <01>
+           ----------
+           = 0   = 0    -- carries
+           <00:21|10>   rewrite <00|21|10>
+                             or  <0|21|10> by contraction
+                        which is recognizably seven and three eighths in {012}.
+
+If {xyz} is really {x(y)z}, meaning <-0|++|0> {-0+}, then:
+
+           <-0|++|00>   by replication
+        -  <-0|-0|-0>   adjust background by subtracting <-0>
+        -------------
+        = 0# +   = 0    -- carries
+        <00:0+:-+|+0>   rewrite <00|0+-+|+0>
+                             or  <0|0+-+|+0> by contraction
+                             or   <0|+-+|+0> by absorption
+                        which is recognizably seven and three eighths in {-0+}.
+
+If {xyz} is really {xy(z)}, meaning <=-|00|-> {=-0}, then:
+
+           <=-|00|-->   by replication
+        -  <=-|=-|=->   adjust background by subtracting <=->
+           ----------
+                +# 0    -- carries
+                 |=0>   -- abort (wrong carry-out)!
+
+           =++ ++=++    -- carries
+           <==:0-|-=>   rewrite <==|0-|-=>
+                             or  <=|0-|-=> by contraction
+                        which is still seven and three eighths in {=-0} even
+                        though the best that can be accomplished, again, is
+                        to reduce the background to <=> (i.e. ~<0>).
+
+The Author suspects, however, that "<=|0-|-=>" would not be a proper
+response to the haberdasher's question, "Sir, what is your hat size?".
+[Suggested pronunciation: "LES-iz bar-NUL-neg bar-NEG-iz MOR"]
+
+A consequence of all this is that whether a base b number is represented
+in the system {0,...,b-1} or {-1,0,..,b-2} or ... or {2-b,..,0,1} or
+{1-b,...,0} is completely irrelevant; the representation encodes the value
+of the number regardless of which digit is assigned the function of being
+zero.  But it's not necessary to actually change the symbols for the
+digits in the representation when moving from one base b system to
+another.  All that is needed is to designate (perhaps arbitrarily) some
+digit to be the zero digit which then entirely determines the properties
+of the addition and subtraction tables.
+
+How can this be?  Remember that the background (the LRU) permeates the
+entire number representation and the value of that number is determined
+solely by the variances from that background.  Adding two numbers simply
+sums the variances as well as the backgrounds themselves, producing summed
+variances against a summed background.  And one may (arbitrarily)
+interpret that sum in a base b system other than the system that was used
+to produce that sum.
+
+The choice of a base b system applies to both the addend and augment (or
+subtrahend and minuend) and determines the addition (or subtraction) table
+to be used.  Choosing different base b systems to sum two base b numbers
+will produce different backgrounds, but these "different" sums will always
+represent the same base b number.
+
+Here again are the addition tables for the three possible {xyz} systems
+but in a more abstract form (where the left-most character in each sum
+pair is the carry):
+
+               {(x)yz}                 {x(y)z}                 {xy(z)}
+
+              x   y   z               x   y   z               x   y   z
+           ------------            ------------            ------------
+        x |  0x  0y  0z         x |  -z  0x  0y         x |  -y  -z  0x
+        y |  0y  0z  +x         y |  0x  0y  0z         y |  -z  0x  0y
+        z |  0z  +x  +y         z |  0y  0z  +x         z |  0x  0y  0z
+
+and the corresponding subtraction tables (where the left-most character in
+each difference pair is the carry):
+
+              x   y   z               x   y   z               x   y   z
+           ------------            ------------            ------------
+        x |  0x  -z  -y         x |  0y  0x  -z         x |  0z  0y  0x
+        y |  0y  0x  -z         y |  0z  0y  0x         y |  +x  0z  0y
+        z |  0z  0y  0x         z |  +x  0z  0y         z |  +y  +x  0z
+
+
+===============================================================================
+
+Symbols vs. Values:
+------------------
+
+[forthcoming commentary]
+
+===============================================================================
+
+Normalization:
+-------------
+
+Some representations of a number are more easily comprehended than others
+even though all of them are equally valid for purposes of computation.
+The normalization of a representation simply produces a form that is as
+conventional and compact as possible.
+
+Converting from one form of base b to another form of base b is simply a
+matter of reassigning the function of being zero to a different digit in
+the ordered set of digits (and using different addition and subtraction
+tables, of course); consequently, without loss of generality, the first
+digit from the ordered set of digits may always be assigned the function
+of being zero -- later converting to another form of base b if required.
+Note that these so-called conversions do not require any modification of a
+number's representation (it remains unchanged); relabeling the digits is
+permitted, of course, but this does not change the relationship of one
+digit to another in the representation.  Conversion is simply a matter of
+arbitrarily declaring one of the digits in the system to be the zero
+digit.
+
+In much of what now follows, it is convenient (and clearer) to make the
+simplifying assumption that a base b system is just {0,1,..,b-1}.
+
+Once a digit has been chosen to function as the zero in the system, the
+LRU (i.e. the background) can be adjusted and contracted to a single zero
+digit (or its complement).  The RRU can then be contracted and possibly
+adjusted (if it's an eventual form) to match the LRU.
+
+Finally, each RU should absorb as much as possible (this may require the
+introduction and adjustment of a scale factor between the bars).  If no
+digits remain between the bars and the scale factor is zero (or just the
+point), the bars (and point) may be replaced by a single bar.
+
+If the LRU is the complement of the zero digit, one may complement the
+entire representation and prefix a '~' character for display purposes.
+
+[Examples needed here]
+
+===============================================================================
+
+Reciprocals:
+-----------
+
+[forthcoming -- soon]
+
+===============================================================================
+
+Multiplication:
+--------------
+
+While addition is the sum of two bi-directionally infinite numbers,
+multiplication is essentially the infinite summation of such numbers, each
+being a single-digit multiple of the multiplicand with an appropriate
+scale factor.  With a little work, multiplication can be reduced to the
+sum of just four bi-directionally infinite numbers, each being formed from
+products of finite extent.
+
+[forthcoming -- soon]
+
+===============================================================================
+
+Division:
+--------
+
+[forthcoming -- eventually]
+
+===============================================================================
+
+Just-In-Time-Subtraction (JITS) Revisited:
+-----------------------------------------
+
+Halving a (balanced) ternary integer N by doing a single subtraction --
+conceptually this is computing M = 3*M - 2*M where 2*M = N
+
+If N is actually divisible by two (i.e. even), the procedure yields the
+correct result.  Does it also yield the correct result if N is odd?
+
+Let N = 7, i.e. <0|+-+|0> {-0+};
+the JITS procedure yields <-|-0-|0> which can be rewritten as <-|0-|0>.
+
+By subtracting a convenient zero, say <->, one can readjust the background
+of this result:
+
+          <-|0-|0>
+        - <-|--|->
+          --------
+          =0   =0               -- carries
+          <0|+0|+>      which is recognizable as three and a half.
+
+So, yes, the JITS procedure also produces the correct result if N is odd
+-- one merely needs to adjust the background of the result to get it to
+zero elevation in order to more clearly see the result.
+
+===============================================================================
+
+What's the REAL Difference Between 1's- and 2's-Complement Arithmetic:
+---------------------------------------------------------------------
+
+Modern computing hardware generally represents integers as binary with
+intrinsic sign, abandoning attempts to represent integers as (extrinsic)
+sign and magnitude.
+
+So positive integers are represented as <0|n|0> [2] where the LRU is
+explicitly represented as a high-order bit, the RRU is implicitly assumed,
+and n (the number) is represented by a fixed-length string of binary
+digits (bits) typically of length word-size less one.
+
+Negative integers are simply the complements of corresponding positive
+integers which complements the LRU background (the so-called "sign" bit)
+without altering the bit-length of n.  But what is done with the RRU?
+
+For 1's-complement hardware, the RRU is simply left unchanged (i.e. the
+background is assumed to extend both left and right).
+
+But 2's-complement hardware always assumes that the RRU is |0> independent
+of the background; consequently, an RRU carry-in of '+' is arbitrarily
+assumed for any complement and will convert the |1> (the complemented |0>)
+back to |0> carrying out a '+' across the bar.  Unfortunately, if all the
+bits between the bars are also one, the carry continues across the other
+bar and finally carries out of the LRU as well.  No carry-in/carry-out
+rules are violated, but <1|1|1> will always get converted to <0|0|0> (this
+is either good or bad, depending on one's computational point of view).
+Such hardware usually implements a "logical" complement in addition to an
+"arithmetic" complement, as well as a number of other "logical" operations
+that function rather like their 1's-complement "arithmetic" counterparts.
+
+The Author remains computationally agnostic on this point.
+
+===============================================================================
+
+Credits:
+-------
+
+The Author's co-worker and office mate, John Halleck, deserves much credit
+for being a sounding board for bizarre ideas over many of these past years.
+He has also been a persistent prod to the Author to document some of these
+ideas in order to Make the Intuitively Obvious Understandable.
+
+The "Just-in-Time Subtraction" procedure divides a base-b number by b-1.
+The name was coined by Dylan Pocock, another of the Author's co-workers.
+
+To John Scholes I owe thanks for taking an interest in the JITS procedure
+and doggedly searching out its source -- and then taking an interest in the
+ideas (with clarifications) that led to such a scheme in the first place.
+
+-------------------------------------------------------------------------------
+
+Comments:
+--------
+
+The JITS procedure actually generates a complete and accurate division by
+b-1 without remainder -- provided that one properly handles bi-directionally
+infinite strings of digits (in some base b) as representations of rational
+numbers.  In such a world there are multiple but equivalent representations
+of every rational number (both positive and negative), all of which are
+amenable to even simple pencil-and-paper calculation.  The JITS procedure
+always generates a rational result without remainder but possibly in one of
+those equivalent representations.
+
+Concerning balanced ternary, one will undoubtedly notice that a simple test
+for evenness (and therefore integral divisibility by two) is just to sum the
+non-zero digits of the number (assuming RUs of zero), iteratively as needed
+("casting out signs" is like "casting out nines" in base ten).
+Pre-rounding/truncating the number to induce evenness would eliminate the
+need for a post-adjustment of any non-integral division by two.
+
+It has been pointed out that the phrase "Replication (or Repetition) Unit"
+is somewhat ponderous; the terminology "Repetition Sequence" has been
+suggested as a possibly more appropriate replacement.  The two terms
+"Replication" and "Unit" got into this fine mess during some of the Author's
+original doodling regarding representations of rational numbers; these terms
+have simply survived, but are mostly replaced by the somewhat semantically
+empty moniker "RU".  The Author remains open to further suggestions.
+
+I originally thought of a continual carry to the left as somehow
+disappearing over the horizon ("To Infinity and Beyond!") so as to be
+out-of-sight and out-of-mind.  And I always wanted to avoid invoking any
+notion of "end-around" carries in all contexts -- a notion that seemed to be
+expedient in many cases but which I felt obscured a more fundamental
+understanding of what was going on.  All of this eventually got reduced to
+the "carry out what you carry in" maxim.  An end-around carry, in any case,
+is merely a convenient fiction -- RU carries always originate at the
+low-order end, propagate through the RU, and then carry out of the
+high-order end (there's no "around" around here).  If the carry-out differs
+from the carry-in, then the initially assumed carry-in is incorrect and the
+computation must be redone using the correct initial carry (which one can't
+actually know until the carry-out is known).
+
+I toyed with the idea of placing the initial (low-order) carry over the
+final delimiter of an RU but decided in the end (pun intended) that it
+really belongs in line with the (low-order) digit to which it applies.
+Similarly, the carry-out skips the leading non-digit punctuation and lines
+up with the digit to which it applies (the '=' or '#' being placed over the
+leading punctuation to indicate whether the carry-out equaled the carry-in
+or not).
+
+Additionally, I have come to think of the background and its reduction to a
+sea of '0's as being akin to the particle physicist's trick of
+renormalization to get rid of those "damned infinities" (as Richard Feynman
+referred to them).  And if we cannot computationally reduce the background
+to zero but only to the complement of zero, then we are no worse off than
+computer scientists who do this all the time with their "high-order sign
+bit(s)".
+
+-------------------------------------------------------------------------------
+
+Connections:
+-----------
+
+I originally came to the problem of the continual carries (actually borrows)
+while working on the JITS procedure.  But this ultimately seemed no more
+bizarre than the continual carries (of zero) that fundamentally happen for
+every addition/subtraction operation -- carries that as school children we
+were taught to ignore (if they were ever mentioned at all), but they are
+there nonetheless.  The JITS procedure was trying to tell me something -- it
+certainly wasn't just random noise heading over the far horizon!  And if it
+meant anything at all, it had to be a representation of the remainder, or
+something like that ...
+
+And the JITS procedure itself was only a consequence of considering what is
+often called the "Hailstone Problem": pick n > 0 and odd, multiply by three,
+add one, cast out all factors of two, cook 'til (d)one.  It seemed obvious
+that patterns of numbers might be usefully investigated in base three in
+order to gain some insights -- but that division by two was just plain
+nasty!  Hence JITS.
+
+The idea for JITS initially sprang from remembering an old (base ten)
+addition puzzle:
+
+          SEND
+        + MORE
+         -----
+         MONEY
+
+The idea for the RU notation was unashamedly swiped from quantum mechanics
+(the "bra" and "ket" notation) where it is used for an entirely different
+purpose.
+
+The Middle Ages counting board (essentially a marked table top or "board")
+was a common piece of household furniture.  Even after losing its markings,
+it is still commonly known as a "counter".  A portable set of markings on a
+"checkered" cloth was popular with tax collectors who worked for the
+"exchequer".
+
+The word "xyzzy" comes from an early interactive fantasy role playing game
+called Adventure (written in Fortran as I recall); the word was (and I
+suppose still is) carved in stone and effected magical transport when
+uttered, er, typed.  The fact that <xy|zz|y> is also my hat size I chalk up
+to the general perversity of Life, the Universe, and Everything -- but for
+that we really need <x|yyzx|x>.
+
+===============================================================================
+
+Back to: →ratsum←
+
+See also: JitSub bt esh ary ratsum phinary fibonacci
+See also: eval.dws/notes.bta
+
+Index:Eide numbers|polynomial|rational number|skewed four|balanced ternary
+Index:Just-In-Time-Subtraction|subtraction, just-in-time
+Index;Eide L.N.|Euler L.

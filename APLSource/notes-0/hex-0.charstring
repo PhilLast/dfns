@@ -1,0 +1,88 @@
+cvex ←    {width} ##.hex nums               ⍝ Hexadecimal from decimal.
+nums ← {signed←0} ##.dec cvex               ⍝ Decimal from hexadecimal.
+
+[hex] and [dec] convert between arrays of decimal numbers and their  hexadecimal
+equivalents.
+
+Hex's optional left argument {width} specifies the number of  hexadecimal digits
+required. Width defaults to 2, 4, 8 or 16 depending on the magnitude of the arg-
+ument.
+
+Dec's optional left argument {signed} determines whether  a  hexadecimal  number
+whose first digit is in the range 8..f is to  be interpreted as a signed or  un-
+signed (default) number.
+
+Restriction: [hex] will not accept numbers whose magnitude means  that  adding 1
+will make no difference.  This means a  maximum  of  around 2*53 for a number of
+⎕DR-type 645.
+
+Examples:
+
+    hex 12 34 56                            ⍝ (result is nested).
+┌──┬──┬──┐
+│0c│22│38│
+└──┴──┴──┘
+
+    hex 100×⍳6                              ⍝ larger numbers.
+ 0064  00c8  012c  0190  01f4  0258
+
+    hex 100000×⍳4                           ⍝ even larger numbers.
+ 000186a0  00030d40  000493e0  00061a80
+
+    hex 4 5⍴⍳20                             ⍝ array of numbers.
+ 01  02  03  04  05
+ 06  07  08  09  0a
+ 0b  0c  0d  0e  0f
+ 10  11  12  13  14
+
+    4 hex 4 5⍴⍳20                           ⍝ specify width.
+ 0001  0002  0003  0004  0005
+ 0006  0007  0008  0009  000a
+ 000b  000c  000d  000e  000f
+ 0010  0011  0012  0013  0014
+
+    dec'3e8'                                ⍝ convert to decimal.
+1000
+    dec'3E8'                                ⍝ upper case A-Z is OK, too.
+1000
+    dec hex 2 4 5⍴⍳40                       ⍝ convert both ways.
+ 1  2  3  4  5
+ 6  7  8  9 10
+11 12 13 14 15
+16 17 18 19 20
+
+21 22 23 24 25
+26 27 28 29 30
+31 32 33 34 35
+36 37 38 39 40
+
+    hex saw(1 2 3)(100 200 300)             ⍝ nested array.
+┌──────────┬────────────────┐
+│┌──┬──┬──┐│┌────┬────┬────┐│
+││01│02│03│││0064│00c8│012c││
+│└──┴──┴──┘│└────┴────┴────┘│
+└──────────┴────────────────┘
+
+    dec hex (1 2 3)(100 200 300)            ⍝ full circle.
+ 1 2 3  100 200 300
+
+⍝ hex of negative integers returns 2's complement or "unsigned" hex number:
+
+    hex ¯3 to 3                             ⍝ hex of negative numbers.
+ fd  fe  ff  00  01  02  03
+
+    1 dec hex ¯3 to 3                       ⍝ round trip if signed.
+¯3 ¯2 ¯1 0 1 2 3
+
+    0 dec hex ¯3 to 3                       ⍝ non-round trip if unsigned.
+253 254 255 0 1 2 3
+
+    hex 2*53                                ⍝ number too big.
+Too big
+    hex 2*53
+   ∧
+
+See also: int saw hexf
+See also: ary phinary bt
+
+Index:hexadecimal|decimal (from hex)

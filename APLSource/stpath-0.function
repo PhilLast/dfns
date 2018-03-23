@@ -1,0 +1,7 @@
+ stpath←{                ⍝ Path through spanning tree ⍺ to vertex ⍵.
+     tree←⍺              ⍝ (partial) spanning tree.
+     ⍬{                  ⍝ path accumulator.
+         ⍵<0:(⍵=¯2)↓⍺    ⍝ root or unvisited vertex: finished.
+         (⍵,⍺)∇ ⍵⊃tree   ⍝ otherwise: prefix previous (parent) vertex.
+     }⍵
+ }

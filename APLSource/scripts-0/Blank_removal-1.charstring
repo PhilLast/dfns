@@ -1,0 +1,68 @@
+⍝ Blank Removal:
+
+      show←{' ·'subs ⍵}             ⍝ show '·'s for blanks.
+
+      cvec←'  twas  ever  thus  '
+
+      show cvec                     ⍝ character vector.
+··twas··ever··thus··
+
+      show dlb cvec                 ⍝ drop leading blanks.
+twas··ever··thus··
+
+      show dtb cvec                 ⍝ drop trailing blanks.
+··twas··ever··thus
+
+      show deb cvec                 ⍝ drop ending blanks.
+twas··ever··thus
+
+      show dmb cvec                 ⍝ drop multiple blanks.
+·twas·ever·thus·
+
+      show dxb cvec                 ⍝ drop extraneous blanks.
+twas·ever·thus
+
+      show dab cvec                 ⍝ drop all blanks.
+twaseverthus
+
+      mix←{⎕ml←0 ⋄ ↑⍵}
+
+      cmtr←mix cvec'  heart with  clay  '
+
+      show cmtr                     ⍝ character matrix.
+··twas··ever··thus··
+··heart·with··clay··
+
+      show dlb cmtr                 ⍝ drop leading blank columns.
+twas··ever··thus··
+heart·with··clay··
+
+      show deb cmtr                 ⍝ drop ending blank columns.
+twas··ever··thus
+heart·with··clay
+
+      show dxb cmtr                 ⍝ drop extraneous blank columns.
+twas··ever·thus
+heart·with·clay
+
+      show¨ dxb↓cmtr                ⍝ drop extraneous blanks in depth 2 array.
+ twas·ever·thus  heart·with·clay 
+
+      show mix dxb↓cmtr             ⍝ drop extraneous blanks from each row.
+twas·ever·thus·
+heart·with·clay
+
+      's'dmb'Mississippi'           ⍝ drop multiple 's's.
+Misisippi
+
+      'sp'dmb'Mississippi'          ⍝ ... and 'p's.
+Misisipi
+
+      'is'dxb'Mississippi'          ⍝ drop extra 'i's and 's's.
+Mipp
+
+      1 dmb 8 1 1 1 2 5             ⍝ drop multiple 1s.
+8 1 2 5
+
+      ''≡dmb''                      ⍝ test null case (Hager).
+1

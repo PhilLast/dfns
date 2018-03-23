@@ -1,0 +1,126 @@
+Boolean functions and truth tables
+----------------------------------
+
+NB: There is substantial overlap between this article and Phil Last's →logic←.
+
+Boolean  functions  may  be represented as "truth tables". Here are truth tables
+for ∧ (and), ∨ (or) and ≠ (not-equal):
+
+      ∧   0   1           ∨   0   1           ≠   0   1
+        ┌───┬───┐           ┌───┬───┐           ┌───┬───┐
+      0 │ 0 │ 0 │         0 │ 0 │ 1 │         0 │ 0 │ 1 │
+        ├───┼───┤           ├───┼───┤           ├───┼───┤
+      1 │ 0 │ 1 │         1 │ 1 │ 1 │         1 │ 1 │ 0 │
+        └───┴───┘           └───┴───┘           └───┴───┘
+
+We can represent these results in a more compact form by raveling the matrix:
+
+      ∧  0 0 0 1          ∨  0 1 1 1          ≠  0 1 1 0
+
+Notice that each of the above vectors is the result of applying its dyadic func-
+tion between arguments 0 0 1 1 and 0 1 0 1.
+
+Here is the complete list of boolean functions:
+
+    {⍺∧0∧⍵}  0 0 0 0        ⍝ boolean functions (pervasive).
+         ∧   0 0 0 1
+         >   0 0 1 0
+    {⍺∨0∧⍵}  0 0 1 1
+         <   0 1 0 0
+    {⍵∨0∧⍺}  0 1 0 1
+         ≠   0 1 1 0
+         ∨   0 1 1 1
+         ⍱   1 0 0 0
+         =   1 0 0 1
+    {⍵⍲1∨⍺}  1 0 1 0
+         ≥   1 0 1 1
+    {⍺⍲1∨⍵}  1 1 0 0
+         ≤   1 1 0 1
+         ⍲   1 1 1 0
+    {⍺∨1∨⍵}  1 1 1 1
+
+We can check this by accumulating a list-of-functions,  using operator →lof←, to
+apply each function in turn:
+
+    bfns←{''}                       ⍝ initial boolean functions vector ...
+
+    bfns ← bfns lof  {⍺∧0∧⍵}        ⍝ boolean functions (pervasive).
+    bfns ← bfns lof   ∧
+    bfns ← bfns lof   >
+    bfns ← bfns lof  {⍺∨0∧⍵}
+    bfns ← bfns lof   <
+    bfns ← bfns lof  {⍵∨0∧⍺}
+    bfns ← bfns lof   ≠
+    bfns ← bfns lof   ∨
+    bfns ← bfns lof   ⍱
+    bfns ← bfns lof   =
+    bfns ← bfns lof  {⍵⍲1∨⍺}
+    bfns ← bfns lof   ≥
+    bfns ← bfns lof  {⍺⍲1∨⍵}
+    bfns ← bfns lof   ≤
+    bfns ← bfns lof   ⍲
+    bfns ← bfns lof  {⍺∨1∨⍵}
+
+    ↑ 0 0 1 1 bfns 0 1 0 1          ⍝ check (pervasive) boolean functions.
+0 0 0 0
+0 0 0 1
+0 0 1 0
+0 0 1 1
+0 1 0 0
+0 1 0 1
+0 1 1 0
+0 1 1 1
+1 0 0 0
+1 0 0 1
+1 0 1 0
+1 0 1 1
+1 1 0 0
+1 1 0 1
+1 1 1 0
+1 1 1 1
+
+For  depth=0  arguments, the non-scalar (D) functions may be greatly simplified,
+as they are then not required to pervade their arguments:
+
+    {0}  0 0 0 0        ⍝ boolean functions (non-pervasive).
+     ∧   0 0 0 1
+     >   0 0 1 0
+     ⊣   0 0 1 1
+     <   0 1 0 0
+     ⊢   0 1 0 1
+     ≠   0 1 1 0
+     ∨   0 1 1 1
+     ⍱   1 0 0 0
+     =   1 0 0 1
+   {~⍵}  1 0 1 0
+     ≥   1 0 1 1
+   {~⍺}  1 1 0 0
+     ≤   1 1 0 1
+     ⍲   1 1 1 0
+    {1}  1 1 1 1
+
+(
+    Of  course,  each  of the above D-functions may be made pervasive by binding
+    it with the →perv← operator:
+
+          0 1 ⊢perv ⊂0 1
+     0 1  0 1
+
+          0 1 ⊣perv ⊂0 1
+     0 0  1 1
+
+          .. etc.
+)
+
+Boolean scans
+-------------
+Many of the functions derive interesting functions with scan (\). For example:
+
+    ∧\      ⍝ leading 1s
+    <\      ⍝ first 1
+    ≠\      ⍝ toggle at 1s
+  ...\
+  {0}\      ⍝ first item, then 0s. See →baby←
+
+See also: lof baby logic
+Index:boolean functions|truth tables|pervasive function

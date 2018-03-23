@@ -1,0 +1,10 @@
+ dfspan←{                ⍝ Depth-first spanning tree: graph ⍺ from vertex ⍵.
+     tree←¯2⊣¨⍺          ⍝ initial tree: all unvisited vertices.
+     graph←⍺             ⍝ ⍺ is graph vector.
+     tree⊣¯1{            ⍝ return final value of tree.
+         ¯2≠⍵⊃tree:0     ⍝ vertex visited: backtrack.
+         tree[⍵]←⍺       ⍝ backlink vertex.
+         ⍬≡⍵⊃graph:0     ⍝ no exits: backtrack.
+         ⍵ ∇¨⍵⊃graph     ⍝ follow vertices in order.
+     }⍵                  ⍝ from starting vertex.
+ }

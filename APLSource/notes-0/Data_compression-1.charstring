@@ -1,0 +1,185 @@
+───────────────────────
+pack-: Data Compression
+───────────────────────
+These functions, mostly from Veli-Matti Jantunen, pack and unpack data. The left
+argument  of  each  function  (default 1)  determines whether the right argument
+is to be 1:compressed or 0:expanded (mnemonic: 1-pack, 0-unpack).
+
+          text ≡ 0 packT 1 packT text
+    1
+
+packs are suitable for compressing:
+
+    B H R S U Z 4   bitmaps and images
+    D H S T Z       text,
+    N Z             sparse, simple numeric or character arrays.
+
+We  can  test the relative performance of the various approaches with a function
+that compresses and expands  its argument. [pack_test] takes an array to pack as
+right argument and a 1-character algorithm code as left argument.
+
+    pack_test←{                         ⍝ Test pack/unpack.
+        pack←⍎'pack',⍺                  ⍝ compression function.
+        ais←⎕AI ⋄ cmp←  pack ⍵          ⍝ compressed data.
+        aic←⎕AI ⋄ exp←0 pack cmp        ⍝ re-expanded data.
+        aix←⎕AI                         ⍝ expansion time.
+        exp≢⍵:'N / A'                   ⍝ unpack & check.
+        times←¯2-/2⊃¨ais aic aix        ⍝ processor times.
+        mill←,↑6 0∘⍕¨times              ⍝ milliseconds processor time.
+        fmto←⎕SIZE↑2 4⍴'exp cmp '       ⍝ before and after sizes.
+        pcent←'%',⍨4 0⍕100×÷/⌽-\fmto    ⍝ % reduction (bigger is better).
+        csize←6 0⍕¯1↑fmto               ⍝ compressed size.
+        csize,pcent,mill                ⍝ size compression milliseconds.
+    }
+
+Result fields are:
+
+    csize   size of compressed data.
+    redn%   percentage reduction (bigger is better).
+    cmill   processor milliseconds for compression.
+    xmill   processor milliseconds for expansion.
+
+The compression algorithms were tested against 3 arrays:
+
+A bitmap:
+
+      'dapl'⎕wc'BitMap' 'c:/dyalog90/dyalog.bmp'    ⍝ Dyalog APL bitmap
+
+A text vector:
+
+      notes.Data_compression.
+
+A sparse numeric matrix:
+
+      nmat←{⍵×0=10|⍵}?100 100⍴1000
+
+... leading to:
+
+      algs←'BDHNQRSTUX4Z'                           ⍝ algorithms: packB, ···
+      data←notes.Data_compression dapl.CBits nmat   ⍝ subject data.
+      size←{⎕size'⍵'}                               ⍝ size function.
+      ttls←⍕¨'Text' 'BitMap' 'Sparse',¨size¨data    ⍝ initial data sizes.
+
+      (' ',algs),ttls⍪algs∘.pack_test data          ⍝ comparison table.
+┌─┬───────────────────────┬───────────────────────┬───────────────────────┐
+│ │Text 7632              │BitMap 181940          │Sparse 20020           │
+├─┼───────────────────────┼───────────────────────┼───────────────────────┤
+│B│  7652   0%     0    16│  6108  97%     0    16│  3240  84%     0     0│
+├─┼───────────────────────┼───────────────────────┼───────────────────────┤
+│D│  4612  40%    15     0│N / A                  │N / A                  │
+├─┼───────────────────────┼───────────────────────┼───────────────────────┤
+│H│  4552  40%    16    78│  5800  97%    15   531│  2508  87%    15   110│
+├─┼───────────────────────┼───────────────────────┼───────────────────────┤
+│N│  6768  11%     0     0│187688  ¯3%     0     0│  3384  83%     0     0│
+├─┼───────────────────────┼───────────────────────┼───────────────────────┤
+│Q│  4676  39%     0    16│ 13980  92%    15    32│  3760  81%     0     0│
+├─┼───────────────────────┼───────────────────────┼───────────────────────┤
+│R│  9728 ¯27%    16     0│ 15508  91%     0     0│  5924  70%     0     0│
+├─┼───────────────────────┼───────────────────────┼───────────────────────┤
+│S│  4764  38%    15   500│  5800  97%    15  4649│  2612  87%    15   390│
+├─┼───────────────────────┼───────────────────────┼───────────────────────┤
+│T│  5612  26%    16     0│N / A                  │N / A                  │
+├─┼───────────────────────┼───────────────────────┼───────────────────────┤
+│U│  7816  ¯2%     0     0│  5776  97%    16     0│ 10284  49%     0     0│
+├─┼───────────────────────┼───────────────────────┼───────────────────────┤
+│X│  6704  12%    46    16│  5780  97%    47    15│  6560  67%    16    15│
+├─┼───────────────────────┼───────────────────────┼───────────────────────┤
+│4│  8612 ¯13%   125   172│ 12880  93%   265   296│  6264  69%   109   125│
+├─┼───────────────────────┼───────────────────────┼───────────────────────┤
+│Z│  3816  50%   250   265│  2536  99%   671   249│  2556  87%   219   156│
+└─┴───────────────────────┴───────────────────────┴───────────────────────┘
+
+For  comparison, the following examples show some different packings of the same
+array 'Mississippi'.
+
+    packB'Mississippi'                  ⍝ simple array packing.
+┌─────────┬─────────────────────┬───────────────────────────────┐
+│1 11 Misp│1 1 1 0 1 1 0 1 1 0 1│0 0 1 0 1 0 1 0 0 1 0 1 0 1 1 1│
+└─────────┴─────────────────────┴───────────────────────────────┘
+
+    packD'Mississippi'                  ⍝ Pack char array to boolean vector.
+0 0 0 1 0 0 1 0 0 1 0 1 1 0 0 0 0 0 0 1 1 0 0 0 1 1 0 0 1 0 0 1 0 0 0 1 1 0 0 1
+      0 0 0 0 0 0 1 0 0 1 1 0 1 1 0 0 0 1 0 1 0 0 1 0 0 1 0 1 0 0 1 0 0 1 0 1 1
+      0 1 1 0 1 0
+
+    packH'Mississippi'                  ⍝ Huffman packing.
+┌──┬────┬───────┬─────────────────────────────────────────┐
+│11│sMpi│1 3 3 2│1 0 0 1 1 0 0 1 1 0 0 1 1 1 0 1 1 0 1 1 1│
+└──┴────┴───────┴─────────────────────────────────────────┘
+
+    packQ'Mississippi'                  ⍝ Assorted uniQues packer.
+┌────┬────┬───────────────────────────────────────────────────────────┐
+│ispM│1 11│1 0 0 0 1 0 1 0 0 1 0 0 1 0 1 0 0 1 0 0 1 0 1 1 0 1 1 0 1 0│
+└────┴────┴───────────────────────────────────────────────────────────┘
+
+    packR'Mississippi'                  ⍝ RLE packing.
+┌──┬───────────────┬────────┐
+│11│1 1 2 1 2 1 2 1│Misisipi│
+└──┴───────────────┴────────┘
+
+    packS'Mississippi'                  ⍝ Shannon-Fano packing.
+┌──┬────┬───────┬───────────────────────────────────────────────────────────┐
+│11│ispM│1 2 3 3│0 1 0 1 1 0 1 1 1 1 1 1 0 1 0 1 0 0 1 0 1 0 0 1 1 0 1 1 0 0│
+└──┴────┴───────┴───────────────────────────────────────────────────────────┘
+
+    packU'Mississippi'                  ⍝ Unique packing.
+┌──┬────┬─────────────────────┐
+│11│Misp│0 1 2 2 1 2 2 1 3 3 1│
+└──┴────┴─────────────────────┘
+
+    packX'Mississippi'                  ⍝ Text packing.
+┌────┬────┬───────────────────────────────────────────────────────────────────┐
+│Misp│1 11│0 1 0 0 1 0 1 0 0 1 1 0 0 0 0 1 0 1 0 0 1 0 0 0 1 1 0 0 0 0 0 1 1 1│
+└────┴────┴───────────────────────────────────────────────────────────────────┘
+
+    pack4'Mississippi'                  ⍝ Quad-tree packing.
+┌────┬──┬──────────────────────────────────────────┐
+│Misp│11│¯3 0 1 ¯1 2 ¯1 2 1 ¯2 2 ¯1 2 1 ¯1 3 ¯1 3 1│
+└────┴──┴──────────────────────────────────────────┘
+
+    packZ'Mississippi'                  ⍝ LZW packing.
+┌──┬─────────────────┬────┐
+│11│0 0 0 0 1 1 0 0 0│Misp│
+│  │0 0 1 1 0 1 1 1 0│    │
+│  │0 1 0 0 1 1 1 1 1│    │
+└──┴─────────────────┴────┘
+
+    ⍝ Here are some more examples, using a larger text matrix:
+
+    mm←⎕fmt notes.Marilyn       ⍝ mm is a simple char matrix. See: →Marilyn←
+
+    chk←{                       ⍝ check of compress-decompress round-trip.
+        size←{⍬⍴⎕size'⍵'}
+        ⍵≡0 ⍺⍺ ⍺⍺ ⍵:size ⍺⍺ ⍵
+        ' Error: compression round-trip fails'
+    }
+
+        ⊢ chk mm    ⍝ Raw data size
+11300
+    packB chk mm    ⍝ Pack a simple array.
+11376
+    pack4 chk mm    ⍝ ⍝ Quad-tree packing.
+9176
+    packR chk mm    ⍝ Run Length Encoding (RLE packing).
+7808
+    packT chk ,mm   ⍝ Simple text vector packager.
+7136
+    packQ chk mm    ⍝ Assorted uniQues packer.
+5276
+    packS chk mm    ⍝ Shannon-Fano packing
+5084
+    packU chk mm    ⍝ Unique packer.
+5064
+    packH chk mm    ⍝ Huffman packing.
+5028
+    packX chk mm    ⍝ TeXt packer.
+3800
+    packZ chk mm    ⍝ Lempel-Ziv-Welch compression.
+3612
+
+See also: packB packD packH packN packQ packR
+See also: packS packT packU packX packZ pack4
+See also: pack base64 shannon
+
+Index:compression|text|stuff
+Index;Jantunen V-M.|Monroe M.

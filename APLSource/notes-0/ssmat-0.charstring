@@ -1,0 +1,30 @@
+cmat ← ##.ssmat (cmat from into)            ⍝ Matrix search/replace.
+
+As  ss,  but  the  result  and first item in the argument are character matrices
+rather  than  vectors.  When [from] and [into] are of differing lengths, shorter
+vectors along the last axis are padded on the right with prototypical items.
+
+Examples:
+
+      ssmat(2 12⍴'Is you is oris you aint?')'is' 'was'
+Is you was or
+was you aint?
+
+      ssmat (3 5⍴⍳15) (7 8 9) (70 80 90)    ⍝ Numeric replacement.
+ 1  2  3  4  5
+ 6 70 80 90 10
+11 12 13 14 15
+
+      ssmat (3 5⍴⍳15) (7 8 9) 'repl'        ⍝ Replace with longer string.
+ 1  2  3  4  5  0
+ 6  r  e  p  l 10
+11 12 13 14 15  0
+
+      ssmat (3 5⍴⍳15) (7 8 9) 'r'           ⍝ Replace with shorter string.
+ 1  2  3  4  5
+ 6  r 10  0  0
+11 12 13 14 15
+
+See also: ss ssword subs
+
+Index:xutils, ss|string replacement|substitution

@@ -1,0 +1,15 @@
+⍝ Time function application:
+
+⍝ [time] uses ⎕← to display monitoring information in the session.
+⍝ For testing, we modify the temporary copy of the operator in this
+⍝ namespace to output to variable ∆out.
+
+    sout←'⎕←' '_←{∆out∘←⍵}'∘subs        ⍝ subs ∆out← for ⎕←
+
+    _←⎕fx sout ⎕cr'time'                ⍝ modify time operator.
+
+    ∆out←''                             ⍝ initialise output buffer.
+    + time 0                            ⍝ time function application.
+0
+    ↑∆out                               ⍝ show traced output.
+00.00

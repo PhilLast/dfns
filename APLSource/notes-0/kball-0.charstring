@@ -1,0 +1,75 @@
+rslt ← {c←1} ##.kball p         ⍝ Relationship between point and k-ball.
+
+Supplied  by  Steve Mansour, this function determines the relationship between a
+point and a k-ball. For background, see Steve's paper Arithmetic Boundary Check-
+ing [abc].
+
+For k=1, this is a line segment
+    k=2, this is a circle
+    k=3, this is a sphere
+    k=4, this is a hypersphere, etc.
+
+c:  Left argument is a scalar or vector
+    First item of c is the radius
+    Remaining items are the coordinates of the center (default is origin)
+    If left argument is not specified, it represents the unit ball centered
+    at the origin.
+
+p:  Vector or matrix
+    If p is a k-vector it is the coordinates of a point in k-space
+    If p is a k×n matrix, each column represents the coordinates of a point
+
+rslt:  A scalar or vector of length n corresponding to the rows of p
+       indicating the region to which it belongs as indicated in the
+       diagram below:
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                                                                       │
+│       Outside (1)                                                     │
+│                            *     *     *                              │
+│                                                Boundary (0)           │
+│                     *                       *   |                     │
+│                                                 ∨                     │
+│                 *                               *                     │
+│                                                                       │
+│                                                                       │
+│             *                                       *                 │
+│                                                                       │
+│                       r                                               │
+│             *<----------------->*                    *                │
+│                                 c                                     │
+│                                                                       │
+│             *                                       *                 │
+│                             Interior (-1)                             │
+│                                                                       │
+│                 *                               *                     │
+│                                                                       │
+│                     *                       *                         │
+│                                                                       │
+│                           *     *     *                               │
+│                                                                       │
+│                                                                       │
+└───────────────────────────────────────────────────────────────────────┘
+
+Examples:
+
+    5 kball 2 3                     ⍝ Inside the circle.
+¯1
+    5 kball 3 4                     ⍝ On the boundary.
+0
+    5 kball 5 6                     ⍝ Outside the circle.
+1
+    5 1 2 kball 2 3, 4 6, ⍪9 9      ⍝ Radius 5; center at (1,2).
+¯1 0 1
+
+    13 kball 5 6 7                  ⍝ Inside the sphere.
+¯1
+    13 kball 3 4 12                 ⍝ On the surface.
+0
+    13 kball 6 8 12                 ⍝ Outside the sphere.
+1
+
+See also: abc kcell ksphere
+
+Index:K-ball|sphere|hypersphere
+Index;Mansour S.M.

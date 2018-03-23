@@ -1,0 +1,70 @@
+⍝ Null packing:
+
+    string←'whistles        far     and wee'        ⍝ text string.
+
+    disp packN string                               ⍝ format of packN'd string.
+┌──┬─────────────────────────────────────────────────────────────┬─────────────────┐
+│31│1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 1 1 1 0 1 1 1│whistlesfarandwee│
+└──┴─────────────────────────────────────────────────────────────┴─────────────────┘
+
+      size←{⎕size'⍵'}                               ⍝ show size.
+
+:If 16=size ⍬                                       ⍝ 32-bit interpreter:
+
+          size string                               ⍝ original size.
+    48
+          size packN string                         ⍝ packed: nett loss.
+    104
+          size 1000⍴string                          ⍝ larger sring.
+    1016
+          size packN 1000⍴string                    ⍝ packed: nett gain.
+    760
+
+:Else                                               ⍝ 64-bit interpreter:
+
+          size string                               ⍝ original size.
+    64
+          size packN string                         ⍝ packed: nett loss.
+    192
+          size 1000⍴string                          ⍝ larger sring.
+    1032
+          size packN 1000⍴string                    ⍝ packed: nett gain.
+    840
+
+:EndIf
+
+      mat←4 12⍴((⍳48)∊4 32 35 37 48)\2.48 3.66 7.57 9.92 6.33
+
+      mat                                           ⍝ numeric matrix.
+0    0 0 2.48 0 0 0 0    0 0 0    0   
+0    0 0 0    0 0 0 0    0 0 0    0   
+0    0 0 0    0 0 0 3.66 0 0 7.57 0   
+9.92 0 0 0    0 0 0 0    0 0 0    6.33
+
+    disp packN mat                                  ⍝ format of packN'd matrix.
+┌────┬───────────────────────────────────────────────────────────────────────────────────────────────┬────────────────────────┐
+│4 12│0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 0 1 0 0 0 0 0 0 0 0 0 0 1│2.48 3.66 7.57 9.92 6.33│
+└────┴───────────────────────────────────────────────────────────────────────────────────────────────┴────────────────────────┘
+
+:If 16=size ⍬                                       ⍝ 32-bit interpreter:
+
+          size mat                                  ⍝ original size.
+    404
+          size packN mat                            ⍝ packed: nett gain.
+    128
+
+:Else
+          size mat                                  ⍝ original size.
+    424
+          size packN mat                            ⍝ packed: nett gain.
+    208
+
+:EndIf
+
+    chk←{
+        ⍵≡0 ⍺⍺ ⍺⍺ ⍵:'ok'
+        ' Error: compression round-trip fails'
+    }
+
+    packD chk ⎕fmt notes.Marilyn        ⍝ simple text matrix
+ok

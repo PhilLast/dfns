@@ -1,0 +1,20 @@
+⍝ Justify line-vector to width ⍺:
+
+    sub←'\'(⎕ucs 13)∘subs
+
+    txt←sub'We''re all going on a\summer holiday;\no more working for a\week or two.'
+
+    txt
+We're all going on a 
+summer holiday;      
+no more working for a
+week or two.         
+
+    justify txt
+We're  all going on a
+summer       holiday;
+no more working for a
+week or two.         
+
+    Alpha test'Line_vectors'
+1

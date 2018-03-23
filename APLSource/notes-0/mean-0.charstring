@@ -1,0 +1,36 @@
+num ← ##.mean nvec                          ⍝ Arithmetic mean.
+
+An illustration of local definitions.
+
+NB: From Dyalog V14, this function can be coded as the fork:
+
+    mean ← +⌿ ÷ ≢       ⍝ mean along first axis
+
+Example:
+
+    mean 1 2 3 4
+2.5
+    square ← *∘2
+    sqrt ← *∘0.5
+    stdev ← {sqrt(mean square ⍵)-square mean ⍵}     ⍝ standard deviation.
+
+    ⎕pp←5
+
+    stdev 2 2 2
+0
+    stdev 1 2 3
+0.8165
+
+    stdev ← sqrt(mean∘square - square∘mean)         ⍝ ditto using train
+
+⍝ Also:
+
+    mean ← +.÷∘⍴⍨           ⍝ (P.Last)
+    mean ← {1÷.⊥⍵(⍵=⍵)}     ⍝ (G.Streeter Dyalog'14)
+    mean ← {⍵⌹⍵=⍵}          ⍝ (T.Seppälä)
+    mean ← {⌹/⍵∘*¨1 0}      ⍝ (R.Hui)
+    mean ← ⌹∘(=⍨)⍨          ⍝ (R.Hui)
+    mean ← ⊢ ⌹ =⍨           ⍝ same idea using fork
+
+Index:local names|standard deviation|APL'88
+Index;Last P.|Streeter G.|Hui R.K.W.|Seppälä T.

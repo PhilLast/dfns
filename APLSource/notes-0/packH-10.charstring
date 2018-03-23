@@ -1,0 +1,317 @@
+cmp ← {cmp←1} ##.packH exp                  ⍝ Huffman packing.
+
+Huffman's  algorithm  builds  a binary tree of unique items in the input string,
+using  the  items'  frequency  of occurrence as a weighting. Frequently occuring
+items  are  placed near the root of the tree and those less frequent towards the
+leaves. For example, using the string 'Mississippi':
+
+    Original string:    M i s s i s s i p p i
+    unique items:       M i s p
+    item frequency:     1 4 4 2
+
+    Huffman tree:       ┌──┴──┐
+                        s   ┌─┴──┐
+                        4 ┌─┴─┐  i
+                          M   p  4
+                          1   2
+
+An item may then be picked from the tree using binary code: 0:left, 1:right. For
+example, in the above tree 'M' is at (1 0 0), 'i' is at (1 1) and 's' is at (0).
+The full coding for 'Mississippi' is the concatenation of codes:
+
+     M       i     s   s   i     s   s   i     p       p       i
+    (1 0 0) (1 1) (0) (0) (1 1) (0) (0) (1 1) (1 0 1) (1 0 1) (1 1)
+
+=>  1 0 0 1 1 0 0 1 1 0 0 1 1 1 0 1 1 0 1 1 1
+
+Choosing  the shortest codes for the most frequently occurring items, guarantees
+that the total code length is optimally short.
+
+Notice  that no separation marker is needed between successive code items in the
+output "bit string" as the length of each is determined by the path it describes
+from  the  root  of the tree to its leaf. On expansion, bits are taken one-at-a-
+time  from  the input bit stream, to navigate through the tree. Each time a leaf
+is  encountered, it is emitted to the output stream and the process resumed with
+the following bit, starting from the tree's root.
+
+Output  from  the encoding is the bit string, together with its Huffman tree. In
+addition,  in  order  to allow simple arrays of _any_ rank, the subject array is
+ravelled, with its original shape prefixed to the output structure.
+
+Technical notes:
+
+The nested array form of the Huffman tree could be included directly in the out-
+put  structure,  but  there are more space-efficient representations. An obvious
+one  is  to emit the vector of unique items and its corresponding frequency vec-
+tor.  This  is  appealing in that the sub-function that builds the tree from the
+frequency  vector  may be used for both compression and expansion, and so may be
+included in the packH capsule as a common local function.
+
+Using this method, the output would look like this:
+
+        packH'Mississippi'
+    ┌──┬────┬───────┬─────────────────────────────────────────┐
+    │11│Misp│1 4 4 2│1 0 0 1 1 0 0 1 1 0 0 1 1 1 0 1 1 0 1 1 1│
+    └──┴────┴───────┴─────────────────────────────────────────┘
+
+However, for an array where any item occurs more than 127 times, elements of the
+frequency vector will occupy 16 bits apiece (and 32 bits if any item occurs more
+than  32,767  times).  A more frugal method is to output the tree's [leaves] and
+[depths]  vectors.  For  all  pratical purposes, items of the depths vector will
+consume only 8 bits each.
+
+        packH'Mississippi'
+    ┌──┬────┬───────┬─────────────────────────────────────────┐
+    │11│sMpi│1 3 3 2│1 0 0 1 1 0 0 1 1 0 0 1 1 1 0 1 1 0 1 1 1│
+    └──┴────┴───────┴─────────────────────────────────────────┘
+
+A  Huffman  tree has the property that each node has either 0 or 2 sub-trees. It
+is  this  property that allows us to reconstruct the tree unambiguously from the
+depths  of  its  leaves.  For  example, there are only four such distinct 4-leaf
+trees, and they have distinct leaf-depth vectors.
+
+    4-leaf trees:       ┌─∘┐         ┌─∘──┐       ┌─∘─┐        ┌─∘─┐
+                      ┌─∘┐ D        ┌∘─┐  D       A  ┌∘─┐      A ┌─∘┐
+                     ┌∘┐ C          A ┌∘┐           ┌∘┐ D        B ┌∘┐
+                     A B              B C           B C            C D
+    leaf depths:     3 3 2 1        2 3 3 1       1 3 3 2      1 2 3 3
+
+In contrast, leaf-depth can not distinguish more general binary trees:
+
+    2-leaf trees:     ┌∘┐          ┌∘─┐
+                     ┌∘ B          ∘┐ B
+                     A              A
+    leaf depths:     2  1           2 1
+
+As  a  larger  example, look at the following (approximate (*)) Huffman tree for
+these  notes, with character '·' substituted for blanks and newlines. Notice how
+the  most  frequently  occurring  character  '·'  is allocated code (0) and that
+groups  of related characters such as '()', '{}', '[]', '├ ┼ ┤', '┌ ┐' and '└ ┘'
+tend to appear at the same depth in the tree. Notice also, how the very presence
+of  this  tree  diagram in the notes has forced the '─' character up to position
+(1 0 0) in itself.
+
+┌┴───────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+·  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┴─────────────────────────────────────────────────────────┐
+  ┌┴───────────────────────────────────────────────────────────────────────────────────────┐                                                                     ┌─────────┴─────────────────────────┐
+  ─                      ┌─────────────────────────────────────────────────────────────────┴───────────────────┐                                   ┌─────────────┴───┐                             ┌─┴───────────────────────────────┐
+     ┌───────────────────┴─┐                                                                     ┌─────────────┴┐                          ┌───────┴─┐             ┌─┴───┐   ┌─────────────────────┴┐    ┌───────────────────────────┴─┐
+    ┌┴───────────┐        ┌┴───────────────────┐                                             ┌───┴─┐            t    ┌─────────────────────┴─┐      ┌┴─┐          ┌┴┐  ┌─┴┐ ┌┴───────────────────┐  e  ┌─┴─┐                          ┌┴┐
+    c          ┌─┴─┐      h  ┌─────────────────┴───────────────────────┐                    ┌┴─┐  ┌┴─────────┐     ┌─┴───────┐              ┌┴─┐    o ┌┴─┐        │ n ┌┴┐ r a        ┌───────────┴┐   ┌┴┐ ┌┴───────────────────┐      s i
+         ┌─────┴┐ ┌┴───┐    ┌┴─────┐                                 ┌─┴─────────────────┐  1 ┌┴┐ m    ┌─────┴┐   ┌┴┐      ┌─┴───────────┐  f ┌┴─┐    u ┌┴─────┐      l ┴          ┌─┴─┐          ┐   ┌ p d  ┌─────────────────┴─┐
+       ┌─┴───┐  y v  ┌─┴┐   b  ┌───┴───┐               ┌─────────────┴┐                ┌─┴┐   0 →    ┌─┴─┐    .   , -    ┌─┴┐          ┌─┴┐   ' ┌┴┐     g  ┌───┴┐              ┌───┴┐ ┌┴─┐                  ┌┴─────────┐        ┌┴─┐
+      ┌┴┐  ┌─┴┐     ┌┴┐ 3     ┌┴─┐   ┌─┴───┐       ┌───┴─────┐        x        ┌───────┴┐ w         ┌┴┐ ┌┴─┐           ┌─┴┐ M      ┌───┴┐ 2     └ ┘       ┌┴─┐  ⍝             ┌┴─┐  ( ) ┌┴───┐              :        ┌─┴─────┐  ┬ ┌┴┐
+      } ↑ ┌┴┐ 4     ↓ ¯       A ┌┴┐ ┌┴┐  ┌─┴─┐   ┌─┴─┐   ┌───┴───┐         ┌───┴───┐    j           ⍺ T ⊃ ┌┴┐         ┌┴┐ ∘      ┌─┴─┐  H                 > ┌┴┐               k ┌┴┐     q  ┌─┴─┐                 ┌───┴┐    ┌─┴┐   ⍵ +
+          B ≡                   F C D ⌽ ┌┴┐ ┌┴┐ ┌┴┐ ┌┴┐ ┌┴─┐   ┌─┴─┐     ┌─┴─┐   ┌─┴─┐                    " ├         ┼ ┤      ┌─┴┐ ┌┴┐                     = ~                 ⍉ ←       ┌┴┐ ┌┴┐              ┌─┴─┐  <  ┌─┴┐ {
+                                        N E * [ ] \ R 9 S ┌┴┐ ┌┴┐ ┌┴┐   ┌┴┐ ┌┴┐ ┌┴┐ ┌┴┐                                       ┌┴┐ O 7 ⍬                                                   ⊂ ¨ / ∇             ┌┴┐ ┌┴┐   ┌┴┐ I
+                                                          # ! ⍨ W ⍋ ⊥   ⍳ ; 5 _ ⍪ ⎕ ∨ ⍕                                       × |                                                                             U 6 8 ⍴   ≠ P
+
+(*)  The  tree  is approximate, because inserting it into the notes, changes the
+notes'  Huffman  tree slightly (as does adding this comment). Several iterations
+of  recalculating  and replacing the tree resulted in a loop of several distinct
+trees, of which the above is one. Therefore, the above tree _does not_ represent
+these notes exactly unless adding this final remark happens to cause the iterat-
+ions to converge! The tree was formatted using:
+
+    hfmt←{                                                ⍝ Format Huffman tree.
+        join←{⍵⍪⍉↑↑{⍺,' ',⍵}/↓∘⍉¨⍺}                       ⍝ join sub-trees.
+        arch←{⍺⍺ ⍺[⎕IO+{⍵+∨\⍵}⍺⍺'┴'=⊃↓⍵]}                 ⍝ make ┌─┴─┐ archway.
+        0=≡⍵:↑,↓⍕,⍵                                       ⍝ leaf: char mat.
+        lft rgt←∇¨⍵                                       ⍝ sub-trees and their,
+        case←×|≡¨⍵                                        ⍝ relative depths:
+        0 0≡case:lft rgt join'┌┴┐'                        ⍝ leaf-leaf,
+        0 1≡case:lft rgt join'┌┴',' ─┐'⌽arch rgt          ⍝ leaf-branch,
+        1 0≡case:lft rgt join'┴┐',⍨' ─┌'+arch lft         ⍝ branch-leaf,
+        lft rgt join(' ─┌'+arch lft),'┴',' ─┐'⌽arch rgt   ⍝ branch-branch.
+    }
+
+-----------
+compression
+-----------
+The  tree  is  built  by taking the two most infrequently occurring items in the
+unique  list  and  replacing them with a single item: their "pair" together with
+the  sum of their frequencies. This process is repeated until only a single item
+remains:
+
+        tree←{                          ⍝ Huffman tree.
+            1=⍴⍵:⊃⌽⊃⍵                   ⍝ list exhausted: done
+            nxt←⍵[2↑⍋⊃¨⍵]               ⍝ next two lowest frequencies,
+            freqs items←↓⍉↑nxt          ⍝ and corresponding items.
+            ∇(⍵~nxt),⊂(+/freqs),⊂items  ⍝ collect 2 most infrequent items.
+        }↓⍉↑freq uniq                   ⍝ tree from frequency-item pairs.
+
+ ┌→──┬───┬───┬───┐    ┌→──┬───┬──────┐    ┌→──┬──────────┐    ┌→──────────────┐
+ │1 M│4 i│4 s│2 p│ => │   │   │┌→┬──┐│ => │   │┌→┬──────┐│ => │┌→─┬──────────┐│
+ └+─→┴+─→┴+─→┴+─→┘    │4 i│4 s││3│Mp││    │   ││ │┌→─┬─┐││    ││  │┌→┬──────┐││
+                      │   │   │└─┴─→┘│    │4 s││7││Mp│i│││    ││  ││ │┌→─┬─┐│││
+                      └+─→┴+─→┴─────→┘    │   ││ │└─→┴─┘││    ││11││s││Mp│i││││
+                                          │   │└─┴─────→┘│    ││  ││ │└─→┴─┘│││
+                 ┌→┬──────┐               └+─→┴─────────→┘    ││  │└─┴─────→┘││
+ yielding tree:  │ │┌→─┬─┐│                                   │└~─┴─────────→┘│
+                 │s││Mp│i││                                   └──────────────→┘
+                 │ │└─→┴─┘│
+                 └─┴─────→┘
+
+The  leaves and depths vectors are extracted from the tree by a simple recursive
+traversal.
+
+        leaves depths←↓⍉↑tree{      ⍝ tree leaves and depths.
+            ⍬≡⍴⍺:⊂⍺ ⍵               ⍝ leaf: leaf and depth.
+            ↑,/⍺ ∇¨1+⍵              ⍝ branch: traverse deeper sub-branches.
+        }0                          ⍝ starting at depth 0 for the root.
+
+---------
+expansion
+---------
+The  tree  is  restored from its [depths] and [leaves] vectors with a single re-
+ductive  pass  across their transpose [depth-leaf] vector. During the reduction,
+the  operand function examines adjacent nodes, replacing ones of identical depth
+with a new pair of depth less by 1. The reduction is "seeded" with a dummy depth
+of ¯1 on the right. Using the 'Mississippi' example:
+
+        depths leaves               ⍝ depths and leaves vectors.
+    ┌───────┬────┐
+    │1 3 3 2│sMpi│
+    └───────┴────┘
+
+        ↓⍉↑depths leaves            ⍝ depth-leaf vector.
+    ┌───┬───┬───┬───┐
+    │1 s│3 M│3 p│2 i│
+    └───┴───┴───┴───┘
+
+    tree←⍬ 0 1⊃{                    ⍝ reconstituted Huffman tree.
+        (⊃⍺)≠⊃⊃⍵:(⊂⍺),⍵             ⍝ distinct adjacent depths: continue.
+        (⌽{⊃⍵-1}\⌽↓⍉↑⍺(⊃⍵))∇ 1↓⍵    ⍝ identical adjacent depths: coalesce.
+    }/(↓⍉↑depths leaves),¯1         ⍝ depths/leaves ++ trailing dummy entry.
+
+The  first  line  skips over (or accumulates into the result,) adjacent items if
+their depths differ:
+
+        (⊃⍺)≠⊃⊃⍵:(⊂⍺),⍵             ⍝ distinct adjacent depths: continue.
+
+The  second  line  calls  the operand function recursively for adjacent items of
+identical depth. We can break open the line to examine its constituent parts:
+
+        (·················)∇ 1↓⍵    ⍝ repeat with adjacent nodes coalesced.
+        ·············⍺(⊃⍵)······    ⍝ pair of adjacent same-depth tree nodes.
+        ··········↓⍉↑···········    ⍝ => (depth depth) (node node)
+        ·⌽{····}\⌽··············    ⍝ apply to _first_ item of pair.
+        ···⊃⍵-1·················    ⍝ reduced depth
+        ························    ⍝ => (depth-1)(node node)
+
+The 'Mississippi' example proceeds through the reduction as follows:
+
+                     ┌────────────────  ⍝ adjacent depths:
+                  ┌──┴───┐
+    ┌───┬───┬───┬─↓─┐  ┌─↓─┐
+    │ 1 │ 3 │ 3 │ 2 │  │¯1 │            ⍝ depths 2 ¯1 distinct: continue.
+    │ s │ M │ p │ i │  │   │
+    └───┴───┴───┴───┘  └───┘
+
+        ┌───┬───┬───┐  ┌───┬───┐
+        │ 1 │ 3 │ 3 │  │ 2 │¯1 │        ⍝ depths 3 2  distinct: continue.
+        │ s │ M │ p │  │ i │   │
+        └───┴───┴───┘  └───┴───┘
+
+            ┌───┬───┐  ┌───┬───┬───┐
+            │ 1 │ 3 │  │ 3 │ 2 │¯1 │    ⍝ depths 3 3 same: pair 'M' 'p'
+            │ s │ M │  │ p │ i │   │
+            └───┴───┘  └───┴───┴───┘
+
+            ┌───┬───┐  ┌───┬───┐
+            │ 1 │ 2 │  │ 2 │¯1 │        ⍝ depths 2 2 same: pair 'Mp' 'i'
+            │ s │┌┴┐│  │ i │   │
+            │   │M p│  └───┴───┘
+            └───┴───┘
+
+          ┌───┬─────┐  ┌───┐
+          │ 1 │   1 │  │¯1 │            ⍝ depths 1 ¯1 distinct: continue.
+          │ s │ ┌─┴┐│  │   │
+          │   │┌┴┐ i│  └───┘
+          │   │M p  │
+          └───┴─────┘
+
+                ┌───┐  ┌─────┬───┐
+                │ 1 │  │   1 │¯1 │      ⍝ depths 1 1 same: pair 's'('Mp' 'i')
+                │ s │  │ ┌─┴┐│   │
+                └───┘  │┌┴┐ i│   │
+                       │M p  │   │
+                       └─────┴───┘
+
+            ┌───────┐  ┌───┐
+            │ 0     │  │¯1 │            ⍝ depths 0 ¯1 distinct: continue,
+            │┌┴───┐ │  │   │
+            │s  ┌─┴┐│  └───┘
+            │  ┌┴┐ i│
+            │  M p  │
+            └───────┘
+
+                       ┌───────┬───┐
+                       │ 0     │¯1 │    ⍝ reduction complete.
+                       │┌┴───┐ │   │
+                       │s  ┌─┴┐│   │
+                       │  ┌┴┐ i│   │
+                       │  M p  │   │
+                       └───────┴───┘
+
+The  tree  is extracted from the final (scalar) result of the (vector) reduction
+using (⍬ 0 1⊃)
+
+            ┌───────────────────┐
+            │┌→─────────────┬──┐│
+            ││┌→┬──────────┐│  ││
+            │││ │┌→┬──────┐││  ││      ┌→┬──────┐
+            │││ ││ │┌→─┬─┐│││  ││      │ │┌→─┬─┐│
+ {⍬ 0 1⊃⍵}  │││0││s││Mp│i││││¯1││  =>  │s││Mp│i││
+            │││ ││ │└─→┴─┘│││  ││      │ │└─→┴─┘│
+            │││ │└─┴─────→┘││  ││      └─┴─────→┘
+            ││└─┴─────────→┘│  ││
+            │└─────────────→┴~─┘│
+            └──────────────────→┘
+
+Having  reconstructed  the Huffman tree, the bit-stream is traversed to retrieve
+the  original items. A potential performance bottleneck for the unpacking funct-
+ion, is that the algorithm accesses one bit at a time, using consecutive bits to
+traverse the tree. An alternative approach is to construct a dictionary that can
+be  indexed by the (2∘⊥) of a number of consecutive bits at once. If the maximum
+depth  of the tree is [maxd], then a dictionary of (2*maxd) entries will have an
+entry  for  any  possible  value of [maxd] bits taken from the input string. For
+_short_ paths through the tree (for example, to the 's' of 'Mississippi'), dict-
+ionary  entries  are duplicated. Each dictionary entry contains the value of its
+leaf,  and the number of bits required to reach it, and hence to skip in the in-
+put  stream.  The  input stream is padded with [maxd] dummy bits, to prevent the
+final indexing operation from failing.
+
+        dict
+    ┌───┬───┬───┬───┬───┬───┬───┬───┐
+    │1 s│1 s│1 s│1 s│3 M│3 p│2 i│2 i│
+    └───┴───┴───┴───┴───┴───┴───┴───┘
+
+Prefixing bit string values for each entry:
+
+        ⍉↑(,⍳2 2 2)dict
+    ┌─────┬───┐
+    │0 0 0│1 s│
+    ├─────┼───┤
+    │0 0 1│1 s│
+    ├─────┼───┤
+    │0 1 0│1 s│
+    ├─────┼───┤
+    │0 1 1│1 s│
+    ├─────┼───┤
+    │1 0 0│3 M│
+    ├─────┼───┤
+    │1 0 1│3 p│
+    ├─────┼───┤
+    │1 1 0│2 i│
+    ├─────┼───┤
+    │1 1 1│2 i│
+    └─────┴───┘
+
+Ref: David A. Huffmann, "A Method for the Construction of Minimum-Redundancy
+Codes," Proc. IRE, vol. 40, no. 9, pp. 1098-1101; September, 1952.
+
+See also: Data_compression morse
+
+Index:packing|compression
+Index;Huffman D.

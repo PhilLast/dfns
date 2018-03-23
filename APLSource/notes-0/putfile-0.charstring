@@ -1,0 +1,31 @@
+{size} ← {term←2} ##.putfile (fid rows)     ⍝ Put rows to text-file.
+
+Writes  [rows] to text file [fid]. Optional left argument (default 2) determines
+how many terminator characters are to be appended to each line:
+
+    2:  cr lf   (Windows)
+    1:  lf      (Unix)
+    0:          (no line terminators)
+
+If the file already exists, its contents are _replaced_.
+
+The shy result is the [size] of the file in bytes.
+
+Technical note:
+
+In preparation for the Unicode version of Dyalog, the file is assumed to contain
+any  and  only  characters from ⎕AV. This means that pre-Unicode versions should
+use  conversion  code  82 and post-Unicode should use 160. This is achieved with
+version-independent code:
+
+    size←cvec ⎕NAPPEND ntie,⎕DR ⎕AV     ⍝ write lines to file.
+                            ¯¯¯¯¯¯¯
+Examples:
+
+      lines←'first line' 'second' 'third'
+
+      putfile 'tmp.txt' lines       ⍝ create (Windows) text file.
+
+See also: getfile xtabs
+
+Index:native file|text file|Unicode

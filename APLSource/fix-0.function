@@ -1,0 +1,9 @@
+ fix←{                       ⍝ Fix function/operator rep.
+     0=⍴⍴⍵:⎕FX ⍵             ⍝ ⎕or:  trad/dynamic fn/op.
+     1:name←↑{               ⍝ (name ⎕or): name is shy result.
+         ⍺{                  ⍝ ⎕or (operand to inner operator).
+             ⍎⍵,'←⍺⍺ ⋄ ⍵'    ⍝ name derived/primitive/system function.
+             ⍺⍺              ⍝ (dummy ⍺⍺ forces class).
+         }⍵                  ⍝ name for assignment.
+     }/⌽⍵                    ⍝ split (⎕or name) pair.
+ }

@@ -1,0 +1,8 @@
+⍝ Widen ⍵ to type ⍺:
+
+      ⎕ml←0
+
+      {⊃(⎕dr ⍵)⎕wa}         1↓1e6,⍳10     ⍝ ⎕wa squeezes type.
+83
+      {⊃(⎕dr ⍵)⎕wa}163 type 1↓1e6,⍳10     ⍝ Type survives ⎕wa.
+163

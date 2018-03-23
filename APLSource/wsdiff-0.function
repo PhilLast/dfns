@@ -1,0 +1,100 @@
+ wsdiff←{                                        ⍝ Workspace differences.
+     ⍺←'⍵'                                       ⍝ exclude only self by default.
+     ⍵≡'':⍺ ∇''⎕WSID                             ⍝ diff this ws with saved ⎕wsid.
+     1=≡,⍵:⍺ ∇''⍵                                ⍝ diff this ws with saved ws: ⍵.
+     _←⍺{                                        ⍝ external execute.
+         0::(⍕⎕EN),'::',1↓⎕IO⊃⎕DM                ⍝ execute error:: 'errno::emsg'
+         ⍺⍎⍵                                     ⍝ execute of ⍵ in space ⍺.
+     }{⎕IO ⎕ML←0 1                               ⍝ internal origin and migration.
+         ex←⍺⍺∘⊢                                 ⍝ execute in clean lexical envt.
+         incl←'⍝ ~∇⎕⍵'~⍺                         ⍝ category <inclusion> list.
+         cols←⌊0.5×⎕PW-1                         ⍝ cols per half screen.
+
+         nsv←,'⎕IO' '⎕ML' '⎕DIV' '⎕CT' '⎕AVU'    ⍝ Namespace system ...
+         nsv,←'⎕PP' '⎕RL' '⎕RTL' '⎕WX'           ⍝ ... variables.
+         wsv←,'⎕LX' '⎕TRAP'                      ⍝ Workspace system variables ...
+         ⎕LX←''                                  ⍝ ... localized against ⎕cy.
+
+         diffs←{                                 ⍝ Show workspace differences.
+             tags vals←↓⍉↑fmt¨¨⍺                 ⍝ names and values.
+             1=+/'⎕'=∊tags:⍺⍺ ⍵                  ⍝ no ⎕vars in new space display.
+             ⎕←0 diff tags                       ⍝ names.
+             ~'⎕'∊incl:⍺⍺ ⍵                      ⍝ diff lines not included.
+             ⎕←4 diff 0 1{↑~/⍺⌽⍵}¨⊂vals          ⍝ diffs.
+             ⍺⍺ ⍵                                ⍝ tails.
+         }
+
+         fmt←{                                   ⍝ Format value into char vecs.
+             2≠≡⍵:↓⎕FMT ⍵                        ⍝ default format.
+             ∧/,(⍴∘⍴¨⍵)∊,¨0 1:⍕¨,⍵               ⍝ array of vectors.
+             ↓⎕FMT ⍵                             ⍝ default format
+         }
+
+         diff←{                                  ⍝ Show diffs between objects.
+             mats←⍺{↑⍺{(⍺⍴' '),⍵}¨⍵}¨⍵           ⍝ char matrices.
+             size←(⌈/⊃∘⍴¨mats)cols               ⍝ padding size.
+             ↑{⍺,'│',⍵}/dots¨size∘↑¨mats         ⍝ split screen output.
+         }
+
+         dots←{                                  ⍝ Aligning dots.
+             mask←,(⍵=' ')∧(⍴⍵)⍴cols⍴4↑1         ⍝ blanks every 4 cols,
+             mat←⍵ ⋄ mat⊣(mask/,mat)←'·'         ⍝ inject into char mat.
+         }
+
+         dobs←{(∨\⍵≠' ')/⍵}{⌽⍺⍺⌽⍺⍺ ⍵}            ⍝ drop outer blanks.
+
+         trim←{                                  ⍝ Trim blanks and comments.
+             case←' ⍝'∊incl                      ⍝ blanks and comments included.
+             case≡1 1:⍵                          ⍝ both included: continue.
+             cm←{/∘⍵∧\(⍵≠'⍝')∨≠\''''=⍵}          ⍝ remove unquoted comments.
+             sp←{(∨\' '≠⍵)/⍵}                    ⍝ remove leading blanks.
+             {⍵~(' '∊incl)↓⊂''}{                 ⍝ with/out blank lines.
+                 case≡0 0:⌽sp⌽sp cm ⍵            ⍝ remove blanks and comments.
+                 case≡1 0:⌽sp⌽cm ⍵               ⍝ remove ⍝'s & trailing blanks.
+                 code←cm ⍵                       ⍝ uncommented code.
+                 cmnt←(⍴code)↓⍵                  ⍝ comment from code.
+                 (⌽sp⌽sp code),cmnt              ⍝ pre and post blanks removed.
+             }¨⍵                                 ⍝ ... from each function line.
+         }
+
+         {                                       ⍝ Output ws differences ...
+             0=⍴↑,/⍵:0                           ⍝ exhausted: stop - null result.
+             heads←⊃¨⍵                           ⍝ head items from list.
+             16::∇ 2↓¨0,¨⍵                       ⍝ nonce:: ignore differences.
+             ≡/heads:∇ 1↓¨⍵                      ⍝ heads match: compare tail.
+             names←~∘' '∘⊃¨heads                 ⍝ head names.
+             ≡/names:heads ∇ diffs 1↓¨⍵          ⍝ head names match: diff values.
+             order←⍋↑names                       ⍝ names sort order.
+             next←(0∊∊⍴¨names)≠>/order           ⍝ next name to process.
+             head←next⌽(next⊃heads)''            ⍝ head name and blank.
+             head ∇ diffs(next=0 1)↓¨⍵           ⍝ output head, then tail.
+         }{↑,/⍵,⊂''}¨⍬∘{                         ⍝ join names.
+             ref path svars wsvals←⍵             ⍝ space, name, sysvars, vals.
+             rx←ref∘ex                           ⍝ remote execute
+             class←9,('~∇∇'∊incl)/2 3 4          ⍝ name classes of interest.
+             names←~∘' '¨↓rx'⎕nl ',⍕class        ⍝ names in namespace.
+             (⊂⍺)∇{                              ⍝ ⍺ is refs already visited.
+                 pair←{(path,⍺)⍵}                ⍝ (name value)
+                 (⊂⍵)∊nsv:⊂⍵ pair rx ⍵           ⍝ namespace system var:
+                 (⊂⍵)∊wsv:⊂⍵ pair(wsv⍳⊂⍵)⊃wsvals ⍝ workspace system var:
+                 qt←{'''',⍵,''''}                ⍝ quote.
+                 nc←ref ex'⎕nc',qt ⍵             ⍝ nameclass.
+                 2=nc:⊂⍵ pair rx ⍵               ⍝ variable: name, value.
+                 ('⍵'∊incl)⍵ nc≡0 'wsdiff'(,3):⍬ ⍝ ignore wsdiff function.
+                 9≠nc:⊂⍵ pair trim rx'⎕nr',qt ⍵  ⍝ function: name, code lines.
+                 sub←rx ⍵                        ⍝ ref to sub-space.
+                 sub∊⍺:⊂(¯1↓path)(' → ',⍵)       ⍝ ref cycle: stop.
+                 xpath←path,⍵,'.'                ⍝ extended path.
+                 refs←⍺,ref                      ⍝ visited refs
+                 1↓↑,/0,refs ⍺⍺ sub xpath nsv''  ⍝ namespace: traverse.
+             }¨svars,names                       ⍝ names in namespace.
+         }¨(⎕NS¨⍬ ⍬){                            ⍝ input workspaces.
+             sv←'~'∊incl                         ⍝ vars => system vars.
+             svars←sv/wsv,nsv                    ⍝ system var names.
+             ⍵≡'':#''svars((# ex'⎕LX')⍺.⎕TRAP)   ⍝ comparison with current ws.
+             cmd←'⍺.⎕cy ⍵',sv/'⋄(↑svars)⍺.⎕cy ⍵' ⍝ cmd: copy system vars.
+             0::('Can''t copy: ',⍵)⎕SIGNAL ⎕EN   ⍝ bad wsname:: abort.
+             ⍎cmd,'⋄','⍺ ⍬ svars,⊂',⍕wsv         ⍝ copy, returning space ref.
+         }∘dobs¨⍵                                ⍝ each local space and ws.
+     }⍵
+ }

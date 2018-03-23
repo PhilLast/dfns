@@ -1,0 +1,3 @@
+ uns←{           ⍝ Unsigned from signed integer.
+     (2*⍺)|⍵
+ }

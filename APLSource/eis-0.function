@@ -1,0 +1,4 @@
+ eis←{                   ⍝ enclose-if-simple / link
+     0≠⎕NC'⍺':(∇ ⍺),∇ ⍵  ⍝ dyadic: link
+     {⊂1/⍵}⍣(1=≡,⍵)⊢⍵    ⍝ monadic: enclose if simple
+ }

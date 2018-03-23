@@ -1,0 +1,3 @@
+ and←{   ⍝ Sequential test.
+     ⍺⍺ ⍵:⍵⍵ ⍵ ⋄ 0
+ }

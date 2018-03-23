@@ -1,0 +1,48 @@
+rslt ← (fun ##.file) fname              ⍝ Apply function to native file tie.
+
+Native file 'fname' is opened;  the function operand called  with the tie number
+as  argument;  and  the file closed again. The result of the derived function is
+the result of the operand function.
+
+Technical notes:
+
+The coding is fairly straightforward.
+
+    file←{                  ⍝ Apply operand function to native file tie.
+        tie←⍵ ⎕NTIE 0       ⍝ open file.
+        rslt←⍺⍺ tie         ⍝ operate on file.
+        {rslt}⎕NUNTIE tie   ⍝ close and return result.
+    }
+
+SL suggests the following "crazy" alternative coding:
+
+    file←{
+        ⎕ml←1
+        ⊃⊢∘⎕nuntie\⌽⊢∘⍺⍺\2⍴⍵ ⎕ntie 0
+    }
+
+Local variables are avoided by duplicating a value to produce a pair and operat-
+ing on each item of the pair in turn. The sequence of events could be represent-
+ed graphically by the following "railway diagram":
+
+     ⊃ ⊢∘⎕nuntie\⌽ ⊢∘⍺⍺\2⍴⍵ ⎕ntie 0         expression
+     ↓   ↓       ↓   ↓   ↓  ↓
+   ──┐├─[⎕nuntie]─┐─[⍺⍺]─┬─[⎕ntie]──        railway diagram
+     └───────────┘└──────┘
+      ↑  ↑        ↑  ↑   ↑  ↑
+      │  │        │  │   │  └───⍵ ⎕ntie 0── opens file and returns tie number.
+      │  │        │  │   └────2⍴─────────── duplicates tie number into a pair.
+      │  │        │  └───⊢∘⍺⍺\───────────── applies ⍺⍺ to second item of pair.
+      │  │        └───⌽──────────────────── swaps the items of the pair.
+      │  └───⊢∘⎕nuntie\──────────────────── unties pair's new second item.
+      └───⊃──────────────────────────────── extracts pair's new first item.
+
+Example:
+
+      ⎕nsize file ⎕wsid,'.dws'      ⍝ size of saved version of this workspace.
+217608
+
+See also: getfile xtabs
+
+Index:native file|railway diagram
+Index;Lanzavecchia S.

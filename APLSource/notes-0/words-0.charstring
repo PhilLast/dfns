@@ -1,0 +1,63 @@
+cvecs ← {prim supp} ##.words cvec           ⍝ Source vector split into words.
+
+The character vector argument is split into words.  A word is defined as a sequ-
+ence starting with a character from [prim],  the primary alphabet and continuing
+with characters from both this and the supplementary alphabet [supp]. If no left
+argument is supplied,  prim defaults to A-Z, a-z, Á-õ and supp to 0-9.  A simple
+left argument is interpreted as the primary alphabet, with a null supplementary.
+
+Examples:
+
+    words 'It''s only words,'               ⍝ Word split at A-Z,a-z,Á-õ.
+┌──┬─┬─┬─┬────┬─┬─────┬─┐
+│It│'│s│ │only│ │words│,│
+└──┴─┴─┴─┴────┴─┴─────┴─┘
+
+    words'4x1+x2'                           ⍝ Trailing 0-9 bind to left.
+┌─┬──┬─┬──┐
+│4│x1│+│x2│
+└─┴──┴─┴──┘
+
+    (lcase ⎕a) words'mete and dole'         ⍝ Simple alphabet split.
+┌────┬─┬───┬─┬────┐
+│mete│ │and│ │dole│
+└────┴─┴───┴─┴────┘
+
+    (lcase ⎕a) words':If ⎕IO=0'             ⍝ Split at a-z.
+┌──┬─┬──────┐
+│:I│f│ ⎕IO=0│
+└──┴─┴──────┘
+
+    (⎕A,lcase ⎕a) words':If ⎕IO=0'          ⍝ Split at A-Z,a-z.
+┌─┬──┬──┬──┬──┐
+│:│If│ ⎕│IO│=0│
+└─┴──┴──┴──┴──┘
+
+    (':⎕',⎕A,lcase ⎕a) words':If ⎕IO=0'     ⍝ Split at :,⎕,A-Z,a-z.
+┌───┬─┬───┬──┐
+│:If│ │⎕IO│=0│
+└───┴─┴───┴──┘
+
+    (⎕D,':⎕',⎕A,lcase ⎕a) words':If ⎕IO=0'  ⍝ Split at 0-9,:,⎕,A-Z,a-z.
+┌───┬─┬───┬─┬─┐
+│:If│ │⎕IO│=│0│
+└───┴─┴───┴─┴─┘
+
+    ⎕A (lcase ⎕a) words 'ThatsAllFolks!'    ⍝ Split at A-Z; a-z trail.
+┌─────┬───┬─────┬─┐
+│Thats│All│Folks│!│
+└─────┴───┴─────┴─┘
+
+    (⍳10) words 1 0 0 2 3 0 4 5 6           ⍝ Numeric "alphabet".
+┌─┬───┬───┬─┬─────┐
+│1│0 0│2 3│0│4 5 6│
+└─┴───┴───┴─┴─────┘
+
+    (⍳10) 0 words 1 0 0 2 3 0 4 5 6         ⍝ Numeric;  0s trail.
+┌─────┬─────┬─────┐
+│1 0 0│2 3 0│4 5 6│
+└─────┴─────┴─────┘
+
+See also: tokens segs
+
+Index:text

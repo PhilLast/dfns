@@ -1,0 +1,4 @@
+ remnode←{               ⍝ Remove vertex ⍵ from graph ⍺.
+     new←(⍵≠⍳⍴⍺)/⍺~¨⍵    ⍝ graph with vertex ⍵ removed,
+     new-new>⍵           ⍝ and edges adjusted.
+ }

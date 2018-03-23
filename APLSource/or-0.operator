@@ -1,0 +1,3 @@
+ or←{    ⍝ Sequential test.
+     ⍺⍺ ⍵:1 ⋄ ⍵⍵ ⍵
+ }

@@ -1,0 +1,38 @@
+──────────
+Namespaces
+──────────
+With  the  advent  of  namespace  references  (refs)  in version 9.0, code which
+traverses  a  namespace  structure,  must make special arrangements to avoid the
+"infinite"  recursion  that  may occur if a space contains a reference to one of
+its ancestors. The way of avoiding this problem, used by the →refs← function, is
+to  maintain  a  list of spaces already visited, and so avoid visiting any space
+more  than  once.  Alternatively,  the  →tree←  function just "gives up" when it
+encounters a ref which is not an immediate child of the current space.
+
+Example:
+
+      )ns x
+#.x
+      x.ref←x               ⍝ cyclic ref
+
+      x.ref
+#.x
+      x.⎕nl 9
+ref
+      x.ref.⎕nl 9
+ref
+      x.ref.ref.⎕nl 9
+ref
+      x.ref.ref.ref.ref
+#.x
+
+      tree x                ⍝ →tree← function "gives up" on cyclic refs.
+#.x
+·   ref → #.x
+
+      refs x                ⍝ →refs← function visits each space exactly once.
+ #.x
+
+See also: refs tree xrefs
+
+Index:namespace

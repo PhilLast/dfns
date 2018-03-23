@@ -1,0 +1,344 @@
+{tape} ← {tape} ##.bf toks                  ⍝ Brainfuck.
+
+The startling term "Brainfuck", henceforth "BF" in the interests of brevity (and
+delicacy), denotes  both a theoretical machine and its order-code or programming
+language.  The  machine  is  an exercise in minimalism in that it has only eight
+instructions, none of which takes an explicit operand.
+
+Despite its simplicity,  BF is "Turing-complete", which means that, given enough
+time and memory,  it may be programmed  to solve any problem that a regular com-
+puter can tackle. See: http://www.iwriteiam.nl/Ha_bf_Turing.html
+
+For a full description of the language, together with some programming examples,
+see: http://en.wikipedia.org/wiki/Brainfuck
+
+Machine architecture
+--------------------
+The machine has just two "moving parts":
+
+-   An instruction token stream, the character vector argument to the function.
+
+        ┌───┬───┬───┬───┬───┬───┬───┬───┬──
+        │ > │ [ │ - │ < │ + │ > │ ] │ < │    ∘∘∘
+        └───┴───┴───┴───┴───┴───┴───┴───┴─
+
+-   An infinite "tape" of cells, each of which holds a single numeric value.
+
+        ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬──
+        │ 1 │ 3 │ 4 │ 48│ 49│ 0 │ 1 │ 2 │ 5 │ 0  ∘∘∘
+        └───┴───┴───┴───┴───┴───┴───┴───┴───┴──
+
+The tape and token stream are manipulated using the eight machine instructions:
+
+    >    Move tape pointer one cell position to right.
+    <    Move tape pointer one cell position to left.
+
+    +    Increment value in current tape cell.
+    -    Decrement value in current tape cell.
+
+    .    Output character corresponding to value in current tape cell.
+    ,    Set value in current tape cell to ⎕UCS value of an input char.
+
+    [    If current cell value = 0, jump to right of matching ] in token stream.
+    ]    If current cell value ≠ 0, jump to right of matching [ in token stream.
+
+The final two instructions, [ and ], provide a "while loop".
+
+Any characters other than the above eight "<>+-.,[]" are ignored and may be used
+as program commentary (see example below).
+
+Programming
+-----------
+The  following  vector  (with  embedded newlines) is an example of a BF program,
+which outputs the string 'Hello World':
+
+          display hello
+    ┌→───────────────────────────────────────────────┐
+    │addr:val shows current cell address and value   │
+    │                                                │
+    │+++++ +++++ [           0:10 × loop:            │
+    │    > +++++ ++          1:10×7 for H W          │
+    │    > ++                2:10×2 for e l l o r l d│
+    │    << -                0: decr loop counter    │
+    │]                       0:0                     │
+    │>++ .                   1:72 → H                │
+    │>+.                     2:21 → e                │
+    │+++++ ++ ..             2:28 → l l              │
+    │+++ .                   2:31 → o                │
+    │<<++++ .                0:4  →  sp              │
+    │>+++++ +++++ +++++ .    1:87 → W                │
+    │> .                     2:31 → o                │
+    │+++ .                   2:34 → r                │
+    │--- --- .               2:28 → l                │
+    │--- --- --.             2:20 → d                │
+    │<<-.                    0:3  →  nl              │
+    └────────────────────────────────────────────────┘
+
+Take care,  when commenting such programs, to avoid using any of the instruction
+characters: "<>+-.,[]".
+
+Using the tape
+--------------
+The  final state of the tape is returned as a shy result of the function and may
+be  re-loaded  as  optional left argument to a subsequent BF session. This means
+that  we can use the state of the tape for simple calculations without having to
+convert  between  characters  '1' '2' '3' ... and numbers 1 2 3 .. for input and
+output.
+
+        ⎕←123 45 bf '[->+<]'    ⍝ 123 + 45 → 168
+    0 168
+
+Tracing
+-------
+We  can  watch  the progress of the machine by removing the leading '⍝' from the
+first line of inner fuction "machine":
+
+    machine←{                       ⍝ machine definition: ⍺:tape ⍵:toks.
+        t←get ⍵                     ⍝ next token.
+    ⍝   ⎕←t,↑' ()',.,⍕∘∊¨⍺          ⍝ uncomment to trace.
+    │   ...       └─┴───────────────  "mesh" (Nicolas Delcros).
+    └───────────────────────────────  remove '⍝' to watch trace.
+
+With  tracing  enabled, the next token and memory tape (⍺) are displayed at each
+step with the current tape cell in parentheses:
+
+    +bf'>++[<+++>-]<'               ⍝ 2 × 3
+> 0(0)0
++ 0 0(0)0
++ 0 0(1)0
+[ 0 0(2)0
+< 0 0(2)0
++ 0(0)2 0
++ 0(1)2 0
++ 0(2)2 0
+> 0(3)2 0
+- 0 3(2)0
+] 0 3(1)0
+< 0 3(1)0
++ 0(3)1 0
++ 0(4)1 0
++ 0(5)1 0
+> 0(6)1 0
+- 0 6(1)0
+] 0 6(0)0
+< 0 6(0)0
+∘ 0(6)0 0
+6 0
+
+Turing's Tape
+-------------
+BF's memory is a tape of cells,  which extends to infinity in the ">" direction.
+At any time,  exactly one cell is  under the machine's read-head.  Order codes <
+and > shift the tape to make current the next cell to the left or right.
+
+                                ┌──────────────┐
+                        ┌───────│              │───────┐
+                  ┌─────│ next  │  "current"   │ next  │─────┐
+              ┌───│ nxt │ cell  │    cell      │ cell  │ nxt │───┐
+ -○○ ···∘∘∘⎕⎕⎕│ < │ lft │ left  │  referenced  │ right │ rgt │ > │⎕⎕⎕∘∘∘··· +○○
+              └───│  <  │   <   │  by <>[]+-., │  >    │  >  │───┘
+                  └─────│       │ instructions │       │─────┘
+                        └───────│              │───────┘
+                                └──────────────┘
+
+This infinite tape mechanism is borrowed from Alan Turing's theoretical machine.
+See: http://en.wikipedia.org/wiki/Turing_machine
+
+Technical notes:
+
+Both  tape  and token stream are pleasingly implemented in Dyalog as a recursive
+data structure,  which is a pair of "snoc" and "cons" →list←s,  separated by the
+current cell. The tape is accessed using structure assignment:
+
+    get←{_ m _←⍵ ⋄ m}                   ⍝ current item.
+    put←{l _ r←⍵ ⋄ l ⍺ r}               ⍝ ⍺ replaces current item.
+
+    lft←{(ll l)m r←⍵ ⋄ ll l(m r)}       ⍝ tape pointer left.
+    rgt←{l m(r rr)←⍵ ⋄ (l m)r rr}       ⍝ tape pointer right.
+
+Note how Dyalog's "scalar extension" mechanism automatically extends the tape in
+either direction, as required:
+
+    tape←0 99 0                         ⍝ initial 3-cell tape.
+
+    tape ← lft lft tape ⋄ disp tape     ⍝ move two cells left, extending tape.
+┌─┬─┬────────┐
+│0│0│┌─┬────┐│
+│ │ ││0│99 0││
+│ │ │└─┴────┘│
+└─┴─┴────────┘
+
+    tape ← rgt rgt tape ⋄ disp tape     ⍝ move two cells right again.
+┌───────┬──┬─┐
+│┌───┬─┐│99│0│
+││0 0│0││  │ │
+│└───┴─┘│  │ │
+└───────┴──┴─┘
+
+    tape ← rgt rgt tape ⋄ disp tape     ⍝ move two cells right, extending tape.
+┌────────────────┬─┬─┐
+│┌────────────┬─┐│0│0│
+││┌───────┬──┐│0││ │ │
+│││┌───┬─┐│99││ ││ │ │
+││││0 0│0││  ││ ││ │ │
+│││└───┴─┘│  ││ ││ │ │
+││└───────┴──┘│ ││ │ │
+│└────────────┴─┘│ │ │
+└────────────────┴─┴─┘
+
+    tape←lft lft tape ⋄ disp tape       ⍝ move two cells left again to home.
+┌───────┬──┬───────┐
+│┌───┬─┐│99│┌─┬───┐│
+││0 0│0││  ││0│0 0││
+│└───┴─┘│  │└─┴───┘│
+└───────┴──┴───────┘
+
+Further,  to increment (decrement) the current cell, we need only add (subtract)
+the triple 0 1 0.
+
+    inc←+∘0 1 0                         ⍝ + increment current tape cell.
+    dec←-∘0 1 0                         ⍝ - decrement current tape cell.
+
+However, this operation takes significantly more time as the memory tape becomes
+extended.  This  is  because the interpreter must add 0 to both (nested) ends of
+the memory tape. It could be argued that the interpreter should special-case 0+⍵
+as a no-op  but it would probably still need to traverse a nested array so that,
+for example, 0+((((5)4)3)2)1(2(3(4(5'?'))))  would continue to generate a DOMAIN
+ERROR.
+
+A less elegant but O(1) increment would be:
+
+    inc←{l m r←⍵ ⋄ l(m+1)r}             ⍝ increment of current tape cell.
+
+The only challenging part of the code is in inner operator [skip], which search-
+es the token stream, left or right,  to find a matching bracket for [ or ].  The
+code is complicated by having to navigate nested pairs of brackets,  which means
+that  inner matching [...] pairs must be skipped over during the search.  [skip]
+achieves this with a signature double recursion, characteristic of bracket proc-
+essing in list implementations.  See the line with the exdented comment:
+
+    skip←{                                  ⍝ search ⍺⍺-wise for [] match in ⍵.
+        fm to←{⍵,'[]'~⍵}get ⍵               ⍝ current and target brackets.
+        ⍺⍺{                                 ⍝ ⍺⍺ is lft or rgt.
+            tok←get ⍵                       ⍝ current token.
+            tok≡to:⍵                        ⍝ found match: done.
+            tok≡fm:∇ ⍺⍺ ∇ ⍺⍺ ⍵          ⍝ inner loop: skip over it.
+            tok≡'∘':⍵                       ⍝ run off end: quit.
+            ∇ ⍺⍺ ⍵                          ⍝ skip lft or rgt to next token.
+        }⍺⍺ ⍵                               ⍝ skipping over starting bracket.
+    }
+
+(muse:
+
+    In this code,  [skip],  bound to its operand function [rgt] or [lft], is al-
+    ways applied by the conditional application operator if←{(⍺⍺⍣⍵)⍺}.
+
+        ... ⍵ rgt skip if 0=get
+        ... ⍵ lft skip if 0≠get
+
+    If Dyalog were to implement →hyperators←,  then (skip if)  could be bound at
+    definition time:
+
+        skip_if←{                       ⍝ search ⍺⍺-wise for [] match in ⍵.
+            fm to←{⍵,'[]'~⍵}get ⍵       ⍝ current and target brackets.
+            ⍺⍺{                         ⍝ ⍺⍺ is lft or rgt.
+                tok←get ⍵               ⍝ current token.
+                tok≡to:⍵                ⍝ found match: done.
+                tok≡fm:∇ ⍺⍺ ∇ ⍺⍺ ⍵      ⍝ inner loop: skip over it.
+                tok≡'∘':⍵               ⍝ run off end: quit.
+                ∇ ⍺⍺ ⍵                  ⍝ skip lft or rgt to next token.
+            }⍺⍺ ⍵                       ⍝ skipping over starting bracket.
+        }{(⍺⍺ ⍺⍺⍺⍣⍵)⍺}                  ⍝ conditional →hyperator←.
+)
+
+Refs:
+[1] http://en.wikipedia.org/wiki/Brainfuck        Brainfuck full description.
+[2] http://en.wikipedia.org/wiki/Turing_machine   Turing machine.
+[3] http://esolangs.org/wiki/Brainfuck            More on brainfuck.
+[4] http://www.iwriteiam.nl/Ha_bf_Turing.html     Bf is turing-complete.
+[5] http://esolangs.org                           More esoteric languages.
+[6] min.dws max.dws                               Home-brewed minimal languages.
+
+Note,  when searching the Internet that, owing to its second  syllable's being a
+taboo word in English,  "brainfuck"  is  often  written as brainf***, brainf*ck,
+brainfsck, BF or even b****fuck!
+
+The language was designed to be extremely simple to implement.  For  example, it
+may be expressed in only:
+
+- 21 lines of the minuscule functional language: max.dws/lib.bf
+- 18 reduction rules in term-rewrite system: eval.dws/bfck
+
+Thanks to Nicolas Delcros and Jason Rivers for sowing the seed.
+
+Examples:
+
+    bf'++++++++++[>+++++++>++<<-]>++.>+.+++++++..+++.<<++++.>+++++++++++++++.>.+++.------.--------.<<-.'
+Hello World
+
+⍝ The following program inputs two single-digit numbers and ouputs their sum:
+
+    display add         ⍝ sum of two single digit numbers.
+┌→────────────────────────────────────────────────┐
+│ output sum of two ASCII digits                  │
+│ "⍺" plus "⍵" → "⍺" ┼ "⍵" ─ "0" where "0" = 48   │
+│                                                 │
+│ ,                   0: 1st digit '0' plus ⍺     │
+│ > +++++ + [         1:6 × loop:                 │
+│     < ----- ---     0: sub 6×8: '0' plus ⍺ → ⍺  │
+│     >-              1: decr loop counter        │
+│ ]                   1:0                         │
+│ ,                   1: 2nd digit '0' plus ⍵     │
+│ <[                  0:⍺ × loop                  │
+│     >+              1: incr ⍵                   │
+│     <-              0: decr ⍺                   │
+│ ]                   0:0                         │
+│ >.                  0: output ⍺ plus '0' plus ⍵ │
+└─────────────────────────────────────────────────┘
+
+    bf add                  ⍝ input 3, 4; output 7.
+3
+4
+7
+    +5 8 bf '[>+<-]'        ⍝ simple in-memory adder  5 + 8 → 13.
+0 13
+
+    1e6 bf time '[-]'       ⍝ 1 million loops takes just over 2 minutes.
+02:07.28
+
+⍝ Code snippets may be concatenated into larger programs:
+
+    din ← ',>++++++++[<------>-]<'      ⍝ single-digit input.
+    dot ← '>++++++++[<++++++>-]<.'      ⍝ single-digit output.
+    clr ← '[-]'                         ⍝ cell clear: m → 0
+    ff  ← '[>]'                         ⍝ fast-forward over non-zero cells.
+    adr ← '[->+<]'                      ⍝ add right: m n → 0 (m+n)
+    adl ← '>[-<+>]<'                    ⍝ add left:  m n → (m+n) 0
+    dup ← '[->+>+<<]'                   ⍝ replicate: m → 0 m m
+
+    sum ← din,'>',din,'<',adr,'>',dot   ⍝ output sum of two input digits.
+
+    bf sum                              ⍝ using "sum" from above.
+4
+5
+9
+    bf din,dup,'>',adr,'>',dot          ⍝ double of input digit.
+4
+8
+
+⍝ This program, transliterated from Böhm's P" language, a precursor to BF,
+⍝ returns the predecessor of a number represented in 2→adic← number system:
+⍝ ⍬ 1 2 11 12 21 22 111 112 121 ...
+
+    +1 1 2 bf'>[>]<[-[<[<]]-<]>+'   ⍝ (-∘1) 8 → 7
+0 0 1 1 1 0
+
+⍝ For a more substantial example, see: →bfack←
+
+See also: mac bfack balm
+See also: baby list time adic lisp joy
+See also: min.dws max.dws eval.dws
+See also: max.dws/lib.bf eval.dws/bfck
+
+Index:Brainfuck|turing complete|lists|hyperator|2-adic numbers|Turing tape|tape
+Index;Turing A.M.|Delcros N.|Rivers J.|Böhm C.

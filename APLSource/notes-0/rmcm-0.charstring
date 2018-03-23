@@ -1,0 +1,91 @@
+line ← ##.rmcm line                         ⍝ APL source with comments removed.
+
+Removes  comments  from  a vector or matrix of APL, by identifying the first un-
+quoted "⍝" on each line character  and  stripping  it  and all characters to its
+right.
+
+Note that the function doesn't  remove  any resulting trailing blank columns but
+if the result is to be passed to ⎕FX, this will make no difference.
+
+VMJ supplies this alternative, named after a Finnish  Prime Minister whose init-
+ials  were  HHH, and whose most memorable quotation was "No comments, I'm drink-
+ing coffee now".
+
+    hhh←{
+        q←⍵
+        ((∨\(⍵='⍝')∧=\⍵≠'''')/q)←' '
+        (-+/∧\' '=⌽q)↓q
+    }
+
+Examples:
+
+    rmcm 'a←b  ⍝ copy'                  ⍝ comment removed.
+a←b
+
+    rmcm 'cm←''⍝''  ⍝ comment'          ⍝ '⍝' character preserved.
+cm←'⍝'
+
+    clean_fn←{⎕fx(rmcm¨⎕nr ⍵)~⊂''}      ⍝ function with white space removed.
+
+    display ⎕cr'dup'                    ⍝ commented function.
+┌→────────────────────────┐
+↓dup←{                    │
+│            ⍝ blah, blah,│
+│                         │
+│    ⍵ ⍵     ⍝ blah, blah,│
+│                         │
+│            ⍝ blah, blah.│
+│                         │
+│            ⍝ (c) C-A.S. │
+│}                        │
+└─────────────────────────┘
+
+    clean_fn'dup'                       ⍝ remove comments and blank lines.
+
+    display ⎕cr'dup'                    ⍝ uncommented function.
+┌→──────┐
+↓dup←{  │
+│    ⍵ ⍵│
+│}      │
+└───────┘
+
+    one_liner←{⎕ML←0                    ⍝ Turn function into 1-liner.
+        ⎕FX↑,↓{                         ⍝ fix:
+            bd←'{⋄' '{'                 ⍝ brace-diamond → brace
+            db←'⋄}' '}'                 ⍝ diamond-brace → brace
+            bds←'{ ⋄' '{'               ⍝ brace diamond → brace
+            dbs←'⋄ }' '}'               ⍝ diamond brace → brace
+            ↑subs/bd db bds dbs ⍵       ⍝ substitution in
+        }↑{⍺,'⋄',⍵}/⎕NR ⍵               ⍝ diamond-joined lines.
+    }
+
+    ⎕cr one_liner'dup'                  ⍝ turn dup into 1-liner.
+dup←{⍵ ⍵}
+
+    one_liner clean_fn'display'         ⍝ turn display fn into 1-liner.
+
+    ⎕cr'display'
+display←{⎕IO ⎕ML←0 ⋄ ⍺←1 ⋄ chars←⍺⊃'..''''|-' '┌┐└┘│─' ⋄ tl tr bl br vt hz←chars ⋄ box←{vrt hrz←(¯1+⍴⍵)⍴¨vt hz ⋄ top←(hz,'⊖→')[¯1↑⍺],hrz ⋄ bot←(⊃⍺),hrz ⋄ rgt←tr,vt,vrt,br ⋄ lax←(vt,'⌽↓')[¯1↓1↓⍺],¨⊂vrt ⋄ lft←⍉tl,(↑lax),bl ⋄ lft,(top⍪⍵⍪bot),rgt ⋄ } ⋄ deco←{⍺←type open ⍵ ⋄ ⍺,axes ⍵} ⋄ axes←{(-2⌈⍴⍴⍵)↑1+×⍴⍵} ⋄ open←{(1⌈⍴⍵)⍴⍵} ⋄ trim←{(~1 1⍷∧⌿⍵=' ')/⍵} ⋄ type←{{(1=⍴⍵)⊃'+'⍵}∪,char¨⍵} ⋄ char←{⍬≡⍴⍵:hz ⋄ (⊃⍵∊'¯',⎕D)⊃'#~'}∘⍕ ⋄ {0=≡⍵:' '⍪(⎕FMT ⍵)⍪(⊃⍵ ⍵∊⎕AV)⊃' -' ⋄ 1 ⍬≡(≡⍵)(⍴⍵):'∇' 0 0 box ⎕FMT ⍵ ⋄ 1=≡⍵:(deco ⍵)box open ⎕FMT open ⍵ ⋄ ('∊'deco ⍵)box trim ⎕FMT ∇¨open ⍵ ⋄ }⍵}
+
+    display ⍳2 2                        ⍝ still works!
+┌→────────────┐
+↓ ┌→──┐ ┌→──┐ │
+│ │1 1│ │1 2│ │
+│ └~──┘ └~──┘ │
+│ ┌→──┐ ┌→──┐ │
+│ │2 1│ │2 2│ │
+│ └~──┘ └~──┘ │
+└∊────────────┘
+
+    ⎕cr one_liner clean_fn 'one_liner'
+one_liner←{⎕ML←0 ⋄ ⎕FX↑,↓{bd←'{' '{' ⋄ db←'}' '}' ⋄ bds←'{' '{' ⋄ dbs←'}' '}' ⋄ ↑subs/bd db bds dbs ⍵ ⋄ }↑{⍺,'⋄',⍵}/⎕NR ⍵}
+
+⍝ This expression, with improvements from JoHo, removes comments from all
+⍝ functions and operators in all namespaces:
+
+    rmcm(refs ⎕this).{⍺⍺{0=⍴⍵: ⋄ ⎕fx∘⍺⍺∘⎕cr¨⍵}⎕nl-,⍵∘.+0.1 0.2}⊂3 4
+
+See also: tokens refs
+
+Index:formatting, functions|comment removal|one-liner
+Index;Holkeri H.H.|Jantunen V-M.|Hoffmann J.

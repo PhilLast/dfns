@@ -1,0 +1,21 @@
+tree ← ##.tnest (depth leaves)              ⍝ Array from TreeView style tree.
+
+The TreeView style representation of a tree is rendered in nested array form.
+
+Technical note:
+
+An alternative coding of this function might be:
+
+    tnest←{⎕ML←0                        ⍝ Array from TreeView style tree.
+        1{                              ⍝ starting with split at 1s.
+            1=⍴⍵:⊃⌽↑⍵                   ⍝ atom: leaf value.
+            (⊂⊃⌽⊃⍵),(⍺+1)∇¨(⍺=⊃¨⍵)⊂⍵    ⍝ tree: node followed by subarrays.
+        }↓⍉↑⍵                           ⍝ vector of depth-node pairs.
+    }
+
+
+Examples, See: Trees
+
+See also: tfmt tview
+
+Index:tree|formatting, trees

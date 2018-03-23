@@ -1,0 +1,218 @@
+##.esh digits                               ⍝ Shell for Eide-number sums.
+
+[esh] is an interactive shell for Eide-number sums (see →ratrep←).  [esh] inter-
+prets  each line of ⍞-input as a vector of numbers in the current base and disp-
+lays its sum by using →ratsum← reduction. This input-eval-display loop continues
+until a terminating ')' is input.
+
+The  right  argument  provides the [digits] for the initial number base (radix).
+The digits, and therefore the base, may subsequently be changed by an input line
+of the form {···0···}.
+
+To start in decimal, we could call [esh] so:
+
+    esh ⎕D      ⍝ start in decimal.
+
+In  addition to the formal syntax of numbers required by →ratsum←, [esh] accepts
+and displays numbers in a more informal style, using these five substitutions:
+
+                   nnn.fff  ←→  <0|nnn.fff|0>       ⍝ plain num → enum.
+
+                  ¯nnn.fff  ←→  comp'<0|nnn.fff|0>' ⍝ negative num → complement.
+
+            ..lrulrunnn.fff ←→  <lru|nnn.fff|0>     ⍝ .. precedes repeated lru.
+
+            nnn.fffrrurru.. ←→ <0|nnn.fff|rru>      ⍝ .. follows repeated rru.
+
+    ..lrulrunnn.fffrrurru.. ←→ {lru|nnn.fff|rru}    ⍝ combination of the above.
+
+The  "double-dot" digraph is a notational device, which captures its longest ad-
+jacent twice-repeated string for the appropriate replication unit (RU).
+
+For example:
+
+            123.45  ←→  <0|123.45|0>        ⍝ Simple number.
+           ¯123.45  ←→  <9|876.55|0>        ⍝ Explicit negative sign absorbed.
+        ..12123.45  ←→  <12|3.45|0>         ⍝ Non-zero LRU.
+        123.4545..  ←→  <0|123|45>          ⍝ Non-zero RRU.
+   ..121234.5656..  ←→  <12|34|56>          ⍝ Both RUs non-zero.
+
+Notice  that, with a number such as "0.233766233766..", it is the _whole_ of the
+"233766" that is repeated indefinitely (not just the "6" on the end). When read-
+ing such numbers, we must learn to spot the _longest_ twice-repeated sequence.
+
+Informally, .. means "the adjacent sequence repeated indefinitely". For example,
+one third may be represented in decimal thus:
+
+    0.33..      ⍝ decimal one-third.
+
+NB: Double-dots do not confer any vagueness of value.  Such numbers have perfect
+accuracy (unlike the beguiling decimal "0.1" in your PC's spreadsheet).
+
+For example, the interaction:
+
+        4.99..      ⍝ display number.
+    5
+
+does not constitute a rounding; "5" and "4.99.." are alternative representations
+of the _same_ decimal number; it's just that esh's (actually →ratsum←'s) display
+code favours the shorter form.
+
+This may come as a bit of a surprise:
+
+        ..999
+    ¯1
+        ..998
+    ¯2
+
+although, after a moment's reflection, it seems reasonable that adding 1 to ..99
+would cause carried "1"s to ripple ever leftwards, leaving ..00.  An alternative
+way  to come to terms with this might be to imagine a brand new odometer with an
+unspecified number of digit positions: [..00]. What would we expect to happen if
+we wound the odometer backwards by one click?
+
+Formal syntax:                                                   Examples
+                                                                 ¯¯¯¯¯¯¯¯
+    num :=            seq                   ⍝ whole number       03102405
+         |  .. seqseq seq                   ⍝   non-zero LRU     ..121234
+         |            seq . seq             ⍝ fractional number       123.456
+         |            seq . seq seqseq ..   ⍝   non-zero RRU          123.455..
+         |  .. seqseq seq . seq seqseq ..   ⍝   non-zero RUs       ..1123.4566..
+    where:
+        seq is a seqence of digits drawn from the current base {digs}.  012
+        seqseq is a twice-repeated sequence.                            012012
+
+Examples:
+
+      esh ⎕d                    ⍝ start in decimal.
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Decimal
+
+    1 2 3 4                     ⍝ sum some nums.
+10
+    4.99..                      ⍝ normalised display.
+5
+    0.142857142857..  0.0909..  ⍝ 1/7 + 1/11 → 18/77
+0.233766233766..
+
+    5 ¯12 ¯4.5                  ⍝ APL has a nice "neg" sign.
+¯11.5
+
+    <12|3|45>                   ⍝ esh accepts formal input.
+2.2424..
+
+    ⍝ Note the subtle differences in these four examples:
+
+    2.33   5.66
+7.99
+
+    2.33.. 5.66
+7.9933..
+
+    2.33   5.66..
+7.9966..
+
+    2.33.. 5.66..
+8
+
+    ..0042.00..                 ⍝ double dots on left.
+42
+
+    ..11                        ⍝ <1|1|0>  (see →ratrep←).
+¯0.11..
+
+    0.1234..                    ⍝ error (no repeated string to left of "..").
+bad number
+
+⍝ Perhaps the following sequence will make you pause before
+⍝ dismissing Euler's preposterous claim (see →ratrep←).
+
+    ..99                            ⍝ (see note above)
+¯1
+    0.99..                          ⍝ (see note above)
+1
+    ..99  0.99..                    ⍝ ¯1 + 1 → 0
+0
+    ..99.99..                       ⍝   ..  ..
+0
+    ..33.33.. ..33.33.. ..33..33..  ⍝ 3 × ..33.33.. → ..99.99.. → 0
+0
+    ..33.33..                       ⍝ 0=3×⍵ implies ⍵=0
+0
+    ..11.11.. ..11.11.. ..11.11..   ⍝ 3 × ..11.11.. → ..33.33.. → 0
+0
+    ..11.11..                       ⍝ 0=3×⍵ implies ⍵=0
+0
+    ..0101.0101..                   ⍝ the sum of 11 of these gives ..1111.1111..
+0
+    ..001001.001001..               ⍝ the sum of 111 of these gives     ..
+0
+    ..123123.123123..               ⍝ 0=123×⍵ implies ⍵=0
+0
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Balanced Ternary
+
+    {-0+}               ⍝ change base to balanced ternary.   See also →bt←
+
+    +--+  +-+-          ⍝ balanced ternary: 16 + 20 → 36
+++00
+
+    + + + + +           ⍝ balanced ternary 5.
++--
+
+    0.++..  +.--..      ⍝ two representations of one-half.
++
+    ..--                ⍝ ... and a third, perhaps less obvious, one.
+0.++..
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Hexadecimal
+
+    {0123456789abcdef}          ⍝ change base to hexadecimal.
+
+    3e8 7d0 bb8 fa0             ⍝ sum of four hex numbers.
+2710
+
+    3e8 ¯200                    ⍝ sum with explicit negative sign.
+1e8
+
+    ffffffff 000003e8           ⍝ ffffffff is ¯1+2*32
+1000003e7
+
+    ..ffffff 000003e8           ⍝ ..ffffff is ¯1
+3e7
+
+    19d9c ¯dead
+beef
+
+    ¯baad ¯3560
+¯f00d
+
+    ..ffe
+¯2
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Pos-skewed four
+
+    {-0+#}          ⍝ change base to pos-skewed four (# is double-plus).
+
+    # # # # # +     ⍝ 11        (2+2+2+2+2+1) → (4⊥1 ¯1 ¯1)
++--
+
+    0.#  0.#        ⍝ one-half plus one-half
++
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Neg-skewed four
+
+    {=-0+}          ⍝ change base to neg-skewed four (= is double-minus).
+
+    + + + + + +     ⍝ 6         (1+1+1+1+1+1) → (4⊥1 ¯2 ¯2)
++==
+
+    +.=  +.=        ⍝ one-half plus one-half
++
+
+    )   ⍝ quit.
+
+See also: ratsum ratrep bt repl
+
+Index:Eide numbers|rational number|balanced ternary|hexadecimal|shell|REPL
+Index;Eide L.N.|Euler L.

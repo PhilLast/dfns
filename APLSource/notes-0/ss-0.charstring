@@ -1,0 +1,25 @@
+cvec ← ##.ss (srce from into)               ⍝ Approx alternative to xutils' ss.
+
+The  right  argument  is a 3-item vector of simple vectors. The result is formed
+from  the  source  [srce] with occurrences of string [from] replaced with string
+[into].  Notice  that  regular  expressions  are  not used; there are no special
+characters, so '*', '[]', etc. are taken literally. Notice also that in the case
+of overlapping strings, both strings are identified and both are replaced.
+
+Examples:
+
+      ss'Banana' 'an' 'AN'                  ⍝ non-overlapping strings.
+BANANa
+
+      ss'Banana' 'ana' 'ANA'                ⍝ overlapping strings.
+BANAANA
+
+      ss (⍳10) (3 4 5) (88 99)              ⍝ numeric strings.
+1 2 88 99 6 7 8 9 10
+
+      ss'b.bb' 'bb' 'zz'                    ⍝ "Ray's case".
+b.zz
+
+See also: subs ssmat ssword subvec
+
+Index:xutils, ss|string replacement|substitution

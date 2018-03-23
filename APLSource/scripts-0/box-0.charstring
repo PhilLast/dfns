@@ -1,0 +1,70 @@
+⍝ Box the simple text array ⍵:
+
+       a←3 10⍴⎕a                ⍝ Simple array.
+       
+      box a                     ⍝ simple case
+┌──────────┐
+│ABCDEFGHIJ│
+│KLMNOPQRST│
+│UVWXYZABCD│
+└──────────┘
+
+      1 box a                   ⍝ draw a row..
+┌──────────┐
+│ABCDEFGHIJ│
+├──────────┤
+│KLMNOPQRST│
+│UVWXYZABCD│
+└──────────┘
+
+      ⎕io ⎕ml←1 0
+
+      ⍬ (⍳5) box a              ⍝ ..and columns
+┌─┬─┬─┬─┬─┬─────┐
+│A│B│C│D│E│FGHIJ│
+│K│L│M│N│O│PQRST│
+│U│V│W│X│Y│ZABCD│
+└─┴─┴─┴─┴─┴─────┘
+
+      (1 2) (2+⍳3) box a        ⍝ both
+┌───┬─┬─┬─────┐
+│ABC│D│E│FGHIJ│
+├───┼─┼─┼─────┤
+│KLM│N│O│PQRST│
+├───┼─┼─┼─────┤
+│UVW│X│Y│ZABCD│
+└───┴─┴─┴─────┘
+
+      2 ⍬ 1  box a              ⍝ raw case
++----------+
+|ABCDEFGHIJ|
+|KLMNOPQRST|
++----------+
+|UVWXYZABCD|
++----------+
+
+      (¯1) (2+⍳5)    box a      ⍝ no horiz lines
+│ABC│D│E│F│G│HIJ│
+│KLM│N│O│P│Q│RST│
+│UVW│X│Y│Z│A│BCD│
+
+      (¯1 1 3) (2+⍳5)    box a  ⍝ draw bottom
+│ABC│D│E│F│G│HIJ│
+├───┼─┼─┼─┼─┼───┤
+│KLM│N│O│P│Q│RST│
+│UVW│X│Y│Z│A│BCD│
+└───┴─┴─┴─┴─┴───┘
+
+      (¯1 0 1) (¯1 9 10) box a  ⍝ a variant
+─────────┬─┐
+ABCDEFGHI│J│
+─────────┼─┤
+KLMNOPQRS│T│
+UVWXYZABC│D│
+
+      (¯1 1 2) (¯1 1 2)  box ↑'OOX' 'OXO' 'XX '  ⍝ I won!
+O│O│X
+─┼─┼─
+O│X│O
+─┼─┼─
+X│X│ 

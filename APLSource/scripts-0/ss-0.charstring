@@ -1,0 +1,13 @@
+⍝ Approx alternative to xutils' ss:
+
+      ss'Banana' 'an' 'AN'                  ⍝ non-overlapping strings.
+BANANa
+
+      ss'Banana' 'ana' 'ANA'                ⍝ overlapping strings.
+BANAANA
+
+      ss (1 to 10) (3 4 5) (88 99)          ⍝ numeric strings.
+1 2 88 99 6 7 8 9 10
+
+      ss'b.bb' 'bb' 'zz'                    ⍝ "Ray's case".
+b.zz

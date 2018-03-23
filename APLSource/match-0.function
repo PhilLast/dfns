@@ -1,0 +1,18 @@
+ match←{⎕ML←1                ⍝ Wildcard match.
+     p x←{⍵'*'}⍣(1=≡,⍺),⍺    ⍝ pattern and wildcard.
+     v←1↓¨{(x≡¨⍵)⊂⍵}x,p      ⍝ wildcard-separated segments.
+     h←↑v⍷¨⊂⍵                ⍝ hits, one row (leading sub-array) per segment.
+     r←0,¯1↓,↑⍴¨v            ⍝ hit-segment rotations.
+     sl←{                    ⍝ array shifted left.
+         a←¯1↓⍴⍵             ⍝ leading axes.
+         x←⌈/⍺               ⍝ maximum shift.
+         p←⍵,(a,x)⍴0         ⍝ 0-padded on right.
+         s←⍉a⍴⍺              ⍝ sub-array of vector rotations.
+         (-(0×a),x)↓s⌽p      ⍝ shifted array.
+     }                       ⍝ :: r ∇ a → a
+     m←⌽∨\⌽r sl h            ⍝ shifted mask 1 .. 1 0 .. 0
+     ↑⊃¨{                    ⍝ filtered hits.
+         (lh lm)(_ rm)←⍺ ⍵   ⍝ left and right hits and masks.
+         (lh∧rm)lm           ⍝ right-masked left hits.
+     }/↓⍉↑⊂⍤¯1¨h m           ⍝ hits and masks.
+ }

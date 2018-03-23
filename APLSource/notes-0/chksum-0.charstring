@@ -1,0 +1,87 @@
+sum ← {digs←6} ##.chksum array              ⍝ Simple ⍺-digit checksum.
+
+A checksum  can  be  considered as a "signature" for a set of data and so may be
+used to verify that the data has not been modified or corrupted.
+
+[chksum] returns a (by default 6-digit-) checksum for its argument array ⍵.
+
+NB: Check-summing  and  hashing systems typically map a large set of data values
+onto a significantly smaller set of sums.  It is therefore inevitable that there
+be  "clashes",  where different values map to the same sum.
+
+This means that a good checksum algorithm guarantees that:
+
+- If the checksum has changed, then the array has _certainly_ changed.
+- If the checksum has not changed, then the array has _probably_ not changed.
+
+The  art of creating useful checksums is to balance the conflicting requirements
+to:
+
+- Produce a fast-enough summing function for large volumes of data.
+- Maximise sensitivity to typical changes in the data.
+
+For example, a simple approach might be an ⍺-residue sum of the data bytes. How-
+ever,  this  would  not  detect  added or removed 0-values or reordering of data
+items. For this reason, a "weighted sum" is often used.
+
+There is a large body of literature devoted to the subject. See, for example:
+
+    http://en.wikipedia.org/wiki/Checksum
+
+Bug: [chksum] ignores array items that are namespace references (refs).
+Bug: [chksum] ignores ⎕NULL.
+Bug: [chksum] crashes (DOMAIN ERROR) on encountering a ⎕OR item.
+
+Technical notes:
+
+[chksum] returns the weighted sum of the:
+    the byte vector of: the shape followed by a ¯1 separator
+        followed by
+    the byte vector of the ravel of the array.
+
+where byte vectors for various item (⎕DR) types are the:
+
+    nested:     concatenation of the byte vectors of subarrays.
+    boolean:    (0 and 1) items themselves.
+    numeric:    (256|83 ⎕DR) byte-values.
+    character:  (256|83 ⎕DR) byte-values of ⎕UCS unicode indices.
+
+Separating  the last two cases above ensures that [chksum] returns the same res-
+ult for character arrays in Unicode and Classic versions of Dyalog.
+
+In  order to distinguish null arrays of differing types, such arrays are repres-
+ented by their prototypical items.
+
+Note that in versions of Dyalog APL prior to V10.1, we must explicitly "squeeze"
+integer  arrays prior to (⎕DR-) converting them to byte-values.  This is so that
+identical  integers,  whose  internal  representations  differ, produce the same
+checksum.
+
+Examples:
+
+    chksum ⎕cr'chksum'              ⍝ simple char array
+314685
+
+    chksum ⎕nr'chksum'              ⍝ nested    ..  ..
+930686
+
+    chksum 1 2 3 ∘.○ 4 5 6          ⍝ simple numeric array.
+412967
+
+    chksum¨(1 3 2)(2 1 3)           ⍝ clash: values with same chksum.
+538 538
+
+    chksum¨'' ⍬                     ⍝ distinct nulls.
+1295 1275
+
+    ⍝ Checksumming the notes in this workspace is reasonably quick:
+
+    chksum time notes.(⍎¨↓⎕nl 2)    ⍝ time checksumming of notes namespace.
+00.16
+
+    chksum #                        ⍝ checksum of ref is 0.
+0
+
+See also: time
+
+Index:checksum|hashing

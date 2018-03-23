@@ -1,0 +1,24 @@
+ xtabs←{⎕IO←0                            ⍝ Expand/compress HT chars.
+     ⍺←8                                 ⍝ default: 8-col tab stops.
+     ⍺=0:⍵                               ⍝ ⍺=0: no-op.
+     chs←~⍵∊⎕UCS 13 133                  ⍝ characters within line.
+
+     ⍺>0:⍺{                              ⍝ +ive ⍺: expand tabs → blanks.
+         tabs nabs←1 0=⊂⍵∊⎕UCS 9         ⍝ masks of tabs and non-tabs.
+         sync←tabs≥chs                   ⍝ sync at tab and end of line.
+         segs←¯1+{⍵-¯1,¯1↓⍵}sync/⍳⍴⍵     ⍝ inter-tab segment lengths.
+         pads←0⌈⍺-⍺|(sync/tabs)/segs     ⍝ padding lengths.
+         (nabs+tabs\pads)/nabs\nabs/⍵    ⍝ padded char vector.
+     }⍵
+
+     ⍺<0:(-⍺){                           ⍝ -ive ⍺: squeeze blanks → tabs.
+         bks nks←1 0=⊂⍵=' '              ⍝ blanks and non-blanks
+         runs←{⍵{⍵-⌈\⍵×~⍺}+\⍵}           ⍝ runs of adjacent 1s.
+         tabs←bks∧chs∧0=⍺|runs chs       ⍝ tab positions.
+         onoff←{(⍺≠⍵){≠\⍺\2≠/¯1,⍺/⍵}⍺-⍵} ⍝ on where ⍺=1, off where ⍵=1.
+         pretab←⌽(⌽tabs)onoff⌽nks        ⍝ blanks that precede tabs.
+         text←⍵                          ⍝ name ⍵ for selective specification:
+         (tabs/text)←⎕UCS 9              ⍝ inject tab chars.
+         (pretab≤tabs)/text              ⍝ without tab-preceding blanks.
+     }⍵
+ }

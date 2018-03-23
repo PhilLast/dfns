@@ -1,0 +1,16 @@
+ getfile←{⎕IO ⎕ML←0 1                        ⍝ Get text file ⍵ as nested vector.
+     ⍺←0,⎕DR' '                              ⍝ default: no tabs, narrow chars.
+     stops ctype←2↑⍺,(≢⍺)↓0,⎕DR' '           ⍝ tab stops and char type.
+     22::(⊃⎕DM)⎕SIGNAL ⎕EN                   ⍝ trap bad file name.
+     tie←⍵ ⎕NTIE 0                           ⍝ file handle.
+     cvec←⎕NREAD tie ctype,⎕NSIZE tie        ⍝ read contents of file.
+     _←⎕NUNTIE tie                           ⍝ release file.
+     lf cr←2↓4↑⎕AV                           ⍝ linefeed carriage-return.
+     split←{{⍵~cr lf}¨(1,¯1↓⍵=lf)⊂⍵}         ⍝ split file at <lf> char.
+     stops=0:split cvec                      ⍝ no tab expansion: nested vector.
+     tabs nabs←1 0=⊂cvec∊9⊃⎕AV               ⍝ masks of tabs and non-tabs.
+     sync←tabs∨cvec=lf                       ⍝ sync at tab and end of line.
+     segs←¯1+¯2-/¯1,sync/⍳⍴cvec              ⍝ inter-tab segment lengths.
+     pads←0⌈stops-stops|(sync/tabs)/segs     ⍝ padding lengths.
+     split(nabs+tabs\pads)/nabs\nabs/cvec    ⍝ padded char vector.
+ }

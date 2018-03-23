@@ -1,0 +1,45 @@
+ fnrefs←{⎕IO ⎕ML←1                       ⍝ External refs from function ⍵.
+
+     cmat←{                              ⍝ Canonical rep of function ⍵.
+         rmqt←{(~≠\⍵='''')mcomp ⍵}       ⍝ Quoted strings removed
+         rmcm←{(∧\'⍝'≠⍵)mcomp ⍵}         ⍝ Comments removed
+         mcomp←{(⍴⍵)⍴(,⍺)\(,⍺)/,⍵}       ⍝ Matrix compress
+         rmcm rmqt ⍵                     ⍝ Cleaned canonical rep.
+     }⎕CR ⍵
+
+     alph←⎕A,⎕Á,'_∆⍙#⎕',26↑17↓⎕AV        ⍝ Word alphabet.
+     xalph←alph,'.',⎕D                   ⍝ + non-leading chars.
+     sntx←xalph,'⍺ ()←'                  ⍝ + assignment syntax.
+
+     cvec←,cmat,'⍝'                      ⍝ Corresp. vec with '⍝' delimiter.
+
+     words←{⎕ML←3                        ⍝ Segment into 'words'
+         comp←~0 0⍷⍺                     ⍝ Compression mask.
+         (comp/⍺)⊂comp/⍵                 ⍝ Word segments.
+     }
+
+     head←{                              ⍝ Header line (for trad fns).
+         (⍵∊xalph)words ⍵
+     }cmat[1;]
+
+     labs←{                              ⍝ Labels.
+         segs←(⍵∊xalph)words ⍵           ⍝ Names, sysnames and numbers.
+         labs←(':'∊¨segs)/segs           ⍝ Labels and keywords.
+         {(∧\⍵≠':')/⍵}¨labs
+     }cvec
+
+     names←∪{                            ⍝ Names referenced from function.
+         segs←(⍵∊xalph)words ⍵           ⍝ Word segments.
+         (~(⊃¨segs)∊⎕D,'.⎕:')/segs       ⍝ Without numbers & system names.
+     }cvec
+
+     vars←{                              ⍝ Names assigned in function.
+         segs←(⍵∊sntx)words ⍵            ⍝ Possible assignment segments.
+         asegs←('←'∊¨segs)/segs          ⍝ Assignment segments.
+         trimd←{(~'  '⍷⍵)/⍵}¨asegs       ⍝ Superfluous blanks removed.
+         lvals←{(∧\⍵≠'←')/⍵}¨trimd       ⍝ left of assign arrow.
+         ↑,/{(⍵∊xalph)words ⍵}¨lvals     ⍝ Split into words.
+     }'←',cvec
+
+     names~vars,head,labs                ⍝ Approx external references.
+ }

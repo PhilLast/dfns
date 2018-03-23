@@ -1,0 +1,357 @@
+rslt ← {x} (u ##.Cut case) y                ⍝ Cut operator.
+
+From Roger Hui:
+
+Monadic Cases:
+u Cut 0 ⊢y applies u to y after reversing y along each axis; it is equivalent to
+(⍉⎕io,⍪-⍴y) u Cut 0 ⊢y .
+
+The "fret" 1⌷y (the leading major cell of y) marks the start of an  interval  of
+major cells of y ; the phrase  u Cut 1 ⊢y  applies u to each such interval.  The
+phrase  u Cut ¯1 ⊢y  differs only in that frets are excluded from the result. In
+u Cut 2  and  u Cut ¯2  the fret is the  last major cell,  and marks the ends of
+intervals.
+
+The monads  u Cut 3 and  u Cut ¯3 apply u to tessellation by maximal cubes, that
+is, they are defined by their dyadic cases using the left argument (⍴⍴y)⍴⌊/⍴y.
+
+Dyadic Cases:
+x u Cut 0 ⊢y  applies u to a rectangle or cuboid of y with  one  vertex  at  the
+point in y indexed by  v←1⌷x and with the opposite vertex determined as follows:
+the dimension is  |2⌷x ,  but the rectangle extends back from v along any axis j
+for which the index j⌷v is negative. Finally, the order of the selected cells is
+reversed along each axis k for which k⌷2⌷x is negative. If x is a vector or
+scalar, it is treated as the matrix ⍉⎕io,⍪x .
+
+The frets in the dyadic cases 1, ¯1, 2, and ¯2 are determined by the 1s in bool-
+ean vector x ; an empty vector x and non-zero  ≢y indicates the entire of y.  If
+x is the scalar 0 or 1 it is treated as (≢y)⍴x .  In general, boolean vector j⊃x
+specifies how axis j is to be cut, with a scalar treated as (j⌷⍴y)⍴j⊃x.
+
+u Cut 3  and  u Cut ¯3  yield (possibly overlapping) tessellations.  x Cut ¯3 ⊢y
+applies u to each complete rectangle of size |2⌷x beginning at integer multiples
+of (each scalar of) the movement vector  1⌷x .  As in u Cut 0 ,  reversal occurs
+along each axis for which the size  2⌷x  is negative.  The case of a  vector  or
+scalar x is equivalent to ⍉1,⍪x , and therefore provides a complete tessellation
+of size x . The case u Cut 3 differs in that shards of length less than |2⌷x are
+included.
+
+Refs:
+
+Iverson, K.E., Rationalized APL, 1983, Section K.:
+    http://www.jsoftware.com/papers/RationalizedAPL.htm
+Hui, R.K.W., Some Uses of { and }, 1987, Section 3.2.:
+    http://www.jsoftware.com/papers/from.htm
+Iverson, K.E., A Dictionary of APL, 1987, m⍤v.:
+    http://www.jsoftware.com/papers/APLDictionary.htm
+Hui, R.K.W., and K.E. Iverson, J Introduction and Dictionary, 2011, Cut (;.):
+    http://www.jsoftware.com/help/dictionary/d331.htm
+
+Examples:
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ 0-Cut
+
+⍝ The 0-cut selects rectangular subarrays, reversing each axis for which the
+⍝ specified length is negative.
+
+    ⎕←x←4 10⍴⍳40
+ 1  2  3  4  5  6  7  8  9 10
+11 12 13 14 15 16 17 18 19 20
+21 22 23 24 25 26 27 28 29 30
+31 32 33 34 35 36 37 38 39 40
+
+⍝ cut at indices 2 3 with sizes 3 4:
+
+    (⍉2 3,⍪3 4) ⊂Cut 0 ⊢x
+┌───────────┐
+│13 14 15 16│
+│23 24 25 26│
+│33 34 35 36│
+└───────────┘
+
+⍝ cut at indices 2 3 with sizes 3 ¯4 (the ¯4 indicates reversal of axis 2):
+
+    (⍉2 3,⍪3 ¯4) ⊂Cut 0 ⊢x
+┌───────────┐
+│16 15 14 13│
+│26 25 24 23│
+│36 35 34 33│
+└───────────┘
+
+⍝ cut at indices 1 1 (default) with sizes 3 ¯4 (the ¯4 indicates reversal of
+⍝ axis 2):
+
+    3 ¯4 ⊂Cut 0 ⊢x
+┌───────────┐
+│ 4  3  2  1│
+│14 13 12 11│
+│24 23 22 21│
+└───────────┘
+
+⍝ reverse each axis:
+
+    ⊢Cut 0 ⊢x
+40 39 38 37 36 35 34 33 32 31
+30 29 28 27 26 25 24 23 22 21
+20 19 18 17 16 15 14 13 12 11
+10  9  8  7  6  5  4  3  2  1
+
+⍝ cut at indices 2 ¯2 with sizes 3 6 (the ¯2 indicates negative indexing):
+
+    (⍉2 ¯2,⍪3 6) ⊢Cut 0 ⊢x
+14 15 16 17 18 19
+24 25 26 27 28 29
+34 35 36 37 38 39
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ 1 ¯1-Cut and 2 ¯2-Cut
+
+⍝ The 1- and 2-cut partition according a "fret", 1s in a boolean left argument
+⍝ in the dyadic case or the leading major cell of the right argument in the
+⍝ monadic case. Frets specify the starts of partitions in the 1-cut and the ends
+⍝ in the 2-cut. The ¯1- and ¯2-cuts differ in excluding the frets.
+
+⍝ cut on leading blanks; apply ⊂ to each cut:
+
+    ⊂Cut 1 ⊢' Cogito, ergo sum.'
+┌────────┬─────┬─────┐
+│ Cogito,│ ergo│ sum.│
+└────────┴─────┴─────┘
+
+⍝ cut on leading blanks; apply {⊂⌽⍵} to each cut:
+
+    {⊂⌽⍵}Cut 1 ⊢' Cogito, ergo sum.'
+┌────────┬─────┬─────┐
+│,otigoC │ogre │.mus │
+└────────┴─────┴─────┘
+
+⍝ cut on leading blanks; apply ⊂ to each cut, excluding the leading cell:
+
+    ⊂Cut ¯1 ⊢' Cogito, ergo sum.'
+┌───────┬────┬────┐
+│Cogito,│ergo│sum.│
+└───────┴────┴────┘
+
+⍝ cut on leading 1s in the left argument; apply ⊂ to each cut:
+
+    1 0 0 0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 ⊂Cut 1 ⊢' Cogito, ergo sum.'
+┌────────┬─────┬─────┐
+│ Cogito,│ ergo│ sum.│
+└────────┴─────┴─────┘
+
+⍝ cut on leading blanks; apply ⊂ to each cut:
+
+    ⊢Cut 1 ⊢' Cogito, ergo sum.'
+ Cogito,
+ ergo
+ sum.
+
+⍝ cut on leading blanks; apply ⊢ to each cut, excluding the leading cell (the
+⍝ common vtom (vector to matrix) utility):
+
+    ⊢Cut ¯1 ⊢' Cogito, ergo sum.'
+Cogito,
+ergo
+sum.
+
+⍝ cut on leading 1s in the left argument (←→ right argument because of the ⍨);
+⍝ apply ≢ to each cut:
+
+    ≢Cut  1⍨ 1 0 1 0 0
+2 3
+
+⍝ cut on leading 1s in the left argument; apply ≢ to each cut, excluding the
+⍝ leading cell:
+
+    ≢Cut ¯1⍨ 1 0 1 0 0
+1 2
+
+⍝ cut on trailing /; apply ⊂ to each cut:
+
+    ⊂Cut 2 ⊢'Cogito,/ergo/sum./'
+┌────────┬─────┬─────┐
+│Cogito,/│ergo/│sum./│
+└────────┴─────┴─────┘
+
+⍝ cut on trailing 1s in the left argument (which specify the _ends_ of the cuts)
+⍝ apply ⊂ to each cut:
+
+    1 0 1 0 0 1 0 0 ⊂Cut 2 ⊢'chthonic'
+┌─┬──┬───┐
+│c│ht│hon│
+└─┴──┴───┘
+
+⍝ cut on trailing 1s in the left argument (which specify the _ends_ of the cuts)
+⍝ apply +⌿ to each cut:
+
+    1 0 1 0 0 1 0 0 +⌿Cut 2 ⊢8 3⍴⍳24
+ 1  2  3
+11 13 15
+39 42 45
+
+⍝ cut on leading 1s in the left argument; apply ⊂ to each cut:
+
+    x←5 3⍴⍳15
+    1 0 1 0 0 ⊂Cut 1 ⊢x
+┌─────┬────────┐
+│1 2 3│ 7  8  9│
+│4 5 6│10 11 12│
+│     │13 14 15│
+└─────┴────────┘
+
+⍝ cut using 1 0 1 0 0 on axis 0 and 1 1 0 on axis 1 (not yet implemented by the
+⍝ model):
+
+    (1 0 1 0 0) (1 1 0) ⊂Cut 1 ⊢x
+┌──┬─────┐
+│1 │2 3  │
+│4 │5 6  │
+├──┼─────┤
+│ 7│ 8  9│
+│10│11 12│
+│13│14 15│
+└──┴─────┘
+
+⍝ cut using ⍬ on axis 0 and 1 1 0 on axis 1 (not yet implemented by the model):
+
+    ⍬ (1 1 0) ⊂Cut 1 ⊢x
+┌──┬─────┐
+│ 1│ 2  3│
+│ 4│ 5  6│
+│ 7│ 8  9│
+│10│11 12│
+│13│14 15│
+└──┴─────┘
+
+⍝ cut using ⍬ on axis 0 (not yet implemented by the model):
+
+    ⍬ ⊂Cut 1 ⊢x
+┌────────┐
+│ 1  2  3│
+│ 4  5  6│
+│ 7  8  9│
+│10 11 12│
+│13 14 15│
+└────────┘
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ 3 ¯3-Cut
+
+⍝ The 3-cut provides tessellation.
+⍝ The ¯3-cut differs in excluding shards, cells less than the full size.
+
+    ⎕←x←5 7⍴⍳35
+ 1  2  3  4  5  6  7
+ 8  9 10 11 12 13 14
+15 16 17 18 19 20 21
+22 23 24 25 26 27 28
+29 30 31 32 33 34 35
+
+⍝ tessellate using movements 2 1 and sizes 3 2:
+
+    (2 2⍴2 1 3 2) ⊂Cut 3 ⊢x
+┌─────┬─────┬─────┬─────┬─────┬─────┬──┐
+│ 1  2│ 2  3│ 3  4│ 4  5│ 5  6│ 6  7│ 7│
+│ 8  9│ 9 10│10 11│11 12│12 13│13 14│14│
+│15 16│16 17│17 18│18 19│19 20│20 21│21│
+├─────┼─────┼─────┼─────┼─────┼─────┼──┤
+│15 16│16 17│17 18│18 19│19 20│20 21│21│
+│22 23│23 24│24 25│25 26│26 27│27 28│28│
+│29 30│30 31│31 32│32 33│33 34│34 35│35│
+├─────┼─────┼─────┼─────┼─────┼─────┼──┤
+│29 30│30 31│31 32│32 33│33 34│34 35│35│
+└─────┴─────┴─────┴─────┴─────┴─────┴──┘
+
+⍝ tessellate using movements 2 1 and sizes ¯3 2
+⍝ (¯3 indicates reversal of axis 1 of each cut):
+
+    (2 2⍴2 1 ¯3 2) ⊂Cut 3 ⊢x
+┌─────┬─────┬─────┬─────┬─────┬─────┬──┐
+│15 16│16 17│17 18│18 19│19 20│20 21│21│
+│ 8  9│ 9 10│10 11│11 12│12 13│13 14│14│
+│ 1  2│ 2  3│ 3  4│ 4  5│ 5  6│ 6  7│ 7│
+├─────┼─────┼─────┼─────┼─────┼─────┼──┤
+│29 30│30 31│31 32│32 33│33 34│34 35│35│
+│22 23│23 24│24 25│25 26│26 27│27 28│28│
+│15 16│16 17│17 18│18 19│19 20│20 21│21│
+├─────┼─────┼─────┼─────┼─────┼─────┼──┤
+│29 30│30 31│31 32│32 33│33 34│34 35│35│
+└─────┴─────┴─────┴─────┴─────┴─────┴──┘
+
+⍝ tessellate using movements 2 1 and sizes 3 ¯2
+⍝ (¯2 indicates reversal of axis 2 of each cut):
+
+    (2 2⍴2 1 3 ¯2) ⊂Cut 3 ⊢x
+┌─────┬─────┬─────┬─────┬─────┬─────┬──┐
+│ 2  1│ 3  2│ 4  3│ 5  4│ 6  5│ 7  6│ 7│
+│ 9  8│10  9│11 10│12 11│13 12│14 13│14│
+│16 15│17 16│18 17│19 18│20 19│21 20│21│
+├─────┼─────┼─────┼─────┼─────┼─────┼──┤
+│16 15│17 16│18 17│19 18│20 19│21 20│21│
+│23 22│24 23│25 24│26 25│27 26│28 27│28│
+│30 29│31 30│32 31│33 32│34 33│35 34│35│
+├─────┼─────┼─────┼─────┼─────┼─────┼──┤
+│30 29│31 30│32 31│33 32│34 33│35 34│35│
+└─────┴─────┴─────┴─────┴─────┴─────┴──┘
+
+⍝ tessellate using movements 1 1 (default) and sizes ¯3 2:
+
+    ¯3 2 ⊂Cut 3 ⊢x
+┌─────┬─────┬─────┬─────┬─────┬─────┬──┐
+│15 16│16 17│17 18│18 19│19 20│20 21│21│
+│ 8  9│ 9 10│10 11│11 12│12 13│13 14│14│
+│ 1  2│ 2  3│ 3  4│ 4  5│ 5  6│ 6  7│ 7│
+├─────┼─────┼─────┼─────┼─────┼─────┼──┤
+│22 23│23 24│24 25│25 26│26 27│27 28│28│
+│15 16│16 17│17 18│18 19│19 20│20 21│21│
+│ 8  9│ 9 10│10 11│11 12│12 13│13 14│14│
+├─────┼─────┼─────┼─────┼─────┼─────┼──┤
+│29 30│30 31│31 32│32 33│33 34│34 35│35│
+│22 23│23 24│24 25│25 26│26 27│27 28│28│
+│15 16│16 17│17 18│18 19│19 20│20 21│21│
+├─────┼─────┼─────┼─────┼─────┼─────┼──┤
+│29 30│30 31│31 32│32 33│33 34│34 35│35│
+│22 23│23 24│24 25│25 26│26 27│27 28│28│
+├─────┼─────┼─────┼─────┼─────┼─────┼──┤
+│29 30│30 31│31 32│32 33│33 34│34 35│35│
+└─────┴─────┴─────┴─────┴─────┴─────┴──┘
+
+⍝ tessellate using movements 1 1 (default) and sizes ¯3 2, excluding shards:
+
+    ¯3 2 ⊂Cut ¯3 ⊢x
+┌─────┬─────┬─────┬─────┬─────┬─────┐
+│15 16│16 17│17 18│18 19│19 20│20 21│
+│ 8  9│ 9 10│10 11│11 12│12 13│13 14│
+│ 1  2│ 2  3│ 3  4│ 4  5│ 5  6│ 6  7│
+├─────┼─────┼─────┼─────┼─────┼─────┤
+│22 23│23 24│24 25│25 26│26 27│27 28│
+│15 16│16 17│17 18│18 19│19 20│20 21│
+│ 8  9│ 9 10│10 11│11 12│12 13│13 14│
+├─────┼─────┼─────┼─────┼─────┼─────┤
+│29 30│30 31│31 32│32 33│33 34│34 35│
+│22 23│23 24│24 25│25 26│26 27│27 28│
+│15 16│16 17│17 18│18 19│19 20│20 21│
+└─────┴─────┴─────┴─────┴─────┴─────┘
+
+⍝ movements 1 1 (default) and sizes 3 3, excluding shards; apply , to each cut:
+
+    life←{1⊖1⌽(-⍴⍵)↑5 6 7∊⍨(3 3 ,Cut ¯3⊢⍵)+.×9⍴1,⍨4⍴2}
+
+    b←10 10⍴0 ⋄ b[2;3]←b[3;4]←b[4;2 3 4]←1  ⍝ "glider"
+
+    {'.x'[1+life⍣⍵⊢b]}¨¯1+⍳10               ⍝ game of life for 10 generations
+┌──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+│..........│..........│..........│..........│..........│..........│..........│..........│..........│..........│
+│..x.......│..........│..........│..........│..........│..........│..........│..........│..........│..........│
+│...x......│.x.x......│...x......│..x.......│...x......│..........│..........│..........│..........│..........│
+│.xxx......│..xx......│.x.x......│...xx.....│....x.....│..x.x.....│....x.....│...x......│....x.....│..........│
+│..........│..x.......│..xx......│..xx......│..xxx.....│...xx.....│..x.x.....│....xx....│.....x....│...x.x....│
+│..........│..........│..........│..........│..........│...x......│...xx.....│...xx.....│...xxx....│....xx....│
+│..........│..........│..........│..........│..........│..........│..........│..........│..........│....x.....│
+│..........│..........│..........│..........│..........│..........│..........│..........│..........│..........│
+│..........│..........│..........│..........│..........│..........│..........│..........│..........│..........│
+│..........│..........│..........│..........│..........│..........│..........│..........│..........│..........│
+└──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+See also: life
+
+Index:Cut|life, game of
+Index;Hui R.K.W.

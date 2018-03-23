@@ -1,0 +1,3 @@
+ isdfn←{         ⍝ Test for D function.
+     3.2=⎕NC⊂⍵
+ }

@@ -1,0 +1,16 @@
+rslt ← {blank} ##.deb argt                  ⍝ Drop Ending Blanks.
+
+Both leading and trailing blanks are dropped from the character vector argument.
+If the argument is of higher rank, blank "columns" are dropped.
+
+Notice that:
+
+    deb ≡≡ dlb∘⌽⍣2      ⍝ (John Daintree)
+
+where ⍣ is the primitive power operator.
+
+Examples, See: Blank_removal
+
+See also: dab dlb dmb dtb dxb
+
+Index:blanks|compression

@@ -1,0 +1,33 @@
+⍝ Apply function Simple-Array-Wise:
+
+      eng←'One' '' '' '' 'Five'
+      esp←'Uno' 'Dos' 'Tres' '' ''
+
+      disp¨eng esp                      ⍝ two nested vectors.
+ ┌───┬┬┬┬────┐  ┌───┬───┬────┬┬┐ 
+ │One││││Five│  │Uno│Dos│Tres│││ 
+ └───┴┴┴┴────┘  └───┴───┴────┴┴┘ 
+
+      disp ⌽saw eng esp                 ⍝ <monadic> saw on depth-3 array.
+┌─────────────┬────────────────┐
+│┌───┬┬┬┬────┐│┌───┬───┬────┬┬┐│
+││enO││││eviF│││onU│soD│serT││││
+│└───┴┴┴┴────┘│└───┴───┴────┴┴┘│
+└─────────────┴────────────────┘
+
+      disp eng {⍺,'=',⍵}saw esp         ⍝ <dyadic> saw between depth-2 arrays.
+┌───────┬────┬─────┬─┬─────┐
+│One=Uno│=Dos│=Tres│=│Five=│
+└───────┴────┴─────┴─┴─────┘
+
+      fnb←{⍺{' '^.=⍺:⍵ ⋄ ⍺}saw ⍵}       ⍝ Paul Mansour's <fnb> function.
+
+      disp eng fnb esp                  ⍝ eng replaces esp simple-array-wise.
+┌───┬───┬────┬┬────┐
+│One│Dos│Tres││Five│
+└───┴───┴────┴┴────┘
+
+      disp ↑fnb/ eng esp '¿?'           ⍝ eng replaces esp with default: '¿?'.
+┌───┬───┬────┬──┬────┐
+│One│Dos│Tres│¿?│Five│
+└───┴───┴────┴──┴────┘

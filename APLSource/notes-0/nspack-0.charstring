@@ -1,0 +1,138 @@
+saved ← {seed} ##.nspack ref                ⍝ Share arrays across space tree.
+
+Nspack  takes a reference to a namespace to be packed by _array sharing_. Ident-
+ical arrays and subarrays are shared among all of the variables in the space and
+all  of  its children. In particular, if the argument is a reference to the root
+space  (#), all variables in the workspace are shared. This may take a consider-
+able  time  but  could  result in a significant saving in a workspace containing
+complex nested arrays. The result is the number of workspace bytes saved.
+
+Nspack may be appropriate for reducing the size of a workspace, prior to deploy-
+ment, when file storage is at a premium. For example, when saving to a PDA.
+
+Notice that the result of ⎕size can be misleading as it ignores subarray sharing
+when counting the bytes consumed by a nested structure.
+
+The  optional  left argument is an array of values to be considered for sharing.
+Dyalog automatically shares literal constants from lines of code (or execute (⍎)
+expressions)  across  the  whole workspace. Examples of literal constants are 9,
+'~∇∇' and 2 3 4 in:
+
+    class←9,('~∇∇'∊incl)/2 3 4
+
+Given that these values are already present in the workspace, nspack may as well
+share them with any arrays that happen to contain an identical subarray.  By de-
+fault,  "common" literals:  0, 1, ¯1, 2, ⍬, '' and ' ' are used. If reducing the
+size  of  the saved workspace is _very_ important, the following function may be
+used  to  harvest  pointers to all literal values present in the workspace. Note
+however,  that for a non-trivial workspace, it takes a depressingly long time to
+run (see example below).
+
+      literals←{                                  ⍝ Unique literal values.
+          lines←∪1 enlist(refs ⍵).(⎕NR¨↓⎕NL 3 4)  ⍝ function source lines.
+          tokns←∪1 enlist tokens¨lines            ⍝ tokens within lines.
+          ltoks←∪{((⊃¨⍵)∊'''¯',⎕D)/⍵}tokns        ⍝ literal tokens.
+          1↓⍎¨'0',ltoks                           ⍝ literal values.
+      }
+
+Technical note:
+Nspack  includes _copies_ of functions →refs← and →pack←. This is so that it may
+be copied stand-alone into a subject workspace.
+
+Bugs:
+Nspack  does  not  penetrate nested arrays looking for refs to (unnamed) spaces.
+This means that array values within such spaces are not shared.
+
+    refs←⎕ns¨'' ''                  ⍝ array of refs containing,
+    refs.(a←⍳3)                     ⍝ distinct values.
+    nspack #                        ⍝ no sharing :-(
+0
+
+Examples:
+
+      nested←⍳¨∘⍳¨∘⍳¨∘⍳¨⍳3 3        ⍝ complex nested array.
+      ⎕size'nested'                 ⍝ size in bytes.
+19484
+      nspack #                      ⍝ nspack recovers most of the space.
+17996
+      nspack #                      ⍝ subsequent pack saves no more space.
+0
+      ⎕size'nested'                 ⍝ size "appears" not to have changed.
+19484
+
+⍝ The following sequences show savings in various workspaces.
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+      )xload tube
+C:\Dyalog90\samples\dfns\tube saved Sun Jul 28 14:30:58 2002
+
+      compile∘⍎¨↓⎕nl 9              ⍝ compile graphs for all routes.
+
+      )copy dfns nspack
+C:\Dyalog90\samples\dfns\dfns saved Sat Oct 12 00:18:00 2002
+
+      nspack #                      ⍝ takes a while but saves 86k.
+88144
+      )erase nspack
+
+      'wsdiff'⎕se.⎕cy'dfns'         ⍝ copy wsdiff to check that
+      ⎕se.wsdiff''                  ⍝ changes are transparent.
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+      )xload wdesign
+C:\Dyalog90\ws\wdesign saved Fri Mar  2 14:19:54 2001
+
+      )copy dfns nspack
+C:\Dyalog90\samples\dfns\dfns saved Fri Oct 11 23:54:22 2002
+
+      nspack #                      ⍝ saves 130k.
+133308
+      )erase nspack
+
+      ⎕se.wsdiff''                  ⍝ check changes are transparent.
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+⍝ The following takes an inordinate time to run, but shares every last byte.
+
+      )xload wdesign
+C:\Dyalog90\ws\wdesign saved Fri Mar  2 14:19:54 2001
+
+      literals←{                                  ⍝ unique literal values.
+          lines←∪1 enlist(refs ⍵).(⎕NR¨↓⎕NL 3 4)  ⍝ function lines.
+          tokns←∪1 enlist tokens¨lines            ⍝ tokens.
+          ltoks←∪{((⊃¨⍵)∊'''¯',⎕D)/⍵}tokns        ⍝ literal tokens.
+          1↓⍎¨'0',ltoks                           ⍝ literal values.
+      }
+
+      )copy dfns nspack refs enlist tokens time
+C:\Dyalog90\samples\dfns\dfns saved Sun Oct 13 13:02:12 2002
+
+      (literals time #)nspack #     ⍝ saves extra 14k (c.f. above).
+15:37.18
+144488
+
+      )erase literals nspack refs enlist tokens time
+
+      ⎕se.wsdiff''                  ⍝ check changes are transparent.
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+⍝ The following example shows the difference between sharing
+⍝ _within_ as opposed _among_ a number of namespaces.
+
+      'x.a' 'x.b' 'x.c'⎕ns¨⊂''      ⍝ make three spaces.
+
+      x.(a b c).(var←⍳¨∘⍳¨∘⍳¨∘⍳¨⍳3 3)   ⍝ populate separately.
+
+      nspack¨x.(a b c)              ⍝ packing _within_ spaces saves 17.5k each.
+17952 17952 17952
+
+      nspack x                      ⍝ packing _among_ spaces saves a further 3k.
+3064
+
+See also: pack refs Data_compression
+
+Index:packing|compression|enlist

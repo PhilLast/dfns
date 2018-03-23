@@ -1,0 +1,138 @@
+⍝ Index of notes in space ⍵:
+
+    disp↑{('a'=⊃∘⊃¨⍵)/⍵}notes index':'      ⍝ matrix of "a" entries from index.
+┌─────────────────────────┬────────────────────────────────────┐
+│abacus                   │┌─────┐                             │
+│                         ││mayan│                             │
+│                         │└─────┘                             │
+├─────────────────────────┼────────────────────────────────────┤
+│accumulator              │┌─────────┬─────────┬────┐          │
+│                         ││factorial│fibonacci│list│          │
+│                         │└─────────┴─────────┴────┘          │
+├─────────────────────────┼────────────────────────────────────┤
+│addition                 │┌──────┐                            │
+│                         ││colsum│                            │
+│                         │└──────┘                            │
+├─────────────────────────┼────────────────────────────────────┤
+│adjacency matrix         │┌──────┐                            │
+│                         ││Graphs│                            │
+│                         │└──────┘                            │
+├─────────────────────────┼────────────────────────────────────┤
+│adjacent 1s              │┌─────┐                             │
+│                         ││xtabs│                             │
+│                         │└─────┘                             │
+├─────────────────────────┼────────────────────────────────────┤
+│aide-mémoire             │┌───────┐                           │
+│                         ││refcard│                           │
+│                         │└───────┘                           │
+├─────────────────────────┼────────────────────────────────────┤
+│align text               │┌────┬───────┐                      │
+│                         ││just│justify│                      │
+│                         │└────┴───────┘                      │
+├─────────────────────────┼────────────────────────────────────┤
+│ambivalent               │┌─────┐                             │
+│                         ││ambiv│                             │
+│                         │└─────┘                             │
+├─────────────────────────┼────────────────────────────────────┤
+│ancestor space           │┌───────┬──┐                        │
+│                         ││refpath│up│                        │
+│                         │└───────┴──┘                        │
+├─────────────────────────┼────────────────────────────────────┤
+│applicative              │┌───┐                               │
+│                         ││joy│                               │
+│                         │└───┘                               │
+├─────────────────────────┼────────────────────────────────────┤
+│apportionment            │┌─────────┐                         │
+│                         ││apportion│                         │
+│                         │└─────────┘                         │
+├─────────────────────────┼────────────────────────────────────┤
+│arithmetic-geometric mean│┌─────┐                             │
+│                         ││limit│                             │
+│                         │└─────┘                             │
+├─────────────────────────┼────────────────────────────────────┤
+│array, nested            │┌────┬──────┬──────┬───┐            │
+│                         ││disp│easter│enlist│int│            │
+│                         │└────┴──────┴──────┴───┘            │
+├─────────────────────────┼────────────────────────────────────┤
+│assembler                │┌────┐                              │
+│                         ││baby│                              │
+│                         │└────┘                              │
+├─────────────────────────┼────────────────────────────────────┤
+│assignment               │┌─────────┬──────┬─┐                │
+│                         ││apportion│assign│X│                │
+│                         │└─────────┴──────┴─┘                │
+├─────────────────────────┼────────────────────────────────────┤
+│assignment, destructive  │┌──────┬──┬───────┬───┬──────┬─────┐│
+│                         ││alists│at│hexdump│sam│select│wpath││
+│                         │└──────┴──┴───────┴───┴──────┴─────┘│
+├─────────────────────────┼────────────────────────────────────┤
+│assignment, indexed      │┌──┬────┬──────┬─────┐              │
+│                         ││at│maze│select│wpath│              │
+│                         │└──┴────┴──────┴─────┘              │
+├─────────────────────────┼────────────────────────────────────┤
+│assignment, selective    │┌──┐                                │
+│                         ││at│                                │
+│                         │└──┘                                │
+├─────────────────────────┼────────────────────────────────────┤
+│association list         │┌──────┬───┐                        │
+│                         ││alists│mns│                        │
+│                         │└──────┴───┘                        │
+├─────────────────────────┼────────────────────────────────────┤
+│astronomy                │┌─────┐                             │
+│                         ││mayan│                             │
+│                         │└─────┘                             │
+├─────────────────────────┼────────────────────────────────────┤
+│at                       │┌────┐                              │
+│                         ││baby│                              │
+│                         │└────┘                              │
+├─────────────────────────┼────────────────────────────────────┤
+│attributes               │┌──────┐                            │
+│                         ││attrib│                            │
+│                         │└──────┘                            │
+├─────────────────────────┼────────────────────────────────────┤
+│autoformat               │┌────┐                              │
+│                         ││test│                              │
+│                         │└────┘                              │
+└─────────────────────────┴────────────────────────────────────┘
+
+    1 disp notes index '?'          ⍝ no hits: null result.
+┌⊖──────┐
+│┌→┬───┐│
+││ │┌⊖┐││
+││ ││ │││
+││ │└⊖┘││
+│└⊖┴──⊖┘│
+└──────→┘
+
+    {'see ',⍵}\↑{1↓¨('→'=⍵)⊂⍵}∘{'→',⊃⍵}¨notes index'≡'      ⍝ alias entries.
+ AGM                      see arithmetic-geometric mean  
+ AST                      see abstract syntax tree       
+ balanced tree            see binary search tree         
+ BFS                      see breadth-first search       
+ BST                      see binary search tree         
+ CPS                      see continuation-passing style 
+ data compression         see compression                
+ DFS                      see depth-first search         
+ EIS                      see enclose-if-simple          
+ FFT                      see Fast Fourier Transform     
+ FRE                      see Function Results Edition   
+ GCD                      see greatest common divisor    
+ HCF                      see greatest common divisor    
+ HHKB                     see Happy Hacking Keyboard     
+ IDN                      see International Day Number   
+ imaginary numbers        see complex numbers            
+ JITS                     see Just-In-Time-Subtraction   
+ LCM                      see least common multiple      
+ line list                see line vector                
+ line-drawing characters  see box-drawing characters     
+ LZW                      see Lempel-Ziv-Welch           
+ MST                      see minimum spanning tree      
+ nested array             see array, nested              
+ network                  see graph                      
+ Phi                      see golden mean                
+ read-eval-print loop     see repl                       
+ recursion                see recursion                  
+ RLE                      see run-length encoding        
+ spaces                   see blanks                     
+ TAO                      see Total array ordering       
+ Ø                        see golden mean                

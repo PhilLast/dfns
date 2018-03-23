@@ -1,0 +1,4 @@
+ to←{⎕IO←0                                   ⍝ Sequence ⍺ .. ⍵
+     from step←1 ¯1×-\2↑⍺,⍺+×⍵-⍺             ⍝ step default is +/- 1.
+     from+step×⍳0⌈1+⌊(⍵-from)÷step+step=0    ⍝ ⍺ thru ⍵ inclusive.
+ }

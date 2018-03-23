@@ -1,0 +1,7 @@
+ cond←{                  ⍝ proposition : consequence : alternative
+     ⍺←2                 ⍝
+     (⍺=1):⍺⍺⊣⍵          ⍝ antecedent
+     (⍺=0):⍵⍵⊣⍵          ⍝ consequent
+     (1 ⍺⍺ ⍵):0 ⍺⍺ ⍵     ⍝ antecedent then consequent
+     ⍵⍵⊣⍵                ⍝ else alternative
+ }

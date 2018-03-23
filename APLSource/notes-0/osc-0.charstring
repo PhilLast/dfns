@@ -1,0 +1,23 @@
+num ← ##.osc num                            ⍝ Oscillate - probably returns 1.
+
+This function expounded by L.Collatz in 1937, illustrates the "cleanness" of the
+D-function style. B.Thwaites (1996) has offered a £1,100 reward for proving that
+it  terminates  for  all  ⍵>0  and Paul Erdős commented: "Mathematics is not yet
+ready for such problems."
+
+In "Gödel, Escher, Bach:", Douglas Hofstadter defines a natural number (n) to be
+"Wondrous"  if  (osc n) terminates. He points out that no-one has yet discovered
+an "un-wondrous" number.
+
+This sequence is also known as the "Hailstone" or "3N+1" sequence.
+
+Example:
+
+      osc¨⍳40               ⍝ (engineer's proof)
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+
+See also: k6174 m91
+
+Index:Oscillate|cash prize|wondrous number|Gödel, Escher, Bach|proof, engineer's
+Index:Hailstone sequence|3N+1 sequence|sequence|engineers|Collatz sequence
+Index;Collatz L.|Thwaites B.|Erdős P.|Hofstadter D.

@@ -1,0 +1,11 @@
+rslt ← {blank} ##.dmb argt                  ⍝ Drop Multiple Blanks.
+
+Multiple  sequences of blanks in the character vector argument are replaced by a
+single  one.  If  the  argument  is of higher rank, adjacent blank "columns" are
+"squeezed".
+
+Examples, See: Blank_removal
+
+See also: dab deb dlb dtb dxb squeeze
+
+Index:blanks|compression

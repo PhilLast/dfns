@@ -1,0 +1,4 @@
+ else←{          ⍝ Condition f else g ...
+     ⍺:⍺⍺ ⍵      ⍝ True: apply left operand.
+     ⍵⍵ ⍵      ⍝ False: apply right operand.
+ }

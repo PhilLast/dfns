@@ -1,0 +1,37 @@
+⍝ Capitalise first letters of names:
+
+    titles←'margaretha von bahr' 'ahti von toilet' 'leonardo da vinci' 'william of orange' 'llywelyn ap gruffudd' 'guzman el bueno' 'winnie the pooh'
+
+    mix←{⎕ml←0 ⋄ ↑⍵}
+
+    mix von¨titles                                ⍝ default capitalisation.
+Margaretha von Bahr 
+Ahti von Toilet     
+Leonardo da Vinci   
+William of Orange   
+Llywelyn ap Gruffudd
+Guzman el Bueno     
+Winnie the Pooh     
+
+    von'd''annunzio t''haarlem'                   ⍝ caps after "'".
+d'Annunzio t'Haarlem
+
+    von'åkerlund æsop'                            ⍝ national language caps.
+Åkerlund Æsop
+
+    'Mc'von'nasty norman mctavish o''reilly'      ⍝ acknowledge "Mc" prefix.
+Nasty Norman McTavish O'Reilly
+
+    von 'lorenzo de'' medici  mohammed el-gerousch c/o al-ahram'
+Lorenzo de' Medici  Mohammed el-Gerousch c/o al-Ahram
+
+    names←'mcgryver macintosh macho dicaprio dickens'
+
+    von names                                     ⍝ default caps,
+Mcgryver Macintosh Macho Dicaprio Dickens
+
+    'mc' 'mac' 'di' von names                     ⍝ ... with Mc, Mac, Di,
+McGryver MacIntosh MacHo DiCaprio DiCkens
+
+    ('Mc' 'Mac' 'Di')('Mach' 'Dick') von names    ⍝ ... except MacH, DiCk.
+McGryver MacIntosh Macho DiCaprio Dickens

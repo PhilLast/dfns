@@ -1,0 +1,26 @@
+ wpath←{                             ⍝ Quickest path fm/to ⍵ in weighted graph ⍺.
+     graph costs←↓⍺                  ⍝ graph structure and costs.
+     fm to←⍵                         ⍝ start and ending vertices.
+     tree←¯1⊣¨graph                  ⍝ initial spanning tree.
+     cost←(⌊/⍬)×fm≠⍳⍴costs           ⍝ cost to reach each vertex.
+     vals←{⍵⊃¨⊂cost}                 ⍝ edge values at ⍵.
+     ⍬{                              ⍝ extract path from tree:
+         ⍵<0:(⍵=¯2)↓⍺                ⍝ root or unvisited vertex: finished.
+         (⍵,⍺)∇ ⍵⊃tree               ⍝ otherwise: prefix parent vertex.
+     }{                              ⍝ lowest spanning cost tree:
+         ⍵≡⍬:to                      ⍝ all vertices visited: done.
+         adjv←⍵⊃¨⊂graph              ⍝ adjacent vertices.
+         fare←⍵⊃¨⊂costs              ⍝ costs to adjacent vertices.
+         totl←fare+⍵⊃¨⊂cost          ⍝ total cost via this vertex.
+         best←(vals¨adjv)⌊to⊃cost    ⍝ costs to beat.
+         mask←totl<best              ⍝ mask of better routes.
+         next←mask/¨adjv             ⍝ next vertices to visit.
+         back←↑,/⍵+0×next            ⍝ back links to parent nodes.
+         cvec←↑,/mask/¨totl          ⍝ cost vector.
+         decr←⍒cvec                  ⍝ decreasing cost order.
+         wave←decr⊃¨⊂↑,/next         ⍝ vertex wave front.
+         tree[wave]←decr⊃¨⊂back      ⍝ link tree nodes to parent.            <V>@
+         cost[wave]←decr⊃¨⊂cvec      ⍝ update cost vector.                   <V>@
+         ∇∪wave                      ⍝ advance wave front.
+     }fm                             ⍝ from starting vertex.
+ }

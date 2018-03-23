@@ -1,0 +1,46 @@
+cvec ← ##.exit code                         ⍝ Return to calling environment.
+
+Some "closed workspaces" like to call ⎕OFF when their task is complete. This can
+can  be  irritating during testing or if the workspace was executed as part of a
+continuing interactive session. [exit] infers if this is the case by determining
+whether there is a six-space input prompt in the session log following the init-
+ial Dyalog APL banner.
+
+The  result is the character vector format of [exit]'s argument, preceded by the
+vector '⎕OFF ' only if it decides there is no session to which to return. [code]
+is typically a small integer "exit code" with 0 meaning success.
+
+[exit] _returns_ a character vector, rather than _executing_ it, to  reduce  the
+probability of accidental termination of APL during testing.
+
+So, with a closed workspace, instead of:
+
+    ⎕LX←'main ⋄ ⎕OFF 0'
+
+we might prefer:
+
+    ⎕LX←'main ⋄ ⍎ exit 0'
+
+With the latter coding, the ⎕LX expression will exit to the session, rather than
+terminating the process, if there has been any prior session interaction.
+
+Bugs:
+
+[exit] will incorrectly assume a non-interactive session to be interactive if:
+
+1. The session output contains a line with six or more explicit leading blanks.
+
+2. The session output has been sufficiently voluminous to cause the log to over-
+   flow, losing the line with the "Dyalog APL" banner.
+
+In both of these cases, [exit] fails safe by omitting the '⎕OFF' vector from its
+result and thus prescribing a return to the session  (rather than termination of
+the APL process).
+
+Examples:
+
+        ' 0' ≡ exit 0   ⍝ in an interactive session.
+
+    '⎕OFF 0' ≡ exit 0   ⍝ in a runtime application.
+
+See also: refws

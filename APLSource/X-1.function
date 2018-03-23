@@ -1,0 +1,22 @@
+ X←{                             ⍝ Exact cover: Knuth's Algorithm X.
+     ⍺←1∨.∨⍵                     ⍝ all cols required by default.
+     x←⍳⍴⍺                       ⍝ column indices.
+     d←(x~⍺/x)∘.=x               ⍝ dummy rows for optional columns.
+     z←{                         ⍝ cover vector.
+         r c←⍴⍵                  ⍝ number of rows and columns.
+         c=0:r⍴0                 ⍝ empty matrix: success.
+         n←+⌿⍵                   ⍝ number of covers per column.
+         f←(<\n=⌊/n)/⍵           ⍝ first column with fewest 1s.
+         ⍵ ∇{                    ⍝ ⍺ is constraint matrix.
+             ~1∊⍵:0              ⍝ no rows: failure.
+             f←<\⍵               ⍝ first row selector.
+             c←,f⌿⍺              ⍝ cols selected by first row.
+             r←∨/c/⍺             ⍝ rows covered by selected cols.
+             s←⍺⍺(~c)/(~r)⌿⍺     ⍝ sub-matrix covers.
+             s≡0:⍺ ∇ f<⍵         ⍝ failure: try a different row.
+             f∨(~r)\s            ⍝ success: row f included.
+         },f                     ⍝ ⍵ is vector of marked rows.
+     }⍵⍪d                        ⍝ exact cover.
+     z≡0:0                       ⍝ failure: 0
+     (-+/~⍺)↓z                   ⍝ without dummy rows.
+ }

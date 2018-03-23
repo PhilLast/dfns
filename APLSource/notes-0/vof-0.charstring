@@ -1,0 +1,134 @@
+rslt ← {larg} {''} ##.vof F vof G vof ··· rarg      ⍝ Vector of functions.
+
+From Phil Last:
+
+[vof]  simulates  the distribution of a "vector of functions" among the items of
+its  argument(s).  It  can be illustrated by the practical problem: "What is the
+size  of the rectangle that bounds these three rectangles, with B and C side-by-
+side and below A?".
+
+    ┌──────────────────────────┐
+    │             A            │
+    │                          │
+    ├────────────┬─────────────┴──┐
+    │            │                │
+    │            │       C        │
+    │     B      │                │
+    │            │                │
+    │            ├────────────────┘
+    │            │
+    └────────────┘
+
+The answer is:
+
+    ((1↑⍴A) + (1↑⍴B) ⌈ (1↑⍴C)) , (¯1↑⍴A) ⌈ (¯1↑⍴B) + (¯1↑⍴C)
+
+but it would be much nicer to be able to say:
+
+    (⍴A) (+⌈) (⍴B) (⌈+) (⍴C)
+
+A diagram shows the distribution of functions with respect to argument items:
+
+         ┌─────┬────────┬─────┬────────┐
+         │     │        │     │        │
+    (⍴A)[0 1] (+⌈) (⍴B)[0 1] (⌈+) (⍴C)[0 1]
+           │    │         │    │         │
+           └────┴─────────┴────┴─────────┘
+
+where  (+⌈)  and  (⌈+) are both 2-item "function vectors" to be distributed over
+their  2-item  argument(s). Compare this with the way that a vector of namespace
+references in a function expression, distributes its function over its arguments
+without needing to specify each:
+
+    (ref0 ref1 ref2 ref3).{···w} ⍳4
+
+More generally:
+
+    a b c···(f g h···) x y z··· ←→ (a f x)(b g y)(c h z)··· ⍝ vector vector
+
+       (⊂a) (f g h···) x y z··· ←→ (a f x)(a g y)(a h z)··· ⍝ scalar vector
+
+    a b c···(f g h···) ⊂x       ←→ (a f x)(b g x)(c h x)··· ⍝ vector scalar
+
+       (⊂a) (f g h···) ⊂x       ←→ (a f x)(a g x)(a h x)··· ⍝ scalar scalar
+
+            (f g h···) x y z··· ←→ (f x)(g y)(h z)···       ⍝ monadic vector
+
+            (f g h···) ⊂x       ←→ (f x)(g x)(h x)···       ⍝ monadic scalar
+
+[vof]  implements  the  distributive  function vector in the alternating mode we
+have seen with →of←, →case← and →lof←.
+
+    {a b c ···} {''} vof f vof g vof h ··· x y z
+
+As  with  →lof←  we need (except in special circumstances) the closing call with
+the  null  function.  An  alternative  would  be to provide a slightly different
+"special" coding for the leftmost operator:
+
+    _vof←{                          ⍝ Close vector of functions.
+        ⍺←⊂                         ⍝ ⍺ elided: ⊂⍵.
+        (al ar)(wl wr)←⍺ ⍵          ⍝ distrubute arg(s).
+        1≡⍺ 1:(⍺⍺ wl)(⍵⍵ wr)        ⍝ mondadic.
+        (al ⍺⍺ wl)(ar ⍵⍵ wr)        ⍝ dyadic.
+    }
+
+Although more expensive,  the following coding works without a terminator to the
+left.  The control over the iteration is the length of the data so if the number
+of functions is different it goes wrong as do the others.
+
+Uses the same method of self reference as the coding of fk in →fork←:
+
+    vof←{
+        (M D)←112358314594370 774156178538190
+        ⍺←M
+        (m d)←M D∊⊂⍺
+        e←2∊⍴⍵
+        e<m:(M ⍺⍺ ¯1↓⍵),⊂⍵⍵⊃⊢/⍵
+        e<d:(D ⍺⍺ ¯1↓⍵),⍵⍵/⊃⊢/⍵
+        e∧m:⊃⍺⍺{(⍺⍺ ⍺)(⍵⍵ ⍵)}⍵⍵/⍵
+        e∧d:⊃⍺⍺{(⍺⍺/⍺),⍵⍵/⍵}⍵⍵/⍵
+        D ∇ ⍺{⍺ ⍵}¨⍵
+    }
+
+Examples:
+
+    1 2 3 4 {''} vof + vof ! vof ? vof | 5 6 7 8        ⍝ vector vector
+6 15  1 6 4  0
+
+          4 {''} vof + vof ! vof ? vof | 5 6 7 8        ⍝ scalar vector
+9 15  4 2 1 5  0
+
+    1 2 3 4 {''} vof + vof ! vof ? vof | 5              ⍝ vector scalar
+6 10  4 5 2  1
+
+          4 {''} vof + vof ! vof ? vof | 5              ⍝ scalar scalar
+9 5  3 5 1 4  1
+
+            {''} vof + vof ! vof ? vof | 5 6 7 8        ⍝ monadic vector
+5 720 1 8
+
+            {''} vof + vof ! vof ? vof | 5              ⍝ monadic scalar
+5 120 2 5
+
+    {2⍴⍵} vof {3⍴⍵} vof {4⍴⍵} 2 3 4                     ⍝ without left closure
+┌─┬─┬─────┬───────┐
+│2│2│3 3 3│4 4 4 4│
+└─┴─┴─────┴───────┘
+
+    {⍬} vof {2⍴⍵} vof {3⍴⍵} vof {4⍴⍵} 2 3 4             ⍝ explicit left closure
+┌───┬─────┬───────┐
+│2 2│3 3 3│4 4 4 4│
+└───┴─────┴───────┘
+
+    {2⍴⍵} _vof {3⍴⍵} vof {4⍴⍵} 2 3 4                    ⍝ closure using [_vof]
+┌───┬─────┬───────┐
+│2 2│3 3 3│4 4 4 4│
+└───┴─────┴───────┘
+
+Notice that the length of the result is the number of functions, not necessarily
+the length of the argument(s).
+
+See also: case of lof Function_arrays co_ops
+
+Index:function array|vector of functions|fork|co-operator
+Index;Last P.

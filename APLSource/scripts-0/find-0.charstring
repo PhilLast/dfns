@@ -1,0 +1,8 @@
+⍝ Lines containing string(s) ⍵:
+
+    20↓,#.scripts find 'What is being found here','?'     ⍝ simple case.
+What is being found here? 
+
+    20↓,#.scripts find 'And what'{⍺ ⍵}' here','?'         ⍝ nested case.
+And what here? 
+

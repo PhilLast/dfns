@@ -1,0 +1,44 @@
+alloc ← {seats←435} ##.apportion populations    ⍝ Huntington-Hill apportionment.
+
+From Ray Polivka:  This  algorithm  apportions a fixed number of assets "fairly"
+among competing beneficiaries.  It has been in use since the 1920s to divide the
+435 seats in the US  House of Representatives  among the states in proportion to
+the size of each state's population.
+
+The algorithm begins  by assigning 1 seat per state and then repeatedly adds one
+of the  remaining  seats to the  most under-represented state at each iteration.
+For details see the Wikipedia article:
+
+    http://en.wikipedia.org/wiki/Huntington-Hill_method
+
+Examples:
+
+    ⍝ Population per state following the 1790 census (Wikipedia):
+
+    s1790 ←'CT'   'DE'  'GA'  'KY'  'MD'   'MA'   'NH'   'NJ'   'NY'   'NC'   'PA'   'RI'  'SC'   'VT'  'VA'
+    p1790 ← 236841 55540 70835 68705 278514 475327 141822 179570 331589 353523 432879 68446 206236 85533 630560
+
+    105 apportion p1790                     ⍝ 105 seats apportioned *fairly*
+7 2 2 2 8 14 4 5 10 10 12 2 6 3 18
+
+    s1790 ,⍪ 105 apportion p1790            ⍝ table of seats by (1790) state.
+ CT   7
+ DE   2
+ GA   2
+ KY   2
+ MD   8
+ MA  14
+ NH   4
+ NJ   5
+ NY  10
+ NC  10
+ PA  12
+ RI   2
+ SC   6
+ VT   3
+ VA  18
+
+See also: assign X
+
+Index: Representatives, House of, US|apportionment|assignment
+Index; Polivka R.|Huntington E.V.|Hill J.A.

@@ -1,0 +1,55 @@
+ mac←{⎕IO ⎕ML←0 1                    ⍝ Simple macro processor.
+
+     mexp←{                          ⍝ macro expansion.
+    ⍝   ⎕←∊¨⍵                       ⍝ uncomment to trace.
+         dd(a(b uu))←⍵               ⍝ moving window on token stream.
+         a≡'\':⍺ ∇(dd b)uu           ⍝ \ escape next token.
+         b≡'=':⍺ ∇ defn ⍵            ⍝ = defn: accumulate.
+         a∊⊃⍺:⍺ ∇ dref ⍵             ⍝ ⍺ name: expand.
+         a≡'(':⍺ ∇ ⍺ ∇ dd(b uu)      ⍝ ( new block: expand.
+         a≡')':dd(b uu)              ⍝ ) end of block: done.
+         ⍺ ∇(dd a)(b uu)             ⍝ move token downstream.
+     }
+
+     defn←{                          ⍝ extension of macro defn table.
+         dd(name(eq uu))←⍵           ⍝ name from token stream.
+         val uuu←⍺ body'('uu         ⍝ macro body.
+         (⍺,⍨∘⊂¨name val)⍺⍺ dd uuu   ⍝ extended association vectors.
+     }
+
+     body←{                          ⍝ macro body.
+         dd(a(b uu))←⍵               ⍝ next tokens and remainder.
+         a∊⊃⍺:⍺ ∇ dref dd(a(b uu))   ⍝ expand name at defn time.
+         a∊' )',nl:dd(b uu)          ⍝ end of macro body: done.
+         a≡'\':⍺ ∇(dd b)uu           ⍝ escape next token.
+         a≡'(':⍺ ∇ ⍺ mexp dd(b uu)   ⍝ inner block:
+         ⍺ ∇(dd a)(b uu)             ⍝ a-extended word.
+     }
+
+     dref←{                          ⍝ name replaced with its definition.
+         names vals←⍺                ⍝ association vectors.
+         dd(name uu)←⍵               ⍝ name and remaining tokens.
+         val←(names⍳name)⊃vals       ⍝ value corresponding to name.
+         ddd n←dd number 1           ⍝ numeric parameter from downstream.
+         ⍺ ⍺⍺ ddd(val(n copy)uu)     ⍝ expanded macro insert.
+     }
+
+     number←{                        ⍝ number for / replication.
+         dd d←⍺                      ⍝ remaining and least sig. digits.
+         ~d∊⎕D:⍺ 0                   ⍝ not a number: 0.
+         ddd n←dd ∇ ⍵×10             ⍝ value of digits to left.
+         ddd(n+⍵×⎕D⍳d)               ⍝ downstream tokens and number.
+     }
+
+     copy←{                          ⍝ splice macro body upstream.
+         ⍺≡'(':⍵                     ⍝ start of value: done.
+         vv v←⍺                      ⍝ v is next value token.
+         v≡'/':vv ∇↑list ⍺⍺ 1/⍵      ⍝ / replicate token upstream.
+         vv ∇ v ⍵                    ⍝ copy token upstream.
+     }
+
+     nl←3⊃⎕AV                        ⍝ newline char.
+     list←{⍺ ⍵}/                     ⍝ list from vector.
+
+     1↓¯2↓∊''⍬ mexp'(',list ⍵,')'    ⍝ macro-expanded code.
+ }

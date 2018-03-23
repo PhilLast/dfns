@@ -1,0 +1,206 @@
+Mechanical Transformation of Simple D-functions into Derived Functions      <V>
+----------------------------------------------------------------------
+The following functions are said to be "extensionally equal" as, given any array
+argument, each returns the same result.
+
+    {⍬⍴⍴⍵}      ⍝ D-function for first-of-shape.
+
+    ⍬∘⍴∘⍴       ⍝ Derived function for first-of-shape.
+
+For very small functions, either coding may be appropriate, though for more com-
+plex ones, the first style is probably preferable.
+
+Having  said  this,  it is possible to prescribe a set of rules for transforming
+(a subset of) simple monadic D-functions into derived functions.
+
+NB:  There seems to be little practical value in performing this transformation,
+other than  as an entertainment.  One possible exception is that primitive power
+operator ⍣ may derive the inverse of a derived function, whereas D-functions are
+not currently admitted.                                                     <V>
+
+The  following  rules may be applied repeatedly to transform a simple monadic D-
+function into a derived function:
+
+    [0]     { f ⍵} → f
+    [1]     a f ⍵} → a∘f ⍵}
+    [2]     ⍵ f a} → (f∘a) ⍵}
+    [3]     ⍵ f ⍵} → f⍨ ⍵}
+    [4]     f f ⍵} → f∘f ⍵}
+    [5]     f f a} → f (f a)
+    [6]   (X) f ⍵} → ⍵ f⍨ X}
+    [7]   (X) f a} → (f∘a) X}
+
+where:
+
+    a is an array
+    f is a (possibly derived) function
+    X is an array-returning expression
+
+In  the  following  examples  "n→"  means "transforms using rule[n] to:" and the
+pattern of the underlined tokens selects which rule to apply next.
+               ¯¯¯¯¯¯¯¯¯¯
+        {(⊂⍋⍵)⌷⍵}           ⍝ sort (Phil Last)
+         ¯¯¯¯¯¯¯¯
+    6→  {⍵⌷⍨⊂⍋⍵}
+            ¯¯¯¯
+    4→  {⍵⌷⍨⊂∘⍋⍵}
+          ¯¯¯¯¯¯¯
+    4→  {⍵⌷⍨∘⊂∘⍋⍵}
+         ¯¯¯¯¯¯¯¯¯
+    3→  {⌷⍨∘⊂∘⍋⍨⍵}
+        ¯¯¯¯¯¯¯¯¯¯
+    0→   ⌷⍨∘⊂∘⍋⍨
+
+
+        {(+/⍵)÷⍴⍵}          ⍝ mean item of vector ⍵
+              ¯¯¯¯
+    4→  {(+/⍵)÷∘⍴⍵}
+         ¯¯¯¯¯¯¯¯¯¯
+    6→  {⍵ ÷∘⍴⍨ +/ ⍵}
+           ¯¯¯¯¯¯¯¯¯¯
+    4→  {⍵ ÷∘⍴⍨∘(+/) ⍵}
+         ¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+    3→  {÷∘⍴⍨∘(+/)⍨⍵}
+        ¯¯¯¯¯¯¯¯¯¯¯¯¯
+    0→   ÷∘⍴⍨∘(+/)⍨
+
+Regarding rule [6]:  if expression X in (X) does not include an occurrence of ⍵,
+an optimisation is to apply rule [1] instead.  This generally leads to a simpler
+derived  function  (although  see the section on optimisation in "Extensions and
+Restrictions" below):
+
+        {(⊂⍬),⍵}        ⍝ (⊂⍬) does not contain ⍵, so apply rule [1].
+         ¯¯¯¯¯¯¯
+    1→  {(⊂⍬)∘,⍵}
+         ¯¯¯¯¯¯¯¯
+    0→   (⊂⍬)∘,
+
+as opposed to:
+
+        {(⊂⍬),⍵}        ⍝ ignore optimisation: apply rule [6].
+         ¯¯¯¯¯¯¯
+    6→  {⍵,⍨⊂⍬}
+          ¯¯¯¯¯
+    5→  {⍵,⍨(⊂⍬)}
+         ¯¯¯¯¯¯¯¯
+    2→  {(,⍨∘(⊂⍬))⍵}
+        ¯¯¯¯¯¯¯¯¯¯¯¯
+    0→    ,⍨∘(⊂⍬)
+
+Prior to the transformations, the D-function must be pre-processed to remove:
+
+[1] array strands that include an ⍵:
+
+    ... A ⍵ B ... → ... (⊂A),(⊂⍵),(⊂B) ...
+
+    For example:
+
+        {⍵ ⍵}               ⍝ dup[licate]
+         ¯¯¯
+     →  {(⊂⍵),⊂⍵}
+             ¯¯¯¯
+    4→  {(⊂⍵),∘⊂⍵}
+         ¯¯¯¯¯¯¯¯¯
+    6→  {⍵,∘⊂⍨⊂⍵}
+          ¯¯¯¯¯¯¯
+    4→  {⍵,∘⊂⍨∘⊂⍵}
+         ¯¯¯¯¯¯¯¯¯
+    3→  {,∘⊂⍨∘⊂⍨⍵}
+        ¯¯¯¯¯¯¯¯¯¯
+    0→   ,∘⊂⍨∘⊂⍨
+
+[2] square-brackets:
+
+    A[B;C] → B C ⌷ A        ⍝ index brackets
+
+    ↓[1] ... → ↓⍉ ...       ⍝ axis brackets
+
+There is a larger example towards the end of ##.scripts.dft
+
+Restrictions and Extensions
+---------------------------
+[1] This  process doesn't cope with an expression that contains ⍵ as the operand
+    of an operator:
+
+        {(⊂⍣⍵)'Doh'}
+
+[2] Nor will it transform a recursive call ∇.  Although it seems likely (to JMS)
+    that  rules  might  be discovered for replacing some cases of recursion with
+    the power operator ⍣.
+
+[3] For multi-line dfns,  Phil Last has shown us how to transform a guard into a
+    simple expression using /. See, for example →pow← and →cond←.
+
+        [8] C:T⋄F}  →  ⊃{F}/(⍳~C),{T}/(⍳C),⊂⍵}
+
+    where C, T and F are expressions. Unfortunately, guard expression C is eval-
+    uated twice.
+
+    (muse:
+
+        There was overwhelming cultural pressure, in the specification of primi-
+        tive power operator ⍣, for the "repeat count" to be the right _operand_.
+
+        Had  the  repeat count been assigned to the left _argument_ of a monadic
+        operator, as in →pow←, rule [8] could have been the simplified slightly:
+
+        [8] C:T⋄F}  →  (~C){F}⍣ C{T}⍣ ⍵}
+
+        Oh, and the _monadic_ derived function could have been "fixpoint":
+
+            1∘+∘÷ ⍣ 1       ⍝ 1+÷ 1+÷ ... 1
+        1.618033989
+    )
+
+Dyadic Functions
+----------------
+In the absence of Hooks and Forks, the best plan appears to be to convert dyadic
+functions into monadic equivalents by passing left and right arguments as a pair
+and referencing them from within the function as (⊃⍵) and (⊃⌽⍵).  If the subject
+function is applied under an operator, the argument-pair array must be  prepared
+accordingly:
+
+X {...⍺...⍵...} Y   →  {...(⊃⍵)...(⊃⌽⍵)...} X Y             ⍝ simply applied fn.
+X {...⍺...⍵...}¨ Y  →  {...(⊃⍵)...(⊃⌽⍵)...}¨ (⊂¨X) ,¨ ⊂¨Y   ⍝ applied with each.
+X ∘.{...⍺...⍵...} Y →  {...(⊃⍵)...(⊃⌽⍵)...}¨ (⊂¨X) ∘., ⊂¨Y  ⍝ outer product.
+...etc.
+
+Optimisation
+------------
+It  might be interesting to provide a second set of post-transformation optimis-
+ation rules such as:
+
+    [o1]    f⍨⍨     → f
+    [o2]    f⍨∘a    → a∘f
+    [o3]    a∘(f⍨)  → f∘a
+    ...
+
+Rule [o2] would render choosing between rules [1] and [6], in the case (a) f ⍵},
+unnecessary as either would (eventually) produce the same result:
+
+        {(⊂⍬),⍵}        ⍝ (⊂⍬) does not contain ⍵, so apply rule [1].
+         ¯¯¯¯¯¯¯
+    1→  {(⊂⍬)∘,⍵}
+         ¯¯¯¯¯¯¯¯
+    0→   (⊂⍬)∘,
+
+as opposed to:
+
+        {(⊂⍬),⍵}        ⍝ ignore optimisation: apply rule [6].
+         ¯¯¯¯¯¯¯
+    6→  {⍵,⍨⊂⍬}
+          ¯¯¯¯¯
+    5→  {⍵,⍨(⊂⍬)}
+         ¯¯¯¯¯¯¯¯
+    2→  {(,⍨∘(⊂⍬))⍵}
+        ¯¯¯¯¯¯¯¯¯¯¯¯
+    0→    ,⍨∘(⊂⍬)
+          ¯¯¯¯¯¯¯
+    o2→  (⊂⍬)∘,         ⍝ (same derived function as above)
+
+See also: dft trains
+
+Index:derived function|expression transformation|transformation, expression
+Index:hook|fork|fixpoint
+
+Index;Last P.

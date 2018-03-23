@@ -1,0 +1,385 @@
+nvec ← {tolerance←⎕ct} ##.cfract numb   ⍝ Continued fraction approx of real ⍵.
+
+Result [nvec] is a simple numeric vector,  whose continued fraction reduction is
+within comparison tolerance of scalar argument [numb].
+
+Any real number ⍵ may be respresented by a continued fraction (CF) of the form:
+
+        ⍵ = n + 1
+                ─────           where n is an integer and
+                i + 1           where i j k ... are positive integers.
+                    ─────
+                    j + 1
+                        ─────
+                        k + 1
+                            ─────
+                             ...
+or:
+        ⍵ = n + 1 ÷ i + 1 ÷ j + 1 ÷ k + 1 ÷ ...
+or:
+        ⍵ = n +   ÷ i +   ÷ j +   ÷ k +   ÷ ...
+or:
+        ⍵ = n + ∘ ÷ i + ∘ ÷ j + ∘ ÷ k + ∘ ÷ ...
+or:
+        ⍵ = +∘÷/ n i j k ...
+
+Given a (possibly infinite) CF, we can reconstitute a rational number  arbitrar-
+ily  close to the real number it represents by reducing successively more terms.
+Rational numbers have finite CFs and  irrational  numbers  have  infinite though
+(after ignoring the first term) possibly regular ones. For example:
+
+          cfract 123÷345        ⍝ rational number: finite CF.
+    0 2 1 4 8
+
+          cfract *1             ⍝ irrational number: infinite, regular CF.
+    2 1 2 1 1 4 1 1 6 1 1 8 1 1 10 1 1 12 ...
+
+          cfract ○1             ⍝ irrational number: infinite, irregular CF.
+    3 7 15 1 292 1 1 1 2 1 3 1 14 ...
+
+Reducing successively longer leading sequences of the CF, produces  increasingly
+closer  approximations.  Here are reductions of the first 10 terms of the CF for
+e = 2.718281828459...:
+
+      +∘÷/¨ ,\ 10↑cfract *1
+2 3 2.6666667 2.75 2.7142857 2.71875 2.7179487 2.7183099 2.7182796 2.7182836
+
+Here are the (base-10) log differences for successive terms of e, Pi sqrt(2) and
+Phi.  The  last  rows  in  each  column  show  that reducing all terms in the CF
+produces a difference that is within comparison tolerance;  in  this case with a
+default value of 10*¯14:
+
+    seq ← {+∘÷/¨,\cfract ⍵}                 ⍝ successive reductions.
+    err ← {10⍟|(⍵-⍺⍺ ⍵)÷⍵}                  ⍝ base 10 log error factor
+    col ← {6 2⍕⍪⍵}                          ⍝ formatted column.
+
+    vals ← (*1) (○1) (2*÷2) (0.5×1+5*÷2)    ⍝ exp, Pi, sqrt 2, phi.
+
+    col∘(seq err)¨ vals         ⍝ 10∘⍟ errors in successive approximations.
+  ¯0.58   ¯1.35   ¯0.53   ¯0.42
+  ¯0.98   ¯3.40   ¯1.22   ¯0.63
+  ¯1.72   ¯4.58   ¯2.00   ¯1.14
+  ¯1.93   ¯7.07   ¯2.76   ¯1.52
+  ¯2.83   ¯9.74   ¯3.53   ¯1.95
+  ¯3.76   ¯9.98   ¯4.29   ¯2.37
+  ¯3.91  ¯10.41   ¯5.06   ¯2.79
+  ¯4.99  ¯11.03   ¯5.82   ¯3.20
+  ¯6.08  ¯11.56   ¯6.59   ¯3.62
+  ¯6.19  ¯12.29   ¯7.35   ¯4.04
+  ¯7.39  ¯14.15   ¯8.12   ¯4.46
+  ¯8.61           ¯8.89   ¯4.88
+  ¯8.69           ¯9.65   ¯5.29
+  ¯9.99          ¯10.42   ¯5.71
+ ¯11.30          ¯11.18   ¯6.13
+ ¯11.37          ¯11.95   ¯6.55
+ ¯12.75          ¯12.71   ¯6.97
+ ¯14.13          ¯13.48   ¯7.38
+                 ¯14.24   ¯7.80
+                          ¯8.22
+                          ¯8.64
+                          ¯9.05
+                          ¯9.47
+                          ¯9.89
+                         ¯10.31
+                         ¯10.73
+                         ¯11.14
+                         ¯11.56
+                         ¯11.98
+                         ¯12.40
+                         ¯12.82
+                         ¯13.24
+                         ¯14.07
+
+Technical notes:
+
+This recurrence relation defines the CF of a rational number P÷Q. The '.' intro-
+duces definitions,  which are local to an exdented antecedent (see max.dws), and
+% is integer quotient {⌊⍺÷⍵}.
+
+    cf p÷1 = p              ⍝ whole number.
+    cf p÷q = n, cf q÷r      ⍝ q>1
+    .   n = p%q             ⍝ integer quotient,
+    .   r = q|p             ⍝ and remainder.
+
+which translates directly into code:
+
+    cfract←{                ⍝ Continued fraction approximation of real ⍵.
+        ⍺←⎕CT ⋄ ⎕CT←⍺       ⍝ default comparison tolerance.
+        ,↑{                 ⍝ cf from rational ⍺÷⍵:
+            ⍵=1:⍺           ⍝ whole number: finished.
+            n r←0 ⍵⊤⍺       ⍝ next term and remainder.
+            n,⍵ ∇ r         ⍝ next term and cf of remainder.
+        }/⌊⍵ 1÷1∨⍵          ⍝ whole number ratio. See →rational←
+    }
+
+The first line:
+
+        ⍺←⎕CT ⋄ ⎕CT←⍺       ⍝ default comparison tolerance.
+
+has a misleading symmetry. "⍺←···" is a special syntax, which supplies a default
+value for a missing left argument. The line means: If no left argument is given,
+default it to the current value of ⎕CT (comparison tolerance),  and then  make a
+local system variable ⎕CT with the explicit or  assumed  value.  In other words:
+if a left argument is given, use its value for comparison tolerance;  otherwise,
+use the current value of ⎕CT.
+
+With finite-precision representation of real numbers, such as IEEE 64-bit float-
+ing point,  [cfract] necessarily returns a finite vector  (though see the "muse"
+section  below).  Therefore, the result always represents a _rational_ number ⍺-
+tolerably close to its "real" argument.
+
+The left and right arguments of the inner function,  which is applied by reduct-
+ion:
+
+        ,↑{                 ⍝ cf from rational ⍺÷⍵:
+            ...
+        }/⌊⍵ 1÷1∨⍵          ⍝ whole number ratio.  See →rational←
+
+are integers whose quotient is a rational number ⎕CT-tolerably close to ⍵.  This
+inner  function  could  be  made  tail-recursive by passing the rational pair as
+right argument, thus freeing the left argument to be an accumulator:
+
+    cfract←{                ⍝ Continued fraction approximation of real ⍵.
+        ⍺←⎕CT ⋄ ⎕CT←⍺       ⍝ default comparison tolerance.
+        ⍬{                  ⍝ sequence accumulator.
+            p q←⍵           ⍝ rational argument pair.
+            q=1:⍺,p         ⍝ whole number: finished.
+            n r←0 q⊤p       ⍝ next term and remainder.
+            (⍺,n)∇ q r      ⍝ extended accumulator and new ratio.
+        }⌊⍵ 1÷1∨⍵           ⍝ whole number ratio. See →rational←
+    }
+
+but in this case, as the number of recursive  calls  is  relatively  small,  the
+saving does not pay for the additional local name assignment and so the function
+as a whole, runs marginally slower.
+
+Here is an alternative, slower coding, which generates the CF directly,  compar-
+ing its value against the subject number at the generation of each term:
+
+    cfract←{                    ⍝ Continued fraction approximation of real ⍵.
+        ⍺←⎕CT ⋄ ⎕CT←⍺           ⍝ default comparison tolerance.
+        real←⍵                  ⍝ "real" number.
+        ⍬{                      ⍝ starting with null sequence.
+            whole part←0 1⊤⍵    ⍝ whole and fractional part of number.
+            seq←⍺,whole         ⍝ sequence extended with next term.
+            real=+∘÷/seq:seq    ⍝ continued fraction approximates real: done.
+            seq ∇÷part          ⍝ otherwise: continued accumulation of terms.
+        }⍵                      ⍝ starting with real number.
+    }
+
+Ref: http://en.wikipedia.org/wiki/Continued_fraction
+
+(muse:
+
+    Continued fractions have many properties that make them an attractive alter-
+    native to regular decimals (3.1415...) and rationals (355÷113).
+
+    Bill Gosper's  treatment of continued fraction arithmetic suggests that val-
+    ues  be  represented as objects, each of which, when referenced, returns the
+    next term in the CF sequence.
+
+    Implementing  "closures"  in Dyalog would give us an elegant way to do this.
+    For  example,  a CF representation of "e" (*1) is the infinite regular sequ-
+    ence:
+
+        1 0 1 1 2 1 1 4 1 1 6 1 1 8 1 1 10 1 1 12 ...
+
+    A closure-based  approach  to  providing  an  object that returns the next ⍵
+    terms in this sequence might be:
+
+        cfe∆←{                          ⍝ continued fraction stream for *1.
+            S←⍵                         ⍝ initial stream.
+            {                           ⍝ closure:
+                ⍵<⍴S:(S↓⍨←⍵)⊢⍵↑S        ⍝ draw ⍵ items from stream.
+                S,←1 1,2+¯1↑S           ⍝ afix more items and
+                ∇ ⍵                     ⍝ draw ⍵ items from extended stream.
+            }
+        }
+
+    then:
+
+        e_nxt← cfe∆ 1 0             ⍝ closure with a state for "stream".
+
+        e_nxt 10                    ⍝ first 10 terms in series.
+    1 0 1 1 2 1 1 4 1 1
+
+        e_nxt 10                    ⍝ following 10 terms.
+    6 1 1 8 1 1 10 1 1 12
+
+        e_nxt 10                    ⍝ ... and so on.
+    1 1 14 1 1 16 1 1 18 1
+
+        (*1)=+∘÷/(cfe∆ 1 0) 20      ⍝ first 20 terms sufficient for default ⎕ct.
+    1
+
+    Similarly, continued fractions for (irrational) square-roots have an initial
+    value  followed by a repeated sequence.  We could write a more general clos-
+    ure-generator for all square-root values.
+
+        cfseq∆←{                        ⍝ return sequence-generating closure.
+            seq←⍵                       ⍝ regular sequence.
+            S←⍺,⍵                       ⍝ initial stream.
+            {                           ⍝ closure:
+                ⍵<⍴S:(S↓⍨←⍵)⊢⍵↑S        ⍝ draw ⍵ items from stream.
+                S,←seq                  ⍝ afix more items and try again.
+                ∇ ⍵
+            }
+        }
+
+    Then:
+
+        r2 ← 1 cfseq∆ 2                 ⍝ Seqence for sqrt 2
+        r3 ← 1 cfseq∆ 1 2               ⍝   ..      ..     3
+        ...
+
+        r2 20                           ⍝ first 20 terms of CF for sqrt 2.
+    1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+
+        (1 seq∆ 1 2)20                  ⍝ first 20 terms of CF for sqrt 19.
+    1 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1
+
+    Finally,  we could generalise our sequence generator to return a closure for
+    _any_ regular sequence.  This operator takes, as right argument, the initial
+    terms of the sequence and as left operand, a function that generates further
+    terms on demand:
+
+        seq∆←{                          ⍝ generate regular sequence closure.
+            S←,⍵                        ⍝ initial sequence.
+            s←⍴S                        ⍝ minimum size.
+            ⍺⍺{                         ⍝ closure:
+                ⍵<(⍴S)-s:(S↓⍨←⍵)⊢⍵↑S    ⍝ ⍵ items from sequence.
+                S∘←⍺⍺ S                 ⍝ extended stream,
+                ∇ ⍵                     ⍝   and try again.
+            }
+        }
+
+    Then:
+
+        fibs ← {⍵,+/¯2↑⍵} seq∆ 0 1      ⍝ Fibonacci numbers.
+
+        fibs 20                         ⍝ first 20 Fibonacci numbers.
+    0 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584 4181
+
+        cfe ← {⍵,1 1,2+¯1↑⍵} seq∆ 1 0   ⍝ continued fraction sequence for e.
+
+        cfe 20                          ⍝ first 20 CF terms for e.
+    1 0 1 1 2 1 1 4 1 1 6 1 1 8 1 1 10 1 1 12
+
+    Rational numbers,  whose continued fraction representation is finite, pose a
+    small problem for this technique. On exhausting the finite part of the sequ-
+    ence,  the generator must continue with terms that do not affect the result;
+    in other words, terms whose reciprocal is _effectively_ zero. Happily, (⌊/⍬)
+    does the trick:
+
+        cfract 93÷113           ⍝ finite continued fraction for rational number.
+    0 1 4 1 1 1 5 1
+
+        r93_113 ← {⍵,⌊/⍬} seq∆ cfract 93÷113        ⍝ generator for CF 93÷113
+
+        r93_113 20              ⍝ first 20 terms of "infinite" CF for 93÷113
+    0 1 4 1 1 1 5 1 1.797693135E308 1.797693135E308 1.797693135E308
+          1.797693135E308 1.797693135E308 1.797693135E308 1.797693135E308
+          1.797693135E308 1.797693135E308 1.797693135E308 1.797693135E308
+          1.797693135E308
+
+        rational +∘÷/ r93_113 20    ⍝ check round-trip of 93÷113
+    93 113
+
+        rational +∘÷/ ({⍵,⌊/⍬} seq∆ cfract 93÷113) 20       ⍝ check round-trip.
+    93 113
+
+    In fact, we can abstract a CF-closure-generator for rational numbers:
+
+        cf_rat ← {{⍵,⌊/⍬}seq∆ cfract ⍺÷⍵}           ⍝ CF generator for ⍺÷⍵
+
+        (11 cfrat 15) 8                             ⍝ first 8 terms for 11÷15
+    0 1 2 1 2 1 1.797693135E308 1.797693135E308
+
+
+    Ref: http://mathworld.wolfram.com/ContinuedFraction.html
+         http://www.tweedledum.com/rwg/cfup.htm
+
+    Details  of an experimental version of Dyalog, which implements closures may
+    be found at: http://dfns.dyalog.com/downloads/fre.pdf
+)
+
+Examples:
+
+      cfract 5÷8                            ⍝ rational numbers have a finite CF.
+0 1 1 1 2
+
+      cfract *1                             ⍝ e has an infinite but regular CF.
+2 1 2 1 1 4 1 1 6 1 1 8 1 1 10 1 1 12
+
+      +∘÷/ cfract *1                        ⍝ reduction reconstitutes e.
+2.718281828
+
+      +∘÷/⎕←cfract ○1                       ⍝ irregular infinite CF for pi.
+3 7 15 1 292 1 1 1 2 1 4
+3.141592654
+
+      +∘÷/⎕←cfract root 2                   ⍝ CF for sqrt(2).
+1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+1.414213562
+
+      +∘÷/⎕←cfract 0.5×1+root 5             ⍝ CF for golden mean (phi ⌽)
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2
+1.618033989
+
+    cfract 3○1                              ⍝ regular CF for tan(1)
+1 1 1 3 1 5 1 7 1 9 1 11 1 13 1 15
+
+      {⎕←⍵,':',cfract root ⍵}¨⍳20           ⍝ (regular) CFs for first 20 sqrts.
+1 : 1
+2 : 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+3 : 1 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2
+4 : 2
+5 : 2 4 4 4 4 4 4 4 4 4 4 4
+6 : 2 2 4 2 4 2 4 2 4 2 4 2 4 2 4
+7 : 2 1 1 1 4 1 1 1 4 1 1 1 4 1 1 1 4 1 1 1 4 1 2
+8 : 2 1 4 1 4 1 4 1 4 1 4 1 4 1 4 1 4 1 4
+9 : 3
+10 : 3 6 6 6 6 6 6 6 6 6
+11 : 3 3 6 3 6 3 6 3 6 3 6 3
+12 : 3 2 6 2 6 2 6 2 6 2 6 2 6
+13 : 3 1 1 1 1 6 1 1 1 1 6 1 1 1 1 6 1 1 1 1 6 1 2
+14 : 3 1 2 1 6 1 2 1 6 1 2 1 6 1 2 1 6 1 3
+15 : 3 1 6 1 6 1 6 1 6 1 6 1 6 1 7
+16 : 4
+17 : 4 8 8 8 8 8 8 8
+18 : 4 4 8 4 8 4 8 4 8 4
+19 : 4 2 1 3 1 2 8 2 1 3 1 2 8 2 1 3 1 2
+20 : 4 2 8 2 8 2 8 2 8 2 8 2
+
+      {⎕←⍵,':',cfract 3 root ⍵}¨⍳20     ⍝ irregular CFs for first 20 cube roots.
+1 : 1
+2 : 1 3 1 5 1 1 4 1 1 8 1 14 1 10 2 1 4
+3 : 1 2 3 1 4 1 5 1 1 6 2 5 8 3 3
+4 : 1 1 1 2 2 1 3 2 3 1 3 1 30 1 4 1 2 9
+5 : 1 1 2 2 4 3 3 1 5 1 1 4 10 18
+6 : 1 1 4 2 7 3 508 1 5 6
+7 : 1 1 10 2 16 2 1 4 2 1 21 1 3 5
+8 : 2
+9 : 2 12 2 18 1 1 1 1 4 1 1 24 1 9
+10 : 2 6 2 9 1 1 2 4 1 12 1 1 1 1 57
+11 : 2 4 2 6 1 1 2 1 2 9 88 2 1 2
+12 : 2 3 2 5 15 7 3 1 1 3 1 1 96
+13 : 2 2 1 5 1 1 43 3 2 1 1 3 10 7
+14 : 2 2 2 3 1 1 5 5 9 6 21 2
+15 : 2 2 6 1 8 1 10 8 12 1 721
+16 : 2 1 1 12 10 18 1 6 1 21 1 2 2
+17 : 2 1 1 3 138 1 1 3 2 3 1 1 207
+18 : 2 1 1 1 1 1 3 22 1 2 2 2 24 64
+19 : 2 1 2 63 1 2 2 2 1 95 2 1 1 2
+20 : 2 1 2 1 1 154 6 1 1 1 6 232
+
+    rational +∘÷/¨ ,\ cfract ○1     ⍝ successive rational approximations to Pi.
+3 22 333 355 103993 104348 208341 312689 833719 1146408 5419351
+1  7 106 113  33102  33215  66317  99532 265381  364913 1725033
+
+See also: rational factors sieve gcd root fibonacci
+
+Index:continued fraction|golden mean|fibonacci number
+Index:Function Results Edition|closure|sequence
+Index:rational number|Pi|greatest common divisor
+Index;Gosper W.|Euclid

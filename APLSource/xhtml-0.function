@@ -1,0 +1,202 @@
+ xhtml←{                                             ⍝ Export this WS to ⍵\*.htm.
+     {⍎⍵}{exec←⍺⍺ ⋄ ⎕IO ⎕ML←0 1                      ⍝ exec avoids name clashes.
+
+         content←{                                   ⍝ content page.
+             fm←+/∧\⍵∊' ·'                           ⍝ first non-white char.
+             to←(fm↓⍵)⍳' '                           ⍝ function name.
+             head ref tail←fm to part ⍵              ⍝ partition line.
+             head,(nlink ref),tail                   ⍝ tag note.
+         }
+
+         link←{                                      ⍝ embed hyper-links in note.
+             lines←hype∘(xlate⍣⍺)¨⍵                  ⍝ →ref← links to note.
+             head body←(lines⍳⊂'')part lines         ⍝ header and body of note.
+             st←⊂¨'See:' 'See also:' 'Quod vide:'    ⍝ "see" tags.
+             ↑seelink¨/st,⊂(hlink¨head),body         ⍝ header and See links.
+         }
+
+         hlink←{                                     ⍝ header links to code.
+             fm←+/∧\~'##.'⍷⍵                         ⍝ posn of code ref.
+             fm=⍴⍵:⍵                                 ⍝ no code in line: skip.
+             to←+/∧\~(fm↓⍵)∊' ){'                    ⍝ function name end.
+             head ref tail←fm to part ⍵              ⍝ split line.
+             head,'##.',(clink ref),∇ tail           ⍝ link line to code.
+         }
+
+         seelink←{                                   ⍝ "See also:" line.
+             mask←⍺⍷⍵                                ⍝ introducer.
+             ~1∊mask:⍵                               ⍝ not in this line: skip.
+             skip←(⍴⍺)+mask⍳1                        ⍝ leading intro chars.
+             (skip↑⍵),slinks skip↓⍵                  ⍝ link each ref.
+         }
+
+         slinks←{                                    ⍝ "See also:" links.
+             0=⍴⍵:⍵                                  ⍝ none left: done.
+             ' '=⊃⍵:' ',∇ 1↓⍵                        ⍝ leading blank: skip.
+             ref rem←(⍵⍳' ')part ⍵                   ⍝ split off ref.
+             (nlink ref),∇ rem                       ⍝ link ref and remainder.
+         }
+
+         hype←{                                      ⍝ embedded →hyper-link←.
+             tags←'→←'⍷⍵∩'→←'                        ⍝ →...← sequences.
+             ~1∊tags:⍵                               ⍝ no tags: continue.
+             fm←1+((⍵∊'→←')\tags)⍳1                  ⍝ posn of first tag.
+             len←(fm↓⍵)⍳'←'                          ⍝ length of tag.
+             head ref tail←fm len part ⍵             ⍝ isolated ref chars.
+             head,(nlink ref),∇ tail                 ⍝ link and remaining tags.
+         }
+
+         tlink←{                                     ⍝ script test link.
+             ~1∊'Alpha test'''⍷⍵:⍵                   ⍝ not sub-script: ignore.
+             fm←1+⍵⍳''''                             ⍝ start of sub-script name.
+             to←(fm↓⍵)⍳''''                          ⍝ end of ditto.
+             head ref tail←fm to part ⍵              ⍝ split at name.
+             head,('s_'tag ref),tail                 ⍝ link to sub-script.
+         }
+
+         wsnew←{                                     ⍝ link name in wsnew list.
+             date name tail←12((12↓⍵)⍳' ')part ⍵     ⍝ partition at name.
+             date,(nlink name),xlate tail            ⍝ link name to note.
+         }
+
+         indx←{                                      ⍝ index entry.
+             split←(80-⍴⍺)<+\1+,↑⍴¨⍵                 ⍝ cumulative item widths.
+             1∊split:↑,/(2↑⊂⍺)∇¨(0 1=⊂split)/¨⊂⍵     ⍝ split at 50 cols.
+             name←'td'wrap⊂dots ⍺                    ⍝ head word.
+             ents←'td'wrap nlink¨⍵                   ⍝ links.
+             ,/'tr'wrap name,↑{⍺,' ',⍵}/ents         ⍝ index table row.
+         }
+
+         putfile←{                                   ⍝ Put rows to text-file.
+             ntie←{                                  ⍝ handle on null file.
+                 22::⍵ ⎕NCREATE 0                    ⍝ ~exists: create.
+                 0 ⎕NRESIZE ⍵ ⎕NTIE 0                ⍝  exists: truncate.
+             }fid ⍺                                  ⍝ full file name.
+             bann←'Dyalog APL',('⍝'∊⊃⍵)/' -'         ⍝ banner.
+             page←'title'wrap⊂bann,comm⊃⍵            ⍝ page title.
+             head←'head'wrap page,sheet,GA           ⍝ head lines.
+             body←↑wrap/'body' 'pre'(⍵,''dindex)     ⍝ body lines.
+             docn←(⊂doctype),html wrap head,body     ⍝ html lines.
+             cvec←↑,/docn,¨⊂2↑⌽⎕TC                   ⍝ collected lines.
+             int8←{¯128+256|128+⍵}                   ⍝ u8 → i8.
+             uvec←int8∊'UTF-8'⎕UCS cvec              ⍝ utf8-vector.
+             size←uvec ⎕NAPPEND ntie 83              ⍝ write lines to file.
+             ⍺{fid ⍺}⎕NUNTIE ntie                    ⍝ return file name.
+         }
+
+         tag←{(⍺,⍵)href ⍵}                           ⍝ qualified link.
+         href←{↑,/('a href="',⍺,'.htm"')wrap⊂⍵}      ⍝ link to ⍺ with caption ⍵.
+         wrap←{(⊂brkt ⍺),⍵,⊂brkt'/',(⍺⍳' ')↑⍺}       ⍝ 'txt'wrap'htag ...'
+         brkt←{'<',⍵,'>'}                            ⍝ angle-bracket.
+         test←{⍵,''(('s_',⍺)href'test script')}      ⍝ link to test script.
+         ccol←{⍵,''(href⍨'code_colours')}            ⍝ a note on code-colour
+         back←{⍵,''((natl⊃⍵),↑href/⍺)}               ⍝ back link to ⍺.
+         natl←{(1∊'Roman'⍷⍵)⊃'Back to: ' 'Retro: '}  ⍝ national language xlate.
+         fid←(⍵,'/')∘{⍺,⍵,'.htm'}                    ⍝ file id.
+         part←{(+\⍺){(0,⍺)↓¨(⍺,⍴⍵)↑¨⊂⍵}⍵}            ⍝ partition ⍵ into ⍺-segs.
+         then←{(⍵⍵⍣(⊃⍺⍺ ⍵))⍵}                        ⍝ conditional application.
+         note←2∘=∘notes.⎕NC                          ⍝ there is a note for ⍵.
+         code←3 4∘(∨.=)∘⎕NC                          ⍝ there is code for ⍵.
+         nlink←note then('n_'∘tag)                   ⍝ link to note.
+         clink←code then('c_'∘tag∘(3∘↓))             ⍝ link to code.
+         xlate←{↑subs/xchars,⊂⍵}                     ⍝ translate special chars.
+         text←{{1↓¨(⍵∊cr)⊂⍵}cr,exec ⍺,'.',⍵}         ⍝ text from ⍺.⍵.
+         rmdx←{(~(6↑¨⍵)∊'Index'∘,¨':;')/⍵}           ⍝ without Index lines.
+         rmtn←{(⌽∨\⌽~⍵∊⊂'')/⍵}                       ⍝ ~ trailing null lines.
+         rmx←rmtn∘rmdx                               ⍝ index lines removed.
+         rxb←{(~'  '⍷⍵)/⍵}                           ⍝ without extra blanks.
+         srce←{xlate¨exec'⎕nr''',⍵,''''}             ⍝ function source code.
+         comm←{(1+⍵⍳'⍝')↓⍵}                          ⍝ line comment.
+         script←{tlink∘xlate¨'scripts'text ⍵}        ⍝ test script lines.
+
+         xchars←⌽{                                   ⍝ special chars xlate.
+             ⍵,⊂'<' '&lt;'}{                         ⍝ < → &lt;
+             ⍵,⊂'>' '&gt;'}{                         ⍝ > → &gt;
+             ⍵,⍨⊂'&' '&amp;'}⍬                       ⍝ & → &amp;
+
+         doctype←brkt rxb{
+             '!DOCTYPE html PUBLIC                               ',⍵}{
+             '"-//W3C//DTD XHTML 1.0 Strict//EN"                 ',⍵}{
+             '"HTTP://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"',⍵}{
+             ⍵}''
+
+        ⍝ NB: uppercase HTTP, above and below, are special-cased in the address-
+        ⍝ linking code.
+
+         html←rxb{                                   ⍝ html tag.
+             'html xmlns="HTTP://www.w3.org/1999/xhtml" ',⍵}{
+             'xml:lang="en-gb"                          ',⍵}{
+             'lang="en-gb"                              ',⍵}{
+             ⍵}''
+
+         sheet←⌽{
+             ⍵,⊂'<link rel="stylesheet" type="text/css" href="xhtml.css"/>'}{
+             ⍵,⊂'<meta http-equiv="Content-Language" content="en-gb"/>'}{
+             ⍵,⊂'<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>'}{
+             ⍵,⊂'<meta name="author" content="The D-Functionistas"/>'}{
+             ⍵,⊂'<meta name="description" content="Dyalog APL"/>'}{
+             ⍵,⊂'<meta name="generator" content=""/>'}{
+             ⍵,⊂'<meta name="keywords" content="',{
+                 'apl,',⍵}{
+                 'algorithms,',⍵}{
+                 'computation,',⍵}{
+                 'computers,',⍵}{
+                 'computing,',⍵}{
+                 'dfns,',⍵}{
+                 '''direct definition'',',⍵}{
+                 'dyalog',⍵}{
+                 ⍵}'"/>'}{
+             ⍵,⊂''}''
+
+         GA←⌽{                                       ⍝ For Google Analytic stats
+             ⍵,⊂'<script type="text/javascript">'}{
+             ⍵,⊂'  var _gaq = _gaq || [];'}{
+             ⍵,⊂'  _gaq.push([''_setAccount'', ''UA-28909969-2 '']);'}{
+             ⍵,⊂'  _gaq.push([''_trackPageview'']);'}{
+             ⍵,⊂'  (function() {'}{
+             ⍵,⊂'    var ga = document.createElement(''script''); ga.type = ''text/javascript''; ga.async = true;'}{
+             ⍵,⊂'    ga.src = (''https:'' == document.location.protocol ? ''https://ssl'' : ''http://www'') + ''.google-analytics.com/ga.js'';'}{
+             ⍵,⊂'    var s = document.getElementsByTagName(''script'')[0]; s.parentNode.insertBefore(ga, s);'}{
+             ⍵,⊂'  })();'}{
+             ⍵,⊂'</script>'}{
+             ⍵,⊂''}''
+
+         dyaurl←'http://www.dyalog.com'              ⍝ dyalog home.
+         dfnsurl←'http://dfns.dyalog.com'            ⍝ dfns home.
+         dyalog←'Back to: <a href="',dyaurl,'">Dyalog APL</a>'
+         dindex←'Back to: <a href="',dfnsurl,'/index.htm">Workspaces</a>'
+         cblink←'n_' '',¨⊂'contents'                 ⍝ contents back link.
+
+         x_put←{content¨1 link'notes'text ⍵}         ⍝ index put.
+         n_put←{cblink back 1 link rmx'notes'text ⍵} ⍝ notes put.
+         c_put←{('n_',⍵)'notes'back ⍵ test ccol srce ⍵}  ⍝ code put.
+         s_put←{('c_',⍵)'code'back script ⍵}         ⍝ script put.
+
+         bs lf cr←⎕TC                                ⍝ line terminators.
+         n_list←~∘' '¨↓notes.⎕NL 2                   ⍝ notes list.
+         c_list←~∘' '¨↓exec'⎕NL 3 4'                 ⍝ code list.
+         s_list←~∘' '¨↓scripts.⎕NL 2                 ⍝ scripts list.
+         wosnew←wsnew¨↓⊖exec'attrib ⎕NL 3 4'         ⍝ what's new?
+         wosttl←'New and Recently changed:' ''       ⍝   title.
+         snxttl←'Topic Index' ''                     ⍝ topic title.
+         pnxttl←'Person Index' ''                    ⍝ person title.
+         ixtab←{'table'wrap↑,/↑¨indx/¨pad ⍵}         ⍝ index table.
+         pad←{↓⍉↑⌽{↓↑⍵}\⌽↓⍉↑⍵}                       ⍝ pad topics
+         dots←{↑,/(0 1=⊂⌽∧\⌽⍵=' ')/¨⍵'·'}            ⍝ topic ·········
+         also←{⊂'see ',⍵}\∘{1↓¨('→'=⍵)⊂⍵}∘{'→',⊃⍵}¨  ⍝ alias entries.
+         alias←also notes index'≡'                   ⍝ see also entries.
+         merge←{⍵[⍋lcase↑⊃¨⍵]}                       ⍝ merge entry lists.
+         snx←ixtab merge alias,notes index':'        ⍝ topic index.
+         pnx←ixtab notes index';'                    ⍝ person index.
+
+         n←{('n_',⍵)putfile n_put ⍵}¨n_list          ⍝ write notes.
+         x←⊂'n_contents'putfile x_put'contents'      ⍝ overwrite contents.
+         c←{('c_',⍵)putfile c_put ⍵}¨c_list          ⍝ write code.
+         s←{('s_',⍵)putfile s_put ⍵}¨s_list          ⍝ write scripts.
+         w←⊂'wassup'putfile wosttl,wosnew            ⍝ write what's new?
+         sx←⊂'sindx'putfile snxttl,snx               ⍝ write topic index.
+         px←⊂'pindx'putfile pnxttl,pnx               ⍝ write person index.
+
+         1:fids←x,n,c,s,w,px,sx                      ⍝ file names.
+     }⍵
+ }

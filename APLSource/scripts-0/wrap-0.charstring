@@ -1,0 +1,97 @@
+⍝ Wrap word vector at ⍺ cols:
+
+    26 wrap ⎕a
+ABCDEFGHIJKLMNOPQRSTUVWXYZ
+
+    26 wrap,'A'
+A
+    ' ·'subs 20 wrap 20⍴'tick '
+tick·tick·tick·tick·
+
+    ' ·'subs 19 wrap 20⍴'tock '
+tock·tock·tock·tock
+                   
+    ' ·'subs 18 wrap 20⍴'tuck '
+tuck·tuck·tuck
+tuck·         
+
+      ' ·'subs 10 wrap ⎕a       ⍝ butchered long "word".
+ABCDEFGHIJ
+KLMNOPQRST
+UVWXYZ    
+
+      10 wrap 10 ¯1 10\'AB'     ⍝ no extra line if exact wrap.
+AAAAAAAAAA
+BBBBBBBBBB
+
+      10 wrap 10 ¯5 5\'AB'      ⍝ no removal of wrapped blanks.
+AAAAAAAAAA
+    BBBBB 
+
+      ' ·'subs 20 wrap(1↓,⍉↑⍬(1 to 26))\⎕a
+A·BB·CCC·DDDD·EEEEE 
+FFFFFF·GGGGGGG      
+HHHHHHHH·IIIIIIIII  
+JJJJJJJJJJ          
+KKKKKKKKKKK         
+LLLLLLLLLLLL        
+MMMMMMMMMMMMM       
+NNNNNNNNNNNNNN      
+OOOOOOOOOOOOOOO     
+PPPPPPPPPPPPPPPP    
+QQQQQQQQQQQQQQQQQ   
+RRRRRRRRRRRRRRRRRR  
+SSSSSSSSSSSSSSSSSSS 
+TTTTTTTTTTTTTTTTTTTT
+UUUUUUUUUUUUUUUUUUUU
+U                   
+VVVVVVVVVVVVVVVVVVVV
+VV                  
+WWWWWWWWWWWWWWWWWWWW
+WWW                 
+XXXXXXXXXXXXXXXXXXXX
+XXXX                
+YYYYYYYYYYYYYYYYYYYY
+YYYYY               
+ZZZZZZZZZZZZZZZZZZZZ
+ZZZZZZ              
+
+    Alpha test'Line_vectors'
+1
+
+    txt←'Say can I have some of your purple berries? Yes, I''ve been eating them for six or seven weeks now; haven''t got sick once. Prob''ly keep us both alive.'
+
+    wrap←{⎕io←1             ⍝ ⍺-wrap (Bob Smith).
+        ⍺←⎕pw               ⍝ default ⎕pw-wrap
+        v←' ',⍵,' '         ⍝ blanks required at start and end
+        j←(v=' ')/⍳⍴v       ⍝ indices of blanks
+        p←(j+⍺+1)∘.<j       ⍝ 1s mark blanks past the cutoff
+        m←p<1⌽p             ⍝ mark last blank that fits on the line
+        i←(⍴m)⍴1,(1↓⍴m)⍴0   ⍝ identity matrix
+        c←⌹i-m              ⍝ compute transitive closure of m
+        v[c[1;]/j]←⊃⌽⎕tc    ⍝ insert the line breaks
+        1↓¯1↓v              ⍝ drop the extra blanks
+    }
+
+    ' ·'subs 24 wrap txt
+Say·can·I·have·some·of 
+your·purple·berries?   
+Yes,·I've·been·eating  
+them·for·six·or·seven  
+weeks·now;·haven't·got 
+sick·once.·Prob'ly·keep
+us·both·alive.         
+
+    wrap←{⎕io ⎕ml←1 0 ⋄       ⍝ ⍺-wrap (John Daintree).
+        ⍺←⎕PW                 ⍝ initialize
+        ⍺≥⍴,⍵:,⊂⍵             ⍝ out if short enough
+        sze←(⍵∊'-?., ')/⍳⍴⍵   ⍝ length of each choice
+        len←⊃⌽(⍺≥sze)/sze     ⍝ longest length
+        len←⊃(len∊sze)⌽⍺ len  ⍝ middle of word?
+        (⊂len↑⍵),⍺ ∇ len↓⍵    ⍝ at valid wrap point
+    }
+
+    ' ·'subs 1 disp 24 wrap txt
+┌→──────────────────────┬─────────────────────┬──────────────────────┬──────────────────────┬───────────────────────┬────────────────────────┬──────────────┐
+│Say·can·I·have·some·of·│your·purple·berries?·│Yes,·I've·been·eating·│them·for·six·or·seven·│weeks·now;·haven't·got·│sick·once.·Prob'ly·keep·│us·both·alive.│
+└──────────────────────→┴────────────────────→┴─────────────────────→┴─────────────────────→┴──────────────────────→┴───────────────────────→┴─────────────→┘

@@ -1,0 +1,55 @@
+⍝ Conditional application:
+
+    eis←1∘=∘≡cond⊂cond⊢         ⍝ enclose if depth=1.
+
+    disp      1 (,1) (⊂,1)      ⍝ items have depth 0 1 2
+┌─┬─┬───┐
+│1│1│┌─┐│
+│ │ ││1││
+│ │ │└─┘│
+└─┴─┴───┘
+    disp eis¨ 1 (,1) (⊂,1)      ⍝ enclose depth-1 items.
+┌─┬───┬───┐
+│1│┌─┐│┌─┐│
+│ ││1│││1││
+│ │└─┘│└─┘│
+└─┴───┴───┘
+
+    0 1 ÷cond-¨ 3               ⍝ dyadic (as opposed to triadic) cond.
+¯3 0.3333333333
+
+    unless←{~∘⍵⍵ cond ⍺⍺ cond⊢⍵}
+    log←⍟unless(≤∘0)
+    log 3
+1.098612289
+    log 0
+0
+    or←{(∨/⍺)cond((0⊥⍺)cond ⍵⍵ cond((2=⍴⍺)cond ⍺⍺ cond((¯1↓⍺)∘⍺⍺)))cond⊢⍵}
+    0 0 0 0-or×or⌈or⌊7.5
+7.5
+    0 0 0 1-or×or⌈or⌊7.5
+7
+    0 0 1 0-or×or⌈or⌊7.5
+8
+    0 1 0 0-or×or⌈or⌊7.5
+1
+    1 0 0 0-or×or⌈or⌊7.5
+¯7.5
+
+⍝ try alternative coding:
+
+    cond←{ ⍝ proposition : consequence : alternative
+        m q y←147036925 258147036 369258147
+        ⍺←m
+        Õ←{⊃⊢∘⍺⍺/(⍳⍵⍵),⊂⍵}
+        ⊢∘⍺⍺ Õ(⍺=q)⊢⊢∘⍵⍵ Õ(⍺=y)⊢⍺⍺{(q ⍺⍺ ⍵)⍺⍺{y∘⍺⍺ Õ ⍺⊢⊢∘⍵⍵ Õ(~⍺)⊢⍵}⍵⍵ ⍵}⍵⍵ Õ(⍺=m)⊢⍵
+    }
+
+    eis←1∘=∘≡cond⊂cond⊢         ⍝ enclose if depth=1.
+
+    disp eis¨ 1 (,1) (⊂,1)      ⍝ enclose depth-1 items.
+┌─┬───┬───┐
+│1│┌─┐│┌─┐│
+│ ││1│││1││
+│ │└─┘│└─┘│
+└─┴───┴───┘

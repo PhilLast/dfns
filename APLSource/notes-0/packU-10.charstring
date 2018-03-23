@@ -1,0 +1,16 @@
+cmp ← {cmp←1} ##.packU exp                    ⍝ Unique packing.
+
+Quick,  suitable  for cases where the data has only a few unique items, and thus
+the index part consists of (small) integers, i.e. small bitmaps.
+
+Example:
+
+    packU'Mississippi'
+┌──┬────┬─────────────────────┐
+│11│Misp│0 1 2 2 1 2 2 1 3 3 1│
+└──┴────┴─────────────────────┘
+
+See also: Data_compression
+
+Index:packing|compression
+Index;Jantunen V-M.

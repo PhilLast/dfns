@@ -1,0 +1,5 @@
+ enlist←{⎕ML←1           ⍝ List ⍺-leaves of nested array.
+     ⍺←0                 ⍝ default: list 0-leaves.
+     ⍺≥¯1+|≡⍵:,⍵         ⍝ all shallow leaves: finished.
+     1↓↑,/(⊂⊂⊃⊃⍵),⍺ ∇¨,⍵ ⍝ otherwise: concatenate sublists.
+ }

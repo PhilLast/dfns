@@ -1,0 +1,5 @@
+ _fk←{               ⍝ Fork left.
+     ⍺←⊢             ⍝ ambivalent
+     ra rr←⍵         ⍝ original ra and result of f02
+     (⍺ ⍺⍺ ra)⍵⍵ rr  ⍝ result of f00 becomes left arg of f01.
+ }

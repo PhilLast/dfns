@@ -1,0 +1,6 @@
+ stamps←{                        ⍝ Postage stamps to the value of ⍵.
+     ⍺←1 5 6 10 26 39 43         ⍝ Default UK stamp denominations.
+     graph←⍺{⍵∘∩¨⍵+⊂⍺}⍳⍵+|⌊/⍺    ⍝ values: 0 ·· ⍵.
+     spath←graph path ⎕IO+0 ⍵    ⍝ shortest path 0→⍵.
+     ¯2-/spath                   ⍝ best-fit stamps.
+ }

@@ -1,0 +1,8 @@
+ roots←{                         ⍝ Real roots of quadratic.
+     a b c←⍵                     ⍝ Coefficients.
+     d←(b*2)-4×a×c               ⍝ Discriminant.
+
+     d<0:⍬                       ⍝ No roots
+     d=0:-b÷2×a                  ⍝ One root
+     d>0:(-b+¯1 1×d*0.5)÷2×a     ⍝ Two roots
+ }

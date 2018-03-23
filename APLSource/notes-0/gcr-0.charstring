@@ -1,0 +1,55 @@
+Gregorian Calendar Reform
+-------------------------
+Countries  adopted  the Gregorian calendar at different times. When using →days←
+or  →date←  for  historical  dates in other than the UK or Eastern Seaboard USA,
+use a left argument from the following table:
+
+                         ⍺∘days     ⍺∘date
+                         ------     ------
+Albania ·   ·   ·   ·   19121201      4731
+Austria (Salzburg)  ·   15831005   ¯115494
+Bulgaria    ·   ·   ·   19160331      5947
+Czech (Bohemia Moravia) 15840106   ¯115401
+Denmark ·   ·   ·   ·   17000218    ¯72989
+Egypt   ·   ·   ·   ·   18750101     ¯9118
+Finland ·   ·   ·   ·   17530217    ¯53631
+France  ·   ·   ·   ·   15821209   ¯115794  P
+Greece  ·   ·   ·   ·   19240309      8847
+Italy   ·   ·   ·   ·   15821004   ¯115860  R
+Ireland ·   ·   ·   ·   17520902    ¯53799  L
+Japan   ·   ·   ·   ·   18730101     ¯9848  J
+Russia  ·   ·   ·   ·   19180131      6618
+Poland  ·   ·   ·   ·   15821004   ¯115860  R
+Portugal    ·   ·   ·   15821004   ¯115860  R
+Spain   ·   ·   ·   ·   15821004   ¯115860  R
+Sweden  ·   ·   ·   ·   17530217    ¯53631
+Turkey  ·   ·   ·   ·   19270101      9875
+UK  ·   ·   ·   ·   ·   17520902    ¯53799  L
+USA, Eastern Seaboard   17520902    ¯53799  L
+USA, Mississippi valley 15821209   ¯115794  P
+USA, TX FL CA NV AZ NM  15821004   ¯115860  R
+USA, WA OR  ·   ·   ·   17520902    ¯53799  L
+USA, AK     ·   ·   ·   18671001    ¯11767
+
+R: Same as Rome.
+L: Same as London.
+P: Same as Paris.
+J: The Gregorian calendar replaced the traditional Japanese calendar 1873-01-01.
+
+Example:
+
+    tx_days←15821004∘days       ⍝ Texas conversions.
+    tx_date←¯115860∘date
+
+    va_days←17520902∘days       ⍝ Virginia conversions.
+    va_date←¯53799∘date
+
+⍝ John Rolfe married Pocahontas on 1614-04-05(VA). If guests were expected
+⍝ from Texas or Florida, the wedding planning must have been a nightmare:
+
+    3↑tx_date va_days 1614 4 5  ⍝ Apr 1614: 5 (VA) -> 15 (TX)
+1614 4 15
+
+See also: Dates days date
+
+Index:Gregorian calendar|1752

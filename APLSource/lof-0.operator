@@ -1,0 +1,4 @@
+ lof←{                   ⍝ List of functions.
+     ⍺←⊢                 ⍝ ambivalent.
+     (⍺ ⍺⍺ ⍵),⊂⍺ ⍵⍵ ⍵    ⍝ one at a time.
+ }

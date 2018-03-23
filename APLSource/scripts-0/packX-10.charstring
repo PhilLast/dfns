@@ -1,0 +1,14 @@
+⍝ TeXt packer:
+
+      disp packX'Mississippi'           ⍝ Text packing.
+┌────┬────┬───────────────────────────────────────────────────────────────────┐
+│Misp│1 11│0 1 0 0 1 0 1 0 0 1 1 0 0 0 0 1 0 1 0 0 1 0 0 0 1 1 0 0 0 0 0 1 1 1│
+└────┴────┴───────────────────────────────────────────────────────────────────┘
+
+    chk←{
+        ⍵≡0 ⍺⍺ ⍺⍺ ⍵:'ok'
+        ' Error: compression round-trip fails'
+    }
+
+    packX chk ⎕fmt notes.Marilyn        ⍝ simple text matrix
+ok

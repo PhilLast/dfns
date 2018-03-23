@@ -1,0 +1,108 @@
+───────────────
+Function Arrays
+───────────────
+Dyalog APL doesn't have arrays of functions but they can be simulated in various
+ways. Apart from →fnarray←, each of the operators here utilises a derived funct-
+ion "tree". The seemingly "linear" sequence ··· F op G op H ··· arg, can be rep-
+resented graphically in the following fashion:
+
+           ┌─··· arg
+         ┌─op─┐
+       ┌─op─┐ H
+     ┌─op─┐ G
+    ···   F
+
+The  function array operators typically traverse the left "spine" of the tree by
+applying ⍺⍺ to an argument until the required operand is reached.
+
+→fnarray← uses an array of namespace references to contain each function.
+
+------------------
+Function selectors
+------------------
+Operators →case← and →of← apply the selected monadic function to the right argu-
+ment  of  the  derived function. →case← uses a boolean "mask" and →of←, a "pick"
+index.  There  is a subtle but significant difference in the usage of →case← and
+→of←:
+
+    0 1 0 - case ! case + 3     ⍝ [larg] fn case fn case fn rarg
+6
+    2 of - of ! of + 3          ⍝ [land] of fn of fn of fn rarg
+6
+
+[larg]  is  the  left  _argument_ of the derived function: (fn case fn case fn),
+whereas [land] is the left _operand_ of the leftmost →of← operator.
+
+In  Dyalog,  we  can  _name_ a derived function such as (fn case fn case fn) and
+with  this example, sometime later use the name in conjunction with a left argu-
+ment  to  "pick" a function to apply to a right argument. However, we can't name
+an  incomplete  operator expression (of fn of fn of fn) which has a missing left
+operand.
+
+Operationally,  →case←  can "see" its left argument from the top (righmost) node
+of  the  derived  function tree and pass an optionally modified copy of it left-
+wards  to each lower level. An →of←-tree on the other hand, has no left argument
+and must traverse left until it happens upon an operand that isn't a function.
+
+Phil  Last suggests a further operator [sel], which indexes _leftwards_ from the
+rightmost operand function:
+
+      sel←{               ⍝ select function from RHS of list.
+          ⍺≤⎕IO:⍵⍵ ⍵      ⍝ apply ⍵⍵ at selected level.
+          (⍺-1)⍺⍺ ⍵       ⍝ traverse left.
+      }
+
+This combines →of←'s simplicity in that a pick index is used, with the advantage
+of →case←, that the derived function may be named. But here's the rub: the left-
+most  operand  function must accept but ignore, a left argument. This is because
+the  operator  doesn't know it _is_ the leftmost function and so passes the next
+lowest  index  as  left  argument. This is not really a problem as an ambivalent
+function may easily be made strictly monadic by composing or enclosing it with a
+monadic identity function: ⊢∘fn or {fn ⍵}.
+
+      fnlist←{⌈⍵} sel ⌊ sel - sel ÷     ⍝ 'vector' of functions,
+
+      ⎕nc'fnlist'                       ⍝ ... is a derived function.
+3
+      1 fnlist 2.5                      ⍝ 1st from right function.
+0.4
+      4 fnlist 2.5                      ⍝ 4th from right function.
+3
+
+---------------------
+Function distributors
+---------------------
+Operators  →lof←  (list-of-functions) and →vof← (vector-of-functions) distribute
+their  functions  over or between their array arguments. The distinction between
+→lof←  and  →vof←  is  that in the former, each function is applied to the whole
+argument array, whereas in the latter, the items of the argument are distributed
+to each function.
+
+monadic:
+
+    F lof G x y ←→ (F x y) (G x y)
+    F vof G x y ←→ (F x  ) (G   y)
+
+dyadic:
+
+    a b F lof G x y   ←→ (a b F x y) (a b G x y)
+    a b F vof G x y   ←→ (a   F x  ) (  b G   y)
+
+Examples:
+
+      1 5 3 + lof ⌈ lof ⌊ lof | 6 2 4
+7 7 7  6 5 4  1 2 3  0 2 1
+
+      1 5 3 + vof ⌈ vof ⌊ vof | 6 2 4
+6 2 1
+
+      - lof ÷ lof ! 4 5 6
+¯4 ¯5 ¯6  0.25 0.2 0.1666666667  24 120 720
+
+      - vof ÷ vof ! 4 5 6
+¯4 0.2 720
+
+See also: case of lof vof for fnarray
+
+Index:function array
+Index;Last P.

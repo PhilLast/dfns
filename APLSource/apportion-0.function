@@ -1,0 +1,8 @@
+ apportion←{                 ⍝ Huntington-Hill apportionment.
+     ⍺←435                   ⍝ default number of seats
+     ⍵{                      ⍝ population per state
+         d←(⍵×⍵+1)*0.5       ⍝ divisor
+         cs←⍺÷d              ⍝ priority value
+         ⍵+cs=⌈/cs           ⍝ next seat allocation
+     }⍣(⍺-≢⍵),1              ⍝ iterated per remaining seat.
+ }

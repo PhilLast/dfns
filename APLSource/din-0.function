@@ -1,0 +1,51 @@
+ din←{                                   ⍝ Input of multi-line D-expression.
+
+     {⎕FX ⍵}{                            ⍝ defined at lexically outer level.
+         ⎕IO ⎕ML←0 1
+
+         accm←{                          ⍝ accumulation of lines.
+             0=level sig ⍵:⍺ ⍵           ⍝ outer level: finished.
+             next←get prmt sig ⍵         ⍝ next input line.
+             (,'→')≡next~' ':⍎'→'        ⍝ →: abort
+             defn←⍺,⊂next                ⍝ accumulated definition.
+             expr←⍵ join cm zap next     ⍝ accumulated expression.
+             defn ∇ expr                 ⍝ ... more lines.
+         }                               ⍝ :: defn ∇ expr → defn expr
+
+         prmt←{                          ⍝ tab-indented prompt.
+             cont←null or more ⍵         ⍝ continue at this level.
+             tail←cont⊃'}'tab            ⍝ close or continuation
+             (∊(level ⍵)⍴⊂tab),tail      ⍝ indented prompt.
+         }
+
+         ask←{⍞⊣⍞←⍵}                     ⍝ ⍵-prompted input.
+         or←{(⍺⍺ ⍵)∨⍵⍵ ⍵}                ⍝ this or that.
+         zap←{(~⍺⍺ ⍵){⍺\⍺/⍵}⍵}           ⍝ blank ⍵ where ⍺.
+         level←{⊃⌽depth ⍵,' '}           ⍝ current nesting level.
+         depth←{⍵⌊¯1⌽⍵}∘{-⌿+\'{}'∘.=⍵}   ⍝ │·{a{'⍝'}c}⍝│ → 0 0 1 1 2 2 2 1 1 0 0
+         qt←{⍵∧¯1⌽⍵}∘{≠\⍵=''''}          ⍝ │·{a{'⍝'}c}⍝│ → 0 0 0 0 0 1 0 0 0 0 0
+         cm←∨\∘~∘('⍝'∘≠or qt)            ⍝ │·{a{'⍝'}c}⍝│ → 0 0 0 0 0 0 0 0 0 0 1
+         dt←~∘('·'∘≠or cm or qt)         ⍝ │·{a{'⍝'}c}⍝│ → 1 0 0 0 0 0 0 0 0 0 0
+         sig←cm or qt zap                ⍝ │ {a{'⍝'}c}⍝│ → │ {a{' '}c}│
+         edge←{'{}'∨.=2↑¯1⌽(⍵,⍺)~' '}    ⍝ ...{ or }...
+         join←{⍺,(⍺ edge ⍵)↓'⋄',⍵}       ⍝ ⋄-separated segments.
+         get←dt zap∘ask                  ⍝ input with blanked leading '·'s.
+         lines←{⍵≠⊃⌽⍵}∘depth zap         ⍝ lines in current nested fn.
+         sepr←{⍺{1↓¨(⍺=⍵)⊂⍵}⍺,⍵}         ⍝ ⍺-separated lines.
+         segs←'⋄'∘sepr∘lines             ⍝ ⋄-separated segments.
+         more←{1∊'←:'∊⊃⌽segs ⍵}          ⍝ last line was assign or guard.
+         null←{(⊃⌽'⋄',⍵~' ')∊'{⋄'}       ⍝ ignoring null line.
+         align←{(4⌊+/∧\' '=⍵)↓⍵}         ⍝ defn lines without indentation.
+         tab←'·   '                      ⍝ tab with white dot.
+
+         init←(cm zap ⍵)~' '             ⍝ defn name or null.
+         asgn←(×⍴init)/'←{'              ⍝ name←{
+         head←get tab,init,asgn          ⍝ initial line.
+         ixpr←cm zap head                ⍝ initial expression.
+         defn expr←(,⊂head)accm ixpr     ⍝ following lines.
+         name←⍺⍺ align¨defn              ⍝ external fix of function.
+         ' '=⊃0⍴name:shy←name            ⍝ success: shy result is name.
+         ⍵⍵ expr                         ⍝ external exec of expression.
+
+     }{0::⎕SIGNAL ⎕EN ⋄ ⍎⍵}⍵             ⍝ evaluated at lexically outer level.
+ }

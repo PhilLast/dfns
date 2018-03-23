@@ -1,0 +1,36 @@
+cmat ← {excl} ##.fndiff (fna fnb)           ⍝ Defined function differences.
+
+Fndiff  takes a pair of function names of the form 'fnid' or 'wsid fnid'. Where,
+[fnid]  is a plain or space-referenced function or operator name and [wsid] is a
+workspace id.
+
+If  [wsid]  is given and a directory path is not supplied, WSPATH (See Options->
+Configure->Workspace) is used to locate the saved workspace.
+
+Otherwise, the function is sought in the current active workspace. The result is
+a  "split-screen"  display  of lines that are in one function but not the other.
+The optional left argument is a character vector exclusion list:
+
+    ' ' Exclude white space from the comparison.
+    '⍝' Exclude comments from the comparison.
+
+In order to accommodate [wsids] containing embedded blanks, the _last_ word in a
+function  specification  is taken as the [fnid] and everything to the left of it
+(omitting leading and trailing blanks) is taken as the [wsid]. Embedded multiple
+blanks are preserved:
+
+    '  My Documents\WS  myfn ' => wsid ≡ 'My Documents\WS'   fnid ≡ 'myfn'
+
+Examples:
+
+      '⍝'fndiff'min trees' 'max trees'
+·   0=≡⍵:⍵  ·   ·   ·   ·   ·   ·   · │·   0=≡⍵:⍕⍵ ·   ·   ·   ·   ·   ·   ·
+·   ~(⊂⊃⍵)∊'@\=':⍺∘∇¨⍵  ·   ·   ·   · │·   (0≡⊃0⍴⍵)∨(0≠≡⊃⍵)∨(,3)≢⍴⍵:⍺∘∇¨⍵  ·
+
+      '⍝'fndiff'display DISPLAY' 'display'
+DISPLAY←{⎕IO·⎕ML←0  ·   ·   ·   ·   · │display←{⎕IO·⎕ML←0  ·   ·   ·   ·   ·
+·   ⍺←0 ⋄ chars←⍺⊃'..''''|-'·'┌┐└┘│─' │·   ⍺←1 ⋄ chars←⍺⊃'..''''|-'·'┌┐└┘│─'
+
+See also: wsdiff Workspaces
+
+Index:difference, functions|compare functions

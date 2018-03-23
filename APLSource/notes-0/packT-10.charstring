@@ -1,0 +1,20 @@
+cmp ← {cmp←1} ##.packT exp                  ⍝ Simple text vector packager.
+
+[packT] is a simple text vector packager, proposed by Stefano Lanzavecchia.
+
+The repeated items are replaced with [esc][asc][chr], where:
+
+    esc = "escape" character (⎕AV[1 2 or 3], it shouldn't be in the data!)
+    asc = ⎕AV character indicates how many times the char must be repeated
+    chr = the character
+
+Because  the  RLE  coding takes three characters, short repeated strings are not
+packed  (and  thus  ⎕AV[1 2 3]  are  free  for "esc"); if the repeated areas are
+longer  than  256  chars,  there  will be more esc sequences. If there are "esc"
+characters,  they  are doubled. This is a nice algorithm, but I (VMJ) have found
+no real world data where it would be useful.
+
+See also: Data_compression
+
+Index:packing|compression
+Index;Lanzavecchia S.|Jantunen V-M.

@@ -1,0 +1,256 @@
+(muse:
+
+    Programmer Dvorak  http://www.kaufmann.no/roland/dvorak
+    ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+    ┌────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬─────────┐
+    │~   │%   │7   │5   │3   │1   │9   │0   │2   │4   │6   │8   │`   │Backspace│
+    │$   │&   │[   │{   │}   │(   │=   │*   │)   │+   │]   │!   │#   │         │
+    ├────┴──┬─┴──┬─┴──┬─┴──┬─┴──┬─┴──┬─┴──┬─┴──┬─┴──┬─┴──┬─┴──┬─┴──┬─┴──┬──────┤
+    │Tab    │:   │<   │>   │P   │Y   │F   │G   │C   │R   │L   │?   │∧   │Enter │
+    │       │;   │,   │.   │p   │y   │f   │g   │c   │r   │l   │/   │@   │      │
+    ├───────┴┬───┴┬───┴┬───┴┬───┴┬───┴┬───┴┬───┴┬───┴┬───┴┬───┴┬───┴┬───┴┐     │
+    │Caps    │A   │O   │E   │U   │I   │D   │H   │T   │N   │S   │_   │|   │     │
+    │Lock    │a   │o   │e   │u   │i   │d   │h   │t   │n   │s   │-   │\   │     │
+    ├──────┬─┴──┬─┴──┬─┴──┬─┴──┬─┴──┬─┴──┬─┴──┬─┴──┬─┴──┬─┴──┬─┴──┬─┴────┴─────┤
+    │Shift │    │"   │Q   │J   │K   │X   │B   │M   │W   │V   │Z   │Shift       │
+    │      │    │'   │q   │j   │k   │x   │b   │m   │w   │v   │z   │            │
+    ├──────┴┬───┴─┬──┴───┬┴────┴────┴────┴────┴────┴┬───┴──┬─┴────┼─────┬──────┤
+    │ctrl   │Win  │Alt   │                          │Alt Gr│Win   │Menu │Ctrl  │
+    │       │     │      │                          │      │      │     │      │
+    └───────┴─────┴──────┴──────────────────────────┴──────┴──────┴─────┴──────┘
+
+    Where should we allocate APL symbols on a Dvorak keyboard? The spirit of the
+    layout  is  to  ignore mnemonic association in favour of arranging keys with
+    respect to the frequency of occurrence of key-sequences. Among other consid-
+    erations,  the keys are placed so as to minimise the total distance that our
+    fingers travel from their home positions in the centre of the keyboard.
+
+    The guiding assumption is that, while mnemonic associations (⍴ on R, ⍳ on I,
+    and so forth)  are  handy  while  we're learning the keyboard, with a little
+    practice, our _fingers_ soon remember where the characters are located with-
+    out  resort to the mnemonic.  This "muscle memory" phenomenon can be seen in
+    action  when we drive a stick-shift or dance the quickstep;  we delegate the
+    changes  to  our  hands  and  feet without having to think consciously about
+    them.
+
+    If  we  accept  this,  then mnemonic placement of keys soon becomes counter-
+    productive  compared  with  schemes that try to minimise hand movements. The
+    (arguably)  most  mnemonic  keyboard of all: ABCDEF..., doesn't seem to have
+    given  QWERTY  much  of  a run for its money even though such keyboards are,
+    these days, no more expensive to produce.
+
+    (muse:
+
+        For  what  it's  worth,  this typist finds it significantly easier spell
+        BRAM(ley) on those ticket machines in Reading Railway Station that sport
+        QWERTY touch-screens, than on the few that offer ABCDEF.
+    )
+
+    http://mkweb.bcgsc.ca/carpalx/?home is an excellent website, which addresses
+    many  of  the  issues  of efficient keyboard layout.  In particular, see the
+    section on "typing effort".
+
+    Frequency of Characters in this Workspace
+    ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+    Here  is a frequency sample (as of 2009-03-22) of _single_ APL characters in
+    source  code in this workspace. It excludes workspace notes and test-scripts
+    but includes APL characters in function comments:
+
+        apl←'⍫⍒⍋⌽⍉⊖⍟⍱⍲⌹⋄¨¯≤≥≠∨×÷⍣⍞⍬⊣⍵∊⍴↑↓⍳○←→⊢≡⍪⍺⌈⌊∇∆∘⎕⍎⍕⍷⍙⍨⊂⊃∩∪⊥⊤⍝⍀⌿⌷'
+
+        code←↑,/,∘⎕cr¨↓⎕nl 3 4                  ⍝ source code chars.
+
+        freq ← {(∪⍵){⍺{(↓⍉↑⍺⍵)[⍒⍵]}+/⍺∘.=⍵}⍵}
+
+        4 40 cols freq code∩apl                 ⍝ apl char-frequency.
+    ⍝ 4468    ∇ 426    → 111    ≥ 44    ∩ 14
+    ⍵ 4011    ∘ 402    ⌈ 99     ⍋ 42    ⍒ 13
+    ← 3159    ¯ 336    ⍉ 99     ∪ 42    ⊣ 7
+    ⍺ 2705    ∊ 323    ⌊ 97     ⍪ 41    ⌹ 5
+    ⍴ 811     × 318    ⍕ 81     ⊥ 40    ⍱ 4
+    ⎕ 799     ⌽ 297    ∆ 81     ⊖ 38    ⌷ 3
+    ¨ 717     ⍳ 279    ⌿ 70     ⊤ 36    ⍲ 3
+    ↑ 623     ⋄ 268    ⍙ 68     ⍟ 32    ⊢ 1
+    ⊂ 563     ⍬ 150    ⍎ 64     ≤ 25    ⍣ 1
+    ↓ 532     ÷ 140    ⍷ 60     ⍫ 25
+    ⊃ 523     ≠ 128    ⍨ 57     ⍞ 16
+    ≡ 444     ∨ 127    ○ 54     ⍀ 15
+
+    It  _could_  be  argued that we should also reassign non-APL, non-alphameric
+    chars:
+
+        other←'~%`$&[{}(=*)+]!#:<>?∧;,./@_|-\"'''
+
+        4 40 cols freq code∩apl∪other           ⍝ non-alphameric frequency.
+    ⍝ 4468    = 618    \ 259    # 71    ⍫ 25
+    ⍵ 4011    + 592    < 233    ⌿ 70    ! 22
+    . 3936    ⊂ 563    > 227    ? 69    ⍞ 16
+    ' 3411    ↓ 532    | 206    ⍙ 68    ⍀ 15
+    ← 3159    ⊃ 523    ∧ 193    ⍎ 64    ∩ 14
+    ⍺ 2705    ≡ 444    ⍬ 150    ⍷ 60    ⍒ 13
+    ) 1988    ∇ 426    " 142    ⍨ 57    ⊣ 7
+    : 1985    ∘ 402    ÷ 140    ○ 54    % 6
+    ( 1981    ¯ 336    ≠ 128    ≥ 44    ⌹ 5
+    , 1859    [ 324    ∨ 127    ⍋ 42    ⍱ 4
+    { 1779    ] 324    * 116    ∪ 42    ⌷ 3
+    } 1771    ∊ 323    → 111    ⍪ 41    ⍲ 3
+    - 1178    × 318    ⌈ 99     ⊥ 40    @ 3
+    / 954     _ 307    ⍉ 99     ⊖ 38    $ 1
+    ⍴ 811     ~ 298    ⌊ 97     ⊤ 36    ⊢ 1
+    ⎕ 799     ⌽ 297    ⍕ 81     ⍟ 32    ` 1
+    ¨ 717     ⍳ 279    ∆ 81     & 30    ⍣ 1
+    ↑ 623     ⋄ 268    ; 75     ≤ 25
+
+    but doing so would win us few friends among (any) existing Programmer Dvorak
+    users.
+
+    Character sequences
+    ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+    The incidence of character _sequences_ is as important as that of individual
+    characters.  For  example, it is beneficial to allocate frequently occurring
+    sequences so that, where possible, the characters are typed with alternating
+    hands or,  failing that, single-hand "finger runs" from the outer (pinky) to
+    the  inner  (index)  side  with  the  same  hand. Regarding this last point,
+    http://en.wikipedia.org/wiki/Dvorak_Simplified_Keyboard notes that we gener-
+    ally drum our fingers on the table in this direction.
+
+    (muse:
+
+        In the same Wikipedia article, Dvorak also recommends:  "Digraphs should
+        not be typed with adjacent fingers.".  This seems a bit rich, given that
+        he  allocates  one of the most frequent digraphs in English: "th" to the
+        second  and  index finger of the right hand.  Presumably this was as the
+        result of a compromise, which avoided an even worse combination.
+    )
+
+    The  following  function returns a list, for each APL character, of the most
+    frequent  non-alphameric  characters that (a) precede and (b) follow it. The
+    list is returned in order of individual APL character frequency, as above.
+
+    cseqs←{                                 ⍝ ⍵-char-sequence table.
+        code←{(⍵≠1⌽⍵)/⍵}↑,/,∘⎕CR¨↓⎕NL 3 4   ⍝ source code chars.
+        atab←{+/⍵⍷code}¨∘.,⍨⍺,⍵             ⍝ adjacency count table.
+        pops←{{⍵⍳⌈/⍵}¨↓⍵⍉atab}              ⍝ indices of popular pairs.
+        pqx←pops¨(2 1)(1 2)                 ⍝ popular ⍺⍵ and ⍵⍺ indices.
+        chars←⍺,⍵                           ⍝ apl and other chars.
+        achar←{⍺⊃¨¨(⊂chars){⍺ ⍵}¨↓⍵⍉atab}   ⍝ popular adjacent char and count.
+        pqvex←pqx achar¨(2 1)(1 2)          ⍝ preceding and following counts.
+        fmt←{                               ⍝ format:
+            (pc pn)(qc qn)←⍵                ⍝ preceding count and char,
+            pn pc(,⍺)qc(⍕qn)                ⍝    -  char  -
+        }                                   ⍝ following char and count.
+        list←⍺ fmt¨(⍴⍺)↑↓⍉↑pqvex            ⍝ list of char adjacencies.
+        sort←{⍺{⍺[⍒⍵]}+/⍺∘.=⍵}              ⍝ sorted in order of frequency.
+        freq←{(∪⍵)sort ⍵}code∩⍺             ⍝ char frequency.
+        ↓⍕↑list[⍺⍳freq]                     ⍝ list by frequency.
+    }
+
+    For example, in the output below (arranged in four columns, so as to be easy
+    on the eye), the _third_ item in the first column: "129 ⍺ ← { 1015" indicat-
+    es  that '←', the _third_ most popular APL character, is preceded most often
+    (128) by an '⍺' and followed most often (1015) by a '{'.
+
+                ┌───────── ←, the third-most frequently occurring APL character,
+          129 ⍺ ← { 1015
+          └───┤   └────┴── is followed most (1015) frequently by {.
+              └─────────── and preceded most (129) frequently by ⍺.
+
+    This suggests that it might be (1015)-attractive to site the '←' key so that
+    Programmer-Dvorak '{' may easily follow it.
+
+    Of course, an analysis of a more traditional workspace, where D-function us-
+    age was less prevalent, might yield quite different results!   ;-)
+
+    NB: Take care not to infer from the above item, anything about the frequency
+    of occurrence of the sequence '⍺←{'. In fact, it occurs only 21 times, while
+    '⍺←' occurs 129 times and '←{' occurs 1015 times.
+
+    Note also that, in the first line of cseqs, function {(⍵≠1⌽⍵)/⍵} deliberate-
+    ly  removes adjacent identical characters from the analysis. A frequent occ-
+    urrence of,  say,  double-each ¨¨ wouldn't help us to locate the ¨ symbol on
+    the keyboard.
+
+    Here are the results for the code in this workspace (as of 2009-03-22):
+
+          4 60 cols apl cseqs other         ⍝ adjacent char frequencies.
+     28 ' ⍝ ' 34      51 ⍵ ∊ ' 47    19 + ⌿ ⍵ 18    5 ⍺ ⍫ ← 4
+    302 ⍴ ⍵ } 619     22 . × ⍵ 43     9 ' ⍙ _ 61    8 } ⍞ ← 10
+    129 ⍺ ← { 1015    42 ⊃ ⌽ ⍵ 53    14 ( ⍎ ⍵ 17    3 ' ⍀ . 4
+    193 ← ⍺ ) 243     34 ( ⍳ ⍴ 82    17 ' ⍷ ⍵ 30    7 [ ⍒ ⍵ 5
+    112 { ⎕ ← 14       5 ' ⋄ ' 9      5 ∊ ⍨ ∘ 8     6 ⍵ ∩ ' 4
+    111 ( ⍴ ⍵ 302     22 ← ⍬ ⍴ 22     2 × ○ ⍵ 36    3 ⍺ ⊣ ⍵ 3
+    137 } ¨ ⍵ 111     27 ) ÷ ⍵ 10     6 ⍺ ≥ ⍴ 13    2 ' ⌹ ' 2
+     71 ) ↑ ⍵ 101     24 ⍵ ≠ ' 21    13 ← ∪ , 10    2 ) ⍱ ⌽ 2
+    165 , ⊂ ' 145     21 ( ∨ \ 34     8 ) ⍪ ( 9     2 ) ⌷ ¨ 1
+     70 ) ↓ ⍵ 129     12 ' → ' 11     2 ' ⊥ ⍉ 5     1 ⍱ ⍲ ⍒ 1
+     62 ) ⊃ ⍵ 112     45 ↓ ⍉ ↑ 46    10 [ ⍋ ↑ 16    1 { ⊢ } 1
+    137 ' ≡ ⍺ 85      10 ← ⌈ / 25     8 { ⊖ ⍵ 9     1 ⍞ ⍣ ⍫ 0
+     85 ) ∇ ¨ 60      21 ← ⌊ / 19    13 ) ⊤ ⍵ 15
+     78 } ∘ { 75      14 ( ⍕ ¨ 15     3 × ⍟ ⍵ 6
+     37 ( ¯ ' 14      15 ' ∆ ← 5      4 < ≤ = 4
+
+    Happily, many of the above rankings confirm our expectations:
+
+        ← is often followed by {, for function definition,
+        ¨ is most often preceded by }, as in "dfn-each",
+        ⍵ is often followed by },
+        ⍵ often follows a primitive function,
+        ) often precedes a primitive function,
+        ⍋ and ⍒ are often preceded by [,
+        ⍉ is often preceded by ↓ and often followed by ↑ (as in ↓⍉↑),
+        ⊥ is often followed by ⍉,
+        ... and so on.
+
+    NB: Before  attempting to use the above results to design an APL/Dvorak key-
+    board,  it  might  be better to adjust function cseqs to report not just the
+    single  highest-frequency  predecessor  and  successor character. Perhaps we
+    should consider a "top ten" popular neighbour chart for each character. This
+    would  permit us a little "wiggle room" when trying to optimise the allocat-
+    ion of APL symbols to keys.
+
+    With the advent of Input Method Editors (IMEs), it is relatively easy to ex-
+    periment with alternative keyboard layouts. Here is one that has attracted a
+    modest following:
+
+    "Colemak"  http://colemak.com
+
+        ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───────┐
+        │ ` │ 1 │ 2 │ 3 │ 4 │ 5 │ 6 │ 7 │ 8 │ 9 │ 0 │ - │ = │Backspc│
+        ├───┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─────┤
+        │Tab  │ Q │ W │ F │ P │ G │ J │ L │ U │ Y │ ; │ [ │ ] │ \   │
+        ├─────┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴─────┤
+        │Caps  │ A │ R │ S │ T │ D │ H │ N │ E │ I │ O │ ' │ Enter  │
+        ├──────┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴────────┤
+        │Shift   │ Z │ X │ C │ V │ B │ K │ M │ , │ . │ / │ Shift    │
+        ├────┬───┴┬──┴──┬┴───┴───┴───┴───┴───┴┬──┴─┬─┴───┼────┬─────┤
+        │Ctrl│Win │Alt  │                     │AltG│Win  │Menu│Ctrl │
+        └────┴────┴─────┴─────────────────────┴────┴─────┴────┴─────┘
+
+    Finally, here is the physical layout of a pretty little keyboard: the Happy
+    Hacking Professional JP, from PFU-Fujitsu. Notice that the narrow space bar
+    leaves room for some additional mode keys, which is just the ticket for APL.
+    For example, the keys adjacent to the space bar, which are pressed with the
+    thumbs, could be used for APL and APL+Shift.
+
+         Happy Hacking Professional2 JP (PD-KB420B)
+        ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐
+        │esc│   │   │   │   │   │   │   │   │   │   │   │   │   │bs │
+        ├───┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴─┬─┴───┤
+        │tab  │   │   │   │   │   │   │   │   │   │   │   │   │enter│
+        ├─────┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┐    │
+        │ctrl  │   │   │   │   │   │   │   │   │   │   │   │   │    │
+        ├──────┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬──┴┬───┤
+        │shift  │   │   │   │   │   │   │   │   │   │   │   │ ↑ │sft│
+        ├───┬┬──┴┬──┴┬──┴┬──┴┬──┴───┴──┬┴──┬┴──┬┴──┬┴──┬┼───┼───┼───┤
+        │fn ││   │   │alt│   │  space  │   │   │alt│fn ││ ← │ ↓ │ → │
+        └───┴┴───┴───┴───┴───┴─────────┴───┴───┴───┴───┴┴───┴───┴───┘
+         http://www.pfu.fujitsu.com/hhkeyboard
+         http://www.youtube.com/watch?v=kWGsxxV1k0A
+)
+
+See also: http://en.wikipedia.org/wiki/Keyboard_layout
+See also: cols
+
+Index:Dvorak|Colemak|QWERTY|Happy Hacking Keyboard
+Index:quickstep|muscle memory|keyboard layout|YouTube
+Index;Dvorak A.

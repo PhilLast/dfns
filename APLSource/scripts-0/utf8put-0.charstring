@@ -1,0 +1,4 @@
+⍝ Char vector ⍺ to UTF-8 file ⍵:
+
+    Alpha test 'utf8getput'
+1

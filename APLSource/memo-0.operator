@@ -1,0 +1,5 @@
+ memo←{                                        ⍝ Function memoization.
+     ⍺←⊢                                       ⍝ ambi-valent.
+     (⊂⍺ ⍵ ⍵)∊⍵⍵.keys:⍵⍵.((keys⍳⊂⍺ ⍵ ⍵)⊃vals)  ⍝ arg(s) known: fetch result.
+     ↑⍬⍴⍵⍵.(vals keys),∘⊂←(⍺ ⍺⍺ ⍵)(⍺ ⍵ ⍵)      ⍝ otherwise: calc & extend cache.
+ }

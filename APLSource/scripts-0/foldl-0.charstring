@@ -1,0 +1,42 @@
+⍝ Fold (reduce) from the left:
+
+    'abracadabra'{⍺~⍵⊃⍺} foldl 1 2              ⍝ rem all 'a's and all 'r's.
+bcdb
+    'abracadabra'{⍺~⍵⊃⍺} foldl 2 1              ⍝ rem all 'b's and all 'a's.
+rcdr
+    repl←subs⍨                                  ⍝ ⍺ with ⍵ replacement.
+
+    pairs ← ('ny' 'kes')'iu'                    ⍝ from/to pairs
+
+    'many a mickle'repl foldl pairs             ⍝ multiple letter replacement.
+makes a muckle
+
+    disp 0 ,∘⊂⍨ foldl 2 5⍴⍳10                   ⍝ higher rank arrays.
+┌──┬───────────────┐
+│5 │┌─┬───────────┐│
+│  ││4│┌─┬───────┐││
+│  ││ ││3│┌─┬───┐│││
+│  ││ ││ ││2│1 0││││
+│  ││ ││ │└─┴───┘│││
+│  ││ │└─┴───────┘││
+│  │└─┴───────────┘│
+├──┼───────────────┤
+│10│┌─┬───────────┐│
+│  ││9│┌─┬───────┐││
+│  ││ ││8│┌─┬───┐│││
+│  ││ ││ ││7│6 0││││
+│  ││ ││ │└─┴───┘│││
+│  ││ │└─┴───────┘││
+│  │└─┴───────────┘│
+└──┴───────────────┘
+
+    scanl←{⎕ML←0           ⍝ Dyadic Scan from the left (cf: ##.ascan).
+        ⌽↑⍺⍺{
+            (⊂(⊃⍵)⍺⍺ ⍺),⍵
+        }/(⌽⍵),⊂⊂⍺
+    }
+
+    disp 'hello' ⌽⍨ scanl 1 1 0 ¯1 ¯1
+┌─────┬─────┬─────┬─────┬─────┬─────┐
+│hello│elloh│llohe│llohe│elloh│hello│
+└─────┴─────┴─────┴─────┴─────┴─────┘

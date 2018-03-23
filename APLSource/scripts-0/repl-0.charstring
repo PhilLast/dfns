@@ -1,0 +1,38 @@
+⍝ Input-eval-display loop.
+
+⍝ repl uses quote-quad input and quad output. For testing, we modify a copy
+⍝ of the function to input from variable ∆i and output to variable ∆o.
+
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+    ∆in←{                               ⍝ input from buffer         ⍝
+        buf←⍵,⊃∆i                                                   ⍝
+        ∆o,←⊂buf                                                    ⍝
+        ∆i↓⍨←1                                                      ⍝
+        buf                                                         ⍝
+    }                                                               ⍝
+                                                                    ⍝
+    qp←'⍞⊣⍞←' ' ∆in '∘subs              ⍝ subs quote-quad prompt    ⍝
+    qt←'⎕←' '∆o,←↓⎕fmt '∘subs           ⍝ subs quad output          ⍝
+    qz←': ' ':↑∆o'∘subs                 ⍝ repl returns output buf   ⍝
+                                                                    ⍝
+    _←⎕fx qz qt qp ⎕cr'repl'            ⍝ modify repl operator.     ⍝
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝
+
+    ∆i ∆o←⍬ ⍬                   ⍝ input/output buffers.
+
+    ∆i,←⊂''
+    ∆i,←⊂'hello'
+    ∆i,←⊂''
+    ∆i,←⊂'world'
+    ∆i,←⊂''
+    ∆i,←⊂')'        ⍝ exit repl.
+
+    ⌽repl')'        ⍝ repl
+         
+    hello
+olleh    
+         
+    world
+dlrow    
+         
+    )    

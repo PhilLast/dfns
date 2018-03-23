@@ -1,0 +1,262 @@
+bool ← ##.isdfn name                        ⍝ Test for D function.
+
+[isdfn] takes a character vector argument [name] and returns 1 if it refers to a
+D function or operator.
+
+NB: With Dyalog V11,  this  function became trivial.  ⎕NC with a nested argument
+now returns sub-classes, which distinguish various types of functions, including
+D-fns. Prior to V11, the task was more challenging ...
+
+Technical notes:
+
+The  many  ways  to write this function seem to split into two broad categories:
+"honest" and "sneaky". The "honest" solutions attempt to analyse the source code
+of  the  function,  whereas  the  "sneaky" ones try to detect differences in the
+effect  of various system operations. This is not to say that an honest solution
+is any "better" than a sneaky one.
+
+Honest
+------
+The  main difficulty with looking at the source code, is that the header line of
+an _ambivalent_ traditional function in Dyalog contains braces:
+
+    rslt←{larg} func rarg
+
+... which rules out testing for the string '←{' in the header. Checking that the
+_last_  character in the function is a '}' also comes unstuck, because a trad-fn
+could finish by defining a D-fn:
+
+    rslt←{larg} func rarg
+    ...
+    dup←{⍵ ⍵}
+
+The  water  is further muddied because Dyalog header lines may contain comments,
+which could make a trad-fn resemble a D-fn.
+
+    rslt←{larg} func rarg ⍝ {}
+
+and  the first line in a D-fn might contain character literals, which could make
+it look a little like an ambivalent trad-fn.
+
+    dfn←{larg'}' func rarg
+        ...
+
+The "honest" approach seems to boil down to:
+
+    It's a D-fn iff:
+    the ⎕CR is a matrix,
+    whose first line,
+    (ignoring comments and character literals)
+    contains a '{' and
+    nothing follows any matching '}'.
+
+Examples of this approach include:
+
+Phil Last's:
+
+    isdfn←{                             ⍝ is fn/op named in (⍵) a dfn/dop?
+         {1=⍴⍴⍵:0                       ⍝ vector ⎕CR - derived function
+             {('}'=⊃⌽⍵)∨≠/+⌿⍵∘.='{}'    ⍝ where do braces balance?
+             }{⍵/⍨∧\⍵≠'⍝'           ⍝ remove remarks
+             }{⍵/⍨~≠\⍵=''''     ⍝ remove literals
+             }⍵[?1;]~' '    ⍝ first line
+         }⎕CR ⍵         ⍝ foreign needs qualified name
+     }
+
+Reima Naumanen's "one-liner" (broken up a bit to show what's happening):
+
+    isdfn←{
+        {
+            ('}'=⎕IO⊃⍵)∨≠/('{}'∘.=⍵)+.×~2|+\''''=⍵
+        }(⌽{
+            ⍵/⍨∧\~⍵='⍝'
+        }⎕IO⊃⎕NR ⍵)~' '
+    }
+
+Veli-Matti Jantunen produced a whole suite of functions!
+
+    isdfn_W0←{
+    ⍝| Add comment column to the function body,
+    ⍝| fix the fn in an unnamed namespace and check for the
+    ⍝| last non-blank - dfn doesn't have the last lamp!
+
+        c←⎕CR ⍵ ⋄ '}'≠¯1↑(,c)~' ':0
+        n←⎕NS'' ⋄ '}'=⍬⍴¯1↑n.(,⎕CR ⎕FX ##.c,'⍝')~' '
+    }
+
+    isdfn_W1←{
+    ⍝| Add blank column to the function body,
+    ⍝| fix the fn in an unnamed namespace and check for the
+    ⍝| header - dfn starts with "dfn←{"
+
+        f←⍵~' ' ⋄ c←⎕CR f ⋄ (f,'←{')≢(2+⍴f)⍴c:0
+        n←⎕NS'' ⋄ (f,'←{')≡(2+⍴f)⍴n.(⎕CR ⎕FX' ',##.c)
+    }
+
+    isdfn_W2←{
+    ⍝| Count the brace balance in the function body.
+    ⍝| If the balance is fulfilled only with the last
+    ⍝| right brace which ends the function body -> dfn!
+
+        f←⍵~' ' ⋄ c←⎕CR f ⋄ (f,'←{')≢(2+⍴f)⍴c:0
+        ⎕ML←3 ⋄ g←{(~≠\⍵='''')/⍵}¨↓c
+        r←∊{(∧\⍵≠'⍝')/⍵}¨g
+        s←{(+\⍵='{')-+\⍵='}'}(1+⍴f)↓r~' '
+        (1=+/s=0)>0∊¯1↓s
+    }
+
+    isdfn_W3←{
+    ⍝| A variant of brace balance algorithm.
+    ⍝| This time only the header is checked.
+
+        f←⍵~' ' ⋄ c←⎕CR f ⋄ (f,'←{')≢(2+⍴f)⍴c:0
+        h←{(~≠\⍵='''')/⍵}{(⍵⍳'⍝')↑⍵}c[⎕IO;]
+        1≥+/0={(+\⍵='{')-+\⍵='}'}(1+⍴f)↓h~' '
+    }
+
+    isdfn_W4←{
+    ⍝| If  a) the body starts with fun←{, and
+    ⍝|     b) the following part between braces is a valid name
+    ⍝| => the header is that of a trad fn/operator.
+    ⍝| Alas, we have to check for the D function df←{variable}, too :(
+
+        f←⍵~' ' ⋄ v←¯7↓6↓⎕VR f
+        (f,'←{')≢(2+⍴f)⍴v:0
+        ¯1=⎕NC(2+⍴f)↓(¯1+v⍳'}')↑v:1
+        (⎕IO+(∨/⎕TC∊v)<'}'=¯1↑v)⊃0 1
+    }
+
+    isdfn_W5←{
+    ⍝| This time we'll just check the header:
+    ⍝| If the brace balance is met, the fn is traditional...
+    ⍝| but we must take care for the one-line dfns, too (with drop).
+
+        n←⎕NR f ⋄ 0∊⍴n:0
+        2|+/'{}'∊⍨{(~≠\⍵='''')/⍵}{(⍵⍳'⍝')↑⍵}(-1=⍴n)↓(⎕IO⊃n)~' '
+    }
+
+    isdfn_W6←{
+    ⍝| A slightly different variant from isdfn_W4
+
+        v←¯7↓6↓⎕VR ⍵ ⋄ '}'≠¯1↑v:0      ⍝ dfn _must_ end with }
+        f←⍵~' ' ⋄ (f,'←{')≢(2+⍴f)⍴v:0  ⍝  ..and start with dfn←{
+
+    ⍝ now we have a dfn OR trad fn with a header like
+    ⍝     fun←{left}   fun    right..
+    ⍝     mop←{left}(  mop R) right..
+    ⍝     dop←{left}(L dop R) right..
+
+        ¯1=⎕NC(2+⍴f)↓(¯1+v⍳'}')↑v:1    ⍝ not {left} ?
+        ~∨/⎕TC∊v                       ⍝ dfn←{variable} case
+    }
+
+
+Sneaky
+------
+The  alternative  is  to discover a "dark little corner" in the interpreter that
+behaves in a different way for D- and trad- functions. For example:
+
+- If auto-format is on, the ⎕CR of a trad-fn starts with a blank.
+- ⎕REFS of a D-fn bombs with a DOMAIN ERROR.
+- Dyadic ⎕STOP on a D-fn has no effect.
+
+These  all  seem to work; are in general simpler and quicker than the honest way
+but are dangerous in that the behaviour on which they rely is susceptible to be-
+ing  "fixed".  Some (slightly amended to make them ⎕ml- and ⎕io- proof) examples
+are:
+
+Jim Ryan's:
+
+    isdfn←{' '≠⍬⍴⎕CR ⍵}
+
+Ray Cannon's:
+
+    isdfn←{
+        11::1
+        0⊣⎕REFS ⍵
+    }
+
+VMJ's:
+
+    isdfn_W7←{
+        0∊⍴⎕VR ⍵:0 ⋄ ~0∊⍴⎕MONITOR ⍵:0
+        ~0∊⍴0 ⎕MONITOR ⍵:0⊣⍬ ⎕MONITOR ⍵
+        1 2≡2⍴1 ⎕AT ⍵
+     }
+
+and this from someone who, understandably, prefers to remain anonymous:
+
+    isdfn←{⎕STOP∘⍵{(⍺⍺ ⍵)⊢⍬≡⍺⍺ 0}⎕STOP·⍵}
+
+John  Daintree  notes  that ⎕fx is intolerant of unbalanced braces when fixing a
+dfn. He exploits this by appending an extra brace and attempting a re-fix, which
+fails for a dfn and succeeds for a trad-fn. In order to avoid damaging an exist-
+ing traditional function, the ⎕fx is applied in a temporary namespace. Note that
+this  version  classifies  a named derived function (sum←+/), or even a variable
+(pi←3.142),  as a dfn. It is safe therefore, only in a context where the subject
+is known to be either a trad-fn or a d-fn.
+
+    isdfn←{⍬≡0⍴(⎕ns'').⎕fx'}',⍨⎕nr ⍵}
+
+Paul  Mansour's  solution seems to be "sneaky but safe" as it relies on a behav-
+ioural difference that is there by design, rather than accident:
+
+If  a  D-fn  is  assigned  a name, the ⎕CR/⎕NR/⎕VR of the function reflects that
+name. In particular, if a second name is assigned, the ⎕CR/.. using the new name
+reflects that new name. This is not the case with a trad-fn where the ⎕CR remem-
+bers its "original" name:
+
+    d1←{⍵ ⍵}  ⋄         d2←d1  ⋄  ⎕cr'd2' ⋄ ≡/⎕cr¨'d1' 'd2'         ⍝ D-fn.
+d2←{⍵ ⍵}
+0
+
+    ⎕fx,⊂'zz←t1 zz'  ⋄  t2←t1  ⋄  ⎕cr't2' ⋄ ≡/⎕cr¨'t1' 't2'         ⍝ Trad-fn.
+rg←t1 rg
+1
+
+Paul's solution exploits this distinction in the following way:
+
+    isdfn←{                 ⍝ Test for D function.
+        1 ¯2 0≢⎕IO⊃⎕AT ⍵:0  ⍝ No exp result, Not ambivalent, can't be D
+        ⍙←⍎⍵                ⍝ Give it a new name
+        ≢/⎕VR¨'⍙'⍵          ⍝ Compare
+    }
+
+There  is  one  small  problem  with  the approach. What if the subject function
+happens  to be called '⍙'? In this case, whatever the function type of the argu-
+ment, the ⎕VR's will match and [isdfn] will return 0. We need to find a new name
+that  is  guaranteed  to  be distinct from ⍵. One solution is to use a temporary
+name whose pedigree is known. "isdfn" fits the bill!
+
+    isdfn←{                 ⍝ Test for D function.
+        1 ¯2 0≢⎕IO⊃⎕AT ⍵:0  ⍝ No exp result, Not ambivalent, can't be D.
+        'isdfn'≡⍵~' ':1     ⍝ I'm a D-fn!
+        isdfn←⍎⍵            ⍝ Give it a new name.
+        ≢/⎕VR¨'isdfn'⍵      ⍝ Compare.
+    }
+
+This solution works in all cases but is slightly precarious. If we wanted to re-
+name  the function: IsDfn←isdfn, we would have to remember to make corresponding
+changes  to  both  occurrences  of  the  string 'isdfn' in the code body. A more
+robust  but more complex solution would be to have an alternative temporary name
+in reserve in case there's a clash. VMJ suggests:
+
+    isdfn←{                         ⍝ Test for D function.
+        0∊⍴⎕VR ⍵:0                  ⍝ Irrepresentable: not a dfn.
+        1 ¯2 0≢⎕IO⊃⎕AT ⍵:0          ⍝ No exp rslt, not ambiv, can't be D.
+        f0←f1←⍎⍵                    ⍝ Choose new names and
+        (⎕VR ⍵)≢⎕VR'f',⍕'f1'≢⍵~' '  ⍝ compare.
+    }
+
+Choosing  names  'f0'  and  'f1' ensures that a name clash is impossible. If the
+subject function is one of these, it can't be the other one.
+
+Notice that these latter solutions, correctly or incorrectly, fail to classify a
+D _operator_ as a 'dfn'. This version of ##.isdfn includes operators:
+
+    isdfn←{         ⍝ Test for Dfns/Dops.
+        0.2=1|⎕NC⊂⍵
+    }
+
+Index:D-function, test for|name-clash problem
+Index;Jantunen V-M.|Last P.|Mansour P.|Naumanen R.|Ryan J.|Cannon R.|Daintree J.

@@ -1,0 +1,35 @@
+⍝ Simple ⍺-digit checksum:
+
+    chksum ⎕cr'chksum'              ⍝ simple char array
+140467
+
+    chksum ⎕nr'chksum'              ⍝ nested    ..  ..
+230726
+
+    chksum 1 2 3∘.÷4 5 6            ⍝ simple numeric array.
+211386
+
+    chksum¨ 3 4 5↑¨⊂1 1 1           ⍝ detect trailing zeros.
+525 526 527
+
+    chksum¨ (0 1 2 3⍴¨1)⍴¨2         ⍝ singles of different ranks.
+259 517 776 1036
+
+    (0 to 10) chksum¨⊂⍳4321         ⍝ various lengths of checksum.
+0 3 43 543 8543 18543 818543 1818543 1818543 601818543 2601818543
+
+    null ← 0∘⍴∘⊂                    ⍝ null reshape of array.
+
+    chksum¨(0 to 4)null pow¨⊂⍬      ⍝ distinct nulls. 
+1275 2805 4845 7395 10455
+
+    chksum¨(0 to 4)null pow¨⊂''     ⍝ distinct nulls.
+1403 2997 5101 7715 10839
+
+    x←⎕ns''                         ⍝ space-ref.
+    
+    chksum¨ x (1 2) (1 2 x)         ⍝ refs ignored.
+0 523 2569
+
+    chksum # ## ⎕se ⎕null           ⍝ Vince's example
+514

@@ -1,0 +1,43 @@
+ find←{⎕IO ⎕ML←0 1                       ⍝ Lines containing string(s) ⍵.
+
+     ⍺←⎕THIS                             ⍝ Search current space by default.
+
+     ⍺{                                  ⍝ Avoid name clashes by executing
+         2::(⎕NS'')⍎⍵                    ⍝ ref ⍺⍺ too weird: ignore.
+         ⍺⍺⍎⍵                            ⍝ expression in target space out-
+     }{                                  ⍝ side main code body.
+         exec←⍺⍺                         ⍝ External execute.
+         names←~∘' '¨↓exec'⎕NL 2 3 4'    ⍝ Names of vars, fns and ops.
+         0=⍴names:0 2⍴⊂''                ⍝ Empty namespace: finished.
+
+         format←{                        ⍝ Format name-value rows.
+             mask←match↑⍵                ⍝ string matches.
+             linos←mask/⍳⍴⍵              ⍝ matching line nos.
+             bkt←{'[',⍵,']'}∘⍕           ⍝ format line no: [n].
+             tags←(tag ⍺)∘,∘bkt¨linos    ⍝ full line tag: #.name[n]
+             trim←{(∨\' '≠⍵)/⍵}          ⍝ Remove leading blanks.
+             both←{⌽⍺⍺⌽⍺⍺ ⍵}             ⍝ Apply from both ends of vector.
+             trim both¨⍉↑tags(mask/⍵)    ⍝ tagged lines containing string.
+         }
+
+         lines←{                         ⍝ Lines from named object.
+             qname←'''',⍵,''''           ⍝ quoted name.
+             2=exec'⎕NC',qname:{         ⍝ variable: simple-array-wise.
+                 0::0⍴⊂''                ⍝ ⍵ too weird: give up.
+                 1≥|≡⍵:↓⎕FMT ⍵           ⍝ simple: variable lines.
+                 1↓↑,/∇¨'·',,⍵           ⍝ nested: lines from sub-arrays.
+             }exec ⍵                     ⍝ value of variable.
+             ↓⎕FMT exec'⎕CR',qname       ⍝ function: lines of function.
+         }
+
+         match←⍵{                        ⍝ Matching function.
+             0::0                        ⍝ ⍺⍺ too weird: ignore.
+             1=≡,⍺⍺:∨/⍺⍺⍷⍵               ⍝ simple match.
+             ∨/⍵⍵⍷↑~∘0¨↓↑⍵⍵+.×⍺⍺⍷¨⊂⍵     ⍝ nested match.
+         }(1+⍳⍴⍵)                        ⍝ 1 2 ···
+
+         tag←(exec'⍕⍺⍺'){⍺⍺,'.',⍵}       ⍝ Space-tagging function.
+
+         ⍕↑⍪/names format∘lines¨names    ⍝ For each name in space.
+     }⍵
+ }

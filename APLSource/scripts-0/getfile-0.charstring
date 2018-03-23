@@ -1,0 +1,62 @@
+⍝ Ascii file as nested vector:
+
+    fid←'Dfns Test Temp File'
+
+    zap←{22::0 ⋄ {1}⍵ ⎕nerase ⍵ ⎕ntie 0}        ⍝ remove file ⍵.
+
+    zap fid                                     ⍝ ensure file doesn't exist.
+0
+    getfile fid                                 ⍝ test bad name trap.
+22::FILE NAME ERROR
+
+    cr lf ht←⎕ucs 13 10 9                       ⍝ "terminal control" chars.
+
+    cvec←''                                     ⍝ write-buffer.
+    
+    cvec,← 'it''s',                    cr, lf
+    cvec,← 'spring',                   cr, lf
+    cvec,← 'and',                      cr, lf
+    cvec,← ht,'the',                   cr, lf
+    cvec,←                             cr, lf
+    cvec,← ht,ht,'goat-footed',        cr, lf
+    cvec,←                             cr, lf
+    cvec,← 'balloonMan',ht,'whistles',     lf   ⍝ getfile is permissive
+    cvec,← 'far',                          lf   ⍝ about missing cr.
+    cvec,← 'and',                      cr, lf
+    cvec,← 'wee',                      cr, lf
+    cvec,← ht,'... e.e.cummings'                ⍝ missing final lf is OK.
+
+    ctype←⎕dr cvec                              ⍝ character type.
+
+    ntie←fid ⎕ncreate 0                         ⍝ create new file.
+    _←cvec ⎕nappend ntie ctype                  ⍝ append line to file.
+    _←⎕nuntie ntie                              ⍝ release file.
+
+    st ← ht '→' ∘ subs ¨                        ⍝ show tabs as '→'s.
+
+    disp st 0 ctype getfile fid                 ⍝ preserve tab chars.
+┌────┬──────┬───┬────┬┬─────────────┬┬───────────────────┬───┬───┬───┬─────────────────┐
+│it's│spring│and│→the││→→goat-footed││balloonMan→whistles│far│and│wee│→... e.e.cummings│
+└────┴──────┴───┴────┴┴─────────────┴┴───────────────────┴───┴───┴───┴─────────────────┘
+
+    disp st 4 ctype getfile fid                 ⍝ expand 4-tabs.
+┌────┬──────┬───┬───────┬┬───────────────────┬┬────────────────────┬───┬───┬───┬────────────────────┐
+│it's│spring│and│    the││        goat-footed││balloonMan  whistles│far│and│wee│    ... e.e.cummings│
+└────┴──────┴───┴───────┴┴───────────────────┴┴────────────────────┴───┴───┴───┴────────────────────┘
+
+    ↑ 4 getfile fid                             ⍝ ... and mix to char matrix.
+it's                
+spring              
+and                 
+    the             
+                    
+        goat-footed 
+                    
+balloonMan  whistles
+far                 
+and                 
+wee                 
+    ... e.e.cummings
+
+    zap fid                                     ⍝ remove test file
+1

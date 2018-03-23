@@ -1,0 +1,6 @@
+⍝ Multiple selection of function list:
+
+      embrace ← {'(',⍵,')'} for {'[',⍵,']'} for {'{',⍵,'}'} for {'<',⍵,'>'}
+
+      1 0 2 3 embrace 'this'
+({{<<<this>>>}})

@@ -1,0 +1,19 @@
+cvecs ← ##.fnrefs func                      ⍝ External refs from function ⍵.
+
+Returns a vector of names referenced by function: func. This list is approximate
+and should be used only as a guide. It does not, for example, 'see' names refer-
+enced by the execute function: ⍎, nor does it compute correctly in all cases the
+scope of names within a D function.
+
+Fnrefs attemps to bind namespace references, so that "aa.bb.cc" and "##.dd" will
+each contribute a single item to the result.  However, "(refs #).ee" will gener-
+ate three items: 'ref' '#' 'ee'.
+
+Example:
+
+      fnrefs'ssword'
+ words
+
+See also: tokens words
+
+Index:references, function|cross-reference

@@ -1,0 +1,59 @@
+⍝ Roman numeral arithmetic:
+
+      ⎕io←1
+
+      'IX' +roman 'IX'                          ⍝ 9 + 9 → 18
+XVIII
+
+      'IX' ×roman 'IX'                          ⍝ 9 × 9 → 81
+LXXXI
+
+      {⍳⍵}roman 'X'                             ⍝ 1 .. 10
+ I  II  III  IV  V  VI  VII  VIII  IX  X 
+
+      'I' 'III' to roman 'XIX'                  ⍝ 1 3 .. 19
+ I  III  V  VII  IX  XI  XIII  XV  XVII  XIX 
+
+      'II' 'III' 'IV' {⍺⍴⍳⍵}roman 'XXIV'        ⍝ Cvbvs nvmerorvm.
+ I     II     III    IV   
+ V     VI     VII    VIII 
+ IX    X      XI     XII  
+                          
+ XIII  XIV    XV     XVI  
+ XVII  XVIII  XIX    XX   
+ XXI   XXII   XXIII  XXIV 
+
+      'I'('II' 'III') +roman ('IV' 'V')'VI'     ⍝ Congeries nidificatvr.
+  V  VI    VIII  IX  
+
+      ⊢roman 'IIIIIIIIIIIIII'                   ⍝ Per norma.
+XIV
+
+      ⊢roman'IVXCM'                             ⍝ (dicere denvo)
+DCCCLXXXIV
+
+      ∘.×⍨∘{⍳⍵}roman 'X'                        ⍝ Mensa mvltiplicandorvm.
+ I     II     III    IV      V     VI      VII     VIII    IX     X    
+ II    IV     VI     VIII    X     XII     XIV     XVI     XVIII  XX   
+ III   VI     IX     XII     XV    XVIII   XXI     XXIV    XXVII  XXX  
+ IV    VIII   XII    XVI     XX    XXIV    XXVIII  XXXII   XXXVI  XL   
+ V     X      XV     XX      XXV   XXX     XXXV    XL      XLV    L    
+ VI    XII    XVIII  XXIV    XXX   XXXVI   XLII    XLVIII  LIV    LX   
+ VII   XIV    XXI    XXVIII  XXXV  XLII    XLIX    LVI     LXIII  LXX  
+ VIII  XVI    XXIV   XXXII   XL    XLVIII  LVI     LXIV    LXXII  LXXX 
+ IX    XVIII  XXVII  XXXVI   XLV   LIV     LXIII   LXXII   LXXXI  XC   
+ X     XX     XXX    XL      L     LX      LXX     LXXX    XC     C    
+
+      {1999 2000 2001}roman''                   ⍝ Anni certi.
+ MCMXCIX  MM  MMI 
+
+      disp {1 0 ¯1}roman ''                     ⍝ not so good below 1.
+┌─┬┬───────┐
+│I││MCMXCIX│
+└─┴┴───────┘
+
+      disp {3999+0 1}roman''                    ⍝ OK up to 3,999
+┌─────────┬─┐
+│MMMCMXCIX│M│
+└─────────┴─┘
+

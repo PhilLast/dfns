@@ -1,0 +1,15 @@
+⍝ Huffman packing:
+
+    disp packH'Mississippi'             ⍝ Huffman packing.
+┌──┬────┬───────┬─────────────────────────────────────────┐
+│11│sMpi│1 3 3 2│1 0 0 1 1 0 0 1 1 0 0 1 1 1 0 1 1 0 1 1 1│
+└──┴────┴───────┴─────────────────────────────────────────┘
+
+    chk←{
+        ⍵≡0 ⍺⍺ ⍺⍺ ⍵:'ok'
+        ' Error: compression round-trip fails'
+    }
+
+    packH chk ⎕fmt notes.Marilyn        ⍝ simple text matrix
+ok
+

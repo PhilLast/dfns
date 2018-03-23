@@ -1,0 +1,80 @@
+────────────────────────────────────────────────────
+Utility functions on Programmable Function (PF) Keys
+────────────────────────────────────────────────────
+A number of the functions in this workspace lend themselves to being attached to
+function keys F1, F2, ··· etc.
+
+Among the candidates are:
+
+    wsdiff''        ⍝ What changes have I made so far this session?
+    attrib ⎕nl 3 4  ⍝ Which fns and ops have I changed recently?
+    tree ⎕cs''      ⍝ What does this namespace look like?
+
+One of many ways to achieve this, is to copy and execute the function dynamical-
+ly from the saved workspace into ⎕SE (for example). This has the advantage that,
+in  exchange for a small hit in execution time, which for these types of utilit-
+ies is probably acceptable, we get the following benefits:
+
+  * Less permanent space is consumed in the ⎕SE namespace.
+  * No additional copy of the utility need be maintained.
+
+⎕shadow may be used to create a temporary local name to receive the copied func-
+tion.  However,  in  this case, it must be called from a traditional function as
+D-functions don't support it.
+
+Many  utilities  are  "namespace sensitive". This means they must execute inside
+(attrib) or outside (wsdiff) the current space or take it as an argument (tree).
+The following (⎕SE) function uses variable: 'home' to distinguish such cases.
+
+        ∇ pfkey key;cmd;home                          ⍝ Respond to PFKEY ⍵.
+    [1]   cmd←{                                       ⍝ execute string to:
+    [2]       shad←'⎕shadow''',⍺,''''                 ⍝   shadow utility name,
+    [3]       copy←'''',⍺,'''⎕cy''dfns'''             ⍝   copy utility,
+    [4]       shad,'⋄',copy,'⋄',⍵                     ⍝   call utility.
+    [5]   }                                           ⍝
+    [6]   home←⊃⍬⍴⎕NSI                                ⍝ calling space.
+    [7]   :Select key                                 ⍝ Key:
+    [8]   :Case 1 ⋄ ⍎'wsdiff'cmd'wsdiff'''''          ⍝   F1: wsdiff''
+    [9]   :Case 2 ⋄ ⍎'tree  'cmd'tree home'           ⍝   F2: tree⊃⍬⍴⎕nsi
+    [10]  :Case 3 ⋄ home⍎'attrib'cmd'attrib ⎕nl 3 4'  ⍝   F3: attrib ⎕nl 3 4
+    [11]  :EndSelect
+        ∇
+
+Calling this function:
+
+    ⎕se.pfkey 1     ⍝ executes: wsdiff''        from within ⎕SE.
+    ⎕se.pfkey 2     ⍝ executes: tree home       from within ⎕SE.
+    ⎕se.pfkey 3     ⍝ executes: attrib ⎕nl 3 4  from within 'home'.
+
+Note that there is a little name pollution: the →attrib← function always appears
+in  its own output. To avoid this, we could modify attrib to take a target space
+as an extra parameter, while it executes from within ⎕SE.
+
+Next,  to  arrange  that pressing a function key generates the required call, we
+attach the session 'Create' event to a callback function that loads the function
+keys:
+
+    '⎕se'⎕ws'Event' 'Create' '⎕se.pfk_init'         ⍝ Attach Session Create to:
+
+        ∇ pfk_init                                  ⍝ Initialise PF keys.
+    [1]   {
+    [2]       ('⎕se.pfkey ',(⍕⍵),⊂'ER')⎕pfkey ⍵     ⍝ load key ⍵,
+    [3]   }¨1 2 3                                   ⍝ for each key.
+        ∇
+
+As dfns can't currently be used for callbacks, pfk_init is coded as a tradition-
+al function
+
+Warning: If you have modified APL's command line to include a starting workspace
+such  as  "C:\dyalog90\dyalog.exe C:\MYWS.DWS", the Session Create event will be
+lost  during  workspace  load  and PF keys will not be set. You can monitor this
+process by having pfk_init output a message to the session as it runs:
+
+    pfk_init[4] ⎕←'PF keys loaded'
+
+After  defining  these  functions and setting the callback, don't forget to save
+the session by clicking on Session->Save in the session menu.
+
+See also: attrib keyboards
+
+Index:programmable function keys

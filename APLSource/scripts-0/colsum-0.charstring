@@ -1,0 +1,22 @@
+⍝ Sum of (decimal by default) columns:
+
+    colsum 10 10⍴⍳9             ⍝ decimal sum.
+5 1 2 3 4 5 6 7 8 8 6
+
+    colsum 10 10⍴1              ⍝ decimal sum.
+1 1 1 1 1 1 1 1 1 1 0
+
+    2 colsum 10 10⍴1            ⍝ binary sum.
+1 0 0 1 1 1 1 1 1 1 0 1 1 0
+
+    3 colsum 10 10⍴1            ⍝ ternary sum.
+1 1 2 2 2 2 2 2 2 2 1 1
+
+    colsum 4 5⍴⍳9               ⍝ 5-column sum.
+1 8 2 6 0 4
+
+    16 colsum ⍪, 1000           ⍝ decimal 1000 in hexadecimal.
+3 14 8
+
+   (1 400/1 0)≡colsum ↑(399 1/0 1)(400/9)   ⍝ accurate beyond IEEE 64-bit FP.
+1

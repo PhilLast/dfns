@@ -1,0 +1,35 @@
+ pack4←{⎕IO ⎕ML←0 1                      ⍝ Quad-tree packing.
+
+     cmp←{                               ⍝ Compression:
+         uniq←∪,⍵                        ⍝ unique items of subject
+         rep←{⍵{⍵/⍺-¯1⌽~⍵}~1 1 0⍷⍵<0}⍣≡  ⍝ compress ¯1 ¯1 ... ¯1 → ¯⍵
+         (⍴⍵){uniq ⍺ ⍵}rep ⍺{            ⍝ unique items, shape and stream
+             ~0∊⍵∊⊂⊃⍵:⊃⍵                 ⍝ atom: unique index.
+             ⍺≥⍴∪,⍵:maxx+/(⍳⍴uniq)∘.=,⍵  ⍝ fine enough: most common item.
+             ax←maxx⍴⍵                   ⍝ longest axis.
+             size←ax⊃⍴⍵                  ⍝ length of longest axis
+             mask←1,1↓(⍳size)=⌊size÷2    ⍝ mask for array split.
+             ¯1,↑,/⍺ ∇¨mask⊂[ax]⍵        ⍝ packed halves of array
+         }uniq⍳⍵                         ⍝ unique-items indices.
+     }                                   ⍝ simple array ⍵.
+
+     exp←{                               ⍝ Expansion:
+         uniq shape stream←⍵             ⍝ unique items; shape; record stream.
+         split←{{(⌊⍵)(⌈⍵)}⍵÷1+maxk ⍵}    ⍝ split of shape along longest axis.
+         maxk←{<\⍵=⌈/⍵}                  ⍝ max mask.
+         exp←{(1+|0⌊1+⍵⌊0)/¯1⌈⍵}         ⍝ expand ¯⍵ → ¯1 ¯1 .. ¯1.
+         {⍵⊃¨⊂uniq}⊃shape{               ⍝ decode of stream.
+             head tail←⍵                 ⍝ first item and remainder of stream.
+             0≤head:(⍺⍴head)tail         ⍝ atom: array of identical items.
+             s0 s1←split ⍺               ⍝ shapes of split array.
+             sub0 rem0←s0 ∇ tail         ⍝ expansion of 1st split and remainder.
+             sub1 rem1←s1 ∇ rem0         ⍝       ..     2nd      ..      ..
+             subs←sub0,[maxx ⍺]sub1      ⍝ recombination of split sub-arrays.
+             subs rem1                   ⍝ array and remaining stream.
+         }↑{⍺ ⍵}/exp stream              ⍝ expanded stream as list.
+     }                                   ⍝ packed quad-tree ⍵.
+
+     maxx←{⍵⍳⌈/⍵}                        ⍝ max index.
+
+     ⍺←1 ⋄ ⍺>0:⍺ cmp ⍵ ⋄ exp ⍵           ⍝ compress or expand.
+ }

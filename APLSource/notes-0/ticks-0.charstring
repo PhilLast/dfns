@@ -1,0 +1,344 @@
+{rslt} ← {larg} (fun ##.ticks) rarg         ⍝ Sample Dfn execution clock ticks.
+
+During  code execution, ⎕AI's "compute time" clock ticks every so-many millisec-
+onds. Operator [ticks] records which line in its operand [fun]ction is executing
+as each tick occurs and reports the percentage of ticks that fall on each line.
+
+In order to obtain a significant tick-sample, the function is applied repeatedly
+to (or between) its argument(s) until the clock has ticked 1,000 times. Repeated
+application means that any side effects (⎕nappend, etc) will also be perpetrated
+repeatedly, which may be undesirable.
+
+At  the  end of the time period, the function source is displayed in the session
+together with, for each line:
+
+- The number of times the line was "visited".
+- The percentage of clock ticks recorded for the line.
+
+    ┌────────────── visits
+    │  ┌─────────── percent
+    │  │  ┌──────── source
+    │  │  │
+    5 14  sieve←{             ⍝ Sieve of Eratosthenes.
+    5 15      ⍺←⍬             ⍝ Default no primes yet.
+    5 14      nxt←1↑⍵         ⍝ Next prime, and
+    5 14      msk←×nxt|⍵      ⍝ ... mask of non-multiples.
+    5 17      ∧/1↓msk:⍺,⍵     ⍝ All non multiples - finished.
+    4 26      (⍺,nxt)∇ msk/⍵  ⍝ Sieve remainder.
+    0  0  }
+
+Where:
+
+- Visits:  This  is (intended to be) an accurate account of the number visits to
+  each  line. A line containing a local function is deemed to be visited both at
+  definition  and application time. This behaviour differs from that of operator
+  →mdf←,  which  reports  only  the  definition count in such cases. See Bugs[6]
+  below.
+
+- Percent:  Approximate  indication of the proportion of clock ticks occuring in
+  each  line.  Owing to timing granularity, the column total may not be 100; see
+  below.
+
+- Source:  As  much of the subject function's source code as will fit across the
+  screen.
+
+Unlike  ⎕MONITOR  used with traditional functions, the time attributed to a line
+_excludes_ that spent in called subfunctions. This is a _good_thing_.
+
+⎕AI's  clock resolution varies: on some systems, the clock ticks every 10 milli-
+seconds  and on others, every 16 (or so). In any case, many lines of code may be
+executed  between  ticks. The best we can do is to run the function for a period
+of time and notice on which lines the ticks occur.
+
+The  following  diagram illustrates the problem: each ┼────┼ represents the real
+and varying execution time of successive lines of code, and ↑tick shows the reg-
+ular clock ticks occuring.
+
+
+    ─┼───┼──┼─┼────┼────┼───┼─┼──┼─┼─┼────────┼──────────┼──────┼─────┼─┼───┼
+    ↑                       ↑                       ↑                       ↑
+    tick                    tick                    tick                    tick
+
+To  interpret  the  result as an indication of relative processing time for each
+line,  we  must suppose that, in general, lines that take longer to execute will
+sustain proportionally more ticks.
+
+Bugs:
+
+[1] The  time taken to execute the monitoring code often vastly exceeds the time
+    taken  to execute the code it is monitoring. This would be OK if the monitor
+    took  _exactly_ the same time to execute on each occasion, in which case, we
+    could  calculate and subtract the overhead. However, in Dyalog APL, the heap
+    manager may take a different number of cycles to satisfy a request depending
+    on  the  state  of  fragmentation  of  the heap. This means that attempts to
+    account  for  the execution time overhead of the monitoring code can be only
+    approximate.
+
+[2] If  the  (copy  of the) subject function, with its embedded monitoring code,
+    happens  to  run  in  a time that is an exact multiple of the system clock's
+    resolution,  all  bets are off as ticks would tend to accumulate in the same
+    few lines.
+
+[3] The generated monitoring function (⍙_f) will fail with a SYNTAX ERROR if any
+    local function call does not produce a result. For example:
+
+        loop←{
+            0<⍵:∇ ⍵-1
+        }
+
+[4] During  execution  of  the  subject function, tail-calling is disabled. This
+    means  that a "highly iterative" function such as the following will produce
+    misleading results:
+
+        loop←{
+            ⍵=0:⍵           ──── comparision with 0 _should_ be
+            ∇ ⍵-1           ──── commensurate with subtraction of 1.
+        }
+
+        loop ticks 1e3
+    1001 15  loop←{
+    1001 14      ⍵=0:⍵
+    1000 71      ∇ ⍵-1
+       0  0  }
+
+[5] As  the monitoring code is merged into a copy of the subject function, there
+    is potential for a name clash. The presence of any of the following names in
+    the subject function will lead to unpredictable results:
+
+        ⍙_a   ⍙_e   ⍙_f   ⍙_l
+        ⍙_m   ⍙_n   ⍙_q   ⍙_s
+        ⍙_t   ⍙_x   ⍙_z
+        ⍙_    _⍙
+
+[6] The  line  visits counter is incremented whenever the entry monitor code de-
+    tects  that the line number (⎕LC) has changed. Such is the case when a local
+    function  is invoked from a line other than its definition line. Compare the
+    following examples:
+
+
+    1 ··  dup1←{
+    3 ··      dup←{⍵ ⍵}         ──── 3 visits: 1 definition +
+    1 ··      a←dup ⍵           ────           1 call +
+    1 ··      dup a             ────           1 more call.
+    0 ··  }
+
+
+    1 ··  dup2←{
+    1 ··      dup←{⍵ ⍵} ⋄ a←dup ⍵ ⋄ dup a       ─── 1 visit to line.
+    0 ··  }
+
+
+    1 ··  dup3←{
+    2 ··      dup←{⍵ ⍵}         ──── 2 visits: 1 definition +
+    1 ··      dup dup ⍵         ────           1 (double) call.
+    0 ··  }
+
+
+    1 ··  dup4←{
+    1 ··      {⍵ ⍵}{⍵ ⍵}⍵       ──── 1 visit to line.
+    0 ··  }
+
+
+    1 ··  dup5←{
+    2 ··      {                 ──── 2 visits: 1 definition +
+    1 ··          ⍵ ⍵           ────           1 call.
+    1 ··      }{
+    1 ··          ⍵ ⍵
+    0 ··      }⍵
+    0 ··  }
+
+
+    1 ··  dup6←{
+    1 ··      {⍵ ⍵}¨⍵ ⍵         ──── 1 visit to line.
+    0 ··  }
+
+
+[7] When  the execution path through the subject function is determined by fact-
+    ors  other  than  its arguments, the first (visits) column of the result may
+    contain  non-integers.  This  might  be the case, for example, if ⎕TS or ⎕RL
+    were used within the function, as with:
+
+        maze ticks 10 20        ⍝ reports non-integral line visits count.
+
+    Such a result might be interpreted as an _average_ number of line visits.
+
+Technical notes:
+
+The  coding  of  [ticks] is fairly ghastly for the same reason as →mdf←. See the
+technical notes in →mdf← for details.
+
+Monitoring is achieved in several stages:
+
+- A copy of the subject function is injected with entry (→⍵) and exit (⍺←) mark-
+  ers  at  the  start of each line and at the entry and exit points of each sub-
+  function. These  markers are subsequently replaced with calls to the entry and
+  exit monitoring sequences:
+
+    ⍙_ ⍵: ⋄ ··· ⍝ entry sequence.
+    ⍺ _⍙ ···    ⍝ exit sequence,
+
+  where  ⍺  and ⍵ are replaced with the number of the function line in which the
+  sequence  appears. Monitoring function ⍙_ returns 0 (so that its guard is ign-
+  ored) and _⍙ returns its right argument as the result of the (sub-) function.
+
+- A small loop is executed to determine ⎕AI's clock resolution and therefore the
+  time needed to endure 1,000 clock ticks.
+
+- The  doctored  function  is  executed  repeatedly for this time period, during
+  which sampling information is accumulated in the operator's local variables:
+
+    ⍙_t     time accumulated per line.
+    ⍙_n     number of times line is visited (first column of resulting display).
+    ⍙_e     number of times entry monitor is called.
+    ⍙_x         ..      ..  exit    ..      ..
+
+  The  copy  (⍙_f)  of  the subject function is applied under ⍎ in order to defy
+  Dfns' "strictly local to the capsule" rule that would otherwise put the accum-
+  ulating variables beyond its scope.
+
+- An  attempt is made to calculate the time overhead spent within the monitoring
+  code  itself.  This  is  effected by timing loops with embedded entry and exit
+  sequences. Note that these loops are "compiled" by using ⍎, so that they bene-
+  fit  from the same interpreter performance improvements, if any (such as idiom
+  recognition), as the monitored subject function.
+
+- Finally, this approximate monitoring overhead is subtracted from the monitored
+  times  and  the  result displayed using ⎕←. The result of the subject function
+  application is returned as a shy result, so that [ticks] may easily be embedd-
+  ed within any expression; see the tube.dws example below.
+
+Examples:
+
+⍝ Ackermann's  function  is a challenging case, as the processing time is
+⍝ _negligible_ compared with the monitoring overhead. Repeated monitoring
+⍝ of this function often shows quite disparate timing.
+
+      3 ack ticks 3
+2432 23  ack←{
+2432 22      ⍺=0:⍵+1
+1244 14      ⍵=0:(⍺-1)∇ 1
+1187 41          (⍺-1)∇ ⍺ ∇ ⍵-1
+   0  0  }
+
+      3 ack ticks 3
+2432 22  ack←{
+2432 24      ⍺=0:⍵+1
+1244 16      ⍵=0:(⍺-1)∇ 1
+1187 38          (⍺-1)∇ ⍺ ∇ ⍵-1
+   0  0  }
+
+⍝ However,  for more substatial functions, the display can be illuminating. Here
+⍝ is the output from a graph searching function in tube.dws. Inserting a call on
+⍝ ticks  into  the  trip function, shows that around 80% of its time is spent in
+⍝ determining which vertices are free.
+⍝
+⍝   trip[19]  find←⍺.graph{⍺⍺ path ticks ⍺ ⍵}       ⍝ find one leg of the route.
+⍝                                  ¯¯¯¯¯
+
+    london trip 'Hammersmith' 'Mornington'
+  1  0  path←{                      ⍝ Shortest path from/to ⍵ in graph ⍺.
+  1  0      graph←⍺                 ⍝ ⍺ is graph vector.
+  1  0      fm to←⍵                 ⍝ starting and target vertex(ices).
+  1  1      tree←¯2+(⍳⍴⍺)∊fm        ⍝ initial spanning tree.
+573 80      free←{(¯2=tree[⍵])/⍵}   ⍝ free vertices in ⍵.
+ 20  1      ⍬{                      ⍝ path accumulator.
+ 19  1          ⍵<0:(⍵=¯2)↓⍺        ⍝ root or unvisited vertex: finished.
+ 18  3          (⍵,⍺)∇ ⍵⊃tree       ⍝ otherwise: prefix previous (parent) vertex
+ 18  1      }{                      ⍝ find partial spanning tree:
+ 18  1          ⍵≡⍬:¯1              ⍝ no vertices left: stitched.
+ 18  1          1∊to∊⍵:1↑⍵∩to       ⍝ found target: finished.
+ 17  1          next←free¨graph[⍵]  ⍝ next vertices to visit.
+ 17  4          back←↑,/⍵+0×next    ⍝ back links.
+ 17  1          wave←↑,/next        ⍝ vertex wave front.
+ 17  1          tree[wave]←back     ⍝ set back links in tree.
+ 17  3          ∇∪wave              ⍝ advance wave front.
+  0  0      }fm                     ⍝ from starting vertex.
+  0  0  }
+Hammersmith
+    Hammersmith         Piccadilly
+    Barons Court        Piccadilly
+    Earl's Court        Piccadilly
+    Gloucester Road     Piccadilly
+    South Kensington    Piccadilly
+    Knightsbridge       Piccadilly
+    Hyde Park Corner    Piccadilly
+    Green Park          Piccadilly
+Green Park
+    Green Park          Victoria
+    Oxford Circus       Victoria
+    Warren Street       Victoria
+    Euston              Victoria
+Euston
+    Euston              Northern
+    Mornington Crescent Northern
+Mornington Crescent
+
+⍝ This example uses Hungarian Assignment on a 100×100 matrix. Note that just
+⍝ four of the lines account for around 60% of processing time:
+
+      assign ticks ?100 100⍴1000
+  1  0  assign←{⎕ML←0                               ⍝ Hungarian method cost assi
+  1  0
+  2  0      step0←{step1(⌽⌈\⌽⍴⍵)↑⍵}                 ⍝ 0: at least as many rows a
+  1  0
+  2  0      step1←{step2↑(↓⍵)-⌊/⍵}                  ⍝ 1: reduce rows by minimum
+  1  0
+  2  0      step2←{                                 ⍝ 2: mark independent zeros.
+  4  0          stars←{                             ⍝ independent zeros.
+  3  0              ~1∊⍵:⍺                          ⍝ no more zeros: done.
+  2  0              next←<\<⍀⍵                      ⍝ more independent zeros.
+  2  0              mask←(rows next)∨cols next      ⍝ mask of dependent rows and
+  2  0              (⍺∨next)∇ ⍵>mask                ⍝ ⍺-accumulated star matrix.
+  0  0          }                                   ⍝
+  2  0          zeros←{⍵+0 stars ⍵}⍵=0              ⍝ 1=>zero, 2=>independent ze
+  1  0          step3 ⍵ zeros                       ⍝ next step: 3.
+  0  0      }
+  1  0
+ 41  0      step3←{costs zeros←⍵                    ⍝ 3: cover cols with starred
+ 40  0          stars←zeros=2                       ⍝ starred zeros.
+ 40  0          covers←2×cols stars                 ⍝ covered cols.
+ 40  0          ~0∊covers:stars                     ⍝ all cols covered: solution
+ 39  0          step4 costs zeros covers            ⍝ next step: 4.
+  0  0      }
+  1  0
+828  1      step4←{costs zeros covers←⍵             ⍝ 4: adjust covering lines.
+827  3          mask←covers=0                       ⍝ mask of uncovered elements
+827  5          open←1=mask×zeros                   ⍝ uncovered zeros.
+827  5          ~1∊open:(⌊/(,mask)/,costs)step6 ⍵   ⍝ no uncovered zeros, next s
+767  1          prime←first open                    ⍝ choose first uncovered zer
+767  1          prow←rows prime                     ⍝ row containing prime.
+767  6          star←2=zeros×prow                   ⍝ star in row containing pri
+806  6          ~1∊star:prime step5{                ⍝ no star in row, next step
+ 39  0              costs ⍵ prime                   ⍝ adjusted zeros matrix,
+  0  0          }zeros+2×prime                      ⍝ new primed zero (3).
+728  1          cnext←covers+prow-2×cols star       ⍝ adjusted covers.
+728  6          znext←zeros⌈3×prime                 ⍝ primed zero.
+728  4          ∇ costs znext cnext                 ⍝ adjusted zeros and covers
+  0  0      }
+  1  0
+109  0      step5←{costs zeros prime←⍵              ⍝ 5: exchange starred zeros.
+108  1          star←(cols prime)∧zeros=2           ⍝ next star.
+147  0          ~1∊star:step3 ⍺{                    ⍝ no stars: next step :3.
+117  1              {costs ⍵}{⍵-2×⍵=3}⍵-⍺∧⍵>1       ⍝ unstarred stars; starred p
+  0  0          }zeros                              ⍝ adjusted zero markers.
+ 69  0          pnext←(rows star)∧zeros=3           ⍝ next prime.
+ 69  0          (⍺∨pnext∨star)∇ costs zeros pnext   ⍝ ⍺-accumulated prime-star-·
+  0  0      }
+  1  0
+ 61  0      step6←{costs zeros covers←⍵             ⍝ 6: adjust cost matrix.
+ 60 20          cnext←costs+⍺×¯1 1+.×0 3∘.=covers   ⍝ add and subtract minimum v
+ 60  1          znext←zeros+(×costs)-×cnext         ⍝ amended zeros marker.
+ 60  0          step4 cnext znext covers            ⍝ next step: 4.
+  0  0      }
+  1  0
+839 15      rows←{(⍴⍵)⍴(⊃⌽⍴⍵)/∨/⍵}                  ⍝ row propagation.
+879 12      cols←{(⍴⍵)⍴∨⌿⍵}                         ⍝ column propagation.
+768 12      first←{(⍴⍵)⍴<\,⍵}                       ⍝ first 1 in bool matrix.
+  1  0
+  1  0      (⍴⍵)↑step0 ⍵                            ⍝ start with step 0.
+  0  0  }
+
+See also: mdf cmpx time
+
+Index:performance|monitor|timing|name-clash problem|Ackermann's function
+Index;Ackermann W.

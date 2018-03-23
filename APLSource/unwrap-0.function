@@ -1,0 +1,3 @@
+ unwrap←{                ⍝ Replace <LF> with blanks.
+     (⍵≠3↓4↑⎕AV){⍺\⍺/⍵}⍵
+ }

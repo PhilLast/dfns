@@ -1,0 +1,192 @@
+cmat ← {topbar←1} ##.dsp array              ⍝ Reduced version of disp.
+
+A frugal alternative to →display← and →disp←, which uses less screen space:
+
+        dsp'hello' 'world'
+    ───────────
+    hello│world
+
+If the general structure of the argument array is known, a left argument of 0
+declutters the result slightly by omitting the uppermost top bar from the disp-
+lay of nested components.
+
+        0 dsp'hello' 'world'        ⍝ without top bar
+    hello│world
+
+        dsp ⊃,∘⊂/⍳5                 ⍝ with top bar (default)
+    ─────────
+    1│───────
+      2│─────
+        3│4 5
+
+        0 dsp ⊃,∘⊂/⍳5               ⍝ without top bar, saves one line.
+    1│───────
+      2│─────
+        3│4 5
+
+Note, however, that omitting the top bar may lead to ambiguities:
+
+        dsp 'hello'         ⍝ dsp of simple vector
+    hello
+
+        dsp ⊂'hello'        ⍝ dsp of enclosed vector
+    ─────
+    hello
+
+        0 dsp ⊂'hello'      ⍝ ... without top bar
+    hello
+
+Beware: Unlike →display← and →disp←, dsp makes no attempt to display the proto-
+typical item of an empty sub-array. Only the adjacent separators provide a clue
+that something is missing:
+
+        dsp 'Look'(⍬)'no'(⊂⊂⍬)'empties'
+    ─────────────────
+    Look││no││empties
+
+Examples:
+
+    cmp ← ⊂∘display , ⊂∘disp , ⊂∘dsp , ⊂∘(0∘dsp)    ⍝ display v disp v 1/0 dsp
+
+    ]boxing off
+Was ON
+
+    cmp'hello' 'world'
+ ┌→────────────────┐  ┌─────┬─────┐  ───────────  hello│world
+ │ ┌→────┐ ┌→────┐ │  │hello│world│  hello│world
+ │ │hello│ │world│ │  └─────┴─────┘
+ │ └─────┘ └─────┘ │
+ └∊────────────────┘
+    cmp ⊃,∘⊂/⍳5
+ ┌→────────────────────┐  ┌─┬───────────┐  ─────────  1│───────
+ │   ┌→──────────────┐ │  │1│┌─┬───────┐│  1│───────    2│─────
+ │ 1 │   ┌→────────┐ │ │  │ ││2│┌─┬───┐││    2│─────      3│4 5
+ │   │ 2 │   ┌→──┐ │ │ │  │ ││ ││3│4 5│││      3│4 5
+ │   │   │ 3 │4 5│ │ │ │  │ ││ │└─┴───┘││
+ │   │   │   └~──┘ │ │ │  │ │└─┴───────┘│
+ │   │   └∊────────┘ │ │  └─┴───────────┘
+ │   └∊──────────────┘ │
+ └∊────────────────────┘
+    cmp ↓↓2 2 2⍴⎕a
+ ┌→────────────────────────────┐  ┌───────┬───────┐  ───────────  ─────│─────
+ │ ┌→──────────┐ ┌→──────────┐ │  │┌──┬──┐│┌──┬──┐│  ─────│─────  AB│CD│EF│GH
+ │ │ ┌→─┐ ┌→─┐ │ │ ┌→─┐ ┌→─┐ │ │  ││AB│CD│││EF│GH││  AB│CD│EF│GH
+ │ │ │AB│ │CD│ │ │ │EF│ │GH│ │ │  │└──┴──┘│└──┴──┘│
+ │ │ └──┘ └──┘ │ │ └──┘ └──┘ │ │  └───────┴───────┘
+ │ └∊──────────┘ └∊──────────┘ │
+ └∊────────────────────────────┘
+    cmp ⍳2 2                                    ⍝ nested matrix
+ ┌→────────────┐  ┌───┬───┐  ───────  1 1│1 2
+ ↓ ┌→──┐ ┌→──┐ │  │1 1│1 2│  1 1│1 2  ───┼───
+ │ │1 1│ │1 2│ │  ├───┼───┤  ───┼───  2 1│2 2
+ │ └~──┘ └~──┘ │  │2 1│2 2│  2 1│2 2
+ │ ┌→──┐ ┌→──┐ │  └───┴───┘
+ │ │2 1│ │2 2│ │
+ │ └~──┘ └~──┘ │
+ └∊────────────┘
+    cmp ↑¨¨↑¨↓↓↓↓(6/2)⍴⎕a                       ⍝ nested matrices
+ ┌→────────────────────────────┐  ┌───────┬───────┐  ───────────  AB│EF│QR│UV
+ ↓ ┌→──────────┐ ┌→──────────┐ │  │┌──┬──┐│┌──┬──┐│  ─────│─────  CD│GH│ST│WX
+ │ ↓ ┌→─┐ ┌→─┐ │ ↓ ┌→─┐ ┌→─┐ │ │  ││AB│EF│││QR│UV││  AB│EF│QR│UV  ──┼──│──┼──
+ │ │ ↓AB│ ↓EF│ │ │ ↓QR│ ↓UV│ │ │  ││CD│GH│││ST│WX││  CD│GH│ST│WX  IJ│MN│YZ│CD
+ │ │ │CD│ │GH│ │ │ │ST│ │WX│ │ │  │├──┼──┤│├──┼──┤│  ──┼──│──┼──  KL│OP│AB│EF
+ │ │ └──┘ └──┘ │ │ └──┘ └──┘ │ │  ││IJ│MN│││YZ│CD││  IJ│MN│YZ│CD  ─────┼─────
+ │ │ ┌→─┐ ┌→─┐ │ │ ┌→─┐ ┌→─┐ │ │  ││KL│OP│││AB│EF││  KL│OP│AB│EF  GH│KL│WX│AB
+ │ │ ↓IJ│ ↓MN│ │ │ ↓YZ│ ↓CD│ │ │  │└──┴──┘│└──┴──┘│  ─────┼─────  IJ│MN│YZ│CD
+ │ │ │KL│ │OP│ │ │ │AB│ │EF│ │ │  ├───────┼───────┤  ─────│─────  ──┼──│──┼──
+ │ │ └──┘ └──┘ │ │ └──┘ └──┘ │ │  │┌──┬──┐│┌──┬──┐│  GH│KL│WX│AB  OP│ST│EF│IJ
+ │ └∊──────────┘ └∊──────────┘ │  ││GH│KL│││WX│AB││  IJ│MN│YZ│CD  QR│UV│GH│KL
+ │ ┌→──────────┐ ┌→──────────┐ │  ││IJ│MN│││YZ│CD││  ──┼──│──┼──
+ │ ↓ ┌→─┐ ┌→─┐ │ ↓ ┌→─┐ ┌→─┐ │ │  │├──┼──┤│├──┼──┤│  OP│ST│EF│IJ
+ │ │ ↓GH│ ↓KL│ │ │ ↓WX│ ↓AB│ │ │  ││OP│ST│││EF│IJ││  QR│UV│GH│KL
+ │ │ │IJ│ │MN│ │ │ │YZ│ │CD│ │ │  ││QR│UV│││GH│KL││
+ │ │ └──┘ └──┘ │ │ └──┘ └──┘ │ │  │└──┴──┘│└──┴──┘│
+ │ │ ┌→─┐ ┌→─┐ │ │ ┌→─┐ ┌→─┐ │ │  └───────┴───────┘
+ │ │ ↓OP│ ↓ST│ │ │ ↓EF│ ↓IJ│ │ │
+ │ │ │QR│ │UV│ │ │ │GH│ │KL│ │ │
+ │ │ └──┘ └──┘ │ │ └──┘ └──┘ │ │
+ │ └∊──────────┘ └∊──────────┘ │
+ └∊────────────────────────────┘
+    cmp 0,⊂⊂⊂⍳2                                 ⍝ with nested scalar sub-array
+ ┌→────────────────┐  ┌─┬───────┐  ─────  0│───
+ │   ┌───────────┐ │  │0│┌─────┐│  0│───    ───
+ │ 0 │ ┌───────┐ │ │  │ ││┌───┐││    ───    1 2
+ │   │ │ ┌→──┐ │ │ │  │ │││1 2│││    1 2
+ │   │ │ │1 2│ │ │ │  │ ││└───┘││
+ │   │ │ └~──┘ │ │ │  │ │└─────┘│
+ │   │ └∊──────┘ │ │  └─┴───────┘
+ │   └∊──────────┘ │
+ └∊────────────────┘
+
+    ⍝ In the following progression, notice how, in contrast to display and disp,
+    ⍝ dsp does not indicate the presence of an enclosed empty item:
+
+      ↑{cmp 0,⊂⊂⊂⍳⍵}¨2 1 0                      ⍝ enclosed empty disappears
+ ┌→────────────────┐  ┌─┬───────┐  ─────  0│───
+ │   ┌───────────┐ │  │0│┌─────┐│  0│───    ───
+ │ 0 │ ┌───────┐ │ │  │ ││┌───┐││    ───    1 2
+ │   │ │ ┌→──┐ │ │ │  │ │││1 2│││    1 2
+ │   │ │ │1 2│ │ │ │  │ ││└───┘││
+ │   │ │ └~──┘ │ │ │  │ │└─────┘│
+ │   │ └∊──────┘ │ │  └─┴───────┘
+ │   └∊──────────┘ │
+ └∊────────────────┘
+ ┌→──────────────┐    ┌─┬─────┐    ───    0│─
+ │   ┌─────────┐ │    │0│┌───┐│    0│─      ─
+ │ 0 │ ┌─────┐ │ │    │ ││┌─┐││      ─      1
+ │   │ │ ┌→┐ │ │ │    │ │││1│││      1
+ │   │ │ │1│ │ │ │    │ ││└─┘││
+ │   │ │ └~┘ │ │ │    │ │└───┘│
+ │   │ └∊────┘ │ │    └─┴─────┘
+ │   └∊────────┘ │
+ └∊──────────────┘
+ ┌→──────────────┐    ┌─┬────┐     ──     0│
+ │   ┌─────────┐ │    │0│┌──┐│     0│
+ │ 0 │ ┌─────┐ │ │    │ ││┌┐││
+ │   │ │ ┌⊖┐ │ │ │    │ ││││││
+ │   │ │ │0│ │ │ │    │ ││└┘││
+ │   │ │ └~┘ │ │ │    │ │└──┘│
+ │   │ └∊────┘ │ │    └─┴────┘
+ │   └∊────────┘ │
+ └∊──────────────┘
+
+    ⍝ dsp produces a pleasing and screen-space efficient display of a "tape"
+    ⍝ data structure (see →bf←):
+
+    tape←{'∘',(⍺↑⍵),{⍺ ⍵}/⍺↓⍵,'∘'}              ⍝ ⍺-window tape
+    rgt←{(⊂2↑⍵),(2↓¯1↓⍵),⊃⌽⍵}                   ⍝ tape-head moves right 1 item
+
+    0 dsp rgt⍣5 ⊢3 tape 2/¨12↑⎕A                ⍝ partially wound 3-tape
+────────────────│FF│GG│HH│─────────────
+─────────────│EE          II│──────────
+──────────│DD                JJ│───────
+───────│CC                      KK│────
+────│BB                            LL│∘
+∘│AA
+
+    ⍝ dsp is sometimes preferable to disp when debugging nested structures:
+
+    8 ⎕stop'kk'         ⍝ stop at kk[8]
+    kk'dsp'
+kk[8]
+
+    disp tx exps        ⍝ tx exps is a nested vector of tokens:
+┌─────────┬───────────────────────────────┬──────────┬─────────┬───────────────·
+│┌───┬─┬─┐│┌─┬─────────────────┬─┬─┬─┬─┬─┐│┌─┬────┬─┐│┌─┬─┬─┬─┐│┌─┬───┬─┬───┬─┬·
+││⎕ML│←│1│││┘│┌─┬───────────┬─┐│∨│0│∊│⍴│⍵│││:│⎕FMT│⍵│││┘│⍺│←│0│││⋄│top│←│'─'│∘│·
+│└───┴─┴─┘││ ││(│┌─┬─┬─┬─┬─┐│)││ │ │ │ │ ││└─┴────┴─┘│└─┴─┴─┴─┘│└─┴───┴─┴───┴─┴·
+│         ││ ││ ││1│=│≡│,│⍵││ ││ │ │ │ │ ││          │         │               ·
+│         ││ ││ │└─┴─┴─┴─┴─┘│ ││ │ │ │ │ ││          │         │               ·
+│         ││ │└─┴───────────┴─┘│ │ │ │ │ ││          │         │               ·
+│         │└─┴─────────────────┴─┴─┴─┴─┴─┘│          │         │               ·
+└─────────┴───────────────────────────────┴──────────┴─────────┴───────────────·
+
+    0 dsp tx exps       ⍝ dsp is able to display more tokens per screen-width:
+───────│─────────────────────────│────────│───────│───────────────────│────────·
+⎕ML│←│1│┘│─────────────│∨│0│∊│⍴│⍵│:│⎕FMT│⍵│┘│⍺│←│0│⋄│top│←│'─'│∘│⍪│⍣│⍺│┘│2│<│⍴│·
+          (│─────────│)                                                        ·
+            1│=│≡│,│⍵                                                          ·
+
+See also: display disp box
+
+Index: boxing|display (of arrays)|tape

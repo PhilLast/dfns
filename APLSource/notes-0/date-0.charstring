@@ -1,0 +1,78 @@
+dates ← {g←¯53799} ##.date daynos           ⍝ ⎕TS format from day number.
+
+The argument is an array of day numbers since 1899-12-31 00:00:00. The resulting
+array has rank one greater than [daynos] where 7-vectors along the new last axis
+are ⎕TS-style date and time: (↓date ⍵)≡date¨⍵.
+
+Optional  left argument {g} specifies the day number of the →Gregorian_calendar←
+reform  (default ¯53799 ≡≡ 1752-09-02).  This is of interest only when exploring
+historical dates.
+
+(
+    Bug: Although [date] accounts for the "removal" of 11 days in September 1752
+    for  the  change to the Gregorian calendar, it does not accommodate the att-
+    endant  change  to  New  Year's  Day.  Prior  to  the  implementation of the
+    →British_Calendar_Act_1751←  the year changed at midnight on the 24th March,
+    making  25th  March  New  Year's Day. The following pairs of dates should be
+    contiguous in the British calendar:
+
+    1750-03-24  1751-03-25      ⍝ Julian year change in March 1750.
+    1751-12-31  1752-01-01 *    ⍝ Calendar Act year change on Dec 31 in 1751.
+    1752-03-24  1752-03-25      ⍝ no Julian year change March 1752.
+    1752-09-02  1752-09-14      ⍝ change to Gregorian calendar.
+    1752-12-31  1753-01-01      ⍝ normal Gregorian year change 1752-1753.
+
+  * "...  according  to  which the Year of our Lord beginneth on the 25th Day of
+     March,  shall  not  be  made use of from and after the last Day of December
+     1751; and that the first Day of January next following the said last Day of
+     December shall be reckoned, taken, deemed and accounted to be the first Day
+     of the Year of our Lord 1752; ..."
+)
+
+Ref: Jean Meeus, "Astronomical Algorithms", p59. ISBN 0-943396-61-1, 1998.
+
+Peter-Michael  Hager  suggests this nifty one-liner, which is good for dates be-
+tween 1752-09-14 and 2400-02-28:
+
+    n_date←{y,m,1+d-(m←m+.≤d)⊃m←+\0 31,(29-×4|1⊃y d←⌊0 365.25⊤694035+⌊(36525×⍵-60.5+0.5××⍵-36584)÷36524),9⍴5⍴31 30}
+
+Examples:
+
+    date 12791                              ⍝ Whole number of days.
+1935 1 8 0 0 0 0
+
+    date 12791.51388889                     ⍝ Part way through day.
+1935 1 8 12 20 0 0
+
+     show←timestamp∘''                      ⍝ Format ⎕TS vector.
+
+     show date 1e5÷3                        ⍝ Fractional number of days.
+1991-04-06 08:00:00
+
+     show date ¯7596.520833                 ⍝ Negative days before 1899 12 31.
+1879-03-14 11:30:00
+
+     date 2 2⍴14892 15509 15761 14798       ⍝ (⍴date ⍵) ≡ (⍴⍵),7.
+1940 10  9 0 0 0 0
+1942  6 18 0 0 0 0
+
+1943  2 25 0 0 0 0
+1940  7  7 0 0 0 0
+
+    date ¯53799 + 0 1                       ⍝ 1752 calendar reform
+1752 9  2 0 0 0 0
+1752 9 14 0 0 0 0
+
+    ⎕ts≡date days ⎕ts                       ⍝ Full circle.
+1
+    eudate←¯115860∘date                     ⍝ European calendar reform:
+
+    eudate ¯115860+0 1                      ⍝ 1582: Oct 4th and 15th contiguous.
+1582 10  4 0 0 0 0
+1582 10 15 0 0 0 0
+
+See also: Dates days cal timestamp
+See also: Gregorian_calendar British_Calendar_Act_1751
+
+Index:Gregorian calendar|1752|calendar
+Index;Meeus J.|Hager P-M.

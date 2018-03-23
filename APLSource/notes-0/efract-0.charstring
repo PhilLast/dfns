@@ -1,0 +1,117 @@
+nvec ← P ##.efract Q                        ⍝ Egyptian fractions.
+
+Any  rational number in the range 0<⍵≤1 may be expressed as the sum of the reci-
+procal of a finite vector of distinct whole numbers. Such sequences of reciproc-
+als are called "Egyptian fractions".
+
+For example:
+
+     2       1       1
+    ---  =  ---  +  ---    =    +/ ÷2 6
+     3       2       6
+
+     9       1       1       1
+    ---  =  ---  +  ---  +  ---    =    +/ ÷2 3 15
+    10       2       3      15
+
+
+    355      1       1        1         1              1
+    ---  =  ---  +  ---  +  ----  +  -------  +  -------------   =   +/ ÷2 29 ..
+    452      2      29      1093     1790881     6414507721441
+
+NB: a given rational number has any number of Egyptian fraction expansions.
+
+Ref: http://en.wikipedia.org/wiki/Egyptian_fraction
+
+Veli-Matti Jantunen's function [efract] returns an integer vector such that:
+
+    (⍺÷⍵) = +/÷ ⍺ efract ⍵          ⍝ quotient = sum of reciprocals.
+    {⍵≡∪⍵}  ⍺ efract ⍵              ⍝ reciprocals are unique.
+
+For example:
+
+        9 efract 10                 ⍝ Egyptian fractions for 9÷10
+    2 3 15
+
+        rational +/÷ 2 3 15         ⍝ check result.
+    9 10
+
+Technical notes:
+
+There are many ways to find Egyptian fractions; Veli-Matti suggests:
+
+    efract←{⎕ML←3
+        (,⍵){
+            0∊⍴⍵:⍺[⍋⍺]
+            x←{⍵ 1×⍵+1}↑⍵
+            n←2×¯1++/⍵=↑⍵
+            (⍺,x)∇(n⍴x),⍵~↑⍵
+        }(⍺-1)/⍵
+    }
+
+
+    efract←{⎕ML←3           ⍝ Egyptian fractions: Splitting method
+
+        (,⍵){
+            0∊⍴⍵:⍺[⍋⍺]
+            q←↑⍵ ⋄ x←q 1×q+1 ⋄ b←(x∊⍺)<≠\x
+            (⍺,b/x)∇((~b)/x),((2×¯1++/⍵=q)⍴x),⍵~q
+        }(⍺-1)/⍵
+    }
+
+
+    efract←{                ⍝ Egyptian fractions: Golomb algorithm
+        (⎕ML ⎕IO)←3 1
+
+        ⍬{
+            (p q)←⍵÷(↑⍵){⍵=0:|⍺ ⋄ ⍵ ∇ ⍵|⍺}↑⌽⍵
+            p=1:{⍵[⍋⍵]}⍺,q
+
+            r←(0=p|1+q×⍳q-1)⍳1
+            s←(1+q×r)÷p
+            (⍺,s×q)∇ r s
+        }⍺ ⍵
+    }
+
+
+    efract←{                ⍝ Egyptian fractions: Binary method
+        (⎕ML ⎕IO)←3 1
+
+        ∆G←{⍵=0:|⍺ ⋄ ⍵ ∇ ⍵|⍺}
+        (p q)←⍺ ⍵÷⍺ ∆G ⍵ ⋄ p=1:q
+
+        n←⌈2⍟q ⋄ b←2*n
+        r←⌊(p×b)÷q ⋄ s←(p×b)-r×q
+
+        (a c)←{2*((n⍴2)⊤⍵)/⌽¯1+⍳n}¨r s
+        (a,c){⍵÷⍺ ∆G¨⍵}((⍴a),⍴c)/b×1 q
+    }
+
+
+Examples:
+
+    3 efract 7                          ⍝ Egyptian fraction rep of 3÷7
+3 11 231
+
+    rational +/÷ 3 efract 7             ⍝ round-trip to check.
+3 7
+
+    rational +/÷ ⎕← 355 efract 452      ⍝ (coarse approximation to ○÷4).
+2 4 29 1093 1790881 6.414507721E12
+355 452
+
+    2 3 5 7 ∘.efract 11 13 17 19        ⍝ ... some more.
+┌──────┬─────────┬─────────┬─────────┐
+│6 66  │7 91     │9 153    │10 190   │
+├──────┼─────────┼─────────┼─────────┤
+│4 44  │5 33 2145│6 102    │7 67 8911│
+├──────┼─────────┼─────────┼─────────┤
+│3 9 99│3 20 780 │4 23 1564│4 76     │
+├──────┼─────────┼─────────┼─────────┤
+│2 8 88│2 26     │3 13 663 │3 29 1653│
+└──────┴─────────┴─────────┴─────────┘
+
+See also: rational
+
+Index:Egyptian fraction
+Index;Jantunen V-M.

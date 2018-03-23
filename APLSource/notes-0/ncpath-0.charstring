@@ -1,0 +1,67 @@
+cvec ← {path←⎕path} ##.ncpath names         ⍝ ⎕path-aware ⎕nc.
+
+Suggested  by Mark Johns, this function searches namespaces in its left argument
+(default ⎕PATH) for functions and operators named in its right argument.
+
+Right  argument [names] is a simple character matrix, vector or scalar, suitable
+as a right argument for ⎕NC.
+
+For  each name found along the [path], [ncpath] reports:
+
+    3 for a function,
+    4 for an operator and
+    0 otherwise.
+
+Note that this function ignores names with a class other than 3 or 4.
+
+Bugs:
+This  rather  simple coding of the function does not cope with the special ⎕path
+entry:  '↑'.  We could arrange to have it substitute occurrences of '↑' in ⎕path
+with  an  appropriate sequence '## ##.## ##.##.## ···'. The following expression
+returns such a sequence:
+
+    {⍺,'.',⍵}\{'##'}¨(⎕cs'')∩'.'
+
+(muse:
+    Remember  that operators may take arrays, as well as functions, as operands.
+    We  could  choose  to extend primitive operator each (¨) to "apply" an array
+    operand  to  each  item  of  its argument. Then sub-expression {'##'}¨ above
+    could be replaced with just '##'¨.
+
+        '##'¨ '...'
+    ┌──┬──┬──┐
+    │##│##│##│
+    └──┴──┴──┘
+
+        0¨⍳2 3
+    0 0 0
+    0 0 0
+)
+
+Examples:
+
+    ncpath'display'                     ⍝ display is a function.
+3
+    notes.⎕nc'display'                  ⍝ display is a variable in notes.
+2
+    notes ncpath'display'               ⍝ no display function in notes.
+0
+    ncpath↑'display' 'rows'             ⍝ rows is an operator.
+3 4
+
+    ⎕path←'⎕se'                         ⍝ set ⎕path for utility fns.
+
+    ⎕se.dup←{⍵ ⍵}                       ⍝ make a duplicator fn in ⎕se.
+
+    dup 33                              ⍝ function reference using ⎕path.
+33 33
+
+    ⎕nc'dup'                            ⍝ no dup in current space.
+0
+    ncpath'dup'                         ⍝ dup is a fn somewhere on ⎕path.
+3
+
+See also: refs
+
+Index:name classification|classification, name|⎕NC, extended
+Index;Johns M.

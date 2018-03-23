@@ -1,0 +1,71 @@
+nvec ← p ##.nicediv q                       ⍝ ⍵ similar integers with sum ⍺.
+
+From Nicolas Delcros, this function distributes integer [p] nicely into [q] sim-
+ilarly-sized partitions.
+
+For example,  in a GUI application, we might want to draw a grid of 5 rows and 7
+columns, which fits exactly in a rectangle of 211 by 437 pixels:
+
+    211 437 nicediv¨ 5 8
+┌──────────────┬───────────────────────┐
+│42 42 43 42 42│55 54 55 55 54 55 54 55│
+└──────────────┴───────────────────────┘
+
+Then:
+
+    'MyGrid' ⎕WS 'CellHeights' 'CellWidths' {⍺ ⍵}¨ 211 437 nicediv¨ 5 8
+
+Technical note:
+
+Phil Last provides this alternative coding:
+
+    nicecdiv←{¯2-/0,⌊0.5++\⍵⍴⍺÷⍵}
+
+and  adds:  "(¯2-/0,) is,  I believe,  the proper inverse of (+\) so we could do
+(+\⍣¯1) instead!
+
+    nicediv←{+\⍣¯1⌊0.5++\⍵⍴⍺÷⍵}
+
+which is neater but slower by about 25%".
+
+Examples:
+
+    100 nicediv 7           ⍝ 7 similar integers, which sum to 100.
+14 15 14 14 14 15 14
+
+    ↑ (0 to 10)nicediv¨5    ⍝ 5-item rows sum to 0 .. 10
+0 0 0 0 0
+0 0 1 0 0
+0 1 0 1 0
+1 0 1 0 1
+1 1 0 1 1
+1 1 1 1 1
+1 1 2 1 1
+1 2 1 2 1
+2 1 2 1 2
+2 2 1 2 2
+2 2 2 2 2
+
+    hist←{' ⎕'⌷⍨⊂⎕io+⊖⍉⍵∘.≥⍳⌈/⍵}        ⍝ simple histogram.
+
+    stacked←{⊖⎕fmt⊖∘hist¨⍺ nicediv¨⍵}   ⍝ ⍺ bricks stacked nicely into ⍵ columns
+
+    100 stacked 12 23 39                ⍝ 100 bricks in various column-widths.
+  ⎕  ⎕  ⎕  ⎕
+ ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+ ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+ ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+ ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕   ⎕  ⎕  ⎕  ⎕ ⎕  ⎕  ⎕  ⎕
+ ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕  ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+ ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕  ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕  ⎕ ⎕ ⎕ ⎕⎕ ⎕ ⎕ ⎕ ⎕⎕ ⎕ ⎕ ⎕⎕ ⎕ ⎕ ⎕ ⎕⎕ ⎕ ⎕ ⎕
+ ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕  ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕  ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+ ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕  ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕  ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+
+    12 stacked 3 to 9                   ⍝ various stackings of 12 bricks.
+ ⎕⎕⎕
+ ⎕⎕⎕  ⎕⎕⎕⎕   ⎕ ⎕
+ ⎕⎕⎕  ⎕⎕⎕⎕  ⎕⎕⎕⎕⎕  ⎕⎕⎕⎕⎕⎕  ⎕ ⎕⎕⎕ ⎕  ⎕ ⎕ ⎕ ⎕    ⎕  ⎕  ⎕
+ ⎕⎕⎕  ⎕⎕⎕⎕  ⎕⎕⎕⎕⎕  ⎕⎕⎕⎕⎕⎕  ⎕⎕⎕⎕⎕⎕⎕  ⎕⎕⎕⎕⎕⎕⎕⎕  ⎕⎕⎕⎕⎕⎕⎕⎕⎕
+
+Index:histogram
+Index;Delcros N.|Last P.

@@ -1,0 +1,53 @@
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Categories:
+⍝   ┌──── sample tokens ────┐   ⍝ ┌ First-class (from V14) nameable items
+A   0 1 2 3 4 5 6 ⍺ ⍵ a b c d   ⍝ * Array
+F   + - × ÷ = ⍳ | ∇ e f g       ⍝ * Function
+H   / ⌿ \ ⍀                 ←   ⍝ * Hybrid function/operator
+AF                              ⍝   bound left argument
+MOP  ¨ ⍨ &                      ⍝ * Monadic operator
+DOP  ⍣                          ⍝   Dyadic operator
+JOT  ∘                          ⍝   Jot: compose / null operand
+DOT  .                          ⍝   Dot: ref / product
+REF                             ⍝   ref-dot ...
+IDX                             ⍝   index/axis
+ERR                             ⍝   error
+LST  ;                         ⍝⍝   subscript list separator
+XLS  ⋄                         ⍝⍝   expression list separator
+CLN  :                         ⍝⍝   colon for guard
+GRD                            ⍝⍝   guard:
+() [IDX] {F}                   ⍝⍝   brackets, note dfn: {F}
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Macros:
+func=F.H                        ⍝   function
+rand=A.func                     ⍝   operand
+1st=rand.MOP                    ⍝   first-class item
+item=1st.DOP                    ⍝   dottable item
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ Bindings:
+                                ⍝ ┌ strength
+A:DOT→REF REF:item→item         ⍝ 10 dotted expression
+                                ⍝
+A:A→A                           ⍝ 9 array to array: vector (strand)
+DOT:A.DOP→ERR                   ⍝   prevents: #.a+b → #.(a+b)
+                                ⍝
+DOP.JOT:rand→MOP                ⍝ 8 dyadic operator (inc ∘) to right operand
+DOT:func→MOP                    ⍝   inner product (with dot as operator)
+                                ⍝
+rand.JOT:MOP→F                  ⍝ 7 left operand (inc ∘) to monadic operator
+func:H→F                        ⍝   hybrid as operator
+rand:IDX→rand                   ⍝   axis / index
+MOP:H→ERR                       ⍝   prevents: +¨/¨ → (+¨)(/¨)
+                                ⍝
+A:func→AF                       ⍝ 6 left argument to function (inc hybrid)
+IDX:A.func→ERR                  ⍝   prevents: v[0]+1 → v[0](+1)
+                                ⍝
+AF.F:A→A                        ⍝ 5 function to its right argument
+                                ⍝
+AF.func:F→F                     ⍝ 4 function to function (train)
+                                ⍝
+A.LST:LST→LST LST:A→LST        ⍝⍝ 3 subscript list: [2;] [2;;]
+                               ⍝⍝
+A:CLN→GRD GRD:A→A              ⍝⍝ 2 guard returns an Array.
+CLN:A→ERR                      ⍝⍝   to prevent: 1:2⋄ → 1:(2⋄)
+                               ⍝⍝
+1st.XLS:XLS→XLS XLS:1st→1st    ⍝⍝ 1 expression list .. ⋄ .. ⋄ ..
+                               ⍝⍝
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝

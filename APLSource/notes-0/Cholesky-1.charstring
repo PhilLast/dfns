@@ -1,0 +1,49 @@
+y ← ##.Cholesky x       ⍝ decomposition of Hermitian positive-definite matrix.
+
+From Roger Hui: see http://www.jsoftware.com/jwiki/Essays/Cholesky%20Decomposition
+for the derivation.
+
+Examples:
+
+      x←t+.×⍉t←¯10+?5 5⍴20
+      x
+ 153  ¯14   10 ¯117 ¯48
+ ¯14  286 ¯158 ¯203  72
+  10 ¯158  178  112  ¯3
+¯117 ¯203  112  274 ¯16
+ ¯48   72   ¯3  ¯16  49
+
+      y←Cholesky x
+      y
+12.3693     0       0         0        0
+¯1.13183   16.8736  0         0        0
+ 0.808452  ¯9.3095  9.52258   0        0
+¯9.45889  ¯12.6651  0.182868  4.90831  0
+¯3.88057    4.00672 3.93148  ¯0.545884 1.46044
+      x ≡ y +.× ⍉y
+1
+
+⍝ The t+.×⍉t construct is a handy way to generate a Hermitian, positive definite
+⍝ matrix. For real numbers, "Hermitian" is the same as symmetric (x≡⍉x); for
+⍝ complex matrices; Hermitian means z≡+⍉z (conjugate transpose).
+
+      z←t+.×+⍉t←(¯10+?5 5⍴20)+0j1×¯10+?5 5⍴20
+      z
+310       ¯51J¯092   93J0157 ¯31J145  244J¯024
+¯51J0092  357      ¯149J¯054  54J060 ¯192J0203
+ 93J¯157 ¯149J0054  217      ¯16J115  113J¯203
+¯31J¯145   54J¯060  ¯16J¯115 397       10J¯048
+244J0024 ¯192J¯203  113J0203  10J048  384
+
+      y←Cholesky z
+
+      z ≡ y +.× +⍉y
+1
+
+⍝ So the Cholesky decomposition is a sort of "square root" y of a Hermitian
+⍝ positive matrix z, such that y is lower-triangular and z≡y+.×+⍉y.
+
+See also: det gauss_jordan
+
+Index:Cholesky decomposition
+Index;Cholesky A-L.|Hui R.K.W.

@@ -1,0 +1,41 @@
+rslt ← (func ##.until cond) argt            ⍝ Conditional function power.
+
+NB: From Dyalog V11, this operator is implemented as primitive ⍣.
+
+Left  operand  [func]  is  applied  cumulatively  to argument [argt] until right
+operand  [cond],  applied  to the result, returns 'true'. Notice that, in common
+with  the  :Repeat ··· :Until  control  structure,  the  test for termination is
+performed  _after_  an  initial application of the left operand. This means that
+the  operand  is  applied  once  even  if  the  original  argument satisfies the
+termination  conditions.  Compare this with the →while← operator.
+
+Examples:
+
+      {⍵,'.'} until {60=⍴⍵} 'Note'          ⍝ Extend until 60 wide.
+Note........................................................
+
+      ↓ until {1=⍴⍴⍵} 2 2 2 2⍴⍳16           ⍝ Split until vector.
+┌─────────────────────┬────────────────────────────┐
+│┌─────────┬─────────┐│┌────────────┬─────────────┐│
+││┌───┬───┐│┌───┬───┐│││┌────┬─────┐│┌─────┬─────┐││
+│││1 2│3 4│││5 6│7 8│││││9 10│11 12│││13 14│15 16│││
+││└───┴───┘│└───┴───┘│││└────┴─────┘│└─────┴─────┘││
+│└─────────┴─────────┘│└────────────┴─────────────┘│
+└─────────────────────┴────────────────────────────┘
+
+      {⍵+1} until {1} 0                     ⍝ {⍵+1} applied once.
+1
+
+      {1↓⍵} while {' '∊⍵}  'hello world'    ⍝ While & until _concur_ if initial
+world
+      {1↓⍵} until {~' '∊⍵} 'hello world'    ⍝ ·· argument _escapes_ termination.
+world
+
+      {1↓⍵} while {'⎕'∊⍵}  'hello world'    ⍝ While & until _differ_ if initial
+hello world
+      {1↓⍵} until {~'⎕'∊⍵} 'hello world'    ⍝ ·· argument _incurs_ termination.
+ello world
+
+See also: cond while limit pow traj
+
+Index:conditional operator

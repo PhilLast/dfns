@@ -1,0 +1,23 @@
+ hexf←{⎕IO ⎕ML←0 1                       ⍝ IEEE 754/854 floating point.
+     1<⍴⍴⍵:↑∇¨↓⍵                         ⍝ vector-wise:
+     1≠≡,⍵:∇¨⍵                           ⍝ simple-array-wise:
+     cols←{(((⍴,⍵)÷⍺),⍺)⍴⍵}              ⍝ ⍵ reshaped to ⍺ cols.
+     XD←'0123456789ABCDEF'               ⍝ upper hex digits.
+     xd←'0123456789abcdef'               ⍝ lower hex digits.
+     big←⊃83 ⎕DR 256                     ⍝ this machine is big-endian?
+     qfr←{2::645 ⋄ ⍎'⎕FR'}0              ⍝ get ⎕FR, safely on old interpreters.
+     nd←⌊qfr÷40                          ⍝ number of hex digits per float.
+     0=2|⎕DR ⍵:{                         ⍝ numeric: return char hex:
+         ' '∊⍵:∇¨{1↓¨(⍵=' ')⊂⍵}' ',⍵     ⍝ scalar-wise:
+         ucase←(XD,XD)[(XD,xd)⍳⍵]        ⍝ upper case hex.
+         big:⊃qfr ⎕DR,⍉(4/2)⊤XD⍳ucase    ⍝ floating scalar.
+         swap←nd cols⊖2 cols ucase       ⍝ byte-swapped hex chars.
+         bits←1=(4/2)⊤XD⍳swap            ⍝ 4×n×nd bit-array.
+         ⊃qfr ⎕DR,[1 2]2 0 1⍉bits        ⍝ floating scalar.
+     }⍵                                  ⍝ char: return numeric:
+     doub _←(⎕DR ⍵)qfr ⎕DR ⍵             ⍝ forced to floating point.
+     bits←11 ⎕DR doub                    ⍝ 64 or 128 bits per number.
+     digs←nd cols 2⊥⍉4 cols bits         ⍝ base-16 digits.
+     big:1↓,' ',XD[digs]                 ⍝ big-endian: blank-separation of numbs.
+     1↓,' ',⊖nd cols⊖2 cols XD[digs]     ⍝ little-endian: byte-flipped.
+ }

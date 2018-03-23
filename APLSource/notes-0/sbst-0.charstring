@@ -1,0 +1,258 @@
+rslt ← {larg} (op ##.sbst) rarg                 ⍝ Simple Binary Search Trees.
+
+     T∆ ← T ∪ sbst (key val)    ⍝ tree ⍺ with key=val ⍵.
+     T∆ ← T ~ sbst key          ⍝ tree ⍺ without key ⍵.
+     T∆ ← T ⍎ sbst key          ⍝ value for key ⍵ in tree ⍺.
+     T∆ ←   = sbst T            ⍝ balanced tree.
+    fmt ←   ⍕ sbst T            ⍝ format of tree ⍵.
+    vec ←   ∊ sbst T            ⍝ enlist of tree ⍵.
+    chk ←   ? sbst T            ⍝ stats for tree ⍵: ok size mean_depth height.
+
+See →BST←
+
+[sbst]  implements the simplest form of binary search tree (BST) with no attempt
+to keep the tree balanced. This means that it performs well only if the keys are
+inserted in random order or the tree is periodically rebalanced.
+
+Technical notes:
+
+In  contrast  with the other BST operators, [sbst] includes a balancing function
+=sbst, which uses the DSW algorithm [0] and works as follows.
+
+First,  the  tree is stripped into a degenerate left list, or "vine". A vine may
+be pictured as a stem supporting (initially depth-0) leaves,  each of which is a
+complete  tree.  Starting  at  the (leftmost) leaf and working back up the vine,
+alternate  sections are "compressed" by rotation, merging adjacent n-leaves into
+(n+1)-leaves. The process is repeated until, after ⌈2⍟⍵ iterations the vine is a
+balanced tree.
+
+                         left vine of 0-leaves
+                             ···
+                             /
+                            O
+                           ⌿
+                          N
+                         /
+                        M
+                       ⌿    ← alternate ⌿ edges are rotated.
+                      L
+                     /
+                    K
+                   ⌿
+                  J
+                 /       1-leaves →   2-leaves    →        3-leaves  →    ...
+                I       ···          ···                  ···
+               ⌿        /            /                    /
+              H        N            L                    H
+             /        ⌿ \          ⌿ \                  / \
+            G        L   O        ⌿   \                /   \
+           ⌿        / \          ⌿     \              /     \
+          F        J   M        H       N            /       \
+         /        ⌿ \          / \     / \          /         \
+        E        H   K        /   \   M   0        /           \
+       ⌿        / \          /     \              /             \
+      D        F   I        D       J            D               L
+     /        ⌿ \          / \     / \          / \             / \
+    C        D   G        /   \   I   K        /   \           /   \
+   ⌿        / \          /     \              /     \         /     \
+  B        B   E        B       F            B       F       J       N
+ /        / \          / \     / \          / \     / \     / \     / \
+A        A   C        A   C   E   G        A   C   E   G   I   K   M   O
+
+If  the  vine  starts  with  exactly  ¯1+2*⍵  nodes, for some ⍵, the result is a
+perfectly  balanced tree. Otherwise, a pre-pass is required to reduce the length
+by  folding those adjacent 0-leaves over and above ¯1+2*⍵ to form 1-leaves. This
+produces  a  vine with exactly ¯1+2*⍵ (0 or 1)-leaves, which becomes a tree that
+is  perfectly  balanced  except for extra nodes located at an incomplete deepest
+level. For example, a 10-node vine is reduced to a 7-node vine with 3 rotations:
+
+                      J ← vine with (3 + ¯1+2*3) 0-leaves.
+                     ⌿
+                    I   →   I ← vine with ¯1+2*3 (0 1)-leaves.
+                   /       ⌿ \
+                  H       G   J   →   G  ← compression to (1 2)-leaves.
+                 ⌿       / \         / \
+                G       E   H       ⌿   \
+               /       ⌿ \         /     \
+              F       D   F       D       I   →   D  ← complete tree
+             ⌿       /           / \     / \     / \    with 3 extra
+            E       C           B   E   H   J   /   \    nodes F H J
+           /       ⌿           / \   \         /     \    at deepest
+          D       B           A   C   F       /       \    level.
+         /       /                           /         \
+        C       A                           /           \
+       /                                   /             \
+      B                                   B               G
+     /                                   / \             / \
+    A                                   /   \           /   \
+                                       /     \         /     \
+                                      A       C       E       I
+                                                       \     / \
+                                                        F   H   J
+
+A  left-hanging  vine, which uses right rotation, is chosen because [sbst] has a
+hard-coded right rotation subfunction [rrot], used during node removal.
+
+                                                            B   →   A
+    rrot←{                          ⍝ right rotation.      / \     / \
+        B((A(p q))r)←⍵              ⍝ unpack nodes.       A   r   p   B
+        A(p(B(q r)))                ⍝ repack nodes.      / \         / \
+    }                               ⍝ :: t ← ∇ t        p   q       q   r
+
+Clearly, right vines and left rotations would work just as well. Here is the DSW
+code. Notice how the size of the tree is discovered by the enlisting function.
+
+    bal←{                           ⍝ dsw-balancing.
+        vine size←0 0 list ⍵        ⍝ vine of 0-leaves and size.
+        log←⌊2⍟size+1               ⍝ largest complete tree ≤ ⍵.
+        rem←1+size-2*log            ⍝ no of surplus nodes.
+        cmps←¯2+2*1+⍳log            ⍝ compression vector.
+        ↑cmp/(1↓cmps,2×rem),⊂vine   ⍝ compression reduction → balanced tree.
+    }                               ⍝ :: t ← ∇ t
+
+    cmp←{                           ⍝ compress of alternate vine sections.
+        ⍺=0:⍵                       ⍝ far enough: terminal leaf.
+        inf(lft rgt)←⍵              ⍝ parts of node.
+        lev←(⍺-1)∇ lft              ⍝ leftmost vine leaf.
+        2|⍺:inf(lev rgt)            ⍝ copying of alternate vine sections.
+        rrot inf(lev rgt)           ⍝ rotation of alternate vine sections.
+    }                               ⍝ :: t ← n ∇ v
+
+    list←{                          ⍝ list (0-vine) from tree ⍵.         /
+        0≡⍵:⍺                       ⍝ null: accumulated vine.   /       C
+        inf(lft rgt)←⍵              ⍝ node info & subtrees.    B   →   /
+        lev s←⍺ ∇ lft               ⍝ left vine & size,       / \     B
+        (inf(lev 0))(s+1)∇ rgt      ⍝ ++ right vine.         A   C   /
+    }                               ⍝ :: v s ← v ∇ t                A
+
+An  alternative  "brute force" method of rebalancing would be to take the vector
+of key=value pairs returned by ∊sbst and re-insert them sequentially into a null
+tree in an order that guarantees a good balance.
+
+    bal←{                               ⍝ rebalance of tree ⍵.
+        pairs←∊sbst ⍵                   ⍝ vector of key=value pairs.
+        order←{⍋⌽⍉((⌈2⍟⍵)/2)⊤⍳⍵}⍴pairs  ⍝ binary insert order.
+        ⊃{⊃⍵ ∪sbst ⍺}/pairs[order],0    ⍝ new balanced tree.
+    }                                   ⍝ :: t ← ∇ t
+
+However,  this method performs poorly compared with DSW, as it uses O(2∘⍟) comp-
+arisons for each of ⍵ insertions:
+
+    tt ← 0 ∪sbst foldl 1000?1000    ⍝ 1,000-node tree.
+
+    cmpx'bal tt' 'bal2 tt'          ⍝ compare with DSW.
+  bal tt  2.2E¯1    0% ⎕⎕⎕⎕⎕
+  bal2 tt 1.8E0  +715% ⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕
+
+References:
+
+[0] 'DSW' stands for Day-Stout-Warren:
+
+[1] Day A.C., Balancing a binary tree, Computer Journal 19.4, Nov 1976, 360-361.
+
+[2] Stout Q.F. Warren B.L., Tree Rebalancing in Optimal Time and Space,
+    Comms ACM 29.9, Sept 1986, 902-908.
+
+Examples:
+
+    ⍕sbst 0 ∪sbst foldl⍳7           ⍝ no balancing if keys inserted in order.
+1=1┐
+   └2=2┐
+       └3=3┐
+           └4=4┐
+               └5=5┐
+                   └6=6┐
+                       └7=7
+
+    ⍕sbst =sbst 0 ∪sbst foldl⍳7     ⍝ explicit rebalancing.
+       ┌1=1
+   ┌2=2┤
+   │   └3=3
+4=4┤
+   │   ┌5=5
+   └6=6┤
+       └7=7
+
+    ⍝ vector of key=value pairs:
+
+    pairs ← ('one'1) ('two'2) ('three'3) ('four'4) ('five'5) ('six'6) ('seven'7)
+
+    tt←0 ∪sbst foldl pairs          ⍝ pairs folded into tree.
+
+    ⍕sbst tt                        ⍝ format of tree.
+            ┌five=5
+     ┌four=4┘
+one=1┤
+     │                   ┌seven=7
+     │             ┌six=6┘
+     │     ┌three=3┘
+     └two=2┘
+
+    tt ← =sbst tt                   ⍝ balanced tree.
+
+    ⍕sbst tt
+              ┌five=5
+       ┌four=4┤
+       │      └one=1
+seven=7┤
+       │       ┌six=6
+       └three=3┤
+               └two=2
+
+    'six'⍎sbst tt                   ⍝ value for key 'six'
+6
+    tt ← tt ~sbst'four'             ⍝ key 'four' removed.
+
+    ⍕sbst tt
+             ┌five=5
+       ┌one=1┘
+seven=7┤
+       │       ┌six=6
+       └three=3┤
+               └two=2
+
+    ∊sbst tt                        ⍝ vector of key=value pairs.
+┌────────┬───────┬─────────┬───────┬─────────┬───────┐
+│┌────┬─┐│┌───┬─┐│┌─────┬─┐│┌───┬─┐│┌─────┬─┐│┌───┬─┐│
+││five│5│││one│1│││seven│7│││six│6│││three│3│││two│2││
+│└────┴─┘│└───┴─┘│└─────┴─┘│└───┴─┘│└─────┴─┘│└───┴─┘│
+└────────┴───────┴─────────┴───────┴─────────┴───────┘
+
+    ?sbst tt                        ⍝ tree stats: ok size mean_depth height.
+1 6 2 3
+
+    ⍕sbst =sbst 0 ∪sbst foldl ⎕a    ⍝ balance of (11+¯1+2*4)-node tree.
+           ┌A=A
+       ┌B=B┤
+       │   └C=C
+   ┌D=D┤
+   │   │   ┌E=E┐
+   │   │   │   └F=F
+   │   └G=G┤
+   │       │   ┌H=H
+   │       └I=I┤
+   │           └J=J
+K=K┤
+   │           ┌L=L
+   │       ┌M=M┤
+   │       │   └N=N
+   │   ┌O=O┤
+   │   │   │   ┌P=P
+   │   │   └Q=Q┤
+   │   │       └R=R
+   └S=S┤
+       │       ┌T=T
+       │   ┌U=U┤
+       │   │   └V=V
+       └W=W┤
+           │   ┌X=X
+           └Y=Y┤
+               └Z=Z
+
+    ?sbst tt                        ⍝ tree stats: ok size mean_depth height.
+1 6 2 3
+
+See also: BST alists avl splay redblack
+
+Index:tree|binary search tree|type notation|enlist
+Index;Day A.C.|Stout Q.F.|Warren B.L.

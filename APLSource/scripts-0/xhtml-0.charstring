@@ -1,0 +1,45 @@
+⍝ Export this WS to ⍵\*.htm:
+
+    ⍝ For speed, remove all but essential components from temp copy of WS:
+
+    retain←'contents' 'xhtml' 'subs' 'dtb' 'getfile' 'scripts' 'notes' 'disp' 'attrib' 'index' 'ltov' 'lcase' 'dxb' 'deb' 'rmcm'
+
+    keep←{⍺.(⎕ex↑(~∘' '¨↓⎕nl 2 3 4 9)~⍵)}               ⍝ retain some names.
+
+    here←⎕this                                          ⍝ ref to temp space.
+
+    _←(here notes scripts)keep¨⊂retain                  ⍝ prune temp space.
+
+    notes.test←, '#.xhtml'          ,⊃⌽⎕tc              ⍝ test notes.
+    notes.test,← ''                 ,⊃⌽⎕tc
+    notes.test,← '→subs←'           ,⊃⌽⎕tc
+    notes.test,← ''                 ,⊃⌽⎕tc
+    notes.test,← 'See also: subs'   ,⊃⌽⎕tc
+
+    1 disp 1↑ xhtml'.'                                  ⍝ output xhtml files.
+┌→───────────────┐
+│./n_contents.htm│
+└───────────────→┘
+
+    ##.(1 disp 0 82 getfile'n_test.htm')                ⍝ test.htm file.
+┌→────────────────────────────────────────────────────────────────────────────────────────────────────────────┬──────────────────────────────────────────────────────────────────────────┬──────┬───────┬──────────┬────────┬─────────────────────────────────────────────────────────┬─────────────────────────────────────────────────────┬────────────────────────────────────────────────────────────────────┬───────────────────────────────────────────────────┬───────────────────────────────────────────────┬───────────────────────────────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────────────┬─┬───────────────────────────────┬────────────────────────┬───────────────────────────────────────────────┬────────────────────────────────┬───────────────┬────────────────────────────────────────────────────────────────────────────────────────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┬─────────────────────────────────────────────────────────────────────────────────────────┬───────┬─────────┬─┬───────┬──────┬─────┬───────┬─┬───────────────────────────────────┬─┬───────────────────────────────────────┬─┬──────────────────────────────────────────────┬─┬──────────────────────────────────────────────────────────────────┬──────┬───────┬───────┐
+│<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "HTTP://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">│<html xmlns="HTTP://www.w3.org/1999/xhtml" xml:lang="en-gb" lang="en-gb" >│<head>│<title>│Dyalog APL│</title>│<link rel="stylesheet" type="text/css" href="xhtml.css"/>│<meta http-equiv="Content-Language" content="en-gb"/>│<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>│<meta name="author" content="The D-Functionistas"/>│<meta name="description" content="Dyalog APL"/>│<meta name="generator" content=""/>│<meta name="keywords" content="apl,algorithms,computation,computers,computing,dfns,'direct definition',dyalog"/>│ │<script type="text/javascript">│  var _gaq = _gaq || [];│  _gaq.push(['_setAccount', 'UA-28909969-2 ']);│  _gaq.push(['_trackPageview']);│  (function() {│    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;│    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';│    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);│  })();│</script>│ │</head>│<body>│<pre>│#.xhtml│ │â↑∇<a href="n_subs.htm">subs</a>â↑⍫│ │See also: <a href="n_subs.htm">subs</a>│ │Back to: <a href="n_contents.htm">contents</a>│ │Back to: <a href="http://dfns.dyalog.com/index.htm">Workspaces</a>│</pre>│</body>│</html>│
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────→┴─────────────────────────────────────────────────────────────────────────→┴─────→┴──────→┴─────────→┴───────→┴────────────────────────────────────────────────────────→┴────────────────────────────────────────────────────→┴───────────────────────────────────────────────────────────────────→┴──────────────────────────────────────────────────→┴──────────────────────────────────────────────→┴──────────────────────────────────→┴───────────────────────────────────────────────────────────────────────────────────────────────────────────────→┴⊖┴──────────────────────────────→┴───────────────────────→┴──────────────────────────────────────────────→┴───────────────────────────────→┴──────────────→┴───────────────────────────────────────────────────────────────────────────────────────────→┴────────────────────────────────────────────────────────────────────────────────────────────────────────────────────→┴────────────────────────────────────────────────────────────────────────────────────────→┴──────→┴────────→┴⊖┴──────→┴─────→┴────→┴──────→┴⊖┴──────────────────────────────────→┴⊖┴──────────────────────────────────────→┴⊖┴─────────────────────────────────────────────→┴⊖┴─────────────────────────────────────────────────────────────────→┴─────→┴──────→┴──────→┘
+
+    zap←{⍵ ⎕nerase ⍵ ⎕ntie 0}                           ⍝ remove native file.
+
+    _←zap¨'n_contents.htm' 'n_test.htm' 'wassup.htm'
+
+    _←zap¨'c_xhtml.htm' 'c_subs.htm' 'c_disp.htm' 'c_deb.htm'
+    _←zap¨'n_xhtml.htm' 'n_subs.htm' 'n_disp.htm' 'n_deb.htm'
+    _←zap¨'s_xhtml.htm' 's_subs.htm' 's_disp.htm' 's_deb.htm'
+
+    _←zap¨'c_attrib.htm' 'c_getfile.htm' 'c_dtb.htm' 'c_dxb.htm'
+    _←zap¨'n_attrib.htm' 'n_getfile.htm' 'n_dtb.htm' 'n_dxb.htm'
+    _←zap¨'s_attrib.htm' 's_getfile.htm' 's_dtb.htm' 's_dxb.htm'
+
+    _←zap¨'c_index.htm' 'c_lcase.htm' 'c_ltov.htm' 'c_rmcm.htm'
+    _←zap¨'n_index.htm' 'n_lcase.htm' 'n_ltov.htm' 'n_rmcm.htm'
+    _←zap¨'s_index.htm' 's_lcase.htm' 's_ltov.htm' 's_rmcm.htm'
+
+    _←zap¨'sindx.htm' 'pindx.htm'

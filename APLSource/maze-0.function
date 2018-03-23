@@ -1,0 +1,76 @@
+ maze←{⎕IO ⎕ML←0 1                               ⍝ Kidz maze.
+
+     ⍺←1 ⋄ smooth ⎕RL←2↑⍺,2⊃⎕AI                  ⍝ 0:clunky, 1:smooth; ⎕rl.
+
+     init←{                                      ⍝ make nmat and cmat.
+         indx←⍳1+2×⍵                             ⍝ index set for maze.
+         nmat←¯1+××/↑(⊂⍵+1)|⍳⍵+2                 ⍝ nmat: 0-free ¯1-edge.
+         cells←∧/↑2|indx                         ⍝ mask of cell positions.
+         types←⍉2⊥⍉↑2|¯2↑¨indx                   ⍝ character types.
+         cmat←(cells+types)⊃¨⊂'+-|∘ '            ⍝ initially closed cells.
+         ports←indx∊{⍵((⍴indx)-⍵+1)}0≠⍳⍴⍵        ⍝ entry/exit ports.
+         node targ←1⌈0 1×⊂⊂⍵                     ⍝ start at entrance and exit.
+         ctrl←nmat+↑1 2+.×(⊂⍳2+⍵)∊¨node targ     ⍝ ctrl array.
+         disp←ports select cmat'↓'               ⍝ display array.
+         (ctrl disp)(node targ)                  ⍝ initial arrays.
+     }                                           ⍝ (c d)(fm to)←:: size
+
+     fill←{                                      ⍝ connect remaining cells.
+         nmat cmat←⍵                             ⍝ ctrl arrays and free cells.
+         free←0 cells nmat                       ⍝ remaining free cells.
+         0=⍴free:nmat cmat                       ⍝ no free cells: finished.
+         node←⊂rand free                         ⍝ select cell at random.
+         ctrl←(cask node)select nmat ⍺           ⍝ fuller control array.
+         (⍺+1)∇ ⍺ path(ctrl cmat)(⊂node)         ⍝ control and display arrays.
+     }                                           ⍝ :: tag ∇ c d → c d
+
+     path←{                                      ⍝ dig path through maze.
+         fm to←⍺                                 ⍝
+         mats(node targ)←⍵                       ⍝ current state and end points.
+         matz(next home)←(mats fm)extend node    ⍝ extend current tree.
+         home:matz                               ⍝ paths meet: finished.
+         to fm ∇ matz(targ next)                 ⍝ extend other path.
+     }                                           ⍝ :: tag ∇ (c d)(fm to) → c d
+
+     extend←{                                    ⍝ extend path from posn ⍵.
+         (nmat cmat)tag←⍺                        ⍝ ctrl arrays and path colour.
+         tags←(⊂¨⍵+incr)⊃¨⊂nmat                  ⍝ neighbouring cell tags.
+         poss←(~tags∊tag ¯1)/⍵+incr              ⍝ possible nodes.
+         0=⍴poss:⍺ ∇⊂rand tag cells nmat         ⍝ none: restart at random cell.
+         next←⊂rand poss                         ⍝ select node at random.
+         home←×next⊃nmat                         ⍝ set connection flag.
+         ctrl←(cask next)select ⍬ ⍵⊃¨⊂nmat       ⍝ new control array.
+         dmsk←dask next+⍵-1                      ⍝ display mask.
+         disp←dmsk select cmat' '                ⍝ new display array.
+         (ctrl disp)(next home)                  ⍝ new node and connection flag.
+     }                                           ⍝ :: (c d)tag ∇ path → (c d)(fm to)
+
+     fold←{                                      ⍝ Nial-type folding of array.
+         2≥⍴⍴⍵:⍵                                 ⍝ matrix or lower: done
+         nxt←∇¨⊂⍤¯1⊢⍵                            ⍝ vectorize along first axis
+         dep←|≡nxt                               ⍝ depth
+         0=2|dep:nxt                             ⍝ even depth: done
+         spc←⊂(⌊dep÷2)1⍴' '                      ⍝ sub-array vert spacing.
+         ⍪∘(spc∘⍪)/↑∘,∘↓¨nxt                     ⍝ sub-arrays down the screen.
+     }
+
+     ldc←{                                       ⍝ conv to line draw chars.
+         1<|≡⍵:∇¨⍵                               ⍝ nested: conv simple arrays.
+         M←(1+⍴⍵)↑⍵                              ⍝ extra row col for rotate.
+         R←(1 ¯1⌽¨⊂M),1 ¯1⊖¨⊂M                   ⍝ rotations of char mat.
+         N←(M='+')×⊃1 2 4 8+.×R≠' '              ⍝ each neighbour of each +.
+         ldcs←N⊃¨⊂'.───│┌┐┬│└┘┴│├┤┼'             ⍝ box drawing chars.
+         S←(×N)select M ldcs                     ⍝ subs corner chars.
+         ¯1 ¯1↓(⊃1 2+.×S∘=¨'-|')select S'─' '│'  ⍝ subs horiz and vert.
+     }
+
+     select←{⍺⊃¨↑,¨/⍵}                           ⍝ ⍺-select items of vector ⍵.
+     cask←(⍳2+⍵)∘∊                               ⍝ control array mask.
+     dask←(⍳1+2×⍵)∘∊                             ⍝ display array mask.
+     rand←{(?⍴⍵)⊃⍵}                              ⍝ random pick from vector.
+     cells←(,⍳2+⍵){(,⍺=⍵)/⍺⍺}                    ⍝ coords of ⍺-cells.
+     incr←,1 ¯1∘.×=∘⊂⍨⍳⍴⍵                        ⍝ incremental steps.
+     ctrl disp←3 fill 1 2 path init ⍵            ⍝ randomly excavate maze.
+     wrap←fold disp                              ⍝ fold to fit across page.
+     smooth:ldc wrap ⋄ wrap                      ⍝ smooth/clunky output.
+ }

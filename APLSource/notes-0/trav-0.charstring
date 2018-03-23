@@ -1,0 +1,312 @@
+rslt ← ival (accm ##.trav subs) tree    ⍝ Generic depth-first tree traversal.
+rslt ← ival (accm ##.ravt subs) tree    ⍝ trav: parent-first, ravt: parent last.
+
+[trav] and [ravt] traverse a [tree], applying left operand accumulating function
+[accm] between the current value of the accumulator  (initial value [ival])  and
+each node. Right operand function [subs] is required to  return a (possibly emp-
+ty) vector of subtrees for each node.
+
+[trav] and [ravt] differ only in the order in which they visit the nodes of  the
+subject [tree].
+
+[trav] visits (applies [accm] to) the parent node before visiting any children.
+                                                  ¯¯¯¯¯¯
+[ravt] visits the parent node after visiting any children.
+                              ¯¯¯¯¯
+Mnemonic: given this tree:
+
+      t         trav visits: t r a v
+    ┌─┼─┐       ravt visits: r a v t
+    r a v
+
+Both left and right operand functions are ambi-valent, with the current accumul-
+ator value as left argument and current node as right argument.  To  borrow  the
+type notation developed in →foldl←:
+
+    trav ravt :: ⍺ (⍺ ∇ ⍵ → ⍺) ∇∇ (⍺ ∇ ⍵ → [⍵]) ⍵ → ⍺   ⍝ type of trav & ravt
+
+Right operand function [subs] "projects" a tree structure onto its  right  argu-
+ment. [tree] could be concrete, as with a collection of nested  namespaces,  but
+could equally be a _notional_ tree, which is not instantiated in the workspace.
+
+In particular, successive arguments, produced during the evaluation  of  a  pure
+recursive function, may be viewed as a tree. This means that, theoretically, any
+relationship that can be expressed as a pure recursive function,  may  be  coded
+using [trav] or [ravt]: the ⍵th Fibonacci  number; arithmetic functions, such as
+GCD and Ackermann; the solution(s) of a Sudoku puzzle; the best next move  in  a
+game of chess; and so on.
+
+An alternative interpretation is that right operand [subs] replaces the task  at
+hand with 0 (base-case) or more sub-tasks and left  operand  [accm]  accumulates
+the results of these sub-tasks to produce the answer.
+
+For example, the ⍵th Fibonacci number may be expressed recursively as:
+
+    ⍵, if ⍵ is 0 or 1
+    the sum of the previous two Fibonacci numbers, otherwise.
+
+Leading to this [trav] coding:
+
+    fib ← {⍺+⍵×⍵∊0 1} trav {(⍵-2 1)~-2 1}   ⍝ ⍵th fibonacci number
+
+    0 fib¨ 0 to 10                          ⍝ fibonacci sequence.
+0 1 1 2 3 5 8 13 21 34 55
+
+This trace operator shows  what's happening by displaying accumulator ⍺ and node
+value ⍵ as a node is visited:
+
+    tc←{                    ⍝ Indented trace of node visit.
+        depth←¯2+⍴⎕SI       ⍝ depth of recursion
+        tab←∊depth⍴⊂'·   '  ⍝ indentation vector
+        ⎕←tab,⍕⍺ ⍵          ⍝ display of ⍺ and ⍵
+        ⍺ ⍺⍺ ⍵              ⍝ node visit.
+    }
+
+    0 {⍺+⍵×⍵∊0 1}tc trav {(⍵-2 1)~-2 1} 5       ⍝ fib 5
+0 5
+·   0 3
+·   ·   0 1
+·   ·   ·   1 0
+·   ·   1 2
+·   ·   ·   1 0
+·   ·   ·   1 1
+·   ·   ·   ·   2 0
+·   2 4
+·   ·   2 2
+·   ·   ·   2 0
+·   ·   ·   2 1
+·   ·   ·   ·   3 0
+·   ·   3 3
+·   ·   ·   3 1
+·   ·   ·   ·   4 0
+·   ·   ·   4 2
+·   ·   ·   ·   4 0
+·   ·   ·   ·   4 1
+·   ·   ·   ·   ·   5 0
+5
+
+(muse:
+·
+·   The above naïve coding of the ⍵th Fibonacci is  very  inefficient.  Operator
+·   →memo← effectively transforms the above _tree_ into the much smaller _graph_
+·   which, by removing duplication, leads  to  an  evaulation  with  many  fewer
+·   steps:
+·
+·   ┌─→─┐─→─┐─→─┐─→─┐─→─┐
+·   5   4   3   2   1   0
+·   └─→─┼─→─┤   │   │   │
+·       └─→─┼─→─┤   │   │
+·           └─→─┼─→─┤   │
+·               └─→─┼─→─┤
+·                   └─→─┘
+)
+
+Sometimes, there is only ever 1 (or 0 in the base case) sub-task.  In such cases
+we have a "unary" tree (AKA "List") as for Euclid's algorithm for Greatest Comm-
+on Divisor →gcd←:
+
+    ⍵, if ⍺ is 0
+    gcd of ⍵ and |⍵-⍺, otherwise
+
+leading to this [trav] coding:
+
+    gcd ← ⊢ trav {|⍵-⍺~0}           ⍝ Euclid's GCD.
+
+    35 gcd 55                       ⍝ cf: 15∨35
+5
+    35 ⊢tc trav {|⍵-⍺~0} 55         ⍝ traced evaluation
+35 55
+·   55 20
+·   ·   20 35
+·   ·   ·   35 15
+·   ·   ·   ·   15 20
+·   ·   ·   ·   ·   20 5
+·   ·   ·   ·   ·   ·   5 15
+·   ·   ·   ·   ·   ·   ·   15 10
+·   ·   ·   ·   ·   ·   ·   ·   10 5
+·   ·   ·   ·   ·   ·   ·   ·   ·   5 5
+·   ·   ·   ·   ·   ·   ·   ·   ·   ·   5 0
+·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   0 5
+5
+
+.. and this more efficient version, which uses residue in place of repeated sub-
+traction:
+
+    35 |tc trav {⍺~0} 55            ⍝ traced evaluation
+35 55
+·   20 35
+·   ·   15 20
+·   ·   ·   5 15
+·   ·   ·   ·   0 5
+5
+
+(muse:
+·
+·   Perhaps, in cases where there can be more than one  sub-task at each node
+·   (Fibonacci, chess problems, ...), an operator like [trav] could help with
+·   organising their parallel evaluation, using multiple processors.
+)
+
+Technical notes:
+
+The coding of the body of trav is surprisingly simple:
+
+    ⊃∇⍨/⌽(⊂⍺ ⍺⍺ ⍵),⍺ ⍵⍵ ⍵
+     │└┬┘  └─┬──┘  └─┬──┘
+     │ │     │       └──── (possibly empty) vector of sub-trees.
+     │ │     └──────────── new value of accumulator.
+     │ └────────────────── left-to-right reduction →foldl←
+     └──────────────────── recursive call on (⍺⍺ trav ⍵⍵).
+
+At first sight, the code appears to be missing a test to back out of the recurs-
+ion after a leaf-node has been visited.  In fact, this occurs automatically:  if
+the vector of sub-trees (⍺ ⍵⍵ ⍵) is empty, the  sub-expression: (⊂⍺ ⍺⍺ ⍵),⍺ ⍵⍵ ⍵
+is a 1-item vector and so the reduction ∇⍨/ passes it along  as  result  without
+applying its operand function and thus avoiding the recursive call on trav.
+
+[ravt] is essentially the same but with the  accumulation (... ⍺⍺ ⍵)  following,
+rather than preceding, the recursive call:
+
+        (⊃∇⍨/⌽(⊂⍺),⍺ ⍵⍵ ⍵)⍺⍺ ⍵      ⍝ visit nodes _after_ subnodes.
+
+It is comforting to have the accumulator as left argument and the  subject  tree
+on the right. Swapping (commuting) these arguments would give a slightly simpler
+coding of the operator:
+
+    vart←{                          ⍝ commuted version of trav,
+        ⊃∇/(⍵ ⍵⍵ ⍺),⊂⍺ ⍺⍺ ⍵         ⍝ ... produces simpler coding.
+    }
+
+at the expense of a correspondingly less intuitive coding for the [accm] operand
+function:
+
+    accm ← {((0=≡⍺)/⍺),⍵}           ⍝ accumulating simple scalars
+    subs ← {(0≠≡⍵)/⍵}               ⍝ non-atoms for processing
+    list ← accm vart subs           ⍝ accumulation of atoms.
+
+    'ab'('cd' 'e') list ''
+abcde
+
+(muse:
+·
+·   Right operand [subs] determines how (for example) a nested array or a  coll-
+·   ection of namespaces, constitute a tree. Given such an association, left op-
+·   erand [accm] defines a _property_ of the resulting  tree, such as  its  size
+·   (number of nodes or leaves) or the enlisted vector of its leaves.
+·
+·   "Right Operand Currying", where an operator's right operand may be bound in-
+·   dependently of its left operand, is useful in this situation. For example:
+·
+·       atree ← trav {(0≠≡⍵)/⍵}         ⍝ vector as tree.      Operand currying.
+·                                       ⍝                      ¯¯¯¯¯¯¯
+·       acount ← {⍺+1} atree            ⍝ property: node count.
+·       aleaves ← {⍺,(0=≡⍵)/,⍵} atree   ⍝ property: leaf list.
+·
+·   By analogy, "Left _Argument_ Currying" would allow us to bind an initial ac-
+·   cumulator value to produce a monadic derived function:
+·
+·       asize ← 0 acount                ⍝ array-as-tree size. Argument currying.
+·       alist ← ⍬ aleaves               ⍝ enlist              ¯¯¯¯¯¯¯¯
+·
+·   Of course, left arguments may already be bound using the slightly less beau-
+·   tiful composition:  asize ← 0∘acount  ⋄  alist ← ⍬∘aleaves
+·
+·   Either way:
+·
+·       asize (1 2)(3 4)                ⍝ tree size (see examples below).
+·   7
+·       alist 'ab'('cd' 'e')            ⍝ enlist.
+·   abcde
+)
+
+Non-termination:
+
+If the "tree" turns out to have cycles and is therefore a  more  general  graph-
+structure, as may be the case with collections of  namespace  references,  it is
+necessary to detect this condition to prevent further node traversal. Otherwise,
+the traversal will fail to terminate. See example below.
+
+Breadth-first search
+--------------------
+The equivalent coding for a breadth-first search, which visits all nodes at each
+level _before_ proceeding to any of their subnodes, is  slightly  more  complex.
+See also →search←.
+
+    bftrav←{⎕ML←1           ⍝ Generic breadth-first tree traversal.
+        ⍺ ⍺⍺{
+            0=⍴⍵:⍺
+            (⍺ ⍺⍺⊃⍵)∇(1↓⍵),(⍺ ⍵⍵⊃⍵)
+        }⍵⍵,⊂⍵
+    }
+
+    subs ← {⍵.(1↓⍎¨'0',↓⎕nl 9)}             ⍝ sub-namespaces for space ⍵.
+
+    't.r.rr' 't.a.aa' 't.v.vv' ⎕ns¨ ⊂''     ⍝ create tree.
+
+    tree t                                  ⍝ depth-2 tree.
+#.t
+·   a
+·   ·   aa
+·   r
+·   ·   rr
+·   v
+·   ·   vv
+
+    ⍬ ,bftrav subs t                        ⍝ nodes in breadth-first order.
+#.t #.t.a #.t.r #.t.v #.t.a.aa #.t.r.rr #.t.v.vv
+
+Examples:
+
+    subs ← {⍵.(1↓⍎¨'#',↓⎕nl 9)}     ⍝ sub-namespaces for space ⍵.
+
+    accm ← {⍺+1}                    ⍝ counting nodes.
+    0 accm trav subs #              ⍝ count of spaces.
+3
+    accm ← ,                        ⍝ accumulating into a vector.
+    ⍬ accm trav subs #              ⍝ vector of spaces. C.f. →refs←
+ #  #.notes  #.scripts
+
+    ⍬ accm ravt subs #              ⍝ ravt visits node _after_ subnodes.
+ #.notes  #.scripts  #
+
+    usp ← {⍵.(1↓⍎¨'#',↓⎕nl 9)~⍺}    ⍝ unique sub-spaces, ignoring cycles.
+
+    'xy'⎕ns¨⊂''                     ⍝ spaces x and y.
+    (x y).(x y)←⊂x y                ⍝ create some cycles
+
+    ⍬ ∪ trav usp x                  ⍝ vector of spaces in graph. C.f. →refs←
+ #.x  #.y
+
+⍝ A (nested) array may be                           ┌─┴─┐
+⍝ considered as a tree with         (1 2)(3 4) ←→  ┌┴┐ ┌┴┐
+⍝ depth-0 items as leaves:                         1 2 3 4
+
+    subs ← {(0≠≡⍵)/,⍵}              ⍝ sub-items of array ⍵.
+
+    accm ← {⍺+1}                    ⍝ counting nodes.
+    0 accm trav subs (1 2)(3 4)     ⍝ node-count
+7
+    accm ← {⍺,(0=≡⍵)/,⍵}            ⍝ accumulating simple scalars
+    ⍬ accm trav subs 'ab'('cd' 'e') ⍝ enlist
+abcde
+
+⍝ N-queens problem:
+
+    accm ← {⍺,(⍺⍺=⍴⍵)/⊂⍵}           ⍝ accumulated leaves.
+
+    subs←{⎕io←1                     ⍝ possible placements          \|/\  | \/| /
+        dd←⌽⍳⍴⍵                     ⍝ diagonal                      ⍟  \ | /\|/
+        ak←(⍵-dd),⍵,(⍵+dd)          ⍝ attacked cols in next row :       \|/  ⍟
+        ⍵∘,¨(⍳⍺⍺)~ak                ⍝ subnodes                           ⍟
+    }
+
+    ⍬(4 accm)trav(4 subs)⍬          ⍝ 4-queens solutions vector.
+ 2 4 1 3  3 1 4 2
+
+⍝ A similar expression for N-Queens using depth-first search is developed
+⍝ in YouTube video:  https://www.youtube.com/watch?v=DsZdfnlh_d0
+
+See also: refs acc foldl osc gcd search queens
+
+Index:tree|currying|type notation|fibonacci number|N-Queens
+Index:depth-first search|breadth-first search|unary|YouTube

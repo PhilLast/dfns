@@ -1,0 +1,210 @@
+⍝ Unification of expressions:
+
+⍝ Here is a parser for simple parenthesised expressions:
+
+    px←{⎕ml←0                   ⍝ Single char token parser.
+        1=⍴⍵:⊃⍵                 ⍝ atom: return scalar.
+        depth←×¯1⌽-⌿+\'()'∘.=⍵  ⍝ within parens.
+        lpars←0 1⍷depth         ⍝ left parens.
+        smask←lpars≥depth       ⍝ segmentation mask.
+        drops←1 ¯1×⊂smask/lpars ⍝ parens drop.
+        ∇¨↑↓¨/drops,⊂smask⊂⍵    ⍝ process each segment.
+    }
+
+⍝ and a corresponding de-parser:
+
+    fx←{                ⍝ Format parse tree.
+        0=≡⍵:⍕⍵         ⍝ atom: done.
+        ↑,/{            ⍝ join branches.
+            0=≡⍵:⍵      ⍝ atom: done.
+            '(',⍵,')'   ⍝ parenthesise.
+        }∘∇¨⍵           ⍝ each branch.
+    }
+
+⍝ Expressions in x and y:
+
+    lexp rexp←px¨ '(1×2)+y' 'x+(3×4)'
+
+    disp¨ lexp rexp
+ ┌───┬─┬─┐  ┌─┬─┬───┐ 
+ │1×2│+│y│  │x│+│3×4│ 
+ └───┴─┴─┘  └─┴─┴───┘ 
+
+⍝ Unification of expressions:
+
+    disp 'xy'unify lexp rexp
+┌───┬─┬───┐
+│1×2│+│3×4│
+└───┴─┴───┘
+
+⍝ ... formatted.
+
+    fx 'xy'unify lexp rexp
+(1×2)+(3×4)
+
+⍝ More complex expressions:
+
+    xa←' a    + (b÷n) - (b × a) + a    '
+    xb←'(1-c) + (c÷2) -  d      + e    '
+    xc←' f    +  g    -  h      + (i-3)'
+
+    vars←lcase ⎕a       ⍝ vars: a b ··· z
+
+    fx vars unify px¨xa xb xc~¨' '
+(1-3)+(3÷2)-(3×(1-3))+(1-3)
+
+
+⍝ Unify can be used to resolve "logical syllogisms", such as:
+⍝
+⍝   Socrates is a man; all men are mortal; ergo, Socrates is mortal.
+
+    s1←'Socrates' 'is' 'man'
+
+    s2←'Man' 'is' 'mortal'
+
+    'man' 'Man'unify s1 s2
+ Socrates  is  mortal 
+
+⍝ Unify works on any conformable arrays, including those of higher rank.
+
+    a←2 13⍴2/13↑⎕a
+    b←2 13⍴13↓⎕a
+
+    disp a b
+┌─────────────┬─────────────┐
+│AABBCCDDEEFFG│NOPQRSTUVWXYZ│
+│GHHIIJJKKLLMM│NOPQRSTUVWXYZ│
+└─────────────┴─────────────┘
+
+                        ⍝ Variable 'A' propogates through variables A-Z:
+    ⎕a unify a b        ⍝ A matches N matches G matches Z matches M ... B.
+AAAAAAAAAAAAA
+AAAAAAAAAAAAA
+
+⍝ replace one variable with a constant:
+
+    (⊃⌽,b)←'*'
+
+    disp a b
+┌─────────────┬─────────────┐
+│AABBCCDDEEFFG│NOPQRSTUVWXYZ│
+│GHHIIJJKKLLMM│NOPQRSTUVWXY*│
+└─────────────┴─────────────┘
+
+                        ⍝ Constant '*' propogates through variables A-Z:
+    ⎕a unify a b        ⍝ * matches M matches Y matches F matches X ... A.
+*************
+*************
+
+⍝ Expression unification is used to infer type in some functional languages.
+⍝ Here is the BNF for a tiny right-associative type expression:
+⍝
+⍝   texp := func | atom
+⍝   func := atom→texp | (texp)→texp
+⍝   atom := tcon | tvar
+⍝   tcon := #
+⍝   tvar := ⍺ | ∆ | ∊ | ⍳ | ⍵
+⍝
+⍝ Type variables are ⍺ ∆ ∊ ⍳ ⍵,
+⍝ # is the only type constant and
+⍝ → is the only type operator.
+
+⍝ Examples of expressions:
+⍝
+⍝   #, ⍺, ⍺→⍵, (⍺→∆)→∊→#
+
+⍝ Parser for such expressions:
+
+    pt←{⎕ML←0                           ⍝ Parse type expression.
+        ⊃⍬{                             ⍝ Parse tree and remainder.
+            0=⍴⍵:⍺ ⍵                    ⍝ done: parse tree and remainder.
+            hd tl←(⊃⍵)(1↓⍵)             ⍝ head and tail of expr.
+            '('=hd:↑∇/⍬ ∇ tl            ⍝ parenthesised sub-expr:
+            ')'=hd:⍺ tl                 ⍝ complete sub-expression:
+            '→'=hd:⌽⍺{⍺⍺ hd ⍵}\⌽⍬ ∇ tl  ⍝ function:
+            hd ∇ tl                     ⍝ atom:
+        }⍵~' '                          ⍝ ignoring blanks.
+    }
+
+⍝ and a corresponding de-parser:
+
+    ft←{⎕ML←1                   ⍝ Format parse tree.
+        0=≡⍵:⍕⍵                 ⍝ atom: done.
+        0=≡⊃⍵:∊∇¨⍵              ⍝ atomic left branch: no parens.
+        '(',(∇⊃⍵),')',∊∇¨1↓⍵    ⍝ parenthesised left branch.
+    }
+
+⍝ Parse trees for type expressions:
+
+    disp pt'⍺→∊→⍳→⍵'
+┌─┬─┬─────────┐
+│⍺│→│┌─┬─┬───┐│
+│ │ ││∊│→│⍳→⍵││
+│ │ │└─┴─┴───┘│
+└─┴─┴─────────┘
+
+    disp pt'(⍺→∊)→⍳→⍵'
+┌───┬─┬───┐
+│⍺→∊│→│⍳→⍵│
+└───┴─┴───┘
+
+⍝ Formatted parse tree. Note how redundant parentheses are ignored:
+
+    ft pt'(⍺→∊)→(⍳→⍵)'
+(⍺→∊)→⍳→⍵
+
+⍝ Vars: ⍺ ∆ ∊ ⍳ ⍵
+
+    vars←'⍺∆∊⍳⍵'
+
+⍝ Some type expressions:
+
+    xa←'(⍺→⍺)→∊    '
+    xb←'    ∆→∆    '
+    xc←'    ⍳→(⍵→#)'
+
+⍝ Unified type expressions:
+
+    ft vars unify pt¨xa xb xc
+(#→#)→#→#
+
+⍝ The following expressions can't be unified:
+
+    clash←pt¨ '(⍺→⍺)→⍵' '⍺→(⍵→⍵)'
+
+⍝ However, if the intention is that the variables
+⍝ in the expressions be independent,  they can be
+⍝ distinguished by:
+
+    dv←{⎕ML←1                   ⍝ Distinguish Variables ⍺ in exprs ⍵.
+        vlft vrgt←⍺∘∩∘∊¨⍵       ⍝ vars in left and right exprs
+        (vlft∩vrgt){            ⍝ duplicate vars.
+            (⊂⍵)∊⍺⍺:(⍺⍺⍳⊂⍵)⊃⍵⍵  ⍝ var in old: subs new.
+            0=≡⍵:⍵              ⍝ atom: pass through.
+            ∇¨⍵                 ⍝ tree: traverse.
+        }(⍺~vlft)\⍵             ⍝ translated right expr.
+    }
+
+⍝ The left argument of dv is the "pool" of
+⍝ variables, available for substitution.
+
+    ft¨clash
+ (⍺→⍺)→⍵  ⍺→⍵→⍵ 
+
+⍝ Distinguish variables:
+
+    ft¨vars dv clash
+ (⍺→⍺)→⍵  ∆→∊→∊ 
+
+⍝ Unify succeeds:
+
+    ft vars unify vars dv clash
+(⍺→⍺)→∊→∊
+
+⍝ Errors:
+
+    ⎕a unify 'ABC' '12'     ⍝ length error.
+5::Can't unify
+
+    ⎕a unify 'X' 'X+1'      ⍝ occurs check.
+11::Can't unify

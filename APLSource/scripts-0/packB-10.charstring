@@ -1,0 +1,19 @@
+⍝ Pack a simple array:
+
+    disp packB'Mississippi'             ⍝ simple array packing.
+┌─────────┬─────────────────────┬───────────────────────────────┐
+│1 11 Misp│1 1 1 0 1 1 0 1 1 0 1│0 0 1 0 1 0 1 0 0 1 0 1 0 1 1 1│
+└─────────┴─────────────────────┴───────────────────────────────┘
+
+    chk←{
+        ⍵≡0 ⍺⍺ ⍺⍺ ⍵:'ok'
+        ' Error: compression round-trip fails'
+    }
+
+    packB chk⎕fmt notes.Marilyn       ⍝ simple text matrix
+ok
+
+    z←59975 + ¯0.13999999989755452 ¯0.13999999999941792 ¯0.14000000059604645
+
+    z ≡ 0 packB packB z     ⍝ check for ⎕CT problems
+1

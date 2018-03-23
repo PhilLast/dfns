@@ -1,0 +1,34 @@
+⍝ Binary Search Trees:
+
+⍝ These tests assume that the calling test (avl, splay, redblack) has defined
+⍝ put, rem and chk.
+
+    mk ← 0∘(put foldl)                  ⍝ make tree :: t ← ∇ (k v)[]
+
+    ∧/∧/¨⊃∘chk∘mk¨∘↓∘pmat¨⍳6            ⍝ insert all perms up to ⍳6
+1
+
+⍝ As chk is O(⍵), the time taken to run the test increases with the square of
+⍝ its argument.                                                     ¯¯¯¯¯¯
+
+    ⎕rl←3⊃⎕ts                           ⍝ daily random seed.
+
+    soak←{                              ⍝ soak-test insert/remove.
+        upd←{                           ⍝ insert/remove ⍵ random keys.
+            ⍬≡⍵:⍺                       ⍝ no more vals: finished.
+            next←⍺ ⍺⍺ ⊃⍵                ⍝ tree ⍺ with ⍵ inserted/removed.
+            ~⊃chk next:'! bad tree'     ⍝ bad tree: give up.
+            next ∇ 1↓⍵                  ⍝ try next value.
+        }
+        t←0 put upd ⍵?⍵                 ⍝ insert each ⍳⍵ in random order.
+        '!'≡⊃t:t                        ⍝ error: quit.
+        t rem upd ⍵?⍵                   ⍝ remove each ⍳⍵ in random order.
+    }
+
+    soak 100                            ⍝ reasonably large tree.
+0
+    (⍳256)≡vec mk 256?256               ⍝ vector from random tree.
+1
+    chk 0                               ⍝ stats for null tree.
+1 0 0 0
+⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝⍝ _BST returns:

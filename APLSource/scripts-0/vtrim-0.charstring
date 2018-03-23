@@ -1,0 +1,39 @@
+⍝ Trim trailing blanks from line-vector:
+
+      join←{↑⍺{⍺,⍺⍺,⍵}/⍵}               ⍝ ⍺-join vectors.
+      
+      nl←⎕ucs 13
+
+      text←nl join'Where Alph, the sacred river, ran  ' 'Through caverns measureless to man    ' '  Down to a sunless sea.           '
+
+      show←' ·'∘subs                    ⍝ Show text with '·'s for blanks.
+
+      show text                         ⍝ Text vector with trailing blanks.
+Where·Alph,·the·sacred·river,·ran··   
+Through·caverns·measureless·to·man····
+··Down·to·a·sunless·sea.···········   
+      ⍴text
+110
+
+      show vtrim text                   ⍝ Superfluous trailing blanks removed.
+Where·Alph,·the·sacred·river,·ran 
+Through·caverns·measureless·to·man
+··Down·to·a·sunless·sea.          
+      ⍴vtrim text
+93
+
+      text←nl join ' ' 'ok'             ⍝ first line all blanks.
+      show text
+· 
+ok
+      show vtrim text
+  
+ok
+      ''∘≡∘vtrim¨ '' ' ' '  '           ⍝ null cases.
+1 1 1
+
+      nl=vtrim 0 1 0 1 1 0 0 1 0 0\nl   ⍝ more null cases.
+1 1 1 1
+
+    0=⍴notes.({(~##.{⍵≡vtrim ⍵}∘⍎¨⍵)/⍵}↓⎕nl 2)     ⍝ Check all notes are trim.
+1

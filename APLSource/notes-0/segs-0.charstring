@@ -1,0 +1,45 @@
+vecs ← seps ##.segs vec                     ⍝ ⍺-separated segments of vector ⍵.
+
+Right argument [vec] is partitioned at items in left argument array  [seps].  In
+particular:
+
+- separator items are removed from each result segment.
+- adjacent separators in [vec] are treated as if only one had been present.
+
+These effects are illustrated by the following example:
+
+    wds ← ' '∘segs                      ⍝ blank-separated words.
+
+    wds 'ready steady      go'          ⍝ three words.
+┌─────┬──────┬──┐
+│ready│steady│go│
+└─────┴──────┴──┘
+
+Examples:
+
+    song ← 'Any old Iron, any old iron? Any old, any old, iron?'
+
+    '?'segs song
+┌──────────────────────────┬───────────────────────┐
+│Any old Iron, any old iron│ Any old, any old, iron│
+└──────────────────────────┴───────────────────────┘
+
+    ','segs¨ '?'segs song
+┌────────────────────────────┬─────────────────────────┐
+│┌────────────┬─────────────┐│┌────────┬────────┬─────┐│
+││Any old Iron│ any old iron│││ Any old│ any old│ iron││
+│└────────────┴─────────────┘│└────────┴────────┴─────┘│
+└────────────────────────────┴─────────────────────────┘
+
+    ' 'segs¨¨ ','segs¨ '?'segs song
+┌───────────────────────────────┬────────────────────────────┐
+│┌──────────────┬──────────────┐│┌─────────┬─────────┬──────┐│
+││┌───┬───┬────┐│┌───┬───┬────┐│││┌───┬───┐│┌───┬───┐│┌────┐││
+│││Any│old│Iron│││any│old│iron│││││Any│old│││any│old│││iron│││
+││└───┴───┴────┘│└───┴───┴────┘│││└───┴───┘│└───┴───┘│└────┘││
+│└──────────────┴──────────────┘│└─────────┴─────────┴──────┘│
+└───────────────────────────────┴────────────────────────────┘
+
+See also: words tokens
+
+Index:words|split|text

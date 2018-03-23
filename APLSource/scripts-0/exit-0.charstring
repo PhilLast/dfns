@@ -1,0 +1,4 @@
+⍝ Return to calling environment:
+
+    (⊂exit 0) ∊ '⎕OFF 0' ' 0'
+1

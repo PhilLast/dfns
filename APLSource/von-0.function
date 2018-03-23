@@ -1,0 +1,29 @@
+ von←{       ⍝ Capitalise first letters of names,
+            ⍝ (except for peculiarities).
+            ⍝ ⍺: (BiCapitalstarters)(Notbicapitalised)
+
+     (⎕IO ⎕ML)←1 3 ⋄ ⍺←''                                 ⍝ defaults
+     (pre not)←{0∊⍴⍵:'' '' ⋄ 3>≡⍵:⍵'' ⋄ ⍵}⍺               ⍝ BiCaps/nots
+     tx←lcase,⍵,' '                                       ⍝ start with lowercase
+
+     q←'ab af al an and ap as av da de dei della der di'  ⍝ noble
+     q,←' el ja la le och of the und van ver von zu y'    ⍝  prefixes
+     q←{' ',¨((⍵≠' ')⊂⍵),¨' '}q                           ⍝  embed with spaces
+
+     not,←' al-' ' c/o' ' d''' ' de''' ' el-' ' l''' ' s''' ' t'''  ⍝ special cases
+
+     ∆pre←{(-⍴⍺){⍵∨⍺⌽⍵}⍺⍷⍵}                               ⍝ bicap starts
+     ∆not←{∨⌿⊃(-⍳¯1+⍴⍺)⌽¨⊂⍺⍷⍵}                            ⍝ ..extinguisher
+
+     ∆fix←{                                               ⍝ fixer:
+         0∊⍴⍺:0                                           ⍝  no list
+         q←lcase¨{2>≡⍵:,⊂,⍵ ⋄ ⍵}⍺                         ⍝  force nested
+         1↓∊∨/q ⍺⍺¨⊂' ',⍵                                 ⍝  process each case
+     }
+
+     b←(¯1↓∊∨/q⍷¨⊂' ',tx)<1,¯2>/~tx∊' -:;.,!?''"/)('      ⍝ uppercase candidates
+     b∨←pre(∆pre ∆fix)tx                                  ⍝ DiCaprio
+     b>←not(∆not ∆fix)tx                                  ⍝ Dickens
+
+     (b/tx)←ucase b/tx ⋄ ¯1↓tx                            ⍝ put caps in place
+ }

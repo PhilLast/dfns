@@ -1,0 +1,44 @@
+ packT←{(⎕IO ⎕ML)←1 3                        ⍝ Simple text vector packager.
+
+     cmp←{
+         ec←{                                ⍝ find the suitable esc character
+             c←1⊃⎕AV ⋄ n←+/⍵=c ⋄ n=0:c
+             d←2⊃⎕AV ⋄ o←+/⍵=d ⋄ o=0:d
+             e←3⊃⎕AV ⋄ p←+/⍵=e ⋄ p=0:e
+             m←⌊/n o p ⋄ (c d e)[n o p⍳m]
+         },⍵
+
+         lv←1,2≠/,⍵ ⋄ e←ec=,⍵                ⍝ repeat lengths
+         ((e<¯1↓1 0 0 1⍷lv,1)/1⌽lv)←1        ⍝ remove 2's and 3's
+         ((e<¯1↓1 0 1⍷lv,1)/1⌽lv)←1          ⍝
+         ln←{¯2-/(⍵,1)/⍳1+⍴⍵}lv              ⍝ packables
+
+         (lv/lv)←1+⌊ln÷256                   ⍝ adjust for 256 length
+
+         ln←∊{⍵<257:⍵                        ⍝ now we have to adjust the long
+             q←256|⍵ ⋄ n←⌊⍵÷256              ⍝ sequences so that the last
+             {                               ⍝ sequence will be
+                 3<¯1↑⍵:⍵                    ⍝ properly done, ie:
+                 (¯2↓⍵),¯4 4+¯2↑⍵            ⍝   257 -> 252 5,
+             }(n/256),⍵-n×256                ⍝   NOT    256 1.
+         }¨ln
+
+         q←lv/,⍵                             ⍝ reduce data
+         b←(ln>3)∨{(↑⍵),2</⍵}q=ec            ⍝ find places where
+         (b/q)←(b/q){ec,⍺,⍵}¨⎕AV[b/ln]       ⍝  to put pack sequences
+         ec,∊q                               ⍝ remove nesting
+     }
+
+     exp←{
+         ec←↑⍵                               ⍝ "esc"
+         ~ec∊1↓⍵:1↓⍵                         ⍝ packed?
+
+         bv←{(↑⍵),2</⍵}1↓⍵=ec                ⍝ reduce vector
+         ln←~bv                              ⍝ lengths (remove escs)
+         ((¯2⌽bv)/ln)←0                      ⍝ remove ascs
+         ((¯1⌽bv)/ln)←⎕AV⍳(¯2⌽bv)/1↓⍵        ⍝ lengths of characters
+         ln/1↓⍵                              ⍝ do it!
+     }
+
+     ⍺←1 ⋄ ⍺:cmp ⍵ ⋄ exp ⍵                   ⍝ compress or expand.
+ }

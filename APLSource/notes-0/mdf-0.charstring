@@ -1,0 +1,94 @@
+report ← {larg} (dfn ##.mdf) rarg           ⍝ Monitor D function.
+
+Mdf applies its operand D function to (or between) its argument(s) then displays
+the  function  with  a count of the number of times each line was executed. This
+output  is  a useful indication of the "hot spots" in the subject function where
+it might pay to review the code in order to improve overall performance.
+
+Bugs:
+
+The  subject  operand  function  may not be more exotic than a named simple dfn.
+In particular, it may not be:
+
+    A derived function as in:
+
+        foo¨mdf 0
+        foo∘goo mdf 0
+        foo mdf mdf 0
+
+    An unnamed function such as:
+
+         {⍵ ⍵}mdf 0
+
+Examples:
+
+⍝ Monitored application of various functions:
+
+      osc mdf 27
+112 osc←{               ⍝ Oscillate - probably returns 1.
+112     1=⍵:1
+111     2|⍵:∇ 1+3×⍵
+ 70         ∇ ⍵÷2
+  0 }
+
+      105 gcd mdf 330
+4 gcd←{       ⍝ Greatest common divisor.
+4     ⍵=0:⍺
+3     ⍵ ∇ ⍵|⍺
+0 }
+
+      sieve mdf 2 to 100
+5 sieve←{             ⍝ Sieve of Eratosthenes.
+5     ⍺←⍬             ⍝ Default no primes yet.
+5     nxt←1↑⍵         ⍝ Next prime, and
+5     msk←×nxt|⍵      ⍝ ... mask of non-multiples.
+5     ∧/1↓msk:⍺,⍵     ⍝ All non multiples - finished.
+4     (⍺,nxt)∇ msk/⍵  ⍝ Sieve remainder.
+0 }
+
+      queens mdf 8
+  1 queens←{⎕ML ⎕IO←0                   ⍝ The N-queens problem.
+  1
+  1     search←{                        ⍝ Search for all solutions.
+863         (⊂⍬)∊⍵:0⍴⊂⍬                 ⍝ stitched: abandon this branch.
+583         0=⍴⍵:rmdups ⍺               ⍝ all done: solution!
+537         hd tl←(⊃⍵)(1↓⍵)             ⍝ head 'n tail of remaining ranks.
+537         next←⍺∘,¨hd                 ⍝ possible next steps.
+537         rems←hd free¨⊂tl            ⍝ unchecked squares.
+537         ↑,/next ∇¨rems              ⍝ ... in following ranks.
+  0     }
+  1
+  1     cvex←(1+⍳⍵)×⊂¯1 0 1             ⍝ Checking vectors.
+  1
+  1     free←{⍵~¨⍺+(⍴⍵)↑cvex}           ⍝ Unchecked squares.
+  1
+  1     rmdups←{                        ⍝ Ignore duplicate solution.
+ 46         rots←{{⍒⍵}\4/⊂⍵}            ⍝ 4 rotations.
+ 46         refs←{{⍋⍵}\2/⊂⍵}            ⍝ 2 reflections.
+ 46         best←{(⊃⍋↑⍵)⊃⍵}             ⍝ best (=lowest) solution.
+ 46         all8←,↑refs¨rots ⍵          ⍝ all 8 orientations.
+ 46         (⍵≡best all8)⊃⍬(,⊂⍵)        ⍝ ignore if not best.
+  0     }
+  1
+  1     fmt←{                           ⍝ Format solution.
+  1         chars←'·⍟'[(↑⍵)∘.=⍳⍺]       ⍝ char array of placed queens.
+  1         expd←1↓,↑⍺⍴⊂0 1             ⍝ expansion mask.
+  1         ↑¨↓↓expd\chars              ⍝ vector of char matrices.
+  0     }
+  1
+  1     squares←(⊂⍳⌈⍵÷2),1↓⍵⍴⊂⍳⍵        ⍝ initial squares
+  1
+  1     ⍵ fmt ⍬ search squares          ⍝ all distinct solutions.
+  0 }
+
+      3 ack mdf 3                       ⍝ Ackermann's function.
+2432 ack←{
+2432     ⍺=0:⍵+1
+1244     ⍵=0:(⍺-1)∇ 1
+1187         (⍺-1)∇ ⍺ ∇ ⍵-1
+   0 }
+
+See also: ticks cmpx time
+
+Index:performance|monitor|timing|name-clash problem|Ackermann's function
+Index;Ackermann W.

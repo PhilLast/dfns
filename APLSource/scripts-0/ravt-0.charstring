@@ -1,0 +1,14 @@
+⍝ Generic tree traversal: visits node _after_ sub-nodes:
+
+    {}'t.r' 't.a' 't.v'⎕ns¨⊂''      ⍝ make some spaces.
+
+    subs ← {⍵.(1↓⍎¨'#',↓⎕nl 9)}     ⍝ sub-namespaces for space ⍵.
+
+    accm ← {⍺+1}                    ⍝ counting namespaces.
+    0 accm ravt subs t              ⍝ number of spaces.
+4
+    accm ← ,                        ⍝ accumulating into a vector.
+    vec ← ⍬ accm ravt subs t        ⍝ sub-nodes first:
+
+    vec ≡ t.a t.r t.v t             ⍝ check match.
+1

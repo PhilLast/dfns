@@ -1,0 +1,75 @@
+i ← bits ##.int u                           ⍝ Signed from unsigned integers.
+u ← bits ##.uns i                           ⍝ Unsigned from signed integers.
+
+These  little  functions  "cast"  between  signed and unsigned integers. This is
+sometimes useful when dealing with native files. Note that as all of the primit-
+ive  functions  used  in  the  coding are pervasive, they-just-work on arrays of
+higher rank and depth.
+
+Technical notes:
+
+For 8-bit (type 83) integers, the functions may be simplified to:
+
+    uns←{256|⍵}                             ⍝ unsigned from signed byte.
+
+    int←{¯128+256|128+⍵}                    ⍝ signed from unsigned byte.
+
+and for 16-bit short (type 163) integers, to:
+
+    uns←{65536|⍵}                           ⍝ unsigned from 16-bit signed.
+
+    int←{¯32768+65536|32768+⍵}              ⍝ signed from 16-bit unsigned.
+
+Thus, in general we have:
+
+    uns←{(2*⍺)|⍵}                           ⍝ unsigned from ⍺-bit signed.
+
+    int←{↑⍵{(⍺|⍵+⍺⍺)-⍵}/2*⍺-0 1}            ⍝ signed from ⍺-bit unsigned.
+
+Examples:
+
+    8 uns ¯3 to 3                           ⍝ 8-bit unsigned.
+253 254 255 0 1 2 3
+
+    16 uns ¯3 to 3                          ⍝ 16-bit unsigned.
+65533 65534 65535 0 1 2 3
+
+    12 uns ¯3 to 3                          ⍝ 12-bit unsigned.
+4093 4094 4095 0 1 2 3
+
+    8 int 8 uns ¯3 to 3                     ⍝ 8-bit round trip.
+¯3 ¯2 ¯1 0 1 2 3
+
+    16 int 16 uns ¯3 to 3                   ⍝ 16-bit round trip.
+¯3 ¯2 ¯1 0 1 2 3
+
+    12 int 12 uns ¯3 to 3                   ⍝ 12-bit round trip.
+¯3 ¯2 ¯1 0 1 2 3
+
+    4 hex 16 uns ¯3 to 3                    ⍝ hex of uns ...
+ fffd  fffe  ffff  0000  0001  0002  0003
+    4 hex ¯3 to 3                           ⍝ ... same as hex of int.
+ fffd  fffe  ffff  0000  0001  0002  0003
+
+    8 uns 8 int  2 3 4⍴256-⍳24              ⍝ ok for higher rank arrays.
+255 254 253 252
+251 250 249 248
+247 246 245 244
+
+243 242 241 240
+239 238 237 236
+235 234 233 232
+
+    8 int 8 uns ↑,∘⊂/-⍳5                    ⍝ ok for nested arrays.
+┌──┬───────────────┐
+│¯1│┌──┬──────────┐│
+│  ││¯2│┌──┬─────┐││
+│  ││  ││¯3│¯4 ¯5│││
+│  ││  │└──┴─────┘││
+│  │└──┴──────────┘│
+└──┴───────────────┘
+
+See also: hex
+
+Index:type conversion|unsigned|integer|pervasive function|native file|cast
+Index:array, nested

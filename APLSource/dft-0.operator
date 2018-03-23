@@ -1,0 +1,100 @@
+ dft←{⎕IO ⎕ML←0 1                            ⍝ Display of function tree.
+
+     trav←{                                  ⍝ traverse, accumulating subtrees.
+         ~(,¨2 3)∨.≡⊂⍴⍵:leaf ⍵               ⍝ not a derv or train: done.
+         '['≡1⊃⍵:∇(⊃⍵)('[',(⍕2⊃⍵),']')       ⍝ axis: special treatment
+         isop 1⊃⍵:{                          ⍝ derived fn:
+             2=⍴⍵:mop ⍵                      ⍝ monadic operator
+             3=⍴⍵:dop ⍵                      ⍝ dyadic operator.
+         }∇¨⍵                                ⍝ formatted subtrees.
+         isfn⊃⌽⍵:train ∇¨⍵                   ⍝ train:
+         leaf ⍵                              ⍝ neither: give up.
+     }
+
+     train←{                                 ⍝ function train.
+         subs←↑mesh/⍵                        ⍝ enmeshed subtrees.
+         tops←apts⊃↓subs                     ⍝ anchor points.
+         jpts←mid⍣(2=+/tops),tops            ⍝ joining points.
+         xvec←{(3×⍵)++\⍵}jpts                ⍝ character index vector.
+         deco←(¯2+⍴⍵)⊃' ── ┌┴┐ ' ' ── ┌┼┐ '  ⍝ plumbing chars.
+         (xvec⊃¨⊂deco)⍪subs                  ⍝ subtree matrix.
+     }
+
+     mop←{                                   ⍝ operator with one operand.
+         land oper←↓¨⍵                       ⍝ derived function components.
+         tab←+/∧\(⊃land)∊' ┌─┐'              ⍝ indentation for top line.
+         leg←dog×⌈spread÷2                   ⍝ length of dog-leg.
+         pad←(tab+dog+leg)/' '               ⍝ padding for operator.
+         topr←pad∘,¨oper                     ⍝ tabbed operator.
+         deco←dog⊃' │  ' ' ┌─┘'              ⍝ plumbing chars.
+         join←tab 1 leg dog/deco             ⍝ dog-leg or straight join.
+         ↑(topr,↓join),land                  ⍝ subtree matrix.
+     }
+
+     dop←{                                   ⍝ operator with two operands.
+         land oper rand←⍵                    ⍝ derived function components.
+         subs←land mesh rand                 ⍝ merged subtrees.
+         tops←mid apts⊃↓subs                 ⍝ anchor points.
+         xvec←{(3×⍵)++\⍵}tops                ⍝ character index vector.
+         head←xvec⊃¨⊂' ── ┌┴┐ '              ⍝ forked subtree joiner.
+         otab←(head⍳'┴')/' '                 ⍝ operator padding.
+         ↑(otab∘,¨↓oper),↓head⍪subs          ⍝ subtree matrix.
+     }
+
+     mesh←{                                  ⍝ meshed left and right subtrees.
+         lbr rbr←⊂[1 2]↑(⌽⍺)⍵                ⍝ sub branches with same no of rows.
+         lft rgt←{+/∧\' '=⍵}¨lbr rbr         ⍝ left and rgt adjacent blanks.
+         sep←⌊/lft+rgt                       ⍝ narrowest separation.
+         dpl←lft⌊sep                         ⍝ chars to drop from left subtree.
+         dpr←0⌈sep-dpl                       ⍝   ..      ..      right   ..
+         lvec←⌽¨dpl↓¨↓lbr                    ⍝ left rows.
+         rvec←dpr↓¨(spread/' ')∘,¨↓rbr       ⍝ right rows, padded with min gap.
+         trim←{(~∧\∧⌿⍵=' ')/⍵}               ⍝ trim off outer blank cols.
+         ⌽trim⌽trim↑lvec,¨rvec               ⍝ meshed subtrees.
+     }
+
+     leaf←{                                  ⍝ format leaf.
+         1∊'←{'⍷⊃↓⍵:∇↑noname↓⍵               ⍝ dfn without name.
+         dots←{(⍵⍳⍺)⊃¨⊂⍵,'·'}                ⍝ dots for blanks.
+         {⍵ dots(,⍵)~' '}⎕FMT ⍵              ⍝ char matrix.
+     }
+
+     noname←{                                ⍝ without dfn name.
+         a←⊃⍵                                ⍝ first line.
+         x←a⍳'{'                             ⍝ length of 'name←'.
+         ~'⍝'∊a:(⊂x↓a),1↓⍵                   ⍝ no comment: without name.
+         c←a⍳'⍝'                             ⍝ position of line[0] comment.
+         d←x↓(c↑a),(x⍴' '),c↓a               ⍝ name← removed, comment adjusted.
+         (⊂d),1↓⍵
+     }
+
+     isfn←{                                  ⍝ is function?
+         0=≡⍵:⍵∊pfns                         ⍝ primitive function:
+         dfnop ⍵:1                           ⍝ dfn:
+         ~(,¨2 3)∨.≡⊂⍴⍵:0                    ⍝ not a derv or train.
+         isop 1⊃⍵:1                          ⍝ derv.
+         ∇⊃⌽⍵                                ⍝ derv or train.
+     }
+
+     isop←{                                  ⍝ is operator?
+         (⊂⍵)∊pops:1                         ⍝ primitive operator:
+         ']['≡2↑¯1⌽⍵:1                       ⍝ axis: [1 2 ..]
+         ~dfnop ⍵:0                          ⍝ not a d-op:
+         1∊↑'⍺⍺' '⍵⍵'⍷¨⊂⍵                    ⍝ is a d-op.
+     }
+
+     mid←{⍵∨(⍳⍴⍵){⍺=⌊(+/⍵/⍺)÷2}⍵}            ⍝ mask with midpoint
+     trim←{⍵-¯1⌽1 1⍷⍵}⍣≡                     ⍝ for ('abc',)
+     apts←trim∘(~∘(∊∘' ┌─┐'))                ⍝ anchor points for sub-trees.
+     dfnop←{'}'≡⊃⌽~∘' ',⍵}                   ⍝ dfn or dop
+
+     pops←'/\⌿⍀.¨∘⍨&⍣['                      ⍝ primitive ops.
+     pf0←'+-×÷⌊⌈|*⍟<≤=≥>≠∨∧⍱⍲!?~○'           ⍝ primitive fns (scalar).
+     pf1←'⊢⊣⌷/⌿\⍀∊⍴↑↓⍳⊂⊃∩∪⊥⊤,⍒⍋⍉⌽⊖⌹⍕⍎⍪≡≢⍷'   ⍝ primitive fns (other).
+     pfns←pf0,pf1                            ⍝ primitive fns.
+
+     spread←1⌈⍵                              ⍝ horizontal spread.
+     ⍺←1 ⋄ dog←⍺                             ⍝ dog-leg for monadic operators.
+
+     fn←⍺⍺ ⋄ trav ⎕CR'fn'                    ⍝ display of function tree.
+ }

@@ -1,0 +1,4 @@
+ up←{                ⍝ Ref to ⍵-parent of space ⍺.
+     ⍺←⎕THIS         ⍝ default current space.
+     {⍵.##}⍣⍵⊢⍺      ⍝ up ⍵ generations.
+ }

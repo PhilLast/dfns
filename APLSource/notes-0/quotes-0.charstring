@@ -1,0 +1,11 @@
+KDF9 Manual, 1961
+-----------------
+KDF9 is the acme of advanced thought and design in electronic computers; nowhere
+is this more true than in the design of the nesting store which combines maximum
+ecomony in programming with maximum operating speed.
+
+A nesting store is, in effect, a series of sixteen registers holding a column of
+items of data, with the rule that an incoming item joins the column at  the  top
+and causes all the items alreadv present to move down one  place.  Similarly, an
+item can be transferred out of the column only from the top, and when this happ-
+ens all the remaining items move up one place.

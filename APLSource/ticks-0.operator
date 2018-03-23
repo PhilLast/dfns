@@ -1,0 +1,115 @@
+ ticks←{                                     ⍝ Sample Dfn execution clock ticks.
+
+    ⍝---------------------- entry / exit monitor code.
+
+     ⍙_←{⎕IO←0                               ⍝ line entry monitor
+         ⍵{                                  ⍝ ⍵ is line number.
+             ⍙_t[1+⍙_l]+←⍵-⍙_m               ⍝ increment time for line.
+             ⍙_e[1+⍙_l]+←⍵≠⍙_m               ⍝ increment entry call count.
+             ⍙_n[1+⍺]+←⍺≠⍙_l                 ⍝ increment line hits.
+             0⊣⍙_m ⍙_l∘←⍵ ⍺                    ⍝ save time and current line number.
+         }1⊃⎕AI                              ⍝ time now.
+     }
+
+     _⍙←{⎕IO←0                               ⍝ line exit monitor
+         ⍵⊣⍺{                                ⍝ pass back result of line
+             ⍙_t[1+⍺]+←⍵-⍙_m                 ⍝ increment time for line.
+             ⍙_x[1+⍺]+←⍵≠⍙_m                 ⍝ increment exit call count.
+             ⊢⍙_m ⍙_l∘←⍵,2⊃⎕LC                  ⍝ save time and current line number.
+         }1⊃⎕AI                              ⍝ time now.
+     }
+
+    ⍝---------------------- fix function "⍙_f" with embedded monitoring code:
+
+     ⍙_f←⍺⍺                                  ⍝ rename operand function.
+
+     2≠≡⎕NR'⍙_f':'bad operand'⎕SIGNAL 11     ⍝ perhaps a derived fn?
+
+     ⍙_s←⎕NR{                                ⍝ source of,
+         ⎕IO⊃⍵/⍨(1↓⎕NR'⍙_f')∘{               ⍝ function whose trailing lines,
+             ⍺≡1↓⎕NR ⍵                       ⍝ match those of operand function.
+         }¨⍵                                 ⍝ for each function,
+     }(~∘' '¨↓⎕NL 3)~⊂'⍙_f'                  ⍝ in namespace.
+
+     0⊣⎕FX(-∘⎕IO⍳⍴⎕NR'⍙_f'){⎕IO ⎕ML←0 1      ⍝ fix function with monitor code.
+         rmqt←{(~≠\''''=⍵){⍺\⍺/⍵}⍵}          ⍝ ignore quoted strings.
+         rmcm←{(1,¯1↓∧\⍵≠'⍝'){⍺\⍺/⍵}⍵}       ⍝ ignore comments.
+         subs←{                              ⍝ subs mon expr for ⊣⍵ ⍺⊣.
+             to fm←⍺                         ⍝ [to/fm]⍵
+             mask←1,1↓(-⍴fm){⍵∨⍺⌽⍵}fm⍷⍵      ⍝ fm string breaks.
+             ↑,/{(fm≡⍵)⊃⍵ to}¨mask⊂⍵         ⍝ to for fm in ⍵.
+         }
+         toks←rmcm rmqt ⍵,' '                ⍝ active tokens.
+         ⍺{
+             emon←'⍙_ ',⍕⍺                   ⍝ entry monitor ⍙_ n.
+             xmon←(⍕⍺),' _⍙ '                ⍝ exit monitor n _⍙.
+             esub←(emon,':')'⊣⍵'             ⍝ entry monitor subs.
+             xsub←xmon'⍺⊣'                   ⍝ exit monitor subs.
+             line←↑subs/esub xsub ⍵          ⍝ monitor substitution.
+             '⍙_f←{'{⍺≡(⍴⍺)↑⍵}⍵:line         ⍝ first line: done
+             ' ⍙_ ',(⍕⍺),': ⋄',line          ⍝ montior entry for each line.
+         }↑,/{                               ⍝ raw token segments.
+             ' '∧.=⍵:⍵                       ⍝ ignore blank segment.
+             '{'=⊃⌽⍵:⍵,'⊣⍵⋄'                 ⍝ definition: entry (and exit) code.
+             ∧/⍵∊' ⍝':⍵                      ⍝ ignore comment line.
+             ':'=⊃⌽⍵:⍵                       ⍝ ignore guard.
+             ((~'←'∊rmcm ⍵)/'⍺⊣'),⍵          ⍝ local defn or rslt expression.
+         }¨(1,¯1↓toks∊':⋄{⍝')⊂⍵,' '          ⍝ each guard/diamond/defn/comment.
+     }¨⎕NR'⍙_f':                             ⍝ each line in subject function.
+
+    ⍝---------------------- determine time for 1000 clock ticks.
+
+     ⍙_m ⍙_q←{                               ⍝ start and stop time.
+         ai←⍬⍴1↓⎕AI                          ⍝ time now.
+         ⍵=ai:∇ ⍵                            ⍝ no ticks: continue.
+         ai+0 1000×ai-⍵                      ⍝ time now and 1000 ticks later.
+     }⍬⍴1↓⎕AI                                ⍝ time now.
+
+    ⍝---------------------- exercise function "⍙_f" for 1000 clock ticks.
+
+     ⍙_n ⍙_e ⍙_x ⍙_t←⊂0,0⊣¨⍙_s               ⍝ initial counts.
+     ⍙_l←0                                   ⍝ local line.
+
+     ⍺←⊢ ⋄ ⍙_a←⍺                             ⍝ left arg or id fn.
+
+     ⍙_z←{                                   ⍝ exercise function for 1000 ticks.
+         ⍙_l←¯1                              ⍝ initial previous line.
+         ⍙_n[⎕IO]+←1                         ⍝ increment loops counter.
+         ⍙_z←⍎'⍙_a ⍙_f ⍵'                    ⍝ execute monadic function.
+         ⍙_m≥⍙_q:⍙_z                         ⍝ time up: quit.
+         ∇ ⍵                                 ⍝ time to spare: go round again.
+     }⍵
+
+     ⎕IO ⎕ML←0                               ⍝ now safe to set local envt.
+
+     tvec evec xvec←1↓¨⍙_t ⍙_e ⍙_x           ⍝ save time and entry/exit counts.
+     hits←1↓⍙_n÷⊃⍙_n                         ⍝ line hits.
+
+    ⍝---------------------- calculate entry / exit monitor code overhead time.
+
+     ⍙_t ⍙_e ⍙_x←⊂0⊣¨⍙_s                     ⍝ reset counters.
+     ⍙_l←0                                   ⍝ reset last line.
+
+     pref←'(1⊃⎕AI){0=⍵:(1⊃⎕AI)-⍺ ⋄'          ⍝ code preface.
+     loop←' ⍺ ∇ '                            ⍝ recursive loop.
+     post←' ⍵-1}+/'                          ⍝ code postscript.
+     emon←'⍙_ 0: ⋄'                          ⍝ entry monitor code.
+     xmon←' 0 _⍙ '                           ⍝ exit monitor code.
+
+     lcode←pref,loop,post,'evec,xvec'        ⍝ raw loop.
+     ecode←pref,emon,loop,post,'evec'        ⍝ loop with entry monitor.
+     xcode←pref,loop,xmon,post,'xvec'        ⍝ loop with exit monitor.
+
+     ltime←⍎lcode                            ⍝ raw loop time.
+     extime←⍎¨ecode xcode                    ⍝ entry / exit monitor time.
+     netts←extime×1-ltime÷+/extime           ⍝ nett entry and exit time.
+     unit←{⍵÷+/⍵}                            ⍝ adjust to unit sum.
+     ohead←netts×unit¨evec xvec              ⍝ entry and exit overhead per line.
+
+    ⍝---------------------- display monitor stats; return shy result.
+
+     pcent←⌊0.5+100×unit tvec-↑+/ohead       ⍝ approx percentage time per line.
+     trim←{r c←⍴⍵ ⋄ (r,c⌊⎕PW)↑⍵}             ⍝ trim to ⎕pw cols.
+     ⎕←trim ⎕FMT hits,pcent,' ',↑⍙_s         ⍝ display monitor information.
+     1:shy←⍙_z                               ⍝ return shy result.
+ }

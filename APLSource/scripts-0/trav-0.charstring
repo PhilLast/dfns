@@ -1,0 +1,89 @@
+⍝ Generic tree traversal:
+
+    {}'t.r' 't.a' 't.v'⎕ns¨⊂''      ⍝ make some spaces.
+    
+    subs ← {⍵.(1↓⍎¨'0',↓⎕nl 9)}     ⍝ sub-namespaces for space ⍵.
+
+    accm ← {⍺+1}                    ⍝ counting namespaces.
+    0 accm trav subs t              ⍝ number of spaces.
+4
+    accm ← ,                        ⍝ accumulating into a vector.
+    vec ← ⍬ accm trav subs t        ⍝ vector of spaces.
+
+    vec ≡ t t.a t.r t.v             ⍝ check match.
+1
+    subs ← {⍵.(1↓⍎¨'0',↓⎕nl 9)~⍺}   ⍝ sub-namespaces with cycle-buster.
+
+    t.a.t ← t                       ⍝ introduce cycle: t → t.a → t.a.t → t
+
+    vec ≡ ⍬ accm trav subs t        ⍝ cycle ignored.
+1
+
+⍝ A nested array may be                             ┌─┴─┐
+⍝ considered a tree with            (1 2)(3 4) ←→  ┌┴┐ ┌┴┐
+⍝ depth-0 items as leaves:                         1 2 3 4
+
+    subs ← {(0≠≡⍵)/⍵}               ⍝ sub-items of array ⍵.
+
+    accm ← {⍺+1}                    ⍝ counting nodes.
+    0 accm trav subs (1 2)(3 4)     ⍝ node-count
+7
+
+    accm ← {⍺,(0=≡⍵)/⍵}             ⍝ accumulating simple scalars
+    ⍬ accm trav subs 'ab'('cd' 'e') ⍝ enlist
+abcde
+
+⍝ simpler coding if accumulator is on the right:
+
+    vart←{                          ⍝ commuted version of trav,
+        ⊃∇/(⍵⍵ ⍺),⊂⍺ ⍺⍺ ⍵           ⍝ ... give simpler coding.
+    }
+
+    accm←{⍵,⍨(0=≡⍺)/⍺}              ⍝ accumulating simple scalars
+
+    'ab'('cd' 'e')accm vart subs ⍬  ⍝ enlist
+abcde
+
+    gcd ← ⊢ trav {|⍵-⍺~0}           ⍝ Euclid's GCD.
+
+    (2×3×5) gcd (5×7×11)            ⍝ cf: 30∨385
+5
+
+    osc ← {(⍵≠1)/(2|⍵)+⍵×0.5+2.5×2|⍵}   ⍝ next term in osc fn.
+
+    ⍬ , trav osc 11                 ⍝ osc sequence
+11 34 17 52 26 13 40 20 10 5 16 8 4 2 1
+
+    0 {⍺+⍵=1} trav {(⍵-1 2)~¯1 ¯2} ¨ 0 to 10        ⍝ fibonacci sequence
+0 1 1 2 3 5 8 13 21 34 55
+
+    bftrav←{⎕ML←0           ⍝ Generic breadth-first tree traversal.
+        ⍺ ⍺⍺{
+            0=⍴⍵:⍺
+            (⍺ ⍺⍺⊃⍵)∇(1↓⍵),(⍺ ⍵⍵⊃⍵)
+        }⍵⍵,⊂⍵
+    }
+
+    subs ← {⍵.(1↓⍎¨'0',↓⎕nl 9)}             ⍝ sub-namespaces for space ⍵.
+
+    {}⎕ex't'                                ⍝ remove old tree.
+
+    {} 't.r.r' 't.a.a' 't.v.v' ⎕ns¨ ⊂''     ⍝ create new tree.
+
+    vec ← t t.a t.r t.v t.a.a t.r.r t.v.v   ⍝ vector of spaces in
+
+    vec ≡ ⍬ ,bftrav subs t                  ⍝ ... breadth-first order.
+1
+
+⍝ N-queens problem:
+
+    accm ← {⍺,(⍺⍺=⍴⍵)/⊂⍵}       ⍝ accumulated leaves.
+
+    subs←{⎕io←1                 ⍝ possible placements          \|/\  | \/| /
+        dd←⌽⍳⍴⍵                 ⍝ diagonal                      ⍟  \ | /\|/
+        ak←(⍵-dd),⍵,(⍵+dd)      ⍝ attacked cols in next row :       \|/  ⍟
+        ⍵∘,¨(⍳⍺⍺)~ak            ⍝ subnodes                           ⍟
+    }
+
+    ⍬(4 accm)trav(4 subs)⍬      ⍝ 4-queens solutions vector.
+ 2 4 1 3  3 1 4 2 

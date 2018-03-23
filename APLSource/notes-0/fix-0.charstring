@@ -1,0 +1,66 @@
+{name} ← ##.fix rep                         ⍝ Fix function/operator rep.
+
+Fixes  the function or operator from its [rep]resentation. The name of the fixed
+function is returned as a shy result.
+
+Technical note:
+
+[fix]  uses  a technique suggested by Maurice Jordan for re-establishing the ⎕or
+of a function. It works as follows:
+
+Taking the ⎕or of a function is fast because it doesn't do anything! A _pointer_
+to  the  function  is  marked as _value_, rather than _function_ in the parser's
+internal  state. This  causes a name assigned to the value to have a class of 2,
+rather  than  3.  Conversely, the ⎕fx of a ⎕or is fast because the parser merely
+marks the pointer as _function_.
+
+A  D-  (or  traditionally  defined) _operator_ may be given either an array or a
+function  as operand. On receipt of an operand, the operator looks at the inter-
+nal  structure  of  the value  passed and allocates a name class accordingly. If
+the  operator  receives the ⎕or of a function as operand, it deduces that it has
+been  passed  a function and sets the class (of ⍺⍺, in the case of a d:op) to 3.
+Maurice's traditionally defined operator looked like this:
+
+        ∇ Z←(QOR APPLY)A    ⍝ Apply ⎕OR of function to A
+    [1]   Z←QOR A
+        ∇
+
+In  the  case  of  a derived function, [fix] passes the ⎕or as _operand_ and the
+[name]  as  _argument_, to an inner operator. Notice that as ⍺⍺ is quoted in the
+argument  to  ⍎  that is used to effect the assignment, a dummy, unvisited ⍺⍺ is
+placed  on the following line. This is in order to force the enclosing {}s to be
+an operator and so receive the ⎕or as left operand, rather than left argument.
+
+        fix←{                   ⍝ Fix function/operator rep.
+            ···
+            ⍺{                  ⍝ ⎕or (operand to inner operator).
+                ⍎⍵,'←⍺⍺ ···'    ⍝ name derived/primitive/system function.
+                ⍺⍺              ⍝ (dummy ⍺⍺ forces class).
+            }⍵                  ⍝ name for assignment.
+            ···
+        }
+
+Example:
+
+    vec                         ⍝ vector of function reps.
+┌──────┬──────┬──────────┐
+│ ∇tfn │ ∇dfn │┌───┬────┐│
+│      │      ││afn│ ×/ ││
+│      │      │└───┴────┘│
+└──────┴──────┴─────────→┘
+
+    fix¨vec                     ⍝ fix functions.
+
+    ⎕cr¨'afn' 'dfn' 'tfn'       ⍝ function 'source'.
+┌──┬─────────┬─────┐
+│×/│dfn←{3↑⍵}│z←tfn│
+│  │         │z←⎕TS│
+└──┴─────────┴─────┘
+
+      afn dfn tfn                   ⍝ test functions.
+600300
+
+See also: rep
+
+Index:function, fix
+Index;Jordan M.

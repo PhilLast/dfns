@@ -1,0 +1,5 @@
+ segs←{⎕ML←1                 ⍝ ⍺-separated segments of vector ⍵.
+     pre←(1↑⍺),⍵             ⍝ ⍺-introduced first segment.
+     vex←1↓¨(pre∊⍺)⊂pre      ⍝ ⍺-segments.
+     vex~0⍴¨⊂⍺               ⍝ without null segments.
+ }

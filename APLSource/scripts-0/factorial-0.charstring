@@ -1,0 +1,6 @@
+⍝ Tail recursive factorial:
+
+      ⎕io←1
+
+      factorial¨⍳10
+1 2 6 24 120 720 5040 40320 362880 3628800

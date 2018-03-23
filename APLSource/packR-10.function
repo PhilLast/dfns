@@ -1,0 +1,17 @@
+ packR←{                             ⍝ Run Length Encoding (RLE packing).
+
+     cmp←{                           ⍝ compress:
+         shape←⍴⍵ ⋄ vect←,⍵          ⍝ shape and items of array.
+         runs←1,2≠/vect              ⍝ mask of start of runs.
+         repls←¯2-/{⍵/⍳⍴⍵}runs,1     ⍝ replication count.
+         solos←runs/vect             ⍝ non-repeated items.
+         shape repls solos           ⍝ compressed structure.
+     }
+
+     exp←{                           ⍝ expand:
+         shape repls solos←⍵         ⍝ compressed structure.
+         shape⍴repls/solos           ⍝ reconstituted array.
+     }
+
+     ⍺←1 ⋄ ⍺:cmp ⍵ ⋄ exp ⍵           ⍝ compress or expand.
+ }

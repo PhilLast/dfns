@@ -1,0 +1,16 @@
+ time←{                                  ⍝ Time function application.
+     tfmt←{                              ⍝ elapsed time format hh:mm:ss.cc
+         csec←{⌊0.5+0.1×⍵-⍺}             ⍝ elapsed centi-seconds.
+         tvec←{0 60 60 100⊤⍵}            ⍝ time vector: hours mins secs centi.
+         pair←{(-2⌈⍴⍵)↑'0',⍵}∘⍕          ⍝ 2-digit time unit.
+         sepr←{1↓↑,/':::.',¨⍵}           ⍝ ':' or '.' separated pairs.
+         trim←{(~{⌽∨\⌽⍵}¯2⌽'00:'⍷⍵)/⍵}   ⍝ leading 00:s removed.
+         trim sepr pair¨tvec ⍺ csec ⍵    ⍝ hh:mm:ss.cc
+     }
+     0::(,↑⍬⍴⎕DM)⎕SIGNAL ⎕EN             ⍝ catchall: pass back error.
+     fm←⍬⍴2↓⎕AI                          ⍝ start time.
+     6::{}⎕←fm tfmt ⍬⍴2↓⎕AI              ⍝ value error: fn didn't return result.
+     ⍺←⊢ ⋄ rslt←⍺ ⍺⍺ ⍵                   ⍝ apply function.
+     ⎕←fm tfmt ⍬⍴2↓⎕AI                   ⍝ display elapsed time.
+     1:shy←rslt                          ⍝ pass on shy result.
+ }

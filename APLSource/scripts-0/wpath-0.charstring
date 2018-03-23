@@ -1,0 +1,82 @@
+    Alpha test'wGraphs'
+1
+    ⍝ Mike's cases:
+
+    ⍝   A───2──→B
+    ⍝   │       │
+    ⍝   3       1
+    ⍝   ↓       ↓
+    ⍝   C───2──→D
+
+    md1←,¨↑ ((2 3)4 4 ⍬) ((2 3)1 2 ⍬)
+          ⍝   A   B C D /  A   B C D
+
+    1 disp md1
+┌→──┬─┬─┬─┐
+↓2 3│4│4│0│
+├~─→┼→┼→┼⊖┤
+│2 3│1│2│0│
+└~─→┴→┴→┴⊖┘
+
+    md1 wpath 1 4       ⍝ path from A to D.
+1 2 4
+
+    ⍝   ┌───2───B───2───┐
+    ⍝   │               │
+    ⍝   ↑               ↓
+    ⍝   │               │
+    ⍝   A───2──→C───1──→E
+    ⍝   │               │
+    ⍝   ↓               ↑
+    ⍝   │               │
+    ⍝   └───2───D───2───┘
+
+    md2←,¨↑((2 3 4) 5 5 5 ⍬) ((2 2 2)2 1 2 ⍬)
+          ⍝  A      B C D E /  A     B C D E
+
+    md2 wpath 1 5       ⍝ path from A to E.
+1 3 5
+
+    mattographa←{⎕ML←0
+        i←{⍵⍴⍳×/⍵}⍴⍵
+        max←1+⌈/,i
+        ⍺←1 1 1 1           ⍝ if up left right down
+        addlink←{
+            1 1↓¯1 ¯1↓⍺{
+                ⍺=0:⍵
+                ⍺=1:¯1⊖⍵
+                ⍺=2:¯1⌽⍵
+                ⍺=3:1⌽⍵
+                ⍺=4:1⊖⍵
+            }⍵
+        }
+        op←⍺/⍳4
+        w←max,max,⍨max⍪max⍪⍨i
+        links←,{⍵/⍨⍵<max}¨↓[⎕IO]↑op addlink¨⊂w
+        costs←links{⍺⊃¨⊂⍵}¨⊂,⍵
+        links←(⊂⊂¨,i)⍳¨⊂¨¨links
+        ↑links costs
+    }
+
+    small←0 5⍴0
+
+    small ⍪← 131 673 234 103  18
+    small ⍪← 201  96 342 965 150
+    small ⍪← 630 803 746 422 111
+    small ⍪← 537 699 497 121 956
+    small ⍪← 805 732 524  37 331
+
+    1 25 wpath⍨ 0 0 1 1 mattographa small
+1 6 7 8 13 14 19 24 25
+
+    m2g←{⎕ML←0                          ⍝ Graph from weightings matrix.
+        ⍺←1 1 1 1                       ⍝ up left right down.
+        dirns←⍺/(¯1 0)(0 ¯1)(0 1)(1 0)  ⍝ directions.
+        xvecs←dirns∘+∘⊂¨⍳⍴⍵             ⍝ index vectors per link.
+        links←,{⍵⍳¨⍵∩¨xvecs}⊂,⍳⍴⍵       ⍝ unweighted graph.
+        costs←,links{⍺⊃¨⊂⍵}¨⊂,⍵         ⍝ costs per link.
+        ↑links costs                    ⍝ weighted graph.
+    }
+
+    1 25 wpath⍨ 0 0 1 1 m2g small
+1 6 7 8 13 14 19 24 25

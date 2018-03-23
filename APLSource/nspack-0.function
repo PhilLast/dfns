@@ -1,0 +1,50 @@
+ nspack←{⎕IO ⎕ML ⎕CT←0 1 0                   ⍝ Share arrays across space tree.
+
+     ⍺←0,1,¯1,2 ⍬'' ' '                      ⍝ seed with common literal values.
+
+     {⎕WA-⍵+92                               ⍝ rslt: reclaimed workspace bytes.
+     }⍺ ⎕WA{
+         ⍎⍵                                  ⍝ execute avoiding name clashes.
+     }{
+         seed wsavail←⍺                      ⍝ seed values and starting ⎕wa.
+
+         refs←{                              ⍝ sub-space references for ⍵.
+             1∊⍵=⍺:⍺                         ⍝ already been here: quit.
+             ⍵.(↑∇∘⍎⍨/⌽(⊂⍺,⍵),↓⎕NL 9)        ⍝ traverse any sub-spaces.
+         }
+
+         pack←{⎕IO ⎕ML ⎕CT←0 1 0             ⍝ Save WS by sharing sub-arrays.
+             ↑{                              ⍝ start and stop depth.
+                 6≠10|⎕DR ⍵:⍵                ⍝ simple: done.
+                 atoms←∪⍺{                   ⍝ extract ⍺-atoms.
+                     ⍺>|≡⍵:⍬                 ⍝ ignore (<⍺)-atoms.
+                     ⍺=|≡⍵:⊂⍵                ⍝ ⍺-atom.
+                     6≠10|⎕DR ⍵:⍬            ⍝ simple: ignore
+                     ↑,/,⍺ ∇¨(1⌈⍴⍵)↑⍵        ⍝ nested: ⍺-atoms from subarrays.
+                 }⍵                          ⍝ for each ⍺-atom in ⍵.
+                 share←{                     ⍝ share atom.
+                     (atoms⍳⊂⍵)⊃atoms,⊂⍵     ⍝ share with atoms vector
+                 }                           ⍝   if possible.
+                 ⍺{                          ⍝ array with shared ⍺-atoms.
+                     ⍺>|≡⍵:⍵                 ⍝ (<⍺)-atom: copy
+                     ⍺=|≡⍵:share ⍵           ⍝ ⍺-atom: share with atoms vector.
+                     6≠10|⎕DR ⍵:⍵            ⍝ simple: copy (will share later).
+                     ⍺ ∇∘share¨⍵             ⍝ nested: ⍺-atoms from subarrays.
+                 }⍵                          ⍝ for each ⍺-atom in ⍵.
+             }/(⌽⍳|≡⍵),⊂⍵                    ⍝ collect at depths 0, 1, ...
+         }
+
+         rvec←⍬ refs ⍵                       ⍝ vector of refs.
+         mask←××/↑rvec ⍺⍺¨⊂'⍴⍺.⎕nl 2'        ⍝ spaces with variables.
+         ~1∊mask:wsavail                     ⍝ no vars: quit.
+         vars←mask/rvec                      ⍝ spaces with vars.
+         vals←vars ⍺⍺¨⊂'⍺.(⍎¨↓⎕nl 2)'        ⍝ values of all vars.
+         packs←1↓pack(⊂seed),vals            ⍝ packed vars.
+         names←vars ⍺⍺¨⊂'⍺.⎕nl 2'            ⍝ variable names.
+         discs←(1=⊃∘⍴¨names)/¨'⊃'            ⍝ discloses for single names.
+         astat←{'{⍺.(',⍺,')←',⍵,'⍵}/⍺'}      ⍝ make assignment statement.
+         nvect←{1↓(~'  '⍷⍵)/⍵}∘{,' ',⍵}      ⍝ blank-separated names.
+         stats←(nvect¨names)astat¨discs      ⍝ assignment statements.
+         wsavail⊣(↓⍉↑vars packs)⍺⍺¨stats     ⍝ reassign vars per space.
+     }⍵                                      ⍝ for given starting ref.
+ }

@@ -1,0 +1,41 @@
+⍝ Vector of functions:
+
+    1 2 3 4 {''} vof + vof ! vof ? vof | 5 6 7 8        ⍝ vector vector
+6 15  1 6 4  0
+
+          4 {''} vof + vof ! vof ? vof | 5 6 7 8        ⍝ scalar vector
+9 15  4 2 1 5  0
+
+    1 2 3 4 {''} vof + vof ! vof ? vof | 5              ⍝ vector scalar
+6 10  4 5 2  1
+
+          4 {''} vof + vof ! vof ? vof | 5              ⍝ scalar scalar
+9 5  3 5 1 4  1
+
+            {''} vof + vof ! vof ? vof | 5 6 7 8        ⍝ monadic vector
+5 720 1 8
+
+            {''} vof + vof ! vof ? vof | 5              ⍝ monadic scalar
+5 120 2 5
+
+    1 disp {2⍴⍵} vof {3⍴⍵} vof {4⍴⍵} 2 3 4              ⍝ without left closure
+┌→┬─┬─────┬───────┐
+│2│2│3 3 3│4 4 4 4│
+└─┴─┴~───→┴~─────→┘
+
+    1 disp {⍬} vof {2⍴⍵} vof {3⍴⍵} vof {4⍴⍵} 2 3 4      ⍝ explicit left closure
+┌→──┬─────┬───────┐
+│2 2│3 3 3│4 4 4 4│
+└~─→┴~───→┴~─────→┘
+
+    _vof←{                          ⍝ Close vector of functions.
+        ⍺←⊂                         ⍝ ⍺ elided: ⊂⍵.
+        (al ar)(wl wr)←⍺ ⍵          ⍝ distrubute arg(s).
+        1≡⍺ 1:(⍺⍺ wl)(⍵⍵ wr)        ⍝ mondadic.
+        (al ⍺⍺ wl)(ar ⍵⍵ wr)        ⍝ dyadic.
+    }
+
+    1 disp {2⍴⍵} _vof {3⍴⍵} vof {4⍴⍵} 2 3 4             ⍝ closure using <_vof>
+┌→──┬─────┬───────┐
+│2 2│3 3 3│4 4 4 4│
+└~─→┴~───→┴~─────→┘

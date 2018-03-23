@@ -1,0 +1,29 @@
+⍝ Minimum Spanning Tree for wu-graph ⍺:
+
+      ⎕io ⎕ml←1 0
+
+⍝   ┌───────A───────┐       Edge    Weight
+⍝   │       │       │       ----    ------
+⍝   1       3       1       A-B     1
+⍝   │       │       │       A-C     3
+⍝   B───2───C───1───D       A-D     1
+⍝           │       │       B-C     2
+⍝           1       1       C-D     1
+⍝           │       │       C-E     1
+⍝           └───────E       D-E     1
+
+    aa←↑((2 3 4)(1 3)(1 2 4 5)(1 3 5)(3 4))((1 3 1)(1 2)(3 2 1 1)(1 1 1)(1 1))
+       ⍝  A      B    C        D      E      A      B    C        D      E
+
+    1 disp aa                   ⍝ simple weighted, undirected graph shown above.
+┌→────┬───┬───────┬─────┬───┐
+↓2 3 4│1 3│1 2 4 5│1 3 5│3 4│
+├~───→┼~─→┼~─────→┼~───→┼~─→┤
+│1 3 1│1 2│3 2 1 1│1 1 1│1 1│
+└~───→┴~─→┴~─────→┴~───→┴~─→┘
+
+    aa wmst 2                   ⍝ minimum spanning tree with root 2, c.f.:
+2 ¯1 4 1 4
+
+    aa wspan 2                  ⍝ spanning tree with lowest cost to each vertex.
+2 ¯1 2 1 3

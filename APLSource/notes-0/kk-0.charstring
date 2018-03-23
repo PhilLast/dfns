@@ -1,0 +1,558 @@
+kmap ← {xk←(⊂,⊂∘kind)⎕nl-⍳10} ##.kk fnop    ⍝ Kind Koloring of d-fnop named ⍵.
+
+Result [kmap] is a vector of character vectors of the "kinds" of names  in  each
+line of the ⎕NR of right argument function or  operator  [fnop].  Optional  left
+argument [xk] is a dictionary of the kinds of external names.
+
+Background
+----------
+We  can't  parse the following line of APL until we know whether the names refer
+to variables, functions or operators:
+
+    report ← lines print title pages
+
+For example, "print" could be a dyadic function (F), which takes the array-pair
+(title pages) as right argument and array (lines) as left:
+
+    report ← lines print title pages        ⍝ print is a function
+                   FFFFF
+
+or title could also be a (monadic) function:
+
+    report ← lines print title pages        ⍝ print and title are functions
+                   FFFFF FFFFF
+
+or title could be a monadic operator (M), which takes function print as left
+operand:
+
+    report ← lines print title pages        ⍝ title is a monadic operator
+                   FFFFF MMMMM
+
+or print could be a dyadic operator (D), taking title as right operand:
+
+    report ← lines print title pages        ⍝ print is a dyadic operator
+             FFFFF DDDDD FFFFF
+
+If we acknowledge that the expression to the right of the assignment arrow might
+resolve  to  a function _train_, making "report" a function, there are many more
+possibilites, including:
+
+    report ← lines print title pages        ⍝ (lines print title) "atop" pages
+    FFFFFF   FFFFF DDDDD       FFFFF
+
+In general, an APL expression can be parsed if and only if its names can be
+classified into one of four "kinds", depending on their referent values:
+
+  N: array or niladic function
+  F: function
+  M: monadic operator
+  D: dyadic operator
+
+Here are some more examples using N and F to "kind-colour" names (and brackets):
+
+    mean←{ sum←+⌿⍵ ⋄ num←≢⍵ ⋄ ( sum÷num ) }     ⍝ (sum÷num) nilad
+    FFFF·F·NNN·······NNN······N·NNN·NNN·N·F
+
+    mean←{ sum←+⌿⍵ ⋄ num←≢  ⋄ ( sum÷num )⍵}     ⍝ (sum÷num) Agh train
+    FFFF·F·NNN·······FFF······F·NNN·FFF·F·F
+
+    mean←{ sum←+⌿  ⋄ num←≢  ⋄ ( sum÷num )⍵}     ⍝ (sum÷num) fgh train
+    FFFF·F·FFF·······FFF······F·FFF·FFF·F·F
+
+In addition to names,  [kk]  colours parentheses and curly braces to reflect the
+kinds of their contained expressions.
+
+(muse:
+
+    How many valid parsings are there of ⍵ consecutive distinct names?  We can
+    try permutations of representatives (0 + ¨ ⍤) from each of the four kinds,
+    trapping syntax errors for invalid sequences.  Here are the numbers for seq-
+    uences of lengths from one to twelve, showing an approximately exponential
+    increase. For a dozen adjacent distinct names there are over a million sep-
+    arate interpretations:
+
+        ⎕ ← kinds ← {+/,{2::0 ⋄ _←⍎'0+¨⍤'[⍵] ⋄ 1}¨⍳⍵/4}¨ 1 to 12
+    3 7 19 60 200 669 2258 7644 25974 88475 302052 1033072
+
+        ⌊ 0.5+ ⍟kinds               ⍝ exponential ←→ log approximately linear
+    1 2 3 4 5 7 8 9 10 11 13 14
+
+    Here are all 19 valid sequences of length 3:
+
+        {~∘0,{2::0 ⋄ _←⍎'0+¨⍤'[⍵] ⋄ 'NFMD'[⍵] }¨⍳⍵/4} 3
+    ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐
+    │NNN│NNM│NFN│NFF│NMF│NMM│NDN│NDF│FNN│FNM│FFN│FFF│FFM│FMN│FMF│FMM│FDN│FDF│DNN│
+    └───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┘
+)
+
+A Colouring Experiment
+----------------------
+As an experiment [kk] has been used to colour the webpages for the code of the
+functions and operators from this workspace.  Click the ##.kk link in the header
+line above to see the effect.  As suggested by Morten Kromberg in his blog post,
+the pages use _italics_ to distinguish array from function and operator values.
+
+Attempting to use a BOLD font-style for operators widened the characters, caus-
+ing misalignment of the comment symbols and rendering the overall effect rather
+untidy.  To avoid this, monadic and dyadic operator names have been coloured in
+medium and lighter blue, respectively:
+
+       Font     Colour          Kind
+       ----     ------          ----
+    N: normal   black           niladic (array)
+    F: italic   black           function
+    M: italic   medium blue     monadic operator
+    D: italic   lighter blue    dyadic operator
+
+For example, in the code at http://dfns.dyalog.com/c_kk.htm, notice that:
+
+1. In the second line, because ⊂∘kind is a function, the parenthesised express-
+   ion as a whole is a _fork_ and so the parentheses are italicised. The ital-
+   ics should help when reading the line, by indicating that the parenthesised
+   expression consumes, rather than provides a left argument for, the result of
+   the ⎕NL:
+
+   [1]   ⍺←(⊂,⊂∘kind)⎕NL-⍳10                ⍝ (...) is a function
+           F    FFFFF
+
+   (muse: This identification of function trains may alone be sufficient reason
+          for adopting kind-colouring.)
+
+2. Within the definition of sub-function [body], notice that [dq] and [expr] are
+   both identified as functions. The colouring helps with reading the ⊃ and / to
+   their right as "first" and "reduction" respectively:
+
+   [19]  K∆←1⊃dq⊃expr/(⌽⍺),⊂E∆ K ⍬          ⍝ dq is a fn, so ⊃ is "first"
+              FF FFFF
+
+
+The code for →rats← at http://dfns.dyalog.com/c_rats.htm provides examples of
+several more cases:
+
+1. [rats] itself is a (medium-blue-coloured) monadic operator.  With colouring,
+   we can determine this immediately from the colours of the name and opening
+   curly brace, without having to scan the body of the code for the presence of
+   an ⍺⍺ (and the absence of an ⍵⍵, which would make it a _dyadic_ operator).
+
+   [0]  rats←{⎕ML ⎕IO←1                     ⍝ rats is a monadic operator
+        MMMM M
+
+2. Inner [arith] is also easily identified as a monadic operator:
+
+    [2]     arith←{                         ⍝ arith is a monadic operator
+            MMMMM M
+
+3. Inferring the kind of rats' operand ⍺⍺ is currently beyond kk's ability and
+   so name "aa" in line[3] is coloured (red) for "unknown".
+
+   [3]  fn←⍺⍺{aa←⍺⍺ ⋄ ⊃⎕CR'aa'}⍵            ⍝ aa is coloured "unknown"
+             M??              M
+
+4. [norm] and [sum] reference a function and monadic operator, respectively:
+
+   [4]      '+'≡fn:norm ⍺+sum ⍵             ⍝ sum is a monadic operator
+                   FFFF   MMM
+
+5. Towards the end of the code some functions are derived from dyadic operators:
+
+   [59] else←{⍺⍺ ⍵:⍵ ⋄ err ⍵⍵}              ⍝ else is a dyadic operator
+        DDDD D               D                ¯¯¯¯
+   [60] echk←{⍵≡⌊⍵}else'irrational'         ⍝ ... deriving function echk
+        FFFF F    FDDDD                                             ¯¯¯¯
+   [63] err←⎕SIGNAL∘11                      ⍝ err is a derived function
+        FFF                                   ¯¯¯
+   [65] imin←∩mesh⌊                         ⍝ dyadic op mesh derives fn imin
+        FFFF  DDDD                                      ¯¯¯¯            ¯¯¯¯
+   [67] gcd←imin over umax                  ⍝ dyadic op over derives fn gcd
+        FFF FFFF DDDD FFFF                              ¯¯¯¯            ¯¯¯
+
+The code for →joy← at http://dfns.dyalog.com/c_joy.htm shows the binding of ⍺ as
+left operand of a multi-line monadic operator to form a derived function "prt":
+
+   [208]    prt←⍺{                          ⍝ ⍺{...⍺⍺...} derives fn prt
+            FFF  M                             ¯        ¯            ¯¯¯
+Without the colouring of both prt and the left brace, this snippet would be hard
+to parse  without noticing that nothing follows the matching brace fifteen lines
+further down the code.
+
+Kind-polymorphism
+-----------------
+Depending on context, some expressions can resolve to more than one kind.  Exam-
+ples include the four "hybrid" tokens: / ⌿ \ ⍀,  which can each be of kind F  or
+M, depending  on what is to their left, and operand tokens, ⍺⍺ and ⍵⍵, which can
+each be either N or F. In isolation, the colours for names "slash" and "left" in
+slash←/ and left←⍺⍺ cannot be  determined.
+
+This is not a shortcoming of the kind-inference process: given this property  of
+the Dyalog language, drawing attention to such ambiguities with distinct colours
+can be considered a virtue.
+
+For example, the name "left" in this operator:
+
+    twice ← {left←⍺⍺ ⋄ left left ⍵}
+
+has kind F if the operator is called with a function operand,  and N if an array
+operand is used. In this case [kk] correctly infers a composite kind: N∨F.
+
+[kk] employs a total of 11 colours: N, F, M, D, f, r, h, o, ·, Z and ?:
+
+                        ┌────────── Example of referent value
+                        │
+N: niladic              ⍬           (name assigned to ⍬ is coloured N)
+F: function             +           (name assigned to + is coloured F)
+M: monadic operator     ⌸            etc
+D: dyadic operator      ⍤
+
+r: N∨F                  ⍺⍺ ⍵⍵       ("r" stands for opeRand)
+h: · F∨M                / ⌿ \ ⍀     ("h" stands for Hybrid)
+o: · · M∨D              ∇∇          ("o" stands for Operator)
+
+f: monadic function     1+          (temporary kind used internally)
+?: unresolved                       (kind could not be determined)
+·: not coloured         ⍝...        (for tokens other than names and brackets)
+Z: internal error                   (indicates a fault in the parse table)
+
+In the web pages for the code at dfns.dyalog.com, colour _red_ is used for kinds
+other than the primary N, F, M and D.  See: http://dfns.dyalog.com/c_ratsum.htm,
+which contains several such expressions.
+
+Kind-forcing
+------------
+When coding APL, it is often possible to "force" the kind of a polymorphic expr-
+ession.  For example, it may be intended that the [twice] operator  be used only
+to apply its operand _function_ twice to an argument array.
+
+    twice ← {left←⍺⍺ ⋄ left left ⍵}
+
+    ⊂twice 'this'           ⍝ enclosed twice
+┌──────┐
+│┌────┐│
+││this││
+│└────┘│
+└──────┘
+
+However, as coded, the operator is equally happy with an _array_ operand:
+
+    '<'twice 'this'         ⍝ prefixed twice
+┌─┬─┬────┐
+│<│<│this│
+└─┴─┴────┘
+
+To force kind F for name "left", we could code:
+
+    twice←{left←⍺⍺∘⊢ ⋄ left left ⍵}
+                ¯¯¯¯
+    ⊂twice 'this'           ⍝ function operand: enclosed twice
+┌──────┐
+│┌────┐│
+││this││
+│└────┘│
+└──────┘
+
+    '<'twice 'this'         ⍝ array operand is a no-op.
+this
+
+In similar fashion, adding ⊣0 to the end of line[131] of →ratsum← to become:
+
+    [131]  digs←↑↓/(1 ¯1×'{}'≡ext ⍺⍺),⊂⍺⍺⊣0    ⍝ digits without surrounding {}s.
+                                         ¯¯
+... removes much of the red colouring from: http://dfns.dyalog.com/c_ratsum.htm.
+
+Finally, note that (1+⍺⍺) has a compound kind of N∨F, whereas the kind of (⍺⍺+1)
+is simply N. If ⍺⍺ always references an array, the latter coding should reduce
+the burden on the human reader.
+
+Technical notes:
+
+0. kk's optional left argument ⍺ defaults to a dictionary of the →kind← of each
+   name in the current namespace. A dictionary is a pair of vectors (names
+   values) from which function [val], given a name, can obtain its value.
+
+1. Function →tokens← is used to create a vector of token vectors from the lines
+   of the ⎕NR of the subject function.
+
+2. The tokens vectors for each line are joined with a synthetic newline token
+   (,'┘') to produce a single vector [toks] of tokens. With respect to parsing,
+   newlines are the same as diamonds.
+
+3. Function [lint] removes tokens (comments and white space), not needed in the
+   parsing, and returns a vector of indices into [toks] of the remaning ones.
+   The orginal tokens can be retrieved from this vector with function [tx] and
+   in the following descriptions the word "token" will often be used inter-
+   changeably with "token index". In addition, surplus newlines and diamonds are
+   removed, as are tokens for outer-product (∘.) so that all remaining ∘s can be
+   treated as the commute operator. This works because kind(∘.f) ←→ kind(f).
+   There are several similar transformations:
+
+        kind(x.y)  ←→ kind(y)
+        kind(x[y]) ←→ kind(x)
+        kind(x←y)  ←→ kind(y)
+
+4. The kind-inference process uses four mutually-recursive functions: [fnop],
+   [body], [expr] and [tokn], together with a de-queueing function [dq] Here
+   are their types:
+
+    fnop :: S E K Q ← Tinx ∇ S E K Q
+    body ::   E K   ← Body ∇   E K
+    expr ::   E K Q ← Expr ∇   E K Q
+    tokn :: S E K Q ← Tinx ∇ S E K Q
+      dq ::     K   ←      ∇   E K Q
+
+   where:
+       S := [Kind]                  ⍝ Stack: vector of kinds
+       E := [Tinx][Kind]            ⍝ Environment: maps tokens to kinds
+       K := [Tinx Kind]             ⍝ Colour map: vector of token/kind pairs
+       Q := [Body]                  ⍝ Queue of deferred fnop bodies
+    Kind := N F M D _F NF H MD U Z  ⍝ Kind
+    Body := [Expr]                  ⍝ Vector of ⋄:┘-separated exprs
+    Expr := [Tinx]                  ⍝ Expression: vector of token indices
+    Tinx := Indx | [Tinx]           ⍝ Index or indices into toks vector
+
+    [fnop] takes a nested triple: '{' body '}'; logs the colours of the { and }
+    braces by looking for the presence of ⍺⍺ or ⍵⍵ in the fnop body; and splits
+    tokens into ⋄-, :- and ┘-separated expressions; with which it calls function
+    [body].
+
+    [body] processes the vector of expressions, which constitute the fnop body,
+    with a left-to-right [expr]-reduction, accumulating E K and Q vectors.
+
+    [expr] takes a vector of tokens, representing an expression, together with:
+    an environment (E); current colour map (K); and body queue (Q), and returns
+    new values for E, K and Q. The expression is processed with a right-to-left
+    [tokn]-reduction.
+
+    [tokn] takes a token to its left and the tuple (S E K Q) as right argument.
+    E, K, and Q are as above and S is a stack of the kinds of tokens already
+    visited. For a complete and correct expression, the stack S can be resolved
+    into a single kind by function [parse]
+
+5. The Queue Q
+
+    The parsing process distinguishes fnop _definitions_ from _applications_.
+    Applications are processed immediately on encounter but definitions are
+    deferred until the end of the current body. The following code illustrates
+    why this is necessary, when colouring instances of name "sum" within the two
+    inner functions:
+
+        {
+            sum←+/          ⍝ sum:F    "sum is of kind F"
+            def←{sum ⍵}     ⍝ def:F     sum:N (from below)
+            app←{sum ⍵}⍵    ⍝ app:N     sum:F (from above)
+            sum←+/⍵         ⍝ sum:N
+            def 0           ⍝ def:F
+        }
+
+    After  processing all expressions in a fnop body, function [dq] is called to
+    flush the queue.
+
+Auxiliary functions:
+
+    toks                        ⍝ token vector with white-space and ┘-newlines
+┌───┬─┬─┬─┬────┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬────┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┐
+│foo│←│{│┘│    │a│←│(│b│+│c│)│+│(│(│d│+│e│)│×│f│)│┘│    │a│[│g│]│∘│.│{│⍺│ │⍵│}│⍵│┘│}│
+└───┴─┴─┴─┴────┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴────┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┘
+
+Function [lint] discards surplus tokens and returns a vector of the indices of
+the remaining ones.
+
+    lint toks                   ⍝ indices of de-fluffed tokens vector
+0 1 2 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 24 25 26 27 30 31 33 34 35 37
+
+[tx] reconstitutes tokens from their indices:
+
+    tx lint toks                ⍝ reconstituted by [tx] function
+┌───┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┐
+│foo│←│{│a│←│(│b│+│c│)│+│(│(│d│+│e│)│×│f│)│┘│a│[│g│]│{│⍺│⍵│}│⍵│}│
+└───┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┘
+
+[nest] encloses each occurrence of top-level of brackets into a triple.
+
+    tx '{}'nest lint toks       ⍝ nested at {} tokens
+┌───┬─┬─────────────────────────────────────────────────────────────┐
+│foo│←│┌─┬───────────────────────────────────────────────────────┬─┐│
+│   │ ││{│┌─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┐│}││
+│   │ ││ ││a│←│(│b│+│c│)│+│(│(│d│+│e│)│×│f│)│┘│a│[│g│]│{│⍺│⍵│}│⍵││ ││
+│   │ ││ │└─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┘│ ││
+│   │ │└─┴───────────────────────────────────────────────────────┴─┘│
+└───┴─┴─────────────────────────────────────────────────────────────┘
+
+    body ← 2 1⊃'{}'nest lint toks   ⍝ function body
+    tx body
+┌─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┐
+│a│←│(│b│+│c│)│+│(│(│d│+│e│)│×│f│)│┘│a│[│g│]│{│⍺│⍵│}│⍵│
+└─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┘
+
+    tx '()[]'nest body              ⍝ top-level () and [] nesting
+┌─┬─┬─────────────┬─┬─────────────────────┬─┬─┬─────────┬─┬─┬─┬─┬─┐
+│a│←│┌─┬───────┬─┐│+│┌─┬───────────────┬─┐│┘│a│┌─┬───┬─┐│{│⍺│⍵│}│⍵│
+│ │ ││(│┌─┬─┬─┐│)││ ││(│┌─┬─┬─┬─┬─┬─┬─┐│)││ │ ││[│┌─┐│]││ │ │ │ │ │
+│ │ ││ ││b│+│c││ ││ ││ ││(│d│+│e│)│×│f││ ││ │ ││ ││g││ ││ │ │ │ │ │
+│ │ ││ │└─┴─┴─┘│ ││ ││ │└─┴─┴─┴─┴─┴─┴─┘│ ││ │ ││ │└─┘│ ││ │ │ │ │ │
+│ │ │└─┴───────┴─┘│ │└─┴───────────────┴─┘│ │ │└─┴───┴─┘│ │ │ │ │ │
+└─┴─┴─────────────┴─┴─────────────────────┴─┴─┴─────────┴─┴─┴─┴─┴─┘
+
+Bugs:
+
+1. [kk] confuses names in "dotted expressions":
+
+    nil←0 ⋄ ⎕se.nil←⊢ ⋄ nil         ⍝ rightmost "nil" should be NNN
+    NNN         FFF     FFF
+
+2. It is possible to confound the kind inferencing by re-using the same name for
+   different kinds within a particular fnop body.  Look  at  name  "what" in the
+   following code:
+
+    {
+        what←0          ⍝ what:N
+        fun←{what ⍵}    ⍝ what:?
+        0⊣fun 0:        ⍝ first call on fun what:N
+        what←⊢          ⍝ what:F
+        fun 0           ⍝ second call on fun: what:F
+    }
+
+   In this example, name "what", within function "fun", will be coloured F by
+   the de-queueing process. Ideally it should be coloured N∨F(r) but this would
+   require a significantly more complex treatment.  Of course, refraining from
+   changing the kind of a name, which is (arguably) good practice, should avoid
+   this problem.
+
+3. Primitive function execute (⍎) can return an array, function or monadic oper-
+   ator: kind(⍎⍵) → N∨F∨M. [kk] ignores this fact and infers N.
+
+        what←⍎'+'           ⍝ "what" wrongly coloured as N
+        NNNN
+
+   This could be improved slightly by adding some execute-specific binding rules
+   but it hardly seems worth the increase in complexity. To force the colouring
+   of an execute expression that is known to return a function, we could code:
+
+        what←(⍎'+')∘⊢
+        FFFF N    N
+
+   ... although the parentheses remain as N.
+
+Possible improvements:
+
+1. Some kinds can be inferred from their context. For example, for correct code:
+
+    The kind of a guard or error-guard must be N:
+
+        (0<⍺⍺):⍵
+        N    N
+
+    Some primitive operators are known to accept only kind F operands:
+
+        (0<⍺⍺)¨⍵
+        F    F
+
+    Some primitive functions are strictly dyadic so an expression to its left
+    must be of kind N:
+
+        (0<⍺⍺)∧⍵
+        N    N
+
+    Only kind N may be returned as the result of a function or operator:
+
+        (0<⍺⍺)
+        N    N
+
+    An assignment of _multiple_ names must be of kind N:
+
+        this that ← (0<⍺⍺)
+        NNNN NNNN   N    N
+
+    ... and so on.
+
+2. A Mk-II version of [kk] might choose to deal in only the four primary kinds:
+   N F M D.
+
+   The inference process would create a parse-tree for the whole capsule (fnop)
+   with ambiguous nodes represented as _vectors_ of multiple interpretations: a
+   tree-of-trees. Items of stack S would, in general be vectors of kinds:
+
+        S := [[K]]                              ⍝ Stack: vector vectors of kinds
+
+   and [parse] would be applied to the outer-product-join reduction of the stack.
+   A unification process (see →unify←) would filter consistent combinations from
+   the tree-of-trees:
+
+        S∆ E∆ ← E unify filter parse¨ ,⊃∘.,/ S  ⍝ all consistent interpretations
+                                      ¯¯¯¯¯¯
+   ... leaving some, though in practice probably few, multi-coloured names:
+
+      {⍵/'NFMD'}¨1↓,⎕io≠⍳4/2                    ⍝ all possible kind colours
+    ┌─┬─┬──┬─┬──┬──┬───┬─┬──┬──┬───┬──┬───┬───┬────┐
+    │D│M│MD│F│FD│FM│FMD│N│ND│NM│NMD│NF│NFD│NFM│NFMD│
+    └─┴─┴──┴─┴──┴──┴───┴─┴──┴──┴───┴──┴───┴───┴────┘
+
+   In particular it could:
+
+   1. Automatically make use of the kinds of operands passed to inner operators.
+      For example, if local operator "twice" is only ever called with a function
+      operand, then expressions that include ⍺⍺ within its body can be treated
+      accordingly:
+
+        {
+            twice←{left←⍺⍺ ⋄ left left ⍵}   ⍝ left is FFFF because:
+            this←⊂twice ⍺                   ⍝   twice is only ever called
+            that←+/twice ⍵                  ⍝       with a _function_ as operand
+            ...
+        }
+
+      Given this technology, it might be appropriate to colour the ⍺⍺, ⍵⍵ and ∇∇
+      tokens themselves.
+
+   2. Accumulate inference information between lines. For example, in the first
+      line below, "nums" might reference either an array or a function (train).
+      However, assuming the second line to be correct code, the expression to
+      the left of the guard (which in isolation could also evaluate to a train)
+      must reduce to 0 or 1, implying nums to be a nilad: NNNN.
+
+        nums←1↓⍺⍺               ⍝ nums could be NNNN or FFFF
+        0∊nums:'error'          ⍝ nums must be NNNN
+
+3. In addition to resolving ambiguities, _conflicting_ kind determinations could
+   be flagged as errors in the code.
+
+Requires: →tokens← →kind←
+
+Examples:
+
+    mean←{
+        sum←+⌿⍵
+        num←≢
+        (sum÷num)⍵
+    }
+
+      (⎕nr ,[0.5] kk)'mean'         ⍝ source lines and colours
+┌──────┬───────────┬─────────┬──────────────┬─┐
+│mean←{│    sum←+⌿⍵│    num←≢│    (sum÷num)⍵│}│
+├──────┼───────────┼─────────┼──────────────┼─┤
+│FFFF·F│····NNN····│····FFF··│····FNNN·FFFF·│F│
+└──────┴───────────┴─────────┴──────────────┴─┘
+
+    ⍝ The following function interleaves the lines of its argument function
+    ⍝ with their kind colours:
+
+    crkk←{↑↑,/(⎕NR ⍵){⍺ ⍵}¨kk ⍵}    ⍝ ⎕cr interleaved with line colouring
+
+    crkk'mean'                      ⍝ colours per line of function "mean"
+mean←{
+FFFF·F
+    sum←+⌿⍵
+····NNN····
+    num←≢
+····FFF··
+    (sum÷num)⍵
+····FNNN·FFFF·
+}
+F
+
+    crkk'crkk'                      ⍝ (selfie)
+crkk←{↑↑,/(⎕NR ⍵){⍺ ⍵}¨kk ⍵}
+FFFF·F····N·····NF···F·FF··F
+
+See also: parse tokens kind alists to
+
+Index:name colouring|parsing|kind|Bunda-Gerth parser|polymorphism|selfie
+Index;Bunda J.D.|Gerth J.A.|Kromberg M.J.

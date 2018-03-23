@@ -1,0 +1,242 @@
+precedes ← this ##.le that          ⍝ Total array ordering (TAO) comparison.
+
+Inspired by Roger Hui,  [le]  "less than or equal"  defines a Total Order on APL
+arrays. For any arrays A, B and C:
+
+    (A le B) ∧ (B le A) : A eq B    ⍝ antisymmetry
+    (A le B) ∧ (B le C) : A le C    ⍝ transitivity
+    (A le B) ∨ (B le A)             ⍝ totality.
+
+See: http://en.wikipedia.org/wiki/Total_order
+See: http://www.jsoftware.com/jwiki/Essays/The_TAO_of_J
+
+Given any two arrays, [le]  tells  us which "precedes or is equal to" the other.
+In particular it may be used to compare arrays of:
+
+    differing type:     '6' le 6
+    differing rank:     3 le ,3
+    differing shape:    5 4 le 5 4 3
+    differing depth:    (⊂⍳2)le ⊂⊂⍳2
+    complex numbers:    7j8 le 8j7
+    namespaces:         # le ⎕SE
+    objects:            le/{⎕new'Form'(⊂'Caption'⍵)}¨'Hello' 'World'
+
+The comparison proceeds in the following order:
+
+- If the ranks differ, the lesser array is extended with leading 1-axes.
+  If the resulting arrays match, the original ranks are used as a tie-breaker.
+
+- If the shapes differ, the arrays are extended to conform with fill items.
+  If the resulting arrays match, the original shapes are used as a tie-breaker.
+
+- Non-atomic arrays are compared item-wise, pervasively, in ravel order.
+
+- Atomic items are compared by category: <char> le <number> le <ref> le <⎕OR>.
+
+- Otherwise, if the categories match:
+
+    Characters are compared using ⍋,
+    Numbers are compared on their real part, followed by their imaginary part,
+    Namespaces are compared recursively in order of their:
+        Type property,
+        Symbol table (name class value) triples,
+            Functions and operators are compared on their ⎕NR values,
+            ⎕ORs are compared using their fixed functions or namepaces.
+        The values of namespace-scope system variables,
+        Property names and values.
+
+Regarding the antisymmetry condition:
+
+    (A le B) ∧ (B le A) : A eq B    ⍝ antisymmetry
+
+When comparing refs, "eq" is not the  same as primitive function match (≡):  two
+refs match _only_ if they reference the _same_ namespace, while [le] would judge
+them equal if their contents and properties match:
+
+    A B ← ⎕ns¨ '' ''        ⍝ two namespaces.
+
+    (A le B) ∧ (B le A)     ⍝ A eq B
+1
+    A ≡ B                   ⍝ A ≢ B
+0
+
+Rationale:
+
+The order that [le] imposes on arrays is to some extent arbitrary but is intend-
+ed to be intuitive. Here are the choices implicit in the coding:
+
+[1] Item value is more significant than shape. For example:
+    'abc   ' le 'xyz'       ⍝ even though (⍴⍺)>⍴⍵
+    'abc' le 'z'            ⍝ even though (⍴⍴⍺)>⍴⍴⍵
+    (1 3⍴'abc') le 'xyz'    ⍝   ..      ..      ..
+
+[2] Characters sort before
+    numbers, which sort before
+    refs, which sort before
+    ⎕ORs.
+
+[3] When comparing complex numbers, real part is more significant than imaginary
+    part.
+
+[4] Within a namespace,
+        user-specified names and values are more significant than
+        system variable values, which are more significant than
+        property values.
+
+[5] Within a namespace, (name class value) triples are compared with each other,
+    rather than having names, classes and values compared consecutively:
+
+        x.a←8                   ⍝ x.a←8 ⋄ y.a←3
+        y.(a b)←3 4             ⍝         y.b←4
+
+        x le y                  ⍝ because (a:8) >> (a:3)
+    0
+        x.(⎕nl 2) le y.(⎕nl 2)  ⍝ notwithstanding the order of namelists.
+    1
+
+Namespace Reference Cycles
+--------------------------
+Namespaces structures may contain reference cycles as in x.p←x or (x y).q←(y x).
+Apart from avoiding infinite recursion problems when processing such structures,
+we need to bestow a relative order upon them. What is (x le y) in the second ex-
+ample above? The approach taken in [le] comes from a suggestion by Nick Nikolov.
+
+The depth-first search [acmp] of left and right argument graphs keeps a note (in
+⍺⍺) of namespaces already visited. The search continues to follow any cycles un-
+til [a], a "regular"  difference is discovered between the two arguments or [b],
+previously visited vertices are encountered in both graphs.  In the latter case,
+the one with the shorter cycle (∇ ⍺⍺⍳¨⍺⍺) is deemed the lesser.
+
+                                                ⍝ ┌x────┐←┐
+    (x←⎕ns ⍬).(x←⎕ns ⍬).(x←##)                  ⍝ │┌x──┐│ │
+                                                ⍝ ││ x→───┘
+                                                ⍝ │└───┘│
+                                                ⍝ └─────┘
+
+                                                ⍝ ┌y──────┐←┐
+    (y←⎕ns ⍬).(y←⎕ns ⍬).(y←⎕ns ⍬).(y←##.##)     ⍝ │┌y────┐│ │
+                                                ⍝ ││┌y──┐││ │
+                                                ⍝ │││ y→────┘
+                                                ⍝ ││└───┘││
+                                                ⍝ │└─────┘│
+                                                ⍝ └───────┘
+
+    x y ≡ x.x.x  y.y.y.y                        ⍝ 3- and 4-cycles
+1
+    ∘.le⍨ x y                                   ⍝ Total ordering
+1 1
+0 1
+
+Examples:
+
+    4 le 5                  ⍝ simple scalar comparison: 4≤5.
+1
+    3 le ,2                 ⍝ differing rank: compare items.
+0
+    (,3) le 3               ⍝ matching items: compare rank.
+0
+    '3' le 3                ⍝ chars precede numbers.
+1
+    3j4 le 4j3              ⍝ real-part trumps imaginary-part
+1
+    # le ⎕se                ⍝ #.Type ≤ ⎕se.Type
+1
+    'xy'⎕ns¨⊂''             ⍝ two namespaces.
+
+    x.(a c)←1 3             ⍝ with names a c
+    y.(a b)←1 4             ⍝ ... and a b
+    x le y                  ⍝ (a c ...) supersedes (a b ...)
+0
+    x.b←2                   ⍝ new name b in x
+    x le y                  ⍝ (a:1 b:2 ...) precedes (a:1 b:4 ...)
+1
+    qsort←{                             ⍝ quicksort.
+        1≥⍴⍵:⍵                          ⍝ single item or null: done.
+        head tail←(1↑⍵)(1↓⍵)            ⍝ first and remaining items.
+        le gt←1 0=⊂tail ⍺⍺¨head         ⍝ comparison with first item.
+        (∇ le/tail),head,∇ gt/tail      ⍝ sorted vector.
+    }
+
+    display le qsort 3(,3)'3'(,'3')     ⍝ char << num; scalar << vector
+┌→────────────┐
+│   ┌→┐   ┌→┐ │
+│ 3 │3│ 3 │3│ │
+│ - └─┘   └~┘ │
+└∊────────────┘
+
+    ip←+.×                                      ⍝ named function.
+
+    stuff ← ⎕SE ⍬ # (⎕or'ip') '' ⍬              ⍝ assorted stuff.
+
+    display le qsort stuff                      ⍝   sorted stuff.
+┌→────────────────────────┐
+│ ┌⊖┐ ┌⊖┐ ┌⊖┐       ┌───┐ │
+│ │ │ │0│ │0│ # ⎕SE │+.×│ │
+│ └─┘ └~┘ └~┘       └∇──┘ │
+└∊────────────────────────┘
+
+⍝ Other relationships can be derived from le:
+
+    cmp ← {⍺⍺/le/¨1 0⌽¨⊂⍺ ⍵}                    ⍝ comparison
+
+    ge ← ≥cmp                                   ⍝ greater or equal
+    eq ← =cmp                                   ⍝ equal
+    ne ← ≠cmp                                   ⍝ not equal
+    lt ← <cmp                                   ⍝ less than
+    gt ← >cmp                                   ⍝ greater than
+
+    (⎕ns'')  ≡ ⎕ns''                            ⍝ distinct spaces don't match.
+0
+    (⎕ns'') eq ⎕ns''                            ⍝ distinct spaces deemed equal.
+1
+    ∘.ge⍨ 0 1                                   ⍝ truth-table for ge.
+1 0
+1 1
+    grade←{| ⊢/↑ ⍺⍺ qsort ⍵ {⍺ ⍵}¨ ⍵⍵ ⍳⍴⍵}      ⍝ grade up/down.
+
+    gu ← le grade +                             ⍝ grade-up   ⍋
+    gd ← ge grade -                             ⍝ grade-down ⍒
+
+    gu 3 1 4 1 5                                ⍝ grade-up of numeric vector.
+2 4 1 3 5
+
+    gd 3 1 4 1 5                                ⍝ grade-down of numeric vector.
+5 3 1 2 4
+
+    gu 3j5 3j4 4j3 3j4                          ⍝ complex number grade-up.
+2 4 1 3
+
+    display stuff                               ⍝ assorted stuff.
+┌→────────────────────────┐
+│     ┌⊖┐   ┌───┐ ┌⊖┐ ┌⊖┐ │
+│ ⎕SE │0│ # │+.×│ │ │ │0│ │
+│     └~┘   └∇──┘ └─┘ └~┘ │
+└∊────────────────────────┘
+
+    gu stuff                                    ⍝ grade-up of stuff.
+5 2 6 3 1 4
+
+    gd stuff                                    ⍝ grade-down of stuff.
+4 1 3 2 6 5
+
+    q ← 'to' 'be' 'or' 'not' 'to' 'be'          ⍝ that is the question.
+
+    gu q                                        ⍝ grade-up of char vectors ...
+2 6 4 3 1 5
+
+    ⍋∘↑ q                                       ⍝ ... concurs with ⍋∘↑
+2 6 4 3 1 5
+
+    nvs ← (1 1) (2 3 4) (1 1) (3 1) (1 2)       ⍝ numeric vectors.
+
+    gd  nvs                                     ⍝ grade-down ...
+4 2 5 1 3
+
+    ⍒∘↑ nvs                                     ⍝ ... concurs with ⍒∘↑
+4 2 5 1 3
+
+See also: refmatch logic truth_tables lex
+
+Index:sort|quicksort|Total array ordering|order (of arrays)|compare arrays
+Index:grade|stuff|depth-first search
+Index;Hui R.K.W.|Nikolov N.

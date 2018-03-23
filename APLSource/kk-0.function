@@ -1,0 +1,160 @@
+ kk←{⎕IO←0                                   ⍝ Kind Koloring of dfn/op named ⍵.
+     ⍺←(⊂,⊂∘kind)⎕NL-⍳10                     ⍝ include external kinds by default
+     toks←1↓↑,/(⊂⊂,'┘'),¨1 tokens¨⎕NR ⍵      ⍝ →tokens← vector for subject fnop
+
+     fnop←{S E K Q←⍵                         ⍝ function or operator
+         lft top rgt←⍺ inner'{}'             ⍝ braces and token vector for body
+         k←bkind top                         ⍝ fnop kind: F, M or D
+         exps←':⋄┘'sepr'()[]'nest top        ⍝ expression segments, nested subs
+         K∆←K,lft rgt,¨k                     ⍝ token colours for { and }
+         def←(⊂parse k,S)∊F M D              ⍝ definition vs application
+         def:(k,S)E K∆(Q,⊂exps)              ⍝ def: deferred body colouring
+         E∆←E xenv,⊂'⍵⍵'(⊃S)                 ⍝ (can't kind ⍺⍺ for the nonce)
+         _ K∆∆←exps body E∆ K∆               ⍝ app: immediate body colouring
+         (k,S)E K∆∆ Q                        ⍝ only colours from inner fn
+     }                                       ⍝ :: S E K Q ← Tokn ∇ S E K Q
+
+     body←{E K←⍵                             ⍝ body
+         k←bkind ⍺                           ⍝ fnop kind: F, M or D
+         E∆←E xenv('⍺'N)('∇∇'k)              ⍝ envt for ⍺ and ∇∇ in body
+         K∆←dq⊃expr/(⌽⍺),⊂E∆ K ⍬             ⍝ expression kinds in fnop body
+         E K∆                                ⍝ calling envt and body kinds
+     }                                       ⍝ :: E K ← Body ∇ E K
+
+     expr←{E K Q←⍵                           ⍝ expression
+         _ E∆ K∆ Q∆←⊃tokn/⍺,⊂⍬ E K Q         ⍝ extended info for expr ⍵
+         gx←':'≡⊃tx⊃⍺                        ⍝ guarded expression?
+         (gx⊃E∆ E)K∆ Q∆                      ⍝ guarded expr doesn't extend envt
+     }                                       ⍝ :: E K Q ← Expr ∇ E K Q
+
+     tokn←{S E K Q←⍵                         ⍝ next token right-to-left
+         '←'≡⊃S:⍺ asgn ⍵                     ⍝ left of assign arrow ···←
+         '.'≡⊃S:⍺ dot ⍵                      ⍝ left of dot ···.
+         ch←⊃(⊃⍺)⊃toks                       ⍝ initial char of token
+         '{'≡ch:⍺ fnop ⍵                     ⍝ { body }
+         '('≡ch:⍺ subx ⍵                     ⍝ ( expr )
+         '['≡ch:⍺ brkt ⍵                     ⍝ [ axis/index ]
+         ch∊'.←':(ch,S)E K Q                 ⍝ dot or assign: push token marker
+         ch∊':⋄┘':⍬ E K Q                    ⍝ end of expression
+         ch∊'''¯',⎕D:(N,S)E K Q              ⍝ literal value
+         k←E val ⍺⊃toks                      ⍝ token kind from environment E
+         ch∊name:(k,S)E(K,⊂⍺ k)Q             ⍝ name:extended colour map
+         (k,S)E K Q                          ⍝ uncoloured token
+     }                                       ⍝ :: S E K Q ← Tokn ∇ S E K Q
+
+     dq←{E K Q←⍵ ⋄ ⍬ 1⊃body/Q,⊂E K}          ⍝ de-queue :: K ← ∇ E K Q
+
+     asgn←{S E K Q←⍵                         ⍝ name assignment
+         ~'←'≡⊃S:⍺ tokn ⍵                    ⍝ assignment finished
+         ch←⊃tok←(⊃⍺)⊃toks                   ⍝ token and initial char
+         ch∊'←⎕':⍵                           ⍝ sequential assign a←b←.. or sysvar
+         s←parse 1↓S                         ⍝ resolved kind(x←y) → kind(y)
+         ch∊name:S(E xenv,⊂tok s)(K,⊂⍺ s)Q   ⍝ name: extended environment
+         tok≡,'⍺':s(E alpha s)K Q            ⍝ ⍺←0 / ⍺←⊢
+         ~ch∊'([':s E K Q                    ⍝ end of assignment: a←b: → b:
+         lft exp rgt←⍺ inner'()[]'           ⍝ (exp)← or A[exp]←
+         '('≡ch:⊃∇/exp,⊂⍵                    ⍝ (a b)←
+         ⊃tokn/exp,⊂⍬ E K Q                  ⍝ a[x]←
+     }                                       ⍝ :: S E K Q ← Tokn ∇ S E K Q
+
+     dot←{_S E K Q←⍵                         ⍝ space ref or inner/outer product
+         (⊂1↓_S),1↓⍺ tokn ⍬ E K Q            ⍝ kind(x.y) → kind(y)
+     }                                       ⍝ :: S E K Q ← Tokn ∇ S E K Q
+
+     subx←{                                  ⍝ parenthesised sub-expression
+         lft exp rgt←⍺ inner'()[]'           ⍝ ( exp ) nesting of inner sub-exprs
+         S E K Q←↑tokn/exp,⊂(⊂⍬),1↓⍵         ⍝ S is kind-stack of sub-expression
+         s←parse('←'≡⊃S)↓S                   ⍝ stack reduction to single kind
+         (s,⊃⍵)E(K,lft rgt,¨s)Q              ⍝ extended stack, coloured parens
+     }                                       ⍝ :: S E K Q ← Tokn ∇ S E K Q
+
+     brkt←{S E K Q←⍵                         ⍝ []-bracketed: index or axis
+         lft exp rgt←⍺ inner'()[]'           ⍝ [ exp ] nesting of inner sub-exprs
+         subs←';'sepr exp                    ⍝ [ sub ; sub ; ... ]
+         (⊂S),↑expr/subs,⊂E K Q              ⍝ kind(x[y]) → kind(x)
+     }                                       ⍝ :: S E K Q ← Tokn ∇ S E K Q
+
+     nest←{                                  ⍝ ⍺-bracket nesting
+         dinc←(¯1*⍳⍴⍺),0                     ⍝ depth increments
+         simp←(⍵∊⍳⍴toks){⍺\⍺/⍵}⍵             ⍝ simple (non-nested) indices
+         deps←+\dinc[⍺⍳⊃¨toks[simp]]         ⍝ ⍺ depths
+         ~1∊deps:⍵                           ⍝ no ⍺s: finished
+         msk←1↓∨⌿¯1⌽↑(0 1)(1 0)⍷¨⊂0,deps     ⍝ mask of outer ⍺s
+         tos←msk>fms←msk∧2|+\msk             ⍝ ends and starts of exps
+         cut←1,1↓fms∨¯1⌽tos                  ⍝ mask for fold / no-fold segments
+         enc←{⊂(⊃⍵)(1↓¯1↓⍵)(⊃⌽⍵)}            ⍝ '(abc)' → '(' 'abc' ')'
+         ↑,/(cut⊂msk){enc⍣(⊃⍺)⊢⍵}¨cut⊂⍵      ⍝ nesting and joining
+     }                                       ⍝ :: [Tokn] ← ⍞ ∇ [Tokn]
+
+     tx←{0≡≢⍵:'' ⋄ 0=≡⍵:⍵⊃toks ⋄ ∇¨⍵}        ⍝ tokens from indices
+     sepr←{0≡≢⍵:⍵ ⋄ (1,1↓(tx ⍵)∊,¨⍺)⊂⍵}      ⍝ ⍺-separated segments
+     name←{(0≤⎕NC⍪⍵)/⍵}⎕AV~'⍺⍵∇'             ⍝ initial chars for names
+     val←{ns vs←⍺ ⋄ (ns⍳⊂⍵)⊃vs}              ⍝ dref of name ⍵ in envt ⍺
+     xenv←{ns vs←↓⍉↑⍵ ⋄ (,¨ns)vs,¨⍺}         ⍝ envt ⍺ extended with pairs ⍵
+     inner←{l toks r←⍺ ⋄ l(⍵ nest toks)r}    ⍝ nested sub-expression triple
+     N F M D _F NF H MD U Z←1+⍳10            ⍝ kind codes
+     alpha←{(⊂,'⍺')((N F⍳⍵)⊃N NF U),¨⍺}      ⍝ environment ⍺ extended with '⍺'⍵
+     bkind←{D⌊2+2⊥'⍵⍵' '⍺⍺'∊tx ⍵}            ⍝ body-kind: F, M or D
+
+     envt←⍺,¨{                               ⍝ initial environment
+         p←' ! # * + , - / < = > ? \ | ~ ¨ × ÷ ← ↑ ↓ ∊ ∘ ∧ ∨ ∩ ∪ ≠ ≡ ≢ ≤ ≥ ⊂ ⊃ ⊖ ⊢ ⊣ ⊤ ⊥ ⌈ ⌊ ⌷ ⌸ ⌹ ⍠ ⌶ ⌽ ⌿ ⍀ ⍉ ⍋ ⍎ ⍒ ⍕ ⍞ ⍟ ○ ⍣ ⍤ ⍨ ⍪ ⍬ ⍱ ⍲ ⍳ ⍴ ⍵ ⍵⍵ ⍷ ⍺ ⍺⍺ ∇ ∇∇ ⎕ ⎕A ⎕AI ⎕ARBIN ⎕ARBOUT ⎕AT ⎕AV ⎕CMD ⎕CR ⎕CS ⎕CT ⎕CY ⎕D ⎕DF ⎕DL ⎕DM ⎕DQ ⎕DR ⎕ED ⎕EM ⎕EN ⎕EX ⎕EXPORT ⎕FAPPEND ⎕FCHK ⎕FCREATE ⎕FDROP ⎕FERASE ⎕FHIST ⎕FHOLD ⎕FIX ⎕FLIB ⎕FMT ⎕FNUMS ⎕FRDAC ⎕FRDCI ⎕FREAD ⎕FRENAME ⎕FREPLACE ⎕FRESIZE ⎕FSIZE ⎕FSTIE ⎕FTIE ⎕FUNTIE ⎕FX ⎕IO ⎕KL ⎕LC ⎕LOAD ⎕LOCK ⎕LX ⎕MAP ⎕ML ⎕MONITOR ⎕NA ⎕NAPPEND ⎕NC ⎕NCREATE ⎕NERASE ⎕NEW ⎕NL ⎕NNUMS ⎕NQ ⎕NR ⎕NREAD ⎕NREPLACE ⎕NRESIZE ⎕NS ⎕NSIZE ⎕NTIE ⎕NULL ⎕NUNTIE ⎕NXLATE ⎕OPT ⎕OR ⎕PATH ⎕PFKEY ⎕PROFILE ⎕PW ⎕REFS ⎕R ⎕RL ⎕S ⎕SAVE ⎕SE ⎕SH ⎕SHADOW ⎕SI ⎕SIGNAL ⎕SIZE ⎕SM ⎕SR ⎕STATE ⎕STOP ⎕SVC ⎕SVO ⎕SVQ ⎕SVR ⎕SVS ⎕TC ⎕TCNUMS ⎕TGET ⎕THIS ⎕TKILL ⎕TPUT ⎕TRACE ⎕TRAP ⎕TREQ ⎕TS ⎕TSYNC ⎕UCS ⎕VFI ⎕VR ⎕WA ⎕WC ⎕WG ⎕WS ⎕WN ⎕WSID ⎕XML ⎕XT'
+         k←⍎'F N F F F F H F F F F H F F M F F F F F F D F F F F F F F F F F F F F F F F F F F M F D M F H H F F F F F N F F D D M F N F F F F N NF F N NF F MD N N  N   F      F       F   N   F    F   F   N   F   N  F   F   N   F   F   F   F   N   F   F       2        F     F        F      F       F      F      F    F     F    N      F      F      F      F        F         F        F      F      F     F       F   N   F   N   F     F     N   F    N   F        F   F        F   F        F       F    F   N      F   F   F      F         F        F   F      F     N     F       F       D    F   N     F      F        N   F     D  N   D  F     N   F   F       N   F       F     N   F   F      F     F    F    F    F    F    N   F       F     N     F      F     F      N     F     N   F      F    F    F   N   F   F   F   F   N     F    F  '
+         t←~∘' '¨(1 0⍷p=' ')⊂p               ⍝ primitive tokens
+         t k,¨⍬ ⍵                            ⍝ token-kind dictionary
+     }U                                      ⍝ primitive kinds (default: unknown)
+
+     bonds kinds←{                           ⍝ bond strengths and resulting kinds
+         binding pairs←1 0 1 0⊂↓⍉↑⍵          ⍝ bond/kinds and token-pairs
+         masks←(⍳Z+1 1)∘∊∘⊂¨↓⍉↑pairs         ⍝ mask per specification below
+         ↓¨+/↑binding×⊂masks                 ⍝ accum'd bonds and kinds per pair
+     }{                                      ⍝ binding precedence definitions:
+         _←,¨                                ⍝ bond _ result _ tokens _ tokens
+         {                                   ⍝ bond-strengths & results:
+             ⍵,7 _ N _ N _ N}{               ⍝  N ← nilad to nilad (stranding)
+             ⍵,6 _ M _ D _ N F H NF}{        ⍝  M ← D to right operand
+             ⍵,5 _ F _ N F H NF _ M}{        ⍝  F ← left operand to M
+             ⍵,5 _ F _ F H NF _ H}{          ⍝  F ← left operand to hybrid / ..
+             ⍵,4 _ _F _ N _ F H}{            ⍝ _F ← left argument to function
+             ⍵,4 _ N _ N _ NF}{              ⍝  N ← left arg to operand (0 ⍺⍺)
+             ⍵,3 _ N _ F _F NF _ N}{         ⍝  N ← function to right argument
+             ⍵,3 _ NF _ F _F NF _ NF}{       ⍝ NF ← function to operand ⍺⍺ ⍵⍵
+             ⍵,2 _ F _ F _F NF _ F}{         ⍝  F ← function to function (train)
+             ⍵,1 _ NF _ _F _ U}{             ⍝ NF ← monadic fn to ? (1+?)
+             ⍵,1 _ U _ N F U _ U}{           ⍝  ? ← token to ? (0?)(+?)(??)
+             ⍵,1 _ N _ U _ N}{               ⍝  N ← ? to nilad (?3)
+             ⍵}⍵
+     }⍬
+
+     parse←{                                 ⍝ Bunda-Gerth parse of kinds stack
+         1≡≢⍵:⊃⍵                             ⍝ single kind: done
+         diff←2</2{⍺ ⍵⊃bonds}/0,⍵            ⍝ binding strength differentials
+         diff∧.=0:Z                          ⍝ no peaks: failure
+         posn←⌈/diff/⍳⍴diff                  ⍝ rightmost downward slope
+         bind←(2↑posn↓⍵)⊃kinds               ⍝ binding of two tokens
+         ∇(posn↑⍵),bind,(posn+2)↓⍵           ⍝ further reductions
+     }                                       ⍝ :: Kind ← ∇ [Kind]
+
+     lint←{                                  ⍝ indices for de-fluffed token vect
+         chs←(non←~⍵∊' ⍝')/⍵                 ⍝ non-white initial chars
+         as←1 1⍷sep←chs∊'⋄┘'                 ⍝ mask of adjacent separators
+         ss←sep∧⍤1⊢¯1 1⌽'{}'∘.=chs           ⍝   ..   {⋄, {┘, ⋄} and ┘}
+         op←(¯1∘⌽∨⊢)'∘.'⍷chs                 ⍝ outer product: kind(∘.f)→kind(f)
+         (non\~∨⌿op⍪as⍪ss)/⍳⍴⍵               ⍝ index vector for significant toks
+     }                                       ⍝ :: [Indx] ← ∇ [⍞]
+
+     defn←'{}'nest lint⊃¨toks                ⍝ top-level function definition
+     K←dq defn expr envt ⍬ ⍬                 ⍝ token kinds
+
+     cdict←{⍵⊃¨⊂'·NFMDfrho?!'}\(↓⍉↑K),¨⍬ 0   ⍝ colour dictionary
+     colour←{(⍵⊃toks)⊢¨cdict val ⍵}          ⍝ colour vector for ⍵th token
+     split←{∊¨1↓¨(1,toks∊⊂,'┘')⊂'?',⍵}       ⍝ vectors of colours per source line
+     split colour¨⍳⍴toks                     ⍝ colours per source line
+
+    ⍝    K := N F M D _F NF H MD U Z        ⍝ Kind
+    ⍝    S := [K]                           ⍝ Stack: vector of kinds
+    ⍝    E := [Tokn] [K]                    ⍝ Environment: maps tokens to kinds
+    ⍝    Q := [Body]                        ⍝ Queue of deferred fnop bodies
+    ⍝ Body := [Expr]                        ⍝ vector of ⋄:┘-separated exprs
+    ⍝ Expr := [Tokn]                        ⍝ Expression: vector of tokens
+    ⍝ Tokn := Indx | [Tokn]                 ⍝ Indices into toks vector
+ }

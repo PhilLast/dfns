@@ -1,0 +1,88 @@
+rslt ← (dewy ##.do) rarg         ⍝ Apply no-result function "en passant".
+
+A  function [sic] that doesn't return its result is an embarrassment to  the  D-
+programmer.  Operator  [do]  applies such a function to its argument and returns
+the argument as result.
+
+    {} do 3
+3
+
+For example, suppose we want a D-fn "wset" which, given a ref to an object and a
+property-value  pair, sets the new value and returns the previous one as result.
+We might be tempted to try something along the lines of:
+
+    wset←{                  ⍝ Set new prop-value ⍵ on object ⍺.
+        rslt←⍺ ⎕WG ⎕IO⊃⍵    ⍝ get old value.
+        ⍺ ⎕WS ⍵             ⍝ set new value.       !!!!!!! wrong
+        rslt                ⍝ return old value.
+    }
+
+This  won't work because the function terminates on the second line (⎕WS) before
+returning  "rslt"  on  the  third. We can't use a local assignment on the second
+line to prolong execution:
+
+        _←⍺ ⎕WS ⍵           ⍝ set new value.       !!!!!!! wrong
+
+because  ⎕WS  does  not (currently) return a result and so would produce a VALUE
+ERROR. So we use [do] in the following way. Note that, as [do] derives a monadic
+function  (takes no left argument), we are obliged to bind ⎕WS's left argument ⍺
+to form a monadic operand ⍺∘⎕WS:
+
+        _←⍺∘⎕WS do ⍵        ⍝ set new value.
+or
+        0⊣⍺∘⎕WS do ⍵:       ⍝ set new value.
+
+or we could combine the final two lines into:
+
+    wset←{                  ⍝ Set new prop-value ⍵ on object ⍺.
+        rslt←⍺ ⎕WG ⎕IO⊃⍵    ⍝ get old value.
+        rslt⊣⍺∘⎕WS do ⍵     ⍝ set new value and return old value.
+    }
+
+(muse:
+    To  be  of  any  value, functions that don't return results must have useful
+    side-effects.  In  other  words, they _do_ things, rather than indicate what
+    the  value  of the function at a particular argument _is_. For more on this,
+    see: http://dfns.dyalog.com/downloads/howcomp.pdf
+}
+
+Technical notes:
+
+This  coding  of [do] depends on the behaviour of primitive execute (⍎): Execute
+of  a diamond-separated string is defined to return the evaluation of the right-
+most segment as result.
+
+    do←{                  ⍝ Apply no-result function.
+        ⍎'⍺⍺ ⍵ ⋄ ⍵' ⋄ ⍺⍺
+    }
+
+Notice that we must include an unquoted (and unvisited) ⍺⍺ within the braces, in
+order  to  denote [do] as an operator and so consume the function operand to its
+left.
+
+An  alternative  coding  might trap the expected value error. This has the minor
+disadvantage that it disturbs any diagnostic message (⎕DM) and it appears to run
+a little slower:
+
+    do←{                  ⍝ Apply no-result function.
+        6::⍵ ⋄ ⍺⍺ ⍵
+    }
+
+Depressingly, [do] may be coded more simply and efficiently as a traditional op-
+erator:
+
+        ∇ RARG ← (FUNC DO) RARG
+    [1]   FUNC RARG
+        ∇
+
+but  perhaps  this  is to be expected as tradfns are generally better for "do-y"
+programming,  while  D-functions excel at the "is-y" style (see the muse section
+above).
+
+Examples:
+
+    'F1'∘⎕WS do 'Caption' 'Pugwash'
+ Caption  Pugwash
+
+Index:no-result|is-y function|do-y function|passant, en
+Index;Izzy

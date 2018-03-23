@@ -1,0 +1,89 @@
+n ← ##.nlines simple                ⍝ Number of display lines for simple array.
+
+Default display of APL arrays is arranged with items along the last axis  across
+the page and items along leading axes downwards.  Planes of items are  separated
+by successively higher numbers of blank lines: trailing rank-2 arrays are separ-
+ated by 1 line; rank-3 arrays by 2 lines; ...; rank-⍵ arrays by (0⌈⍵-1) lines.
+
+          display {⎕fmt 2 ⍵ 2 2⍴⍳24}¨3 2 1 0    ⍝ format of some rank-4 arrays.
+    ┌→────────────────────────────┐
+    │ ┌→────┐ ┌→────┐ ┌→──┐ ┌→──┐ │
+    │ ↓ 1  2│ ↓ 1  2│ ↓1 2│ ↓   │ │
+    │ │ 3  4│ │ 3  4│ │3 4│ │   │ │
+    │ │     │ │     │ │   │ └───┘ │
+    │ │ 5  6│ │ 5  6│ │   │       │
+    │ │ 7  8│ │ 7  8│ │5 6│       │
+    │ │     │ │     │ │7 8│       │
+    │ │ 9 10│ │     │ └───┘       │
+    │ │11 12│ │ 9 10│             │
+    │ │     │ │11 12│             │
+    │ │     │ │     │             │
+    │ │13 14│ │13 14│             │
+    │ │15 16│ │15 16│             │
+    │ │     │ └─────┘             │
+    │ │17 18│                     │
+    │ │19 20│                     │
+    │ │     │                     │
+    │ │21 22│                     │
+    │ │23 24│                     │
+    │ └─────┘                     │
+    └∊────────────────────────────┘
+
+Jay Foad's function returns the number of lines of output that its simple  argu-
+ment array would produce.
+
+This function is presented as a programming challenge, rather than as having any
+practical application. In fact a sneaky alternative coding could be: ⍬∘⍴∘⍴∘⎕fmt.
+Note that the occurrence of a newline character in the argument array will disp-
+lay more lines than [nlines] predicts.
+
+It is left as an  "exercise for the student"  to extend this function to  nested
+arrays :-).
+
+Examples:
+
+      2 3 4⍴⍳24                     ⍝ default output of rank-3 array ...
+ 1  2  3  4
+ 5  6  7  8
+ 9 10 11 12
+
+13 14 15 16
+17 18 19 20
+21 22 23 24
+
+      nlines 2 3 4⍴⍳24              ⍝ ... produces 1+2×3 lines of output
+7
+
+      2 2 2 2⍴2                     ⍝ rank-4 array ...
+2 2
+2 2
+
+2 2
+2 2
+
+
+2 2
+2 2
+
+2 2
+2 2
+      nlines 2 2 2 2⍴2              ⍝ ... 12 lines.
+12
+      nlines 2 0 3⍴4                ⍝ null array.
+1
+      nlines 2 3 0 0⍴0              ⍝ null array.
+6
+      nlines 1 2 3 4 5 6 7 8⍴9      ⍝ rank-8 array.
+5907
+
+      cfmt←{(nlines ⍵)≡⊃⎕fmt ⍵}     ⍝ compare with output from monadic ⎕fmt.
+
+      shapes←0 1 2 3∘adic¨⍳1000     ⍝ selection of shapes
+
+      ∧/ cfmt¨ shapes ⍴¨ 0          ⍝ compare selection of arrays
+1
+
+See also: adic
+
+Index:default display|lines of output
+Index;Foad J.

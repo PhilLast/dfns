@@ -1,0 +1,39 @@
+⍝ Function string replacement:
+
+    tmp←⎕ns''
+
+    tmp.(aaa bbb←'aaa' 'bbb')
+
+    ⊢tmp.⎕fx'z←trad fn' 'z←aaa bbb'
+trad
+    ⊢tmp.⎕fx,⊂'dfn←{aaa bbb}'
+dfn
+    tmp.⎕nl 3
+dfn 
+trad
+
+    disp tmp.⎕cr¨'dfn' 'trad'
+┌─────────────┬─────────┐
+│dfn←{aaa bbb}│z←trad fn│
+│             │z←aaa bbb│
+└─────────────┴─────────┘
+
+    tmp.trad''
+ aaa  bbb 
+    tmp.dfn''
+ aaa  bbb 
+    
+    ⊢tmp fnrepl 'aaa' 'bbb'
+ dfn  trad 
+
+    disp tmp.⎕cr¨'dfn' 'trad'
+┌─────────────┬─────────┐
+│dfn←{bbb bbb}│z←trad fn│
+│             │z←bbb bbb│
+└─────────────┴─────────┘
+
+    tmp.dfn''
+ bbb  bbb 
+
+    tmp.trad''
+ bbb  bbb 

@@ -1,0 +1,487 @@
+Binary Search Trees
+-------------------
+Binary search trees provide a way to store ordered information so that access is
+reasonably fast. An example of an application might be the storing of name=value
+pairs in a symbol table.
+
+    ┌───────────────────────────────────────────────────────────────────┐
+    │ Binary Search Trees have an elegant structure and are interesting │
+    │ to study. They are _almost_never_ the best way to store key=value │
+    │ pairs in APL. For a more practical APL alternative, see →alists←. │
+    └───────────────────────────────────────────────────────────────────┘
+
+These  notes cannot do justice to the vast technical literature dealing with the
+properties of binary trees, see below for some links.
+
+(
+    NB: A previous coding of these operators used character vector tags as oper-
+    ands ('put' 'rem' 'get' 'fmt' 'vec' 'chk')  to distinguish the cases.  Using
+    primitive functions as operands is (arguably) more suggestive  about  what's
+    going on and reduces the need for parentheses to prevent the  binding of the
+    operand with a left argument.  Note that the operand function is interpreted
+    only as a label and is never applied as a function.
+)
+
+Defn:  A Binary Tree  is  either Null or is a Node, containing some information,
+together with a left and a right subtree.
+
+    Tree ::= Null | Node info (Tree lft) (Tree rgt)
+
+Defn: A Binary Search Tree (BST) is a binary tree whose node information includ-
+es a search key.  Each node in the tree has the property that its key is greater
+than any of those in its left subtree and less than any of those  in  its  right
+subtree.
+
+In  addition,  the  node typically carries a "value" associated with the key. In
+other words, the nodes contain key=value pairs.
+
+        B=2                 key=val pairs stored in a BST
+        / \
+       /   \                Note that for each key K,
+     A=1   E=5              Lft subtree keys < K,
+           / \              Rgt subtree keys > K.
+          /   \
+        D=4   F=6
+        /
+       /
+     C=3
+
+If  we  are interested only in the structure and beauty of BSTs, the value for a
+node  may  be  of  little  interest. For this reason, operators →sbst←, →splay←,
+→avl← and →redblack← take either a key=value pair or just a scalar (character or
+numeric) key. In the latter case, only the key is stored and is returned as val-
+ue by derived function [get]. This frees us to type simple expressions such as:
+
+    0 put foldl ⍳7      ⍝ tree with 1=1, 2=2, 3=3, ...
+
+Some terminology
+----------------
+                    This tree has a "height" of 4 (a null tree has height 0).
+       B=2          This tree has a "size" of 6 (a null tree has size 0).
+       / \          B is the "root".
+      /   \         Nodes A B and C are at "depth" 1 0 and 3, respectively.
+    A=1   E=5       A is B's "left child".
+          / \       E is B's "right child".
+         /   \      D is E's "inner" (parent-side) child.
+       D=4   F=6    F is E's "outer" child.
+       /            E is D's (and F's) "parent".
+      /             B is D's (and F's) "grandparent".
+    C=3             A is D's (and F's) "uncle". *
+                    D is F's "sibling".
+                    D and F are A's (inner and outer) "nephews". *
+                    The size-2 tree D-C is E's left or inner "subtree".
+
+                  * Most  treatments of trees appear to favour male relatives on
+                    the parent's sibling's side. Of course, trees populated with
+                    aunts and nieces would work just as well :-)
+Nulls
+-----
+When drawing BSTs, although it uses a little more space, it is sometimes conven-
+ient to show nulls explicitly. Using '∘' as null, the above example becomes:
+
+          B=2
+          / \
+         /   \
+        /     \
+      A=1     E=5           BST showing Nulls (∘)
+      / \     / \
+     ∘   ∘   /   \
+            /     \
+          D=4     F=6
+          / \     / \
+         /   ∘   ∘   ∘
+        /
+      C=3
+      / \
+     ∘   ∘
+
+Rotation
+--------
+BSTs  are transformed using left or right "rotation" of the edge that connects a
+node to one of its subtrees. Rotation is an elementary operation, which preserv-
+es the search-order of nodes.
+
+By convention, this rotation of an edge is more usually termed a rotation of its
+upper node (vertex). For example, in the following diagram, upper node A is said
+to be rotated leftwards or counter-clockwise.
+
+Notice  how  the  rising  node's inner subtree (q) is reconnected as the falling
+node's inner subtree.
+
+Left Rotation of Node A (rotation of edge A-+-B):
+
+     ↓A                                                        B
+     / ⍀                                                      ⌿ \
+    p   B              A-+-B              A-+-B↑             A   r
+       / \     =>     /  ←/ \     =>     / \   \     =>     / \
+      q   r          p   q   r          p   q   r          p   q
+
+Right Rotation of Node B (rotation of edge A-+-B):
+
+        B↓                                                   A
+       ⌿ \                                                  ⌿ \
+      A   r            A-+-B             ↑A-+-B            p   B
+     / \       =>     / \→  \     =>     /   / \     =>       / \
+    p   q            p   q   r          p   q   r            q   r
+
+Balance
+-------
+Using  rotation,  we  can see that a given set of search keys may be stored in a
+number  of different tree configurations. This number increases rapidly with the
+size of the tree. Taking just 4 keys:
+
+        A           A           A           A           A
+         \           \           \           \           \
+          B           B           C           D           D
+           \           \         / \         /           /
+            C           D       B   D       B           C
+             \         /                     \         /
+              D       C                       C       B
+
+        B           B           C           C
+       / \         / \         / \         / \          All possible BSTs
+      A   C       A   D       A   D       B   D         for keys A B C D.
+           \         /         \         /
+            D       C           B       A
+
+        D           D           D           D           D
+       /           /           /           /           /
+      A           A           B           C           C
+       \           \         / \         /           /
+        B           C       A   C       A           B
+         \         /                     \         /
+          C       B                       B       A
+
+The  number  of distinct ⍵-node binary trees is the Catalan number, which can be
+generated by:
+
+    catalan ← {(⍵!2×⍵)÷⍵+1}             ⍝ ⍵th Catalan number.
+
+    catalan¨ 0 to 15
+1 1 2 5 14 42 132 429 1430 4862 16796 58786 208012 742900 2674440 9694845
+
+or with this equivalent fork:
+
+    catalan ← 1∘+ ÷⍨ ⊢ ! +⍨
+
+Jay Foad suggests this coding of Segner's Recurrence Formula: Cn = C2×Cn-1 + C3×
+Cn-2 + ... + Cn-1×C2
+
+    {⍵,+/⍵×⌽⍵}⍣9⊢1                      ⍝ first 10 Catalan numbers
+1 1 2 5 14 42 132 429 1430 4862
+
+See: http://mathworld.wolfram.com/CatalanNumber.html
+
+The  "height"  of the tree is defined to be the number of edges in the path from
+the  root to the furthest Null.  In the diagrams above (which don't show nulls),
+the first and second trees have height 4 and the third, height 3.
+
+Common Operations
+=================
+Search, Insert/Replace and Remove operations, common to all of the BST operators
+are as follows.
+
+We can express the methods simply in a pseudo-code using "A ∇ B → ..." as short-
+hand for "{A B←⍺ ⍵ ⋄ ...}" and "∘" as shorthand for Null.
+
+In addition, ";", pronounced "where",  introduces a definition, which is _local_
+to the first preceding line that contains  fewer  semicolons.  This idea, dating
+from 1966 [ref 3], is known as "the off-side rule".
+
+Finally, '·' is used as a white-space character, to make it easier to keep track
+of indentation levels.
+
+In  the following example, notice how the commentary corresponds very closely to
+the function tokens.  This means that this "language" is sufficiently high-level
+to render commentary at this level of detail  superfluous, leaving  the  comment
+field free for more abstract (higher-level) commentary.
+
+    avg ← ∇ vec →           ⍝ "avg ia a function which maps vec to
+    ·   tot ÷ num           ⍝  tot divided by num,
+    ·   ;   tot ← sum/vec   ⍝    where tot is the sum reduction of vec,
+    ·   ;   ;   sum ← +     ⍝      where sum is plus
+    ·   ;   num ← ⍴vec      ⍝    and where num is the shape of vec."
+
+Search
+------
+We  compare the sought key at each node, going left or right until we find it or
+reach a null, in which case, the key is not in the tree:
+
+    T ∇ K →                         ⍝ value associated with key K in tree T:
+    ·   T ≡ ∘:   error!             ⍝ null T: K not in tree => error.
+    ·   (Key Val)(Lft Rgt) ← T      ⍝ naming of parts of node.
+    ·   K = Key: Val                ⍝ match:  value from this node.
+    ·   K < Key: Lft ∇ K            ⍝ lower:  value from left subtree,
+    ·   K > Key: Rgt ∇ K            ⍝ higher: value from right subtree.
+
+Insertion-Replacement
+---------------------
+As  with  searching, we compare the key at each node, going left or right. If we
+find  the key, we replace an existing value. Otherwise, we reach a null and ins-
+ert the key=value pair as a new leaf of the tree.
+
+    T ∇ K V →                           ⍝ tree T with key(K)=value(V):
+    ·   T ≡ ∘:   (K V)(∘ ∘)             ⍝ null T: new leaf node.
+    ·   (Key Val)(Lft Rgt) ← T          ⍝ naming of parts of node.
+    ·   K = Key: (K V)(Lft Rgt)         ⍝ match:  node with new value.
+    ·   K < Key: (Key Val)(Lft∆ Rgt)    ⍝ lower:  put in left subtree, where
+    ·   ;   Lft∆ ← Lft ∇ K V            ⍝ Lft∆ is left subtree with K=V
+    ·   K > Key: (Key Val)(Lft Rgt∆)    ⍝ higher: put in right subtree, where
+    ·   ;   Rgt∆ ← Rgt ∇ K V            ⍝ Rgt∆ is right subtree with K=V
+
+Removal
+-------
+Again,  we  search  left or right for the key to be removed. If we reach a null,
+then  the key wasn't in the tree and we have finished. Otherwise, if we find the
+node  and  it  has  0  or  1 non-null children, we replace it with its child (or
+null). Otherwise, if the  node has two non-null children, we have two options:
+
+Option-s (simpler): Push the node to be removed deeper down the tree by repeated
+rotation  until  it has only 1 or 0 children, then proceed as above. It would be
+better to rotate towards the nearest node with fewer than 2 children but, as the
+location  of  such a node is generally unknown, either direction will do. →sbst←
+and →splay← use the simpler option.
+
+Option-q (quicker):  Replace  the  (Key Val) pair of the node with the (Key Val)
+pair  that sorts immediately after (or before) it. Then, remove this "successor"
+node, which must have at most 1 child. →avl← and →redblack← use the quicker opt-
+ion.
+
+    T ∇ K →                                 ⍝ tree T without key K:
+    ·   T ≡ ∘:   T                          ⍝ null T: key not in tree.
+    ·   (Key Val)(Lft Rgt) ← T              ⍝ naming parts of node.
+    ·   K < Key: (Key Val)(Lft∆ Rgt)        ⍝ lower: node with K ...
+    ·   ;   Lft∆ ← Lft ∇ K                  ⍝ ... removed from left subtree.
+    ·   K > Key: (Key Val)(Lft Rgt∆)        ⍝ higher: node with K ...
+    ·   ;   Rgt∆ ← Rgt ∇ K                  ⍝ ... removed from right subtree.
+    ·   Rgt ≡ ∘: Lft                        ⍝ match: null right: left
+    ·   Lft ≡ ∘: Rgt                        ⍝ match: null left: right.
+
+⍝ then either the simpler but slower option-s:
+
+    ·   (KeyValA (LftA ((Key Val)(RgtA Rgt))) ∇ K   ⍝ rgt-rotated Lft without K.
+    ·   ;   KeyValA (LftA RgtA) ← Lft               ⍝ naming parts of K's Lft.
+
+⍝   ┌────────────┬─────────┬────────────┬────
+⍝   │    [K] ~ K →   A ~ K →   A        │
+⍝   │    / \     │  / \    │  / \       │
+⍝   │   A   B    │ p  [K]  │ p  [K] ~ K → ...
+⍝   │  / \       │    / \  │    / \     │
+⍝   │ p   q      │   q   B │   q   B    │
+⍝   └────────────┴─────────┴────────────┴────
+
+⍝ or the quicker but more complex option-q:
+
+    ·   (KeyS ValS) ← Left Rgt              ⍝ successor key=value pair.
+    ·   ;   Left ← ∇ KeyVal(Lft Rgt) →      ⍝ leftmost key=value pair.
+    ·   ·   ·   Lft ≡ ∘: KeyVal             ⍝ left child null: successor.
+    ·   ·   ·   Lft ≢ ∘: ∇ Lft              ⍝ otherwise: left of left subtree.
+    ·   (KeyS ValS)(Lft Rgt∆)               ⍝ successor key and value.
+    ·   ;   Rgt∆ ← Rgt ∇ KeyS               ⍝ right sub with successor removed.
+
+⍝   ┌───────────────┬──────────────┐
+⍝   │     [K] ~ K   │     [S]      │
+⍝   │     / \       │     / \      │
+⍝   │    p   A      →    p   A ~ S │
+⍝   │       / \     │       / \    │
+⍝   │     ...  t    │     ...  t   │
+⍝   │     /         │     /        │
+⍝   │    q          │    q         │
+⍝   │   / \         │   / \        │
+⍝   │ [S]  s        │ [S]  s       │
+⍝   │   \           │   \          │
+⍝   │    r          │    r         │
+⍝   └───────────────┴──────────────┘
+
+For  no  particular reason, other than to explore both methods, operators →sbst←
+and →splay← use option-s, whereas operators →avl← and →redblack← use option-q.
+
+Technical notes
+---------------
+Operators:  →sbst←,  →splay←,  →avl←  and  →redblack←  are used to derive access
+functions  for  their  particular  type of BST, depending on the operator's left
+operand:
+
+    ∪ op    ⍝ tree ⍺ with key=val ⍵.
+    ~ op    ⍝ tree ⍺ without key ⍵.
+    ⍎ op    ⍝ value for key ⍺ from tree ⍵.
+    ⍕ op    ⍝ format of tree ⍵.
+    ∊ op    ⍝ enlist of tree ⍵.
+    ? op    ⍝ stats for tree ⍵: ok size mean_depth height.
+    ≡ op    ⍝ depth of key ⍵ in tree ⍺ (only for →splay←).
+    = op    ⍝ balance of tree ⍵ (only for →sbst←).
+
+Type
+----
+To help illuminate the code, closing braces of inner subfunctions in each of the
+operators show their "type", using the following notation:
+
+   :: "is of type"
+    ∇ function place marker
+   ∇∇ operator place marker
+    → returns
+- ~ # primitive types for char, numb, ref, à la →display←
+⊤ ⍺ ⍵ type variables
+  [⊤] vector of type ⊤
+ [⊤;] matrix of type ⊤, etc
+    t tree
+    k key
+    v value
+    i subtree height increment: ¯1 0 1
+    b node balance moment:      ¯1 0 1
+    r direction of rotation:    ¯1   1
+    e which edge (left right):  ¯1   1
+    d depth from root.
+    h height of (sub)tree.
+    s size of (sub)tree (number of nodes).
+    a arbitrary accumulated value.
+    y boolean value no/yes → 0/1.
+
+For example, the type of avl's inner function [search] shows:
+
+    search :: t (t ∇ k v → t i) ∇∇ k v → t i
+
+may be read as follows:
+
+    search :: t (t ∇ k v → t i) ∇∇ k v → t i    ⍝ search is an operator
+    ¯¯¯¯¯¯                      ¯¯
+    search :: t (t ∇ k v → t i) ∇∇ k v → t i    ⍝ that takes an operand
+                ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+    search :: t (t ∇ k v → t i) ∇∇ k v → t i    ⍝ which is a function
+                   ¯
+    search :: t (t ∇ k v → t i) ∇∇ k v → t i    ⍝ that returns a tree-incr
+                         ¯¯¯¯¯
+    search :: t (t ∇ k v → t i) ∇∇ k v → t i    ⍝ from a tree and a key=val
+                 ¯   ¯¯¯
+    search :: t (t ∇ k v → t i) ∇∇ k v → t i    ⍝ and derives a function
+                ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+    search :: t (t ∇ k v → t i) ∇∇ k v → t i    ⍝ that returns a tree-incr
+                                       ¯¯¯¯¯
+    search :: t (t ∇ k v → t i) ∇∇ k v → t i    ⍝ from a tree and a key=val.
+              ¯                          ¯¯¯
+Using this notation, types of functions derivable from the operators are:
+
+    put ← ∪ avl :: t ∇ k v → t          ⍝ tree ⍺ with key=value pair ⍵.
+    get ← ⍎ avl :: k ∇ t   → v          ⍝ value for key ⍺ in tree ⍵.
+    rem ← ~ avl :: t ∇ k   → t          ⍝ tree ⍺ without key.
+    fmt ← ⍕ avl ::   ∇ t   → [-;]       ⍝ char matrix format of tree ⍵.
+    chk ← ? avl ::   ∇ t   → y s d h    ⍝ statistics for tree ⍵.
+    vec ← ∊ avl ::   ∇ t   → [k v]      ⍝ key=value vector from tree ⍵.
+
+Which is best?
+--------------
+·
+    redblack ────────────────────┐
+    avl ─────────────────────┐   │
+    splay ───────────────┐   │   │
+    sbst ────────────┐   │   │   │
+                     │   │   │   │
+                     BST SPL AVL R-B
+                    ┌───┬───┬───┬───┐
+    Ordered puts    │ 1 │ 1 │ 4 │ 4 │       0 N/A
+                    ├───┼───┼───┼───┤       1 Poor
+    Random puts     │ 3 │ 3 │ 5 │ 5 │       2 So-so
+                    ├───┼───┼───┼───┤       3 Good
+    Adaptive gets   │ 0 │ 5 │ 0 │ 0 │       4 Very Good
+                    ├───┼───┼───┼───┤       5 Excellent
+    Simple code     │ 4 │ 3 │ 2 │ 2 │
+                    ├───┼───┼───┼───┤
+    Key removal     │ 1 │ 1 │ 4 │ 4 │
+                    └───┴───┴───┴───┘
+
+    va ← ⍳1023                  ⍝ ascending sequence of keys (worst case).
+    vb ← ⍋⌽⍉(10/2)⊤⍳1023        ⍝ binary-alternating order keys (best case).
+
+    puts ← ∪avl foldl           ⍝ insert keys ⍵ into tree ⍺.
+
+    ta ← 0 puts va              ⍝ tree from ascending inserts.
+    tb ← 0 puts vb              ⍝ tree from binary-alternating inserts.
+
+    rems ← ~avl foldl           ⍝ remove keys ⍵ from tree ⍺.
+
+    ┌───────────────┬───────────┬───────────┬───────────┬───────────┐
+    │           time│           │           │           │           │
+    │rotations      │       sbst│      splay│        avl│   redblack│
+    ├───────────────┼───────────┼───────────┼───────────┼───────────┤
+    │      0 puts va│       1970│       2129│         63│         93│
+    │               │           │           │1013       │1005       │
+    ├───────────────┼───────────┼───────────┼───────────┼───────────┤
+    │      0 puts vb│         29│         32│         34│         41│
+    │               │           │           │0          │0          │
+    ├───────────────┼───────────┼───────────┼───────────┼───────────┤
+    │     ta rems va│          3│          3│         31│         47│
+    │               │           │           │502        │503        │
+    ├───────────────┼───────────┼───────────┼───────────┼───────────┤
+    │     ta rems vb│        929│        946│         35│         47│
+    │               │           │           │0          │8          │
+    ├───────────────┼───────────┼───────────┼───────────┼───────────┤
+    │     ta rems⌽va│       1947│       1982│         30│         49│
+    │               │           │           │502        │494        │
+    ├───────────────┼───────────┼───────────┼───────────┼───────────┤
+    │     tb rems va│         18│         17│         31│         37│
+    │               │           │           │502        │502        │
+    ├───────────────┼───────────┼───────────┼───────────┼───────────┤
+    │     tb rems vb│         26│         26│         36│         39│
+    │               │           │           │0          │0          │
+    ├───────────────┼───────────┼───────────┼───────────┼───────────┤
+    │     tb rems⌽va│         18│         17│         30│         36│
+    │               │           │           │502        │502        │
+    ├───────────────┼───────────┼───────────┼───────────┼───────────┤
+    │       2↓chk va│   511 1023│   511 1023│      8  10│      9  18│ *
+    ├───────────────┼───────────┼───────────┼───────────┼───────────┤
+    │       2↓chk vb│     8   10│     8   10│      8  10│      9  10│
+    └───────────────┴───────────┴───────────┴───────────┴───────────┘
+    * Worst-case  red-black  trees are deeper than worst-case AVL
+      trees  but  mean  nodes depths, which indicate access times,
+      are not too different.
+
+Key  insertion and removal timings used operator →time← with the following sequ-
+ence. For example, the avl timing tests looked like this:
+
+    ┌avl─────────────────────┐
+    │    puts ← ∪ avl foldl  │
+    │    ta ← 0 puts time va │
+    │00.63                   │
+    │    tb ← 0 puts time vb │
+    │00.34                   │
+    │    rems ← ~ avl foldl  │
+    │    ta rems time va     │
+    │00.31                   │
+    │    ta rems time vb     │
+    │00.35                   │
+    │    ta rems time ⌽va    │
+    │00.30                   │
+    │    tb rems time va     │
+    │00.31                   │
+    │    tb rems time vb     │
+    │00.36                   │
+    │    tb rems time ⌽va    │
+    │00.30                   │
+    └────────────────────────┘
+
+Rotations were counted by injecting a line r+←1 at the start of each inner [rot]
+subfunction:
+
+    rot←{       ⍝ single ⍵-rotation of tree ⍺.
+        r+←1    ⍝ count rotations.
+        ...
+
+and then, for example:
+
+    r←0 ⋄ {}tb rems va ⋄ r      ⍝ number of removal rotations.
+502
+
+References:
+
+[1] http://en.wikipedia.org/wiki/Binary_Search_Tree
+
+[2] Knuth: Computer Musings: The Associative Law, or The Anatomy of Rotations in
+    Binary Trees (video). Stanford University Distinguished Lecture Series VII.
+    University Video Communications (415) 813-0506.
+
+[3] P.J.Landin The Next 700 Programming Languages. CACM 9(3):157 65, March 1966.
+
+See also: sbst splay avl redblack alists display time
+
+Index:binary search tree|type notation|enlist|Catalan number
+Index;Knuth D.E.|Foad J.|Segner J.A.

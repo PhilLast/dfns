@@ -1,0 +1,85 @@
+cmat ← {marker←'*'} ##.draw cmat            ⍝ Draw over '*'s.
+
+Supplied by Veli-Matti Jantunen, draw replaces adjacent markers in the character
+matrix argument with appropriate box-drawing characters.  Optional left argument
+('*'  by  default) specifies the marker; all other characters are passed through
+to the result character matrix.
+
+Examples:
+
+      ⍝ Show arg and result, starting with blank canvas.
+
+      canvas←4 4⍴' ' ⋄ display¨ canvas (draw canvas)
+ ┌→───┐  ┌→───┐
+ ↓    │  ↓    │
+ │    │  │    │
+ │    │  │    │
+ │    │  │    │
+ └────┘  └────┘
+
+      canvas[4;2 3]←'*' ⋄ display¨ canvas (draw canvas)
+ ┌→───┐  ┌→───┐
+ ↓    │  ↓    │
+ │    │  │    │
+ │    │  │    │
+ │ ** │  │ ── │
+ └────┘  └────┘
+
+      canvas[2 3;4]←'*' ⋄ display¨ canvas (draw canvas)
+ ┌→───┐  ┌→───┐
+ ↓    │  ↓    │
+ │   *│  │   ││
+ │   *│  │   ││
+ │ ** │  │ ── │
+ └────┘  └────┘
+
+      canvas[4;4]←'*' ⋄ display¨ canvas (draw canvas)
+ ┌→───┐  ┌→───┐
+ ↓    │  ↓    │
+ │   *│  │   ││
+ │   *│  │   ││
+ │ ***│  │ ──┘│
+ └────┘  └────┘
+
+      canvas[2;⍳4]←'*' ⋄ display¨ canvas (draw canvas)
+ ┌→───┐  ┌→───┐
+ ↓    │  ↓    │
+ │****│  │───┐│
+ │   *│  │   ││
+ │ ***│  │ ──┘│
+ └────┘  └────┘
+
+      canvas[⍳4;2]←'*' ⋄ display¨ canvas (draw canvas)
+ ┌→───┐  ┌→───┐
+ ↓ *  │  ↓ │  │
+ │****│  │─┼─┐│
+ │ * *│  │ │ ││
+ │ ***│  │ └─┘│
+ └────┘  └────┘
+
+      canvas[1;1]←'*' ⋄ display¨ canvas (draw canvas)
+ ┌→───┐  ┌→───┐
+ ↓**  │  ↓┌┐  │
+ │****│  │└┼─┐│
+ │ * *│  │ │ ││
+ │ ***│  │ └─┘│
+ └────┘  └────┘
+
+      '?'draw ' ?'[?10 50⍴2]                ⍝ random scribbles with ? marker.
+ ? ?  ┌┬─ ┌┐  ──    ──┬┬─ ? ┌┬─  │ ┌┬┐  ──┬┐ ─┐  │
+      └┤ ┌┼┤ │   │ ?  └┘ │ ─┴┤  ┌┴─┴┴┼┐   └┼─ │  │
+    ┌─ │ └┴┴─┴┐  │      ─┘   └─ │    └┼─┬┐ │  │
+│   │ ┌┴─     │  │  │      ?   ┌┴─ ── │ └┴┬┘ ┌┘ ┌─
+└┬┬─ ┌┤  ┌┐ ─┬┼──┘ ┌┤  │ ┌┐ ───┘  │   └┐  │  │ ┌┤
+ ├┤  └┘ ─┼┤  └┤    ├┤  │ └┤     ? │  ? │ │    ┌┴┴┐
+┌┴┤ ?  │ ├┴─┐ │   ┌┼┴┐  │ └┐           ├┬┴─┬┐ │  │
+│ ├┐ │ ├─┘  ├─┘ ? └┘ │  └─ ├┬┬─ │     ─┼┤  └┘ │
+└┬┼┘ │ │   ─┤    ?    ?   ┌┴┼┘  └─ │   └┼┬┐  ?  ┌┐
+ └┘ ─┘   ── └─  ?   ?  ?  │ │ ?   ─┘  ? └┴┴─   ─┴┘
+
+See also ##.scripts.pentominos
+
+See also: box
+
+Index:box|box-drawing characters|diversions
+Index;Jantunen V-M.

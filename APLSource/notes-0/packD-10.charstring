@@ -1,0 +1,75 @@
+cmp ← {cmp←1} ##.packD data                 ⍝ Pack char array to boolean vector.
+
+Supplied  by  Veli-Matti Jantunen, this packer uses the same algorithm as packQ,
+but the result is a simple boolean vector.
+
+The  algorithm  is  based  on replacing the unique values with boolean sequences
+that start with ones and end with zeros:
+
+    the most common element is replaced with 1 0
+    the next two with 1 0 0 and 1 1 0
+    the following with 1 0 0 0, 1 1 0 0 and 1 1 1 0
+    and so on.
+
+The  packing  is efficient, if the data contains few unique elements and some of
+them are used widely; normal text documents and APL code seem to pack nicely.
+
+Because it is a boolean vector, we may decrypt the result in several ways:
+
+        encrypt     decrypt
+        {~⍵}        {~⍵}
+        {⌽⍵}        {⌽⍵}
+        {⍺⌽⍵}       {(-⍺)⌽⍵}
+        {⍵≠(⍴⍵)⍴⍺}  {⍵≠(⍴⍵)⍴⍺}
+
+For example, the following operator uses some of the methods:
+
+    crypt←{
+    ⍝| ⍺:   character set (64 elements!)
+    ⍝| ⍺⍺:  0 = decrypt, 1 = crypt
+    ⍝| ⍵⍵:  key (positive integer)
+    ⍝| ⍵:   text
+
+         ⍺←⎕D,⎕A,'+-',lcase ⎕A               ⍝ default character set.
+         ⎕IO←0 ⋄ set←⍺                       ⍝ works nicer in zero origin.
+         key←{((⌊2⍟⍵+1)⍴2)⊤⍵}⍵⍵              ⍝ binarise key.
+
+         cry←{                               ⍝ encryption:
+             b←{(6×⌈(⍴⍵)÷6)↑⍵,6⍴1}packD ⍵    ⍝  pack, pad with 1's if needed.
+             c←b≠(⍴b)⍴key                    ⍝  poor man's xor encryption.
+             set[2⊥(6,(⍴c)÷6)⍴c]             ⍝ result is gibberish.
+         }
+
+         yrc←{                               ⍝ decryption:
+             c←,(6⍴2)⊤set⍳⍵                  ⍝  encode indices.
+             0 packD{(-+/∧\⌽⍵)↓⍵}c≠(⍴c)⍴key  ⍝  de-xor, unpack (n.b. remove last 1's)
+         }
+
+         0::⍵ ⋄ ⍺⍺=1:cry ⍵ ⋄ yrc ⍵
+     }
+
+- This idea may be developed further, e.g. adding characters that are not used.
+
+- Decryption with a wrong key may crash crypt (because the result shape may be
+  anything, say 723572108153 0 1783823 0 0 0 0 0).
+
+Examples:
+
+    packD 'mississippi'
+0 0 0 1 0 0 1 0 0 1 0 1 1 0 0 0 0 0 0 1 1 0 0 0 1 1 0 0 1 0 0 1 0 0 0 1 1 0 0 1
+    0 0 0 0 0 0 0 0 1 1 1 0 1 1 0 0 0 1 0 1 0 0 1 0 0 1 0 1 0 0 1 0 0 1 0 1 1 0
+    1 1 0 1 0
+
+    {⍵≡0 packD 1 packD ⍵}'Full Circle'
+1
+
+    ⎕←crypted←(1 crypt 313)'mississippi'
+5Na1n4ia1qmLJK
+
+    'mississippi'≡(0 crypt 313)crypted
+1
+
+See also: Data_compression
+
+Index:packing|compression|encryption
+Index;Jantunen V-M.

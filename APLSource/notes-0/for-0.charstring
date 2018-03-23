@@ -1,0 +1,29 @@
+rslt ← i j k··· F ##.for G for H··· arg  ⍝ Multiple selection of function list.
+
+This  operator  can be viewed as a function list version of (pow) or it could be
+seen as a multiple choice version of (case).
+
+If
+    fourfns←F for G for H for K
+then
+    2 1 0 2 fourfns arg
+is
+    F F G K K arg
+
+The integer list left argument is anchored such that its right item controls the
+number of times the rightmost function is run and counts leftwards for the rest.
+
+The function operands are monadic and must be capable of acting on the result of
+whichever  of the previous (to the right) functions happen to have run. Right to
+left operation is the order of the day.
+
+Examples:
+
+      embrace←{'(',⍵,')'} for {'[',⍵,']'} for {'{',⍵,'}'} for {'<',⍵,'>'}
+
+      1 0 2 3 embrace 'this'
+({{<<<this>>>}})
+
+See also: case pow co_ops
+
+Index:conditional operator|function selection|function array|co-operator

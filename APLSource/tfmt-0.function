@@ -1,0 +1,7 @@
+ tfmt←{⎕ML←1                 ⍝ Char matrix from tree.
+     ⍺←''                    ⍝ default: no indentation.
+     1=≡,⍵:↑,↓⍺,⍵            ⍝ atom: indented leaf node.
+     node←⍺,⊃⍵               ⍝ tree: node value,
+     subs←(⍺,4↑'·')∘∇¨1↓⍵    ⍝ subtrees.
+     ↑(⊂node),↑,/↓¨subs      ⍝ node followed by subtree rows.
+ }

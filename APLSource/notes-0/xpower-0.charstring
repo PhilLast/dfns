@@ -1,0 +1,39 @@
+digits ← digits ##.xpower number            ⍝ Fast multi-digit power using FFT.
+
+From Mike Day, [xpower] builds on Roger Hui's →xtimes← to provide ⍺*⍵ for multi-
+digit numbers ⍺.
+
+Left argument [digits] is a scalar or vector of decimal digits.  Right  argument
+[number] is a single whole number.
+
+Technical note:
+
+[xpower] uses "repeated squaring" to minimise the number of multiplications.
+See: http://www.jsoftware.com/jwiki/Essays/Repeated%20Squaring
+
+Examples:
+
+    2 xpower 16         ⍝ 2*16
+6 5 5 3 6
+
+    1 6 xpower 4        ⍝ 16*4
+6 5 5 3 6
+
+    2 xpower 64
+1 8 4 4 6 7 4 4 0 7 3 7 0 9 5 5 1 6 1 6
+
+    ↑{⎕D[⍵+⎕IO]}¨ 2 xpower¨2*0 to 8     ⍝ powers of powers of 2.
+2
+4
+16
+256
+65536
+4294967296
+18446744073709551616
+340282366920938463463374607431768211456
+115792089237316195423570985008687907853269984665640564039457584007913129639936
+
+See also: xtimes nats
+
+Index: Fast Fourier Transform
+Index; Day M.|Hui R.K.W.

@@ -1,0 +1,134 @@
+rslt ← {cmp←1} ##.pack4 image               ⍝ Quad-tree packing.
+
+Quad-trees  are normally used to compress 2-dimensional data such as bitmaps (or
+digital television images?). However, the technique generalises nicely to arrays
+of any rank. For compression, the function takes, as right argument, an array to
+be compressed and returns an encoded quad-tree as result.
+
+Left argument [cmp] specifies:
+
+⍺=1: [default] Full-precision compression of array right argument "image".
+⍺=0: Expansion of right argument to reconstitute the original image.
+⍺>1: Part-precision compression, stops when array has only ⍺ distinct items.
+
+The underlying idea is simple: the compression is:
+
+    If all items of the array are identical, then that item.
+    Otherwise, the recursive compression of 2*⍴⍴⍵ subarray "quadrants".
+
+For roughly "square" arrays, such as TV screen  images,  this  quartering  works
+well but in general, where axes may be of very different lengths, a better  sec-
+ond rule is:
+
+    Otherwise, the  recursive  compression of each of the pair of subarrays that
+    result from splitting the array along its longest axis.
+
+Quad-tree packing works best for arrays that contain significant regions of  id-
+entical adjacent values.  For more irregular arrays, the technique is poor owing
+to the overhead of keeping track of small regions.  A good bet for Rothko; a bad
+bet for Pollock.
+
+Technical notes:
+
+The compressed form is the triple:
+
+    uniq:  A vector of the unique items of array ⍵.
+    shape: Shape of the subject array.
+    subs:  A sequence of "sub" records, where a sub is either:
+           - an atom representing a subarray of identical items or
+           - a pair of subs, introduced by a ¯1 marker: (¯1, sub, sub)
+
+The result is further compressed by replacing ¯1 ¯1 .. ¯1 with ¯⍵.
+                                              └────⍵────┘
+
+Notice that it is not necessary to encode the _shapes_ of  compressed  subarrays
+in the compression stream. This is because the array-splitting is completely de-
+termined by the shape of the original subject array and so can  be  inferred  at
+each stage of decompression. The only  additional packing overhead is a ¯1 mark-
+er, which distinguishes a "sub" from an "atom".
+
+Note the technique ↑{⍺ ⍵}/ of converting the stream vector to a push-down "list"
+for decompression. This makes reading the stream, one item at  a  time,  quicker
+and more pleasant. See →list← for more on this technique.
+
+Examples:
+
+    ⎕←vec←10 20/'ab'            ⍝ vector of a's and b's.
+aaaaaaaaaabbbbbbbbbbbbbbbbbbbb
+
+    0 pack4 pack4 10 20/'ab'    ⍝ round-trip
+aaaaaaaaaabbbbbbbbbbbbbbbbbbbb
+
+    pack4 10 20/'ab'            ⍝ packed structure.
+┌──┬──┬────────────────────┐
+│ab│30│¯2 0 ¯2 0 ¯1 0 1 1 1│
+└──┴──┴────────────────────┘
+
+    chk←{⍵≡0 pack4 pack4 ⍵}     ⍝ check round-trip
+
+    chk 10 20/'ab'
+1
+    ⎕←image←⌊0.5×∘.⌊⍨0 to 7     ⍝ 2D image
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 1 1 1 1 1 1
+0 0 1 1 1 1 1 1
+0 0 1 1 2 2 2 2
+0 0 1 1 2 2 2 2
+0 0 1 1 2 2 3 3
+0 0 1 1 2 2 3 3
+
+    pack4 image
+┌───────┬───┬────────────────────────────────────────────┐
+│0 1 2 3│8 8│¯3 0 ¯1 0 1 ¯1 0 1 ¯3 0 1 ¯1 0 1 ¯1 2 ¯1 2 3│
+└───────┴───┴────────────────────────────────────────────┘
+
+    mm←⎕fmt notes.Marilyn       ⍝ larger 2D ASCII-image →Marilyn←
+
+    chk mm                      ⍝ check round-trip.
+1
+    size←{⎕size'⍵'}             ⍝ byte-size of ⍵.
+
+    size mm                     ⍝ size of unpacked array.
+11300
+    size pack4 mm               ⍝ size of full-precision packed array.
+9176
+    size 2 pack4 mm             ⍝ size of reduced-resolution packed array.
+3556
+
+    ⍝ diminishing sizes of decreasing-resolution packings:
+
+    {pk←⍵ pack4 mm ⋄ ⍬⍴⎕size'pk'}¨ 1 to 16
+9176 3556 2068 1252 844 624 432 324 260 216 188 140 128 124 108 100
+
+⍝ This little function shows the effect of successively refined packing. After
+⍝ popping up a blank-screen edit window, there is a delay of a couple of seconds
+⍝ to give you time to maximise the window before the show starts:
+
+    movie←{                         ⍝ Increasingly refined image ⍵.
+        show←{screen∘←(pk dl 1)⍵}   ⍝ show image.
+        pk←{0 pack4 ⍵ pack4 image}  ⍝ ⍵-resolution image.
+        dl←{(⎕DL ⍵⍵)⊢⍺⍺ ⍵}          ⍝ apply ⍺⍺ ⍵ then delay ⍵⍵.
+        screen←{'·'}¨image←⍵        ⍝ blank screen.
+        _←(⎕ED dl 2)'screen'        ⍝ window on image.
+        1:_←(show¨dl 4)⌽⍳⍴∪,⍵       ⍝ show movie.
+    }
+
+    movie ⎕fmt notes.Marilyn        ⍝ show movie.
+
+⍝ It works best if you reduce the session font size so that the whole
+⍝ image is visible in the edit window:
+
+    pix←{                   ⍝ Apply ⍺⍺ ⍵ with font-size ⍵⍵.
+        save←⎕SE.FontObj    ⍝ save current font settings.
+        (2⊃⎕SE.FontObj)←⍵⍵  ⍝ set font size.
+        rslt←⍺⍺ ⍵           ⍝ apply function.
+        ⎕SE.FontObj←save    ⍝ restore font settings.
+        1:_←rslt            ⍝ shy result of ⍺⍺ ⍵.
+    }
+
+    movie pix 10 ⎕fmt notes.Marilyn     ⍝ show movie in 10-pixel font.
+
+See also: Data_compression list Marilyn
+Index:packing|compression|quad-tree
+Index;Rothko M.|Pollock J.|Monroe M.

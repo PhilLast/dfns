@@ -1,0 +1,6 @@
+ cache←{⎕ML←1                ⍝ Ref to space containing initialised cache.
+     vals keys←↓⍉↑{          ⍝ result values and keys.
+         (⊃⍵)(1↓⍵,¯1↑⍵)      ⍝ rslt - {larg} rarg rarg.
+     }¨1↓(⊂0 0),⍵            ⍝ initial values of cache.
+     ⎕NS'vals' 'keys'        ⍝ unnamed ref containing cache variables.
+ }

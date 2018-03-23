@@ -1,0 +1,14 @@
+cvec ← {prim supp} ##.ssword (srce from into)⍝ Approx alternative to xutils ss.
+
+As ss, but only whole words,  as defined by function 'words',  are replaced. The
+optional left argument items [prim] and [supp] are the primary and supplementary
+alphabets used for word splitting. See →words← for more details.
+
+Example:
+
+      ssword'Cant can an ant.' 'an' 'pickled'
+Cant can pickled ant.
+
+See also: words ssmat ss subs
+
+Index:xutils, ss|string replacement|substitution

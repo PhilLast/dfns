@@ -1,0 +1,638 @@
+bmat ← {A CI} ##.baby bmat      ⍝ Manchester Small Scale Experimental Machine.
+
+The Manchester Small Scale Experimental Machine (Baby) was the first operational
+electronic stored-program computer. The first program, which ran on 21 June 1948
+searched for the highest factor of a given number. See the example below.
+
+This  function,  which  emulates  the SSEM machine, takes a 32×32 boolean matrix
+argument that defines the initial state of the machine's memory and, on encount-
+ering a Halt instruction, returns the final state as result.
+
+Technical notes for SSEM
+------------------------
+NB: Binary values in the SSEM are written with the least significant bits on the
+left, for example:
+
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0     ⍝  0
+1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0     ⍝  1
+0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0     ⍝  2
+1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0     ⍝  3
+1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1     ⍝ ¯3
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1     ⍝ -2*18
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0     ⍝ ¯1+2*18
+
+The  machine's  memory is a 32×32 matrix of bits,  stored in a  Williams-Kilburn
+cathode ray tube.  The memory is addressed as 32 words or "lines",  each 32 bits
+wide. Each line represents either a (2's complement) signed integer or an instr-
+uction in the following format:
+
+     0         5               13    16
+    ┌─────────┬───────────────┬─────┬───────────────────────────────┐
+    │0 0 0 0 0│0 0 0 0 0 0 0 0│0 0 0│0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0│
+    └─────────┴───────────────┴─────┴───────────────────────────────┘
+     │         │               │     └─── unused
+     │         │               └───────── function number (operation code)
+     │         └───────────────────────── (spare: storage unit number)
+     └─────────────────────────────────── operand address.
+
+In addition to the main store, there are three visible "registers":
+
+    A  32-bit Accumulator.
+    CI 32-bit Control Instruction (program counter) only first 5 bits are used.
+    PI 32-bit Present Instruction (op-code buffer) only first 3 bits are used.
+and
+    S is a 5-bit internal register used to hold the current operand address.
+
+The seven machine instructions are:
+
+    0 0 0   jmp     CI ←STORE[S;]       ⍝ Jump
+    1 0 0   jrp     CI+←STORE[S;]       ⍝ Jump relative
+    0 1 0   ldn     A ←-STORE[S;]       ⍝ Load negative
+    1 1 0   sto     STORE[S;]←A         ⍝ Store
+    0 0 1   sub     A-←STORE[S;]        ⍝ Subtract
+    1 0 1           (same as 0 0 1)     ⍝
+    0 1 1   cmp     CI+←A<0             ⍝ Compare
+    1 1 1   hlt     (stop)              ⍝ Halt
+
+Notice that there are no "immediate" instructions; literal values must be loaded
+from the store.
+
+The  program  counter  (CI) is incremented immediately _before_ each instruction
+fetch, so that it usually shows the address of the prior instruction. This means
+that on executing a jmp nn instruction, the next instruction to be executed will
+be  the one whose address is one more than the value in line nn. For example, to
+jump to line number 03, we could store a 2 in line 0 (say) and jmp 00.
+
+Some system software
+--------------------
+Rather than having to program the machine in binary, we can invent a simple ass-
+embly  language using the instruction mnemonics from above. An assembler program
+is  a  character  array (simple matrix, line_list, vector of vectors). Each line
+has the following format:
+
+    nn oper rand    ⍝ optional comment.
+or
+    nn numb         ⍝ optional comment.
+
+where:
+
+    nn   is the decimal line number 00-31,
+    oper is one of: jmp jrp ldn sto sub cmp hlt,
+    rand is a scalar-integer-returning APL expression,
+    numb    ..      ..      ..      ..      ..
+
+Lines that are not represented in the assembler source are set to 0.
+
+An  example might be the following program to add the number in line[10] to that
+in line[11] and store the result in line[12]:
+
+    display sum
+┌→──────────────────────────────────────────────────┐
+│01 ldn 10   ⍝ negate first number into accumulator.│
+│02 sub 11   ⍝ subtract second number.              │
+│03 sto 12   ⍝ store negative of result.            │
+│04 ldn 12   ⍝ negate negative ...                  │
+│05 sto 12   ⍝ ... result.                          │
+│06 hlt      ⍝ stop                                 │
+│                                                   │
+│10 1234     ⍝ input                                │
+│11 5678     ⍝ input                                │
+│12          ⍝ result                               │
+└───────────────────────────────────────────────────┘
+
+Here is an assember for baby code:
+
+    asm←{⎕ML ⎕IO←0                              ⍝ Assembler for Baby.
+        ⍺←32 32 ⋄ lines bits←⍺                  ⍝ memory size.
+        ops←↓8 3⍴'jmpjrpldnstosub   cmphlt'     ⍝ opcode mnemonics.
+        wds←{⍵~⊂''}∘{⍵~¨' '}∘{(1,1↓⍵=' ')⊂⍵}    ⍝ blank-separated words.
+        raw←{(∧\⍵≠'⍝')/⍵}                       ⍝ without comments.
+        bin←{⌽(⍺/2)⊤⍵}                          ⍝ ssem-binary from decimal.
+        ↑{                                      ⍝ bool store matrix.
+            ↑(⍺⍳,¨⍳lines)⊃¨⊂lines↑⍵             ⍝ lines in line-number order.
+        }/↓⍉↑{                                  ⍝ line_numbers, lines.
+            0::11 ⎕SIGNAL⍨'bad line: ',⍵        ⍝ something wrong with line.
+            nn instr←{(⊃⍵)(1↓⍵)}wds raw ⍵       ⍝ line number and content.
+            line←(⍎nn,',⍬')∘{⍺ ⍵}               ⍝ line_number, bool_vector pair.
+            0=⍴instr:line bits bin 0            ⍝ null instruction: 0 line.
+            ~(1↑instr)∊ops:line bits bin⍎⍕instr ⍝ 1st wd not opcode: raw value.
+            oper rand←2↑instr,⊂'0'              ⍝ opcode and operand address.
+            addr←5 bin⍎rand                     ⍝ operand address.
+            unit←8 bin 0                        ⍝ (storage unit number).
+            opco←3 bin ops⍳⊂oper                ⍝ operator code.
+            line bits↑addr,unit,opco            ⍝ line number and bool vector.
+        }¨↓⎕FMT↑⍵                               ⍝ char vecs from any format.
+    }
+
+.. and a corresponding disassembler:
+
+    dis←{⎕IO ⎕ML←0                              ⍝ Disassembler for Baby.
+        lines bits←⍴⍵                           ⍝ no of lines and word size.
+        max←2*bits                              ⍝ miximum unsigned value.
+        ops←↓8 3⍴'jmpjrpldnstosubsubcmphlt'     ⍝ opcode mnemonics.
+        arity←⍎'  1  1  1  1  1  1  0  0  '     ⍝ instruction arity.
+        decode←(0 5 13 16∊⍨⍳bits)∘⊂             ⍝ instruction decode.
+        lfmt←{¯2↑'0',⍕⍵}                        ⍝ line number format.
+        dec←(-max÷2){⍺⍺+⍵⍵|⍵-⍺⍺}max∘{2⊥⌽⍵}      ⍝ signed decimal from ⌽binary.
+        {                                       ⍝ assembled lines:
+            nn num instr←⍵                      ⍝ line, decimal value, instr.
+            (↑nn),' ',(⍕⍪num),↑instr            ⍝ assembled to char matrix.
+        }↓⍉↑(lfmt¨⍳lines){                      ⍝ label for each line.
+            addr _ opco _←dec¨decode ⍵          ⍝ instruction decode.
+            oper←opco⊃ops                       ⍝ instruction mnemonic.
+            rand←(opco⊃arity)/' ',lfmt addr     ⍝ operand address.
+            ⍺(dec ⍵)('  ⍝ ',oper,rand)          ⍝ instruction ⍝ number.
+        }¨↓⍵                                    ⍝ ... for each line.
+    }
+
+The disassembler shows both an integer and instruction decoding of each line. In
+particular,  the  instruction  decoding  for a line with a value of 0 is jmp 00.
+Here is the result of our sum program from above. Notice that the result (1234 +
+5678 → 6912) is in line[12]:
+
+    display dis baby asm sum    ⍝ assemble-run-disassemble sum program.
+┌→─────────────────┐
+↓00     0  ⍝ jmp 00│
+│01 16394  ⍝ ldn 10│
+│02 32779  ⍝ sub 11│
+│03 24588  ⍝ sto 12│
+│04 16396  ⍝ ldn 12│
+│05 24588  ⍝ sto 12│
+│06 57344  ⍝ hlt   │
+│07     0  ⍝ jmp 00│
+│08     0  ⍝ jmp 00│
+│09     0  ⍝ jmp 00│
+│10  1234  ⍝ jmp 18│
+│11  5678  ⍝ jmp 14│
+│12  6912  ⍝ jmp 00│
+│13     0  ⍝ jmp 00│
+│14     0  ⍝ jmp 00│
+│15     0  ⍝ jmp 00│
+│16     0  ⍝ jmp 00│
+│17     0  ⍝ jmp 00│
+│18     0  ⍝ jmp 00│
+│19     0  ⍝ jmp 00│
+│20     0  ⍝ jmp 00│
+│21     0  ⍝ jmp 00│
+│22     0  ⍝ jmp 00│
+│23     0  ⍝ jmp 00│
+│24     0  ⍝ jmp 00│
+│25     0  ⍝ jmp 00│
+│26     0  ⍝ jmp 00│
+│27     0  ⍝ jmp 00│
+│28     0  ⍝ jmp 00│
+│29     0  ⍝ jmp 00│
+│30     0  ⍝ jmp 00│
+│31     0  ⍝ jmp 00│
+└──────────────────┘
+
+Watching Baby working
+---------------------
+To  watch  the  machine  working, we can display its Williams-Kilburn tube in an
+edit window in the following way:
+
+1. Fix function <asm> by Cutting & Pasting from the notes above.
+
+2. Edit  [baby]  to  inject  a  new line, which formats the machine state into a
+   global  character  matrix  CRT,  at  the  start of the inner state transition
+   function:
+
+    ...
+    0{                                      ⍝ CI increment.
+        CRT∘←disp{↑,/2↑¨⍵⊃¨⊂'·⍟'}¨⍪⍵        ⍝ NEW LINE: update CRT display.
+        A CI_ M←⍵                           ⍝ Acc Ctrl-Instr Store-Matrix.
+    ...
+
+3. Cut & Paste prog0 (say) assembly source, from the examples below, into a var-
+   iable:
+
+    )ed →prog0
+
+4. Open an edit window on global character matrix CRT:
+
+    )ed -CRT
+
+5. Now run the program:
+
+    baby asm prog0      ⍝ watch that Baby go ...
+
+History
+-------
+The precise wording of "first operational electronic stored-program computer" is
+significant.
+
+Wikipedia provides an excellent chronology:
+
+    http://en.wikipedia.org/wiki/Timeline_of_computing_2400_BC-1949
+    http://en.wikipedia.org/wiki/Computing_timeline_1950-1979
+    http://en.wikipedia.org/wiki/Computing_timeline_1980-1989
+    http://en.wikipedia.org/wiki/Computing_timeline_1990-forward
+
+Here is an extract from this history, with relevance to the SSEM:
+
+         Provided a computing service to end users ──────────────────────────┐
+         Multiple instances built ───────────────────────────────────────┐   │
+         Number base ────────────────────────────────────────────────┐   │   │
+         Practical ──────────────────────────────────────────────┐   │   │   │
+         Turing-complete ────────────────────────────────────┐   │   │   │   │
+         Electronic ─────────────────────────────────────┐   │   │   │   │   │
+         Stored program ─────────────────────────────┐   │   │   │   │   │   │
+         General purpose ────────────────────────┐   │   │   │   │   │   │   │
+         Conceived ──────────────────┐           │   │   │   │   │   │   │   │
+         Operational ─────┐          │           │   │   │   │   │   │   │   │
+                          O          C           G   S   E   T   P   N   M   U
+                         ┌──────────┬──────────┬───┬───┬───┬───┬───┬───┬───┬───┐
+            Tally sticks │¯35000    │          │ Y │ - │ - │ - │ Y │  1│ Y │ Y │
+                         ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+             Bead Abacus │¯2400     │          │ Y │ - │ - │ - │ Y │2×5│ Y │ Y │
+                         ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+   da Vinci's calculator │          │1492      │ Y │ - │ - │ - │ Y │ 10│ - │ - │
+                         ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+          Napier's Bones │1617      │1614      │ Y │ - │ - │ - │ Y │ 10│ Y │ Y │
+                         ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+              Slide Rule │1622      │          │ Y │ - │ - │ - │ Y │ 10│ Y │ Y │
+                         ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+  Schickard's calculator │1623      │          │ Y │ - │ - │ - │ Y │ 10│ - │ Y │
+                         ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+     Pascal's adding m/c │1642      │          │ Y │ - │ - │ - │ Y │ 10│ Y │ Y │
+                         ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+   Babbage's Anal.Engine │          │1834      │ Y │ - │ - │ Y │ Y │ 10│ - │ - │
+                         ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+          Turing's paper │          │1936      │ Y │ Y │ - │ Y │ - │ - │ - │ - │
+                         ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+               Zuse's Z3 │1941-05-12│1936      │ Y │ - │ - │ Y │ - │  2│   │   │
+                         ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+   Atanasoff/Berry's ABC │1942      │1937      │ - │ - │ Y │ - │ - │  2│   │   │
+                         ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+                Colossus │1943-04   │          │ - │ Y │ Y │ - │ Y │  2│   │ Y │
+                         ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+            Harvard Mk1  │1944-08-07│          │ - │ - │ - │ - │ Y │ 10│   │   │
+                         ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+                  ENIAC  │1946-02   │          │ Y │ - │ Y │ Y │ Y │ 10│   │ Y │
+    ┌────┐               ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+    │Baby├──────── SSEM  │1948-06-21│          │ Y │ Y │ Y │ Y │ - │  2│ - │   │
+    └────┘               ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+                  EDSAC  │1949-05-06│          │ Y │ Y │ Y │ Y │ Y │  2│ - │ Y │
+                         ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+            ACE (Pilot)  │1950-05-10│1946-02-19│ Y │ Y │ Y │ Y │ Y │  2│ - │   │
+                         ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+                   MESM  │1951-01-04│          │ Y │ Y │ Y │ Y │ Y │  2│   │ Y │
+                         ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+                  EDVAC  │1951      │1945-06-30│ Y │ Y │ Y │ Y │ Y │  2│ - │ Y │
+                         ├──────────┼──────────┼───┼───┼───┼───┼───┼───┼───┼───┤
+                 UNIVAC  │1951-03-30│          │ Y │ Y │ Y │ Y │ Y │  2│ Y │ Y │
+                         └──────────┴──────────┴───┴───┴───┴───┴───┴───┴───┴───┘
+                          O          C           G   S   E   T   P   N   M   U
+SSEM References:
+
+    http://www.computer50.org
+    http://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine
+    http://www.cs.man.ac.uk/CCS/ssem/progref1.html
+    https://en.wikipedia.org/wiki/Williams_tube
+
+Technical notes:
+
+[baby] is written in a pure functional style, without variables or side-effects.
+Therefore, it would be possible to transform the code step-by-step into a single
+(albeit  long)  expression,  which  contains no name-assignments or guards; only
+primitive  functions,  operators  and  parentheses. See →cmat← for an example of
+this process.
+
+(muse:
+    We can view this expression as a mapping from a vector  of machine states to
+    a vector of machine states. The <domain> vector has one item for each of the
+    2*32×32+2  possible  initial  machine  configurations (if we include initial
+    states of CI and A). The considerably shorter <range> vector has an item for
+    each  state in which CI addresses a line containing a <hlt> instruction, to-
+    gether  with  a  single  additional  special state "⊥" ("bottom"), which re-
+    presents non-termination. See →declarative←.
+)
+
+In  the  interests of authenticity (but at considerable expense to performance),
+subsystems of the machine are written to use SSEM-binary values directly, rather
+than to cheat by using regular APL numbers. In particular, no use is made of APL
+primitive functions ⊤ or ⊥. For example, the <sub> instruction is implemented as
+a binary subtractor, which deals directly with its boolean-vector arguments.
+
+In fact, the machine has both an adder and a subtractor. As these differ only in
+their bit-manipulation functions ...
+
+    add←{                           ⍝ parallel binary adder.
+        c←⍺∧⍵           ⍝ note ∧    ⍝ carry bits.
+        ~1∊c:⍺∨⍵        ⍝ note ∨    ⍝ no carry bits: done.
+        (⍺≠⍵)∇ 0,¯1↓c               ⍝ shift & add/sub carry bits.
+    }
+
+    sub←{                           ⍝ parallel binary subtractor.
+        c←⍺<⍵           ⍝ note <    ⍝ carry bits.
+        ~1∊c:⍺>⍵        ⍝ note >    ⍝ no carry bits: done.
+        (⍺≠⍵)∇ 0,¯1↓c               ⍝ shift & add/sub carry bits.
+    }
+
+...  we  can  abstract them into a single operator and pass the bit-manipulation
+functions as operands:
+
+    addsub←{                        ⍝ parallel binary adder/subtractor.
+        c←⍺ ⍺⍺ ⍵                    ⍝ carry bits.
+        ~1∊c:⍺ ⍵⍵ ⍵                 ⍝ no carry bits: done.
+        (⍺≠⍵)∇ 0,¯1↓c               ⍝ shift & add/sub carry bits.
+    }
+
+then:
+
+    add←∧addsub∨                    ⍝ parallel binary adder.
+    sub←<addsub>                    ⍝ parallel binary subtractor.
+
+For example:
+
+    1 0 1 0 0 add 0 1 1 0 0         ⍝ 5 + 6 → 11
+1 1 0 1 0
+
+    1 0 1 0 0 sub 0 1 1 0 0         ⍝ 5 - 6 → ¯1
+1 1 1 1 1
+
+We also need binary successor, predecessor and negation functions:
+
+    inc←{(⍵>∧\⍵)∨<\~⍵}              ⍝ binary successor.
+    dec←{(⍵><\⍵)∨∧\~⍵}              ⍝ binary predecessor.
+    neg←{(⍵<∨\⍵)∨<\⍵}               ⍝ 2s complement negation.
+
+    inc 1 0 1 0 0                   ⍝ 5 +1 → 6
+0 1 1 0 0
+
+    dec 0 1 1 0 0                   ⍝ 6 -1 → 5
+1 0 1 0 0
+
+    neg 1 0 1 0 0                   ⍝ - 5 → ¯5
+1 1 0 1 1
+
+(
+    Notice that <inc> and <dec> could also be abstracted into an incdec operator
+    in a manner similar to addsub:
+
+        incdec←{(⍵>⍺⍺\⍵)∨⍵⍵\~⍵}     ⍝ binary successor/predecessor.
+
+    then:
+
+        inc←∧incdec<                ⍝ binary successor.
+        dec←<incdec∧                ⍝ binary predecessor.
+
+    though it hardly seems worth the abstraction for such small functions.
+)
+
+Finally,  we  need  a "Y-shift" unit, which returns a line-selection mask from a
+binary address:
+
+    yshift←(0=⍳⊃⍴⍵)∘{               ⍝ Y-shift: Y-mask from ssem-binary.
+        ~1∊⍵:⍺                      ⍝ 0: done.
+        (¯1⌽⍺)∇ dec ⍵               ⍝ mask shift.
+    }
+
+    yshift 1 0 1 0 0                ⍝ mask for line[5].
+0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+(muse:
+
+    For  the  sake  of purity, the code eschews indexed assignment to a variable
+    ("STORE", say) when executing a <sto> instruction. Instead, it uses a rather
+    contorted →at← operator to indicate the new value:
+
+        store←{⍺(⍵ set)msk ⍺⍺}      ⍝ store-matrix ⍺ with ⍵ in line ⍺⍺.
+
+    where:
+
+        msk←(1∨⍵)∘{⍺∧[0]yshift ⍵}   ⍝ mask for line ⍵ of store.
+        set←{(⍺>⍵)∨⍵∧[1]⍺⍺}         ⍝ merge of ⍺ with val ⍺⍺ in line ⍵.
+
+    <store>  takes a store-matrix and new line value as left and right arguments
+    and a line selection as left operand and returns the new store-matrix.
+
+    See operator →at←.
+)
+
+The coding of the <cmp> function uses an unusual scan {0}\:
+
+        0 1 1≡PI:({0}\⌽A)∇ A CI M           ⍝ cmp: CI+←A<0
+                  ¯¯¯¯
+Applied  between  scalar  arguments, {0} is one of the 16 boolean functions, see
+→truth_tables←.  Applied  to a boolean vector, {0}\ returns a vector of the same
+length, duplicating the first item and with all following items, 0.
+
+Therefore, the left argument ({0}\⌽A) of cmp's recursive call is:
+
+   A negative (ends in 1):  1 0 0 0 ... 0
+   otherwise  (ends in 0):  0 0 0 0 ... 0
+
+NB:  The expression {0}\⌽A is used in spirit of exploration; it is currently im-
+plemented  in Dyalog as an O(n*2) algorithm and so not recommended when perform-
+ance is an issue. In this case 32↑⊃⌽A would be inordinately faster but not quite
+as "cool".  A further advantage of {0}\⌽ over 32↑⊃⌽ is that,  apart from the in-
+struction decode function, baby makes no assumpions about the size of the memory
+matrix; this baby will already run 64-bit software!
+
+Examples:
+
+    ⍝ After defining <asm> and <dis> from above:
+
+    prog0                   ⍝ First program to run on the Baby: 1948-06-21
+01 ldn 24
+02 sto 26
+03 ldn 26
+04 sto 27
+05 ldn 23
+06 sub 27
+07 cmp
+08 jrp 20
+09 sub 26
+10 sto 25
+11 ldn 25
+12 cmp
+13 hlt
+14 ldn 26
+15 sub 21
+16 sto 27
+17 ldn 27
+18 sto 26
+19 jmp 22
+20 ¯3
+21  1
+22  4
+23 -2*18
+24 ¯1+2*18
+
+    bin0 ← asm prog0        ⍝ assembled to ssem-binary.
+
+    bin0                    ⍝ ssem-binary is the 32×32 store matrix.
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 1 1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 1 0 1 1 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 1 0 1 1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 1 0 1 1 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 1 1 0 1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 1 0 1 1 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 1 0 1 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 1 0 1 1 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 0 0 1 1 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 0 0 1 1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 1 0 1 1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 0 1 0 1 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 1 0 1 1 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 1 0 1 1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 1 0 1 1 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 1 1 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+    rslt0 ← baby bin0       ⍝ Takes many minutes ...
+
+    rslt0                   ⍝ store dump.
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 1 1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 1 0 1 1 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 1 0 1 1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 1 0 1 1 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 1 1 0 1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 1 0 1 1 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 1 0 1 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 1 0 1 1 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 0 0 1 1 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 0 0 1 1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 1 0 1 1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 0 1 0 1 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 1 0 1 1 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 1 0 1 1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 1 0 1 1 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 1 1 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+    dis rslt0           ⍝ disassembled result of prog0
+00       0  ⍝ jmp 00
+01   16408  ⍝ ldn 24
+02   24602  ⍝ sto 26
+03   16410  ⍝ ldn 26
+04   24603  ⍝ sto 27
+05   16407  ⍝ ldn 23
+06   32795  ⍝ sub 27
+07   49152  ⍝ cmp
+08    8212  ⍝ jrp 20
+09   32794  ⍝ sub 26
+10   24601  ⍝ sto 25
+11   16409  ⍝ ldn 25
+12   49152  ⍝ cmp
+13   57344  ⍝ hlt
+14   16410  ⍝ ldn 26
+15   32789  ⍝ sub 21
+16   24603  ⍝ sto 27
+17   16411  ⍝ ldn 27
+18   24602  ⍝ sto 26
+19      22  ⍝ jmp 22
+20      ¯3  ⍝ hlt
+21       1  ⍝ jmp 01
+22       4  ⍝ jmp 04
+23 ¯262144  ⍝ jmp 00
+24  262143  ⍝ hlt
+25       0  ⍝ jmp 00
+26 ¯131072  ⍝ jmp 00
+27  131072  ⍝ jmp 00
+28       0  ⍝ jmp 00
+29       0  ⍝ jmp 00
+30       0  ⍝ jmp 00
+31       0  ⍝ jmp 00
+
+      hcf
+ ⍝ code:
+01 ldn 30       ⍝ Highest common factor (Tootill 1948).
+02 sto 29       ⍝ http://www.computer50.org/mark1/prog98/intro.html
+03 ldn 31
+04 sto 31
+05 ldn 31
+06 sto 30
+07 ldn 29
+08 sub 30
+09 cmp
+10 jrp 27
+11 sub 31
+12 sto 31
+13 sub 28
+14 cmp
+15 jmp 00
+16 hlt
+ ⍝ data:
+27     -3
+28     2
+29     0
+30     3141593  ⍝ input → rslt
+31     5214     ⍝ input
+
+    dis baby asm hcf
+00     0  ⍝ jmp 00
+01 16414  ⍝ ldn 30
+02 24605  ⍝ sto 29
+03 16415  ⍝ ldn 31
+04 24607  ⍝ sto 31
+05 16415  ⍝ ldn 31
+06 24606  ⍝ sto 30
+07 16413  ⍝ ldn 29
+08 32798  ⍝ sub 30
+09 49152  ⍝ cmp
+10  8219  ⍝ jrp 27
+11 32799  ⍝ sub 31
+12 24607  ⍝ sto 31
+13 32796  ⍝ sub 28
+14 49152  ⍝ cmp
+15     0  ⍝ jmp 00
+16 57344  ⍝ hlt
+17     0  ⍝ jmp 00
+18     0  ⍝ jmp 00
+19     0  ⍝ jmp 00
+20     0  ⍝ jmp 00
+21     0  ⍝ jmp 00
+22     0  ⍝ jmp 00
+23     0  ⍝ jmp 00
+24     0  ⍝ jmp 00
+25     0  ⍝ jmp 00
+26     0  ⍝ jmp 00
+27    ¯3  ⍝ hlt
+28     2  ⍝ jmp 02
+29  ¯237  ⍝ hlt
+30    79  ⍝ jmp 15
+31     0  ⍝ jmp 00
+
+    ⍝ For more sample Baby programs, see:
+    ⍝ test script ##.scripts.baby and
+    ⍝ http://www.computer50.org/mark1/prog98/prizewinners.html
+
+See also: at truth_tables bf lisp
+
+Index:SSEM|computer, first|assembler|disassembler|diversions|bottom ⊥|Baby
+Index:turing complete|non-termination|pure function|Manchester computer
+Index:UNIVAC|EDVAC|MESM|ACE|EDSAC|ENIAC|Harvard Mk1|Colossus|ABC|Zuse Z3
+Index:at
+Index;Kilburn T.|Williams F.C.|Tootill G.C.|Turing A.M.|Babbage C.|Schickard.W.

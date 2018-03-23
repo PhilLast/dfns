@@ -1,0 +1,6 @@
+ nicediv←{           ⍝ ⍵ similar integers with sum ⍺.
+     q←⍵⍴⌊⍺÷⍵        ⍝ quotient.
+     d←+\(⍵|⍺)÷⍵⍴⍵   ⍝ residue spread in ⍵ decimal steps.
+     i←2</0,⌊0.5+d   ⍝ residue spread in ⍵ integer steps.
+     q+i
+ }

@@ -1,0 +1,48 @@
+⍝ Share arrays across space tree:
+
+    ⎕io←1
+
+    k←{,∘'KB'⍕⌊0.5+⍵÷2*10}          ⍝ approx KB.
+
+    nest←⍳¨∘⍳¨∘⍳¨∘⍳¨∘⍳              ⍝ nesting function.
+
+    nested←nest 3 3                 ⍝ complex nested array.
+
+:If {32=2×⎕size'⍵'}⍬                ⍝ 32-bit interpreter:
+
+        k ⎕size'nested'             ⍝ size in KB.
+    19KB
+        k nspack ⎕this              ⍝ nspack recovers most of the space.
+    18KB
+        k nspack ⎕this              ⍝ subsequent pack saves no more space.
+    0KB
+        k ⎕size'nested'             ⍝ size _appears_ not to have changed.
+    19KB
+        (x←⎕ns'').(a b c←⎕ns¨3/⊂'') ⍝ make space and three subspaces.
+
+        x.(a b c).var←nest¨3/⊂3 3   ⍝ populate subspaces separately.
+
+        k∘nspack¨x.(a b c)          ⍝ packing _within_ spaces saves 18k each.
+     18KB  18KB  18KB 
+
+        k nspack x                  ⍝ packing _among_ spaces saves further 3K.
+    3KB
+:Else                               ⍝ 64-bit interpreter:
+        k ⎕size'nested'             ⍝ size in KB.
+    38KB
+        k nspack ⎕this              ⍝ nspack recovers most of the space.
+    35KB
+        k nspack ⎕this              ⍝ subsequent pack saves no more space.
+    0KB
+        k ⎕size'nested'             ⍝ size _appears_ not to have changed.
+    38KB
+        (x←⎕ns'').(a b c←⎕ns¨3/⊂'') ⍝ make space and three subspaces.
+
+        x.(a b c).var←nest¨3/⊂3 3   ⍝ populate subspaces separately.
+
+        k∘nspack¨x.(a b c)          ⍝ packing _within_ spaces saves 18k each.
+     35KB  35KB  35KB 
+
+        k nspack x                  ⍝ packing _among_ spaces saves further 6K.
+    6KB
+:EndIf

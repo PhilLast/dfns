@@ -1,0 +1,32 @@
+ fndiff←{⎕ML←1                               ⍝ Defined function differences.
+     ⍺←'' ⋄ {                                ⍝ diffs between two functions.
+         mats←↑¨0 1{↑~/⍺⌽⍵}¨⊂⍵               ⍝ line differences.
+         cols←⌊0.5×⎕PW-1                     ⍝ cols per half-screen.
+         size←(⌈/⊃∘⍴¨mats)cols               ⍝ padding size.
+         ↑{⍺,'│',⍵}/{                        ⍝ aligning dots.
+             mask←,(⍵=' ')∧(⍴⍵)⍴cols⍴4↑1     ⍝ blanks every 4 cols,
+             mat←⍵ ⋄ mat⊣(mask/,mat)←'·'     ⍝ inject into char mat.
+         }¨size∘↑¨mats                       ⍝ split screen output.
+     }(' ⍝'∊⍺)∘{                             ⍝ trim white space exclusions.
+         ⍺≡0 0:⍵                             ⍝ neither excluded: continue.
+         cm←{/∘⍵∧\(⍵≠'⍝')∨≠\''''=⍵}          ⍝ remove unquoted comments.
+         sp←{(∨\' '≠⍵)/⍵}                    ⍝ remove leading blanks.
+         ⍺{⍵~(⊃⍺)/⊂''}⍺∘{                    ⍝ with/out blank lines.
+             ⍺≡1 1:⌽sp⌽sp cm ⍵               ⍝ remove blanks and comments, or
+             ⍺≡0 1:⌽sp⌽cm ⍵                  ⍝ ... comments & trailing blanks.
+             code←cm ⍵                       ⍝ uncommented code.
+             cmnt←(⍴code)↓⍵                  ⍝ comment from code.
+             (⌽sp⌽sp code),cmnt              ⍝ before and after blanks removed.
+         }¨⍵                                 ⍝ ... from each function line.
+     }∘{                                     ⍝ copy in function if remote.
+         split←{(1 0=⊂⌽∨\' '=⌽⍵)/¨⊂⍵}        ⍝ split vector at rightmost blank.
+         trim←{(∨\' '≠⍵)/⍵}{⌽⍺⍺⌽⍺⍺ ⍵}        ⍝ remove leading/trailing blanks.
+         wsid fnid←trim¨split trim ⍵         ⍝ wsid / fnid.
+         ''≡wsid~' ':⎕NR fnid                ⍝ function in current ws.
+         base←{(⌽∧\⌽⍵≠'.')/⍵}fnid            ⍝ base name of function.
+         copy←'fnid ⍺.⎕cy wsid'              ⍝ command: copy remote function.
+         srce←'⍺.⎕nr base'                   ⍝ command: return function lines.
+         0::('Can''t copy: ',⍵)⎕SIGNAL ⎕EN   ⍝ abort if copy fails.
+         (⎕NS''){⍎⍵}copy,'⋄',srce            ⍝ copy and return function lines.
+     }¨⍵                                     ⍝ ... for each function.
+ }
