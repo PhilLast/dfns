@@ -1,3 +1,4 @@
  acc←{                                   ⍝ Accumulating reduction.
      ⊃⍺⍺{(⊂⍺ ⍺⍺⊃⍬⍴⍵),⍵}/1↓{⍵,⊂⍬⍴⍵}¯1⌽⍵
+⍝ I wrote this
  }
